@@ -33,6 +33,7 @@ public annotation class ExperimentalContracts
 @ContractsDsl
 @ExperimentalContracts
 @SinceKotlin("1.3")
+@CompileTimeCalculation
 public interface ContractBuilder {
     /**
      * Describes a situation when a function returns normally, without any exceptions thrown.
@@ -93,6 +94,7 @@ public interface ContractBuilder {
 @ContractsDsl
 @ExperimentalContracts
 @SinceKotlin("1.3")
+@CompileTimeCalculation
 public enum class InvocationKind {
     /**
      * A function parameter will be invoked one time or not invoked at all.
@@ -147,4 +149,5 @@ public enum class InvocationKind {
 @InlineOnly
 @SinceKotlin("1.3")
 @Suppress("UNUSED_PARAMETER")
+@CompileTimeCalculation
 public inline fun contract(builder: ContractBuilder.() -> Unit) { }
