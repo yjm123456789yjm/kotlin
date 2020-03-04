@@ -50,6 +50,7 @@ private val DEFAULT_DECLARATION_CHECKERS = listOf(
     ContextualDeclarationChecker,
     ValueParameterUsageInDefaultArgumentChecker,
     CyclicAnnotationsChecker,
+    ConstexprDeclarationChecker
 )
 
 private val DEFAULT_CALL_CHECKERS = listOf(
