@@ -22,7 +22,10 @@ val builtInsSources by task<Sync> {
         // JS-specific optimized version of emptyArray() already defined
         "ArrayIntrinsics.kt",
         // Included with K/N collections
-        "Collections.kt", "Iterator.kt", "Iterators.kt"
+        "Collections.kt", "Iterator.kt", "Iterators.kt",
+
+        "libraries/stdlib/common/src/kotlin/CompileTimeAnnotationsStdlib.kt", // TODO delete later
+        "core/builtins/src/kotlin/CompileTimeAnnotations.kt"
     )
 
     sources.forEach { path ->
