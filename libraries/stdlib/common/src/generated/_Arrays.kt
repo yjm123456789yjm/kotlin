@@ -12891,6 +12891,7 @@ public infix fun CharArray.union(other: Iterable<Char>): Set<Char> {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun <T> Array<out T>.all(predicate: (T) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12901,6 +12902,7 @@ public inline fun <T> Array<out T>.all(predicate: (T) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun ByteArray.all(predicate: (Byte) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12911,6 +12913,7 @@ public inline fun ByteArray.all(predicate: (Byte) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun ShortArray.all(predicate: (Short) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12921,6 +12924,7 @@ public inline fun ShortArray.all(predicate: (Short) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun IntArray.all(predicate: (Int) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12931,6 +12935,7 @@ public inline fun IntArray.all(predicate: (Int) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun LongArray.all(predicate: (Long) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12941,6 +12946,7 @@ public inline fun LongArray.all(predicate: (Long) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun FloatArray.all(predicate: (Float) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12951,6 +12957,7 @@ public inline fun FloatArray.all(predicate: (Float) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun DoubleArray.all(predicate: (Double) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12961,6 +12968,7 @@ public inline fun DoubleArray.all(predicate: (Double) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun BooleanArray.all(predicate: (Boolean) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12971,6 +12979,7 @@ public inline fun BooleanArray.all(predicate: (Boolean) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.all
  */
+@CompileTimeCalculation
 public inline fun CharArray.all(predicate: (Char) -> Boolean): Boolean {
     for (element in this) if (!predicate(element)) return false
     return true
@@ -12981,6 +12990,7 @@ public inline fun CharArray.all(predicate: (Char) -> Boolean): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun <T> Array<out T>.any(): Boolean {
     return !isEmpty()
 }
@@ -12990,6 +13000,7 @@ public fun <T> Array<out T>.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun ByteArray.any(): Boolean {
     return !isEmpty()
 }
@@ -12999,6 +13010,7 @@ public fun ByteArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun ShortArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13008,6 +13020,7 @@ public fun ShortArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun IntArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13017,6 +13030,7 @@ public fun IntArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun LongArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13026,6 +13040,7 @@ public fun LongArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun FloatArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13035,6 +13050,7 @@ public fun FloatArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun DoubleArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13044,6 +13060,7 @@ public fun DoubleArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun BooleanArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13053,6 +13070,7 @@ public fun BooleanArray.any(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.any
  */
+@CompileTimeCalculation
 public fun CharArray.any(): Boolean {
     return !isEmpty()
 }
@@ -13150,6 +13168,7 @@ public inline fun CharArray.any(predicate: (Char) -> Boolean): Boolean {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun <T> Array<out T>.count(): Int {
     return size
@@ -13158,6 +13177,7 @@ public inline fun <T> Array<out T>.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun ByteArray.count(): Int {
     return size
@@ -13166,6 +13186,7 @@ public inline fun ByteArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun ShortArray.count(): Int {
     return size
@@ -13174,6 +13195,7 @@ public inline fun ShortArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun IntArray.count(): Int {
     return size
@@ -13182,6 +13204,7 @@ public inline fun IntArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun LongArray.count(): Int {
     return size
@@ -13190,6 +13213,7 @@ public inline fun LongArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun FloatArray.count(): Int {
     return size
@@ -13198,6 +13222,7 @@ public inline fun FloatArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun DoubleArray.count(): Int {
     return size
@@ -13206,6 +13231,7 @@ public inline fun DoubleArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun BooleanArray.count(): Int {
     return size
@@ -13214,6 +13240,7 @@ public inline fun BooleanArray.count(): Int {
 /**
  * Returns the number of elements in this array.
  */
+@CompileTimeCalculation
 @kotlin.internal.InlineOnly
 public inline fun CharArray.count(): Int {
     return size
@@ -13308,6 +13335,7 @@ public inline fun CharArray.count(predicate: (Char) -> Boolean): Int {
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <T, R> Array<out T>.fold(initial: R, operation: (acc: R, T) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13322,6 +13350,7 @@ public inline fun <T, R> Array<out T>.fold(initial: R, operation: (acc: R, T) ->
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> ByteArray.fold(initial: R, operation: (acc: R, Byte) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13336,6 +13365,7 @@ public inline fun <R> ByteArray.fold(initial: R, operation: (acc: R, Byte) -> R)
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> ShortArray.fold(initial: R, operation: (acc: R, Short) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13350,6 +13380,7 @@ public inline fun <R> ShortArray.fold(initial: R, operation: (acc: R, Short) -> 
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> IntArray.fold(initial: R, operation: (acc: R, Int) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13364,6 +13395,7 @@ public inline fun <R> IntArray.fold(initial: R, operation: (acc: R, Int) -> R): 
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> LongArray.fold(initial: R, operation: (acc: R, Long) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13378,6 +13410,7 @@ public inline fun <R> LongArray.fold(initial: R, operation: (acc: R, Long) -> R)
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> FloatArray.fold(initial: R, operation: (acc: R, Float) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13392,6 +13425,7 @@ public inline fun <R> FloatArray.fold(initial: R, operation: (acc: R, Float) -> 
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> DoubleArray.fold(initial: R, operation: (acc: R, Double) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13406,6 +13440,7 @@ public inline fun <R> DoubleArray.fold(initial: R, operation: (acc: R, Double) -
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> BooleanArray.fold(initial: R, operation: (acc: R, Boolean) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13420,6 +13455,7 @@ public inline fun <R> BooleanArray.fold(initial: R, operation: (acc: R, Boolean)
  * 
  * @param [operation] function that takes current accumulator value and an element, and calculates the next accumulator value.
  */
+@CompileTimeCalculation
 public inline fun <R> CharArray.fold(initial: R, operation: (acc: R, Char) -> R): R {
     var accumulator = initial
     for (element in this) accumulator = operation(accumulator, element)
@@ -13897,6 +13933,7 @@ public inline fun <R> CharArray.foldRightIndexed(initial: R, operation: (index: 
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun <T> Array<out T>.forEach(action: (T) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13904,6 +13941,7 @@ public inline fun <T> Array<out T>.forEach(action: (T) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun ByteArray.forEach(action: (Byte) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13911,6 +13949,7 @@ public inline fun ByteArray.forEach(action: (Byte) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun ShortArray.forEach(action: (Short) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13918,6 +13957,7 @@ public inline fun ShortArray.forEach(action: (Short) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun IntArray.forEach(action: (Int) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13925,6 +13965,7 @@ public inline fun IntArray.forEach(action: (Int) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun LongArray.forEach(action: (Long) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13932,6 +13973,7 @@ public inline fun LongArray.forEach(action: (Long) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun FloatArray.forEach(action: (Float) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13939,6 +13981,7 @@ public inline fun FloatArray.forEach(action: (Float) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun DoubleArray.forEach(action: (Double) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13946,6 +13989,7 @@ public inline fun DoubleArray.forEach(action: (Double) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun BooleanArray.forEach(action: (Boolean) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13953,6 +13997,7 @@ public inline fun BooleanArray.forEach(action: (Boolean) -> Unit): Unit {
 /**
  * Performs the given [action] on each element.
  */
+@CompileTimeCalculation
 public inline fun CharArray.forEach(action: (Char) -> Unit): Unit {
     for (element in this) action(element)
 }
@@ -13962,6 +14007,7 @@ public inline fun CharArray.forEach(action: (Char) -> Unit): Unit {
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun <T> Array<out T>.forEachIndexed(action: (index: Int, T) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -13972,6 +14018,7 @@ public inline fun <T> Array<out T>.forEachIndexed(action: (index: Int, T) -> Uni
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun ByteArray.forEachIndexed(action: (index: Int, Byte) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -13982,6 +14029,7 @@ public inline fun ByteArray.forEachIndexed(action: (index: Int, Byte) -> Unit): 
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun ShortArray.forEachIndexed(action: (index: Int, Short) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -13992,6 +14040,7 @@ public inline fun ShortArray.forEachIndexed(action: (index: Int, Short) -> Unit)
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun IntArray.forEachIndexed(action: (index: Int, Int) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -14002,6 +14051,7 @@ public inline fun IntArray.forEachIndexed(action: (index: Int, Int) -> Unit): Un
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun LongArray.forEachIndexed(action: (index: Int, Long) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -14012,6 +14062,7 @@ public inline fun LongArray.forEachIndexed(action: (index: Int, Long) -> Unit): 
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun FloatArray.forEachIndexed(action: (index: Int, Float) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -14022,6 +14073,7 @@ public inline fun FloatArray.forEachIndexed(action: (index: Int, Float) -> Unit)
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun DoubleArray.forEachIndexed(action: (index: Int, Double) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -14032,6 +14084,7 @@ public inline fun DoubleArray.forEachIndexed(action: (index: Int, Double) -> Uni
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun BooleanArray.forEachIndexed(action: (index: Int, Boolean) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -14042,6 +14095,7 @@ public inline fun BooleanArray.forEachIndexed(action: (index: Int, Boolean) -> U
  * @param [action] function that takes the index of an element and the element itself
  * and performs the action on the element.
  */
+@CompileTimeCalculation
 public inline fun CharArray.forEachIndexed(action: (index: Int, Char) -> Unit): Unit {
     var index = 0
     for (item in this) action(index++, item)
@@ -18378,6 +18432,7 @@ public fun CharArray.minWithOrNull(comparator: Comparator<in Char>): Char? {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun <T> Array<out T>.none(): Boolean {
     return isEmpty()
 }
@@ -18387,6 +18442,7 @@ public fun <T> Array<out T>.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun ByteArray.none(): Boolean {
     return isEmpty()
 }
@@ -18396,6 +18452,7 @@ public fun ByteArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun ShortArray.none(): Boolean {
     return isEmpty()
 }
@@ -18405,6 +18462,7 @@ public fun ShortArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun IntArray.none(): Boolean {
     return isEmpty()
 }
@@ -18414,6 +18472,7 @@ public fun IntArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun LongArray.none(): Boolean {
     return isEmpty()
 }
@@ -18423,6 +18482,7 @@ public fun LongArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun FloatArray.none(): Boolean {
     return isEmpty()
 }
@@ -18432,6 +18492,7 @@ public fun FloatArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun DoubleArray.none(): Boolean {
     return isEmpty()
 }
@@ -18441,6 +18502,7 @@ public fun DoubleArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun BooleanArray.none(): Boolean {
     return isEmpty()
 }
@@ -18450,6 +18512,7 @@ public fun BooleanArray.none(): Boolean {
  * 
  * @sample samples.collections.Collections.Aggregates.none
  */
+@CompileTimeCalculation
 public fun CharArray.none(): Boolean {
     return isEmpty()
 }
@@ -18767,6 +18830,7 @@ public inline fun <S, T : S> Array<out T>.reduce(operation: (acc: S, T) -> S): S
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun ByteArray.reduce(operation: (acc: Byte, Byte) -> Byte): Byte {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18789,6 +18853,7 @@ public inline fun ByteArray.reduce(operation: (acc: Byte, Byte) -> Byte): Byte {
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun ShortArray.reduce(operation: (acc: Short, Short) -> Short): Short {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18811,6 +18876,7 @@ public inline fun ShortArray.reduce(operation: (acc: Short, Short) -> Short): Sh
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun IntArray.reduce(operation: (acc: Int, Int) -> Int): Int {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18833,6 +18899,7 @@ public inline fun IntArray.reduce(operation: (acc: Int, Int) -> Int): Int {
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun LongArray.reduce(operation: (acc: Long, Long) -> Long): Long {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18855,6 +18922,7 @@ public inline fun LongArray.reduce(operation: (acc: Long, Long) -> Long): Long {
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun FloatArray.reduce(operation: (acc: Float, Float) -> Float): Float {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18877,6 +18945,7 @@ public inline fun FloatArray.reduce(operation: (acc: Float, Float) -> Float): Fl
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun DoubleArray.reduce(operation: (acc: Double, Double) -> Double): Double {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18899,6 +18968,7 @@ public inline fun DoubleArray.reduce(operation: (acc: Double, Double) -> Double)
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun BooleanArray.reduce(operation: (acc: Boolean, Boolean) -> Boolean): Boolean {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
@@ -18921,6 +18991,7 @@ public inline fun BooleanArray.reduce(operation: (acc: Boolean, Boolean) -> Bool
  * 
  * @sample samples.collections.Collections.Aggregates.reduce
  */
+@CompileTimeCalculation
 public inline fun CharArray.reduce(operation: (acc: Char, Char) -> Char): Char {
     if (isEmpty())
         throw UnsupportedOperationException("Empty array can't be reduced.")
