@@ -182,6 +182,7 @@ internal expect inline fun <K, V> buildMapInternal(capacity: Int, builderAction:
 /**
  * Calculate the initial capacity of a map.
  */
+@CompileTimeCalculation
 @PublishedApi
 internal expect fun mapCapacity(expectedSize: Int): Int
 
