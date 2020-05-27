@@ -19,11 +19,14 @@ import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.config.JVMConfigurationKeys
 import org.jetbrains.kotlin.config.JvmSerializeIrMode
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.konan.DeserializedKlibModuleOrigin
 import org.jetbrains.kotlin.descriptors.konan.KlibModuleOrigin
 import org.jetbrains.kotlin.diagnostics.impl.BaseDiagnosticsCollector
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.ir.IrBuiltIns
+import org.jetbrains.kotlin.ir.backend.jvm.jvmResolveLibraries
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
@@ -44,6 +47,7 @@ import org.jetbrains.kotlin.psi2ir.generators.fragments.FragmentContext
 import org.jetbrains.kotlin.psi2ir.generators.generateTypicalIrProviderList
 import org.jetbrains.kotlin.psi2ir.preprocessing.SourceDeclarationsPreprocessor
 import org.jetbrains.kotlin.resolve.CleanableBindingContext
+import org.jetbrains.kotlin.util.DummyLogger
 
 open class JvmIrCodegenFactory(
     configuration: CompilerConfiguration,
@@ -115,7 +119,12 @@ open class JvmIrCodegenFactory(
             frontEndContext,
             stubGenerator,
             mangler
-        )
+        ).apply {
+            state.configuration.get(JVMConfigurationKeys.KLIB_PATH_FOR_COMPILE_TIME)?.let {
+                val klibForCompileTimeCalculations = jvmResolveLibraries(listOf(it), DummyLogger).getFullList().single()
+                addDeserializerForCompileTimeDeclarations(psi2irContext.moduleDescriptor, klibForCompileTimeCalculations)
+            }
+        }
 
         val pluginContext by lazy {
             psi2irContext.run {
@@ -183,6 +192,10 @@ open class JvmIrCodegenFactory(
         irLinker.postProcess()
 
         stubGenerator.unboundSymbolGeneration = true
+
+        state.configuration.get(JVMConfigurationKeys.KLIB_PATH_FOR_COMPILE_TIME)?.let {
+            state.configuration.put(CommonConfigurationKeys.IR_BODY_MAP, irLinker.deserializerForCompileTime!!.getBodies() as Map<*, *>)
+        }
 
         // We need to compile all files we reference in Klibs
         irModuleFragment.files.addAll(dependencies.flatMap { it.files })

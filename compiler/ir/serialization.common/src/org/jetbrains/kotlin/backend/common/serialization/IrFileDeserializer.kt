@@ -55,12 +55,12 @@ class IrFileDeserializer(
     }
 }
 
-class FileDeserializationState(
+open class FileDeserializationState(
     val linker: KotlinIrLinker,
     val fileIndex: Int,
-    file: IrFile,
+    val file: IrFile,
     val fileReader: IrLibraryFileFromBytes,
-    fileProto: ProtoFile,
+    val fileProto: ProtoFile,
     deserializeBodies: Boolean,
     allowErrorNodes: Boolean,
     deserializeInlineFunctions: Boolean,
@@ -88,7 +88,7 @@ class FileDeserializationState(
             actualModuleDeserializer.deserializeIrSymbol(idSig, symbolKind)
         }
 
-    private val declarationDeserializer = IrDeclarationDeserializer(
+    open val declarationDeserializer = IrDeclarationDeserializer(
         linker.builtIns,
         linker.symbolTable,
         linker.symbolTable.irFactory,
@@ -103,7 +103,7 @@ class FileDeserializationState(
         compatibilityMode = moduleDeserializer.compatibilityMode
     )
 
-    val fileDeserializer = IrFileDeserializer(file, fileReader, fileProto, symbolDeserializer, declarationDeserializer)
+    val fileDeserializer get() = IrFileDeserializer(file, fileReader, fileProto, symbolDeserializer, declarationDeserializer)
 
     private val reachableTopLevels = LinkedHashSet<IdSignature>()
 
