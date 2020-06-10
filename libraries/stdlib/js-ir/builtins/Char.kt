@@ -14,6 +14,7 @@ package kotlin
  * On the JVM, non-nullable values of this type are represented as values of the primitive type `char`.
  */
 @CompileTimeCalculation
+@EvaluateIntrinsic("kotlin.Char")
 public /*value*/ class Char
 @kotlin.internal.LowPriorityInOverloadResolution
 internal constructor(private val value: Int) : Comparable<Char> {
