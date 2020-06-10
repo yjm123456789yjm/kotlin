@@ -798,6 +798,14 @@ private val escapedIdentifiersLowering = makeBodyLoweringPhase(
     description = "Convert global variables with invalid names access to globalThis member expression"
 )
 
+val compileTimeEvaluationPhase = makeJsModulePhase(
+    ::CompileTimeCalculationLowering,
+    name = "CompileTimeEvaluation",
+    //TODO change annotation to modifier
+    description = "Evaluate calls that are marked with @CompileTimeCalculation annotation"
+    //TODO find best position
+).toModuleLowering()
+
 private val cleanupLoweringPhase = makeBodyLoweringPhase(
     { CleanupLowering() },
     name = "CleanupLowering",
@@ -858,6 +866,7 @@ val loweringList = listOf<Lowering>(
     delegateToPrimaryConstructorLoweringPhase,
     annotationConstructorLowering,
     initializersLoweringPhase,
+    compileTimeEvaluationPhase,
     initializersCleanupLoweringPhase,
     kotlinNothingValueExceptionPhase,
     // Common prefix ends
