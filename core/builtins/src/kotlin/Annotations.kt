@@ -184,3 +184,7 @@ public annotation class PublishedApi
 @Target(AnnotationTarget.CLASS, AnnotationTarget.CONSTRUCTOR, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
 @Retention(AnnotationRetention.BINARY)
 public annotation class CompileTimeCalculation
+
+@Target(AnnotationTarget.CLASS, AnnotationTarget.CONSTRUCTOR, AnnotationTarget.FUNCTION, AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+public annotation class EvaluateIntrinsic(val file: String)
