@@ -362,3 +362,5 @@ projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit4) {
 
     systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
 }
+
+val buildKlib by generator("org.jetbrains.kotlin.GenerateKlibKt")
