@@ -1,7 +1,7 @@
+// DONT_TARGET_EXACT_BACKEND: JS
 // EXPECTED_REACHABLE_NODES: 1252
-// IGNORE_BACKEND: JS
-// RUN_PLAIN_BOX_FUNCTION
 // INFER_MAIN_MODULE
+// ES_MODULES
 
 // MODULE: export-all-file
 // FILE: lib.kt
@@ -17,7 +17,7 @@ class B : A() {
     }
 }
 
-// FILE: test.js
-function box() {
-    return new this["export-all-file"].B().foo("K");
-}
+// FILE: entry.mjs
+// ENTRY_ES_MODULE
+import { B } from "./export-all-file/index.js";
+console.assert(new B().foo("K") == "OK");
