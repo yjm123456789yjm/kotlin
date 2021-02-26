@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.test.generators
 
 import org.jetbrains.kotlin.generators.generateTestGroupSuiteWithJUnit5
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
+import org.jetbrains.kotlin.test.runners.ir.interpreter.AbstractIrInterpreterBlackBoxTest
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.runners.*
 import org.jetbrains.kotlin.test.runners.codegen.*
@@ -77,6 +78,10 @@ fun generateJUnit5CompilerTests(args: Array<String>) {
             }
 
             testClass<AbstractIrBlackBoxCodegenTest> {
+                model("codegen/box")
+            }
+
+            testClass<AbstractIrInterpreterBlackBoxTest> {
                 model("codegen/box")
             }
 
