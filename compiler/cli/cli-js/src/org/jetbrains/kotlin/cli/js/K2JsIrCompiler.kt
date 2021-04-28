@@ -42,6 +42,10 @@ import org.jetbrains.kotlin.ir.backend.js.ic.actualizeCacheForModule
 import org.jetbrains.kotlin.ir.backend.js.ic.buildCache
 import org.jetbrains.kotlin.ir.backend.js.ic.checkCaches
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.backend.js.codegen.CompilerOutputSink
+import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
+import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationOptions
+import org.jetbrains.kotlin.ir.backend.js.codegen.generateEsModules
 import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
 import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult
 import org.jetbrains.kotlin.js.config.*
@@ -325,6 +329,14 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
             val start = System.currentTimeMillis()
 
+            val granularity = when {
+                arguments.irPerModule -> JsGenerationGranularity.PER_MODULE
+                arguments.irPerFile -> JsGenerationGranularity.PER_FILE
+                else -> JsGenerationGranularity.WHOLE_PROGRAM
+            }
+
+            val ir = compile(
+
             val compiledModule = compile(
                 module,
                 phaseConfig,
@@ -336,9 +348,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     arguments.irDceRuntimeDiagnostic,
                     messageCollector
                 ),
-                dceDriven = arguments.irDceDriven,
-                multiModule = arguments.irPerModule,
-                relativeRequirePath = true,
                 propertyLazyInitialization = arguments.irPropertyLazyInitialization,
                 legacyPropertyAccess = arguments.irLegacyPropertyAccess,
                 baseClassIntoMetadata = arguments.irBaseClassInMetadata,
@@ -348,7 +357,11 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     messageCollector
                 ),
                 lowerPerModule = icCaches.isNotEmpty(),
+                granularity = granularity
             )
+            if (arguments.irDce) {
+                eliminateDeadDeclarations(ir.allModules, ir.context)
+            }
 
             messageCollector.report(INFO, "Executable production duration: ${System.currentTimeMillis() - start}ms")
 
@@ -357,10 +370,17 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             outputs.dependencies.forEach { (name, content) ->
                 outputFile.resolveSibling("$name.js").write(content)
             }
+
             if (arguments.generateDts) {
                 val dtsFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "d.ts")!!
                 dtsFile.writeText(compiledModule.tsDefinitions ?: error("No ts definitions"))
             }
+
+            val jsGenerationOptions = JsGenerationOptions(
+                generateTypeScriptDefinitions = arguments.generateDts
+            )
+
+            generateEsModules(ir, outputSink = basicOutputSink, mainCallArguments, granularity, jsGenerationOptions)
         }
 
         return OK

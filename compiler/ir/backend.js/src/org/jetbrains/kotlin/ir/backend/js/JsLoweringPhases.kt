@@ -394,7 +394,7 @@ private val removeInitializersForLazyProperties = makeDeclarationTransformerPhas
 )
 
 private val propertyAccessorInlinerLoweringPhase = makeBodyLoweringPhase(
-    ::PropertyAccessorInlineLowering,
+    ::JsPropertyAccessorInlineLowering,
     name = "PropertyAccessorInlineLowering",
     description = "[Optimization] Inline property accessors"
 )
@@ -742,6 +742,11 @@ private val cleanupLoweringPhase = makeBodyLoweringPhase(
     name = "CleanupLowering",
     description = "Clean up IR before codegen"
 )
+private val moveOpenClassesToSeparatePlaceLowering = makeCustomJsModulePhase(
+    { _, module -> moveOpenClassesToSeparateFiles(module) },
+    name = "MoveOpenClassesToSeparateFiles",
+    description = "Move open classes to separate files"
+).toModuleLowering()
 
 private val jsSuspendArityStorePhase = makeDeclarationTransformerPhase(
     ::JsSuspendArityStoreLowering,
@@ -841,12 +846,14 @@ private val loweringList = listOf<Lowering>(
     captureStackTraceInThrowablesPhase,
     callsLoweringPhase,
     cleanupLoweringPhase,
+    staticMembersLoweringPhase,
+    moveOpenClassesToSeparatePlaceLowering,
     validateIrAfterLowering,
-    jsSuspendArityStorePhase
+    jsSuspendArityStorePhase,
 )
 
 // TODO comment? Eliminate ModuleLowering's? Don't filter them here?
-val pirLowerings = loweringList.filter { it is DeclarationLowering || it is BodyLowering } + staticMembersLoweringPhase
+val pirLowerings = loweringList.filter { it is DeclarationLowering || it is BodyLowering }  + staticMembersLoweringPhase
 
 val jsPhases = NamedCompilerPhase(
     name = "IrModuleLowering",

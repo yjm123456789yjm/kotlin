@@ -2,7 +2,6 @@
 // RUN_PLAIN_BOX_FUNCTION
 // SKIP_MINIFICATION
 // SKIP_NODE_JS
-
 // TODO fix statics export in DCE-driven mode
 // SKIP_DCE_DRIVEN
 
