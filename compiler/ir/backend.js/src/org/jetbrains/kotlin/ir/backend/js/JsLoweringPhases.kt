@@ -839,14 +839,13 @@ private val loweringList = listOf<Lowering>(
     captureStackTraceInThrowablesPhase,
     callsLoweringPhase,
     cleanupLoweringPhase,
-    staticMembersLoweringPhase,
     moveOpenClassesToSeparatePlaceLowering,
     validateIrAfterLowering,
     jsSuspendArityStorePhase,
 )
 
 // TODO comment? Eliminate ModuleLowering's? Don't filter them here?
-val pirLowerings = loweringList.filter { it is DeclarationLowering || it is BodyLowering }  + staticMembersLoweringPhase
+val pirLowerings = loweringList.filter { it is DeclarationLowering || it is BodyLowering } + staticMembersLoweringPhase
 
 val jsPhases = NamedCompilerPhase(
     name = "IrModuleLowering",

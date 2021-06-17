@@ -178,6 +178,16 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                         classModel.postDeclarationBlock.statements += jsAssignment(memberRef, reference).makeStmt()
                     }
                 }
+            declaration.collectRealOverrides()
+                .find { it.modality != Modality.ABSTRACT }
+                ?.let {
+                    val implClassDeclaration = it.parent as IrClass
+
+                    if (implClassDeclaration.shouldCopyFrom() && it.body != null) {
+                        val reference = context.getNameForStaticDeclaration(it).makeRef()
+                        classModel.postDeclarationBlock.statements += jsAssignment(memberRef, reference).makeStmt()
+                    }
+                }
         }
 
         return Pair(memberRef, null)
