@@ -61,6 +61,7 @@ fun compile(
     lowerPerModule: Boolean = false,
     safeExternalBoolean: Boolean = false,
     safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
+    granularity: JsGenerationGranularity = JsGenerationGranularity.WHOLE_PROGRAM,
 ): LoweredIr {
 
     if (lowerPerModule) {
@@ -68,12 +69,8 @@ fun compile(
             depsDescriptors,
             mainArguments,
             exportedDeclarations,
-            generateFullJs,
-            generateDceJs,
             dceRuntimeDiagnostic,
             es6mode,
-            multiModule,
-            relativeRequirePath,
             propertyLazyInitialization,
             baseClassIntoMetadata,
             legacyPropertyAccess,
@@ -107,7 +104,7 @@ fun compile(
         legacyPropertyAccess = legacyPropertyAccess,
         baseClassIntoMetadata = baseClassIntoMetadata,
         safeExternalBoolean = safeExternalBoolean,
-        safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic
+        safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
         granularity = granularity
     )
 

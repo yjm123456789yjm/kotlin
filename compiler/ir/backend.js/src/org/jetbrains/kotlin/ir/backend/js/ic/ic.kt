@@ -133,7 +133,7 @@ fun icCompile(
     baseClassIntoMetadata: Boolean = false,
     safeExternalBoolean: Boolean = false,
     safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
-): CompilerResult {
+): LoweredIr {
 
     val irFactory = PersistentIrFactory()
     val controller = WholeWorldStageController()
@@ -154,8 +154,6 @@ fun icCompile(
 
     val modulesToLower = allModules.filter { it !in loweredIrLoaded }
 
-
-
     if (!modulesToLower.isEmpty()) {
         // This won't work incrementally
         modulesToLower.forEach { module ->
@@ -171,20 +169,7 @@ fun icCompile(
 
 //    dumpIr(allModules.first(), "simple-dump${if (useStdlibCache) "-actual" else ""}")
 
-    val transformer = IrModuleToJsTransformer(
-        context,
-        mainArguments,
-        fullJs = generateFullJs,
-        dceJs = generateDceJs,
-        multiModule = multiModule,
-        relativeRequirePath = relativeRequirePath,
-        moduleToName = moduleToName,
-        removeUnusedAssociatedObjects = false,
-    )
-
-    irFactory.stageController = object : StageController(999) {}
-
-    return transformer.generateModule(allModules)
+    return LoweredIr(context, allModules.last(), allModules)
 }
 
 fun lowerPreservingIcData(module: IrModuleFragment, context: JsIrBackendContext, controller: WholeWorldStageController) {
