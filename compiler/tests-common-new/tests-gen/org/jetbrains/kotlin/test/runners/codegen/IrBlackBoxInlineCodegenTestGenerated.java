@@ -3915,6 +3915,12 @@ public class IrBlackBoxInlineCodegenTestGenerated extends AbstractIrBlackBoxInli
         }
 
         @Test
+        @TestMetadata("reifiedCatchParameter.kt")
+        public void testReifiedCatchParameter() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/reified/reifiedCatchParameter.kt");
+        }
+
+        @Test
         @TestMetadata("singletonLambda.kt")
         public void testSingletonLambda() throws Exception {
             runTest("compiler/testData/codegen/boxInline/reified/singletonLambda.kt");
