@@ -210,6 +210,21 @@ internal class KtFirIntersectionType(
     override fun hashCode() = typeHashcode()
 }
 
+internal class KtFirUnionType(
+    _coneType: ConeUnionType,
+    override val token: ValidityToken,
+    _builder: KtSymbolByFirBuilder,
+) : KtUnionType(), KtFirType {
+    override val coneType by weakRef(_coneType)
+    private val builder by weakRef(_builder)
+
+    override val nestedTypes: List<KtType> by cached {
+        coneType.nestedTypes.map { builder.typeBuilder.buildKtType(it) }
+    }
+
+    override fun asStringForDebugging(): String = withValidityAssertion { coneType.render() }
+}
+
 private fun ConeNullability.asKtNullability(): KtTypeNullability = when (this) {
     ConeNullability.NULLABLE -> KtTypeNullability.NULLABLE
     ConeNullability.UNKNOWN -> KtTypeNullability.UNKNOWN
