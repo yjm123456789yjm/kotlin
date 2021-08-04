@@ -382,10 +382,7 @@ class ConstantExpressionEvaluator(
     }
 }
 
-private val DIVISION_OPERATION_NAMES =
-    listOf(OperatorNameConventions.DIV, OperatorNameConventions.REM, OperatorNameConventions.MOD)
-        .map(Name::asString)
-        .toSet()
+private val DIVISION_OPERATION_NAMES = listOf(OperatorNameConventions.DIV, OperatorNameConventions.REM).map(Name::asString).toSet()
 
 private class ConstantExpressionEvaluatorVisitor(
     private val constantExpressionEvaluator: ConstantExpressionEvaluator,

@@ -205,9 +205,7 @@ public enum PrimitiveBinaryOperationFIF implements FunctionIntrinsicFactory {
 
     @NotNull
     private static JsBinaryOperator getOperator(@NotNull FunctionDescriptor descriptor) {
-        // Temporary hack to get '%' for deprecated 'mod' operator
-        Name descriptorName = descriptor.getName().equals(OperatorNameConventions.MOD) ? OperatorNameConventions.REM : descriptor.getName();
-
+        Name descriptorName = descriptor.getName();
         switch (descriptorName.asString()) {
             case "or":
                 return JsBinaryOperator.BIT_OR;
