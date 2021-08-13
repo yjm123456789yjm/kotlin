@@ -857,6 +857,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
             parameter<ConeKotlinType>("actualType")
         }
         val ACCESSOR_FOR_DELEGATED_PROPERTY by error<KtPropertyAccessor>()
+        val PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION by error<KtExpression>()
+        val PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER by error<KtBackingField>()
+        val PROPERTY_MUST_HAVE_GETTER by error<KtProperty>()
+        val PROPERTY_MUST_HAVE_SETTER by error<KtProperty>()
         val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error<KtModifierListOwner>(PositioningStrategy.ABSTRACT_MODIFIER)
     }
 

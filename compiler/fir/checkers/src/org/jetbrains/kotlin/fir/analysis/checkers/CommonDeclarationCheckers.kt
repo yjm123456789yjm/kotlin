@@ -57,6 +57,7 @@ object CommonDeclarationCheckers : DeclarationCheckers() {
             FirPropertyTypeParametersChecker,
             FirInitializerTypeMismatchChecker,
             FirDelegatedPropertyChecker,
+            FirPropertyFieldTypeChecker,
             FirInlinePropertyChecker,
             FirPropertyFromParameterChecker,
         )
