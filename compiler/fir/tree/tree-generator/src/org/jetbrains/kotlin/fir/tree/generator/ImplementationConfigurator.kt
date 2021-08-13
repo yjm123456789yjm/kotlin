@@ -199,7 +199,6 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
                 withGetter = true
             }
 
-            default("backingFieldSymbol", "FirBackingFieldSymbol(symbol.callableId)")
             useTypes(backingFieldSymbolType, delegateFieldSymbolType)
         }
 
@@ -336,6 +335,10 @@ object ImplementationConfigurator : AbstractFirTreeImplementationConfigurator() 
                 withGetter = true
             }
             useTypes(modalityType)
+            kind = OpenClass
+        }
+
+        impl(backingField) {
             kind = OpenClass
         }
 
