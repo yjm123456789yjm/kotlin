@@ -475,6 +475,8 @@ object FirErrors {
     val PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER by error0<KtBackingField>()
     val PROPERTY_MUST_HAVE_GETTER by error0<KtProperty>()
     val PROPERTY_MUST_HAVE_SETTER by error0<KtProperty>()
+    val INAPPLICABLE_BACKING_FIELD_VISIBILITY by error1<PsiElement, KtModifierKeywordToken>()
+    val INAPPLICABLE_BACKING_FIELD_MODIFIER by error1<PsiElement, KtModifierKeywordToken>()
     val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error0<KtModifierListOwner>(SourceElementPositioningStrategies.ABSTRACT_MODIFIER)
 
     // Multi-platform projects
