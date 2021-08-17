@@ -234,11 +234,9 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
     }
 
     fun evalIrVarargElements(expression: IrVararg): List<State?> {
-        (0 until expression.elements.size).forEach {
-            expression.putElement(it, expression.elements[it].transform(transformer, null) as IrVarargElement)
-        }
         val args = mutableListOf<State?>()
         (0 until expression.elements.size).forEach {
+            expression.putElement(it, expression.elements[it].transform(transformer, null) as IrVarargElement)
             args += callStack.tryToPopState()
         }
         return args
@@ -320,6 +318,24 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
 
     fun fallbackIrTypeOperator(expression: IrTypeOperatorCall, arg: State?): IrExpression {
         if (arg != null) evaluate(expression, listOf(arg), interpretOnly = true)
+        return expression
+    }
+
+    fun evalIrPropertyReferenceDispatchReceiver(expression: IrPropertyReference): State? {
+        expression.dispatchReceiver = expression.dispatchReceiver?.transform(transformer, null)
+        return callStack.tryToPopState()
+    }
+
+    fun evalIrPropertyReferenceExtensionReceiver(expression: IrPropertyReference): State? {
+        expression.extensionReceiver = expression.extensionReceiver?.transform(transformer, null)
+        return callStack.tryToPopState()
+    }
+
+    fun fallbackIrPropertyReference(expression: IrPropertyReference, dispatchReceiver: State?, extensionReceiver: State?): IrExpression {
+        if (expression.dispatchReceiver != null && dispatchReceiver == null) return expression
+        if (expression.extensionReceiver != null && extensionReceiver == null) return expression
+        // TODO do we need check for compile time annotation here?
+        evaluate(expression, listOfNotNull(dispatchReceiver, extensionReceiver), interpretOnly = true)
         return expression
     }
 }
