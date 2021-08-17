@@ -56,6 +56,12 @@ public class IrPartialInterpreterTestGenerated extends AbstractIrPartialInterpre
     }
 
     @Test
+    @TestMetadata("inlineToString.kt")
+    public void testInlineToString() throws Exception {
+        runTest("compiler/testData/ir/interpreter/partial/inlineToString.kt");
+    }
+
+    @Test
     @TestMetadata("simpleCostructorCall.kt")
     public void testSimpleCostructorCall() throws Exception {
         runTest("compiler/testData/ir/interpreter/partial/simpleCostructorCall.kt");
