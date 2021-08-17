@@ -1301,7 +1301,15 @@ class ExpressionCodegen(
                 mv.goTo(tryCatchBlockEnd)
             }
 
-            ((parameterType as? IrUnionType)?.nestedTypes?.map { it.asmType } ?: listOf(descriptorType)).forEach {
+            val typesToGenerate = (parameterType as? IrUnionType)?.nestedTypes?.map {
+                if (it.isReifiedTypeParameter) {
+                    generateReifiedThrowableClass(it.reifiedTypeParameterIdentifier)
+                } else {
+                    it.asmType
+                }
+            } ?: listOf(descriptorType)
+
+            typesToGenerate.forEach {
                 genTryCatchCover(clauseStart, tryBlockStart, tryBlockEnd, tryBlockGaps, it.internalName)
             }
         }
