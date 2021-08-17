@@ -25,17 +25,10 @@ class OptimizerPrototype(irBuiltIns: IrBuiltIns) : PartialIrInterpreter(irBuiltI
     }
 
     override fun visitWhen(expression: IrWhen): IrExpression {
-        val newBranches = mutableListOf<IrBranch>()
         for ((i, branch) in expression.branches.withIndex()) {
             val condition = evaluator.evalIrBranchCondition(branch)
             when {
-                condition == null -> {
-                    (i until expression.branches.size).forEach {
-                        newBranches += evaluator.fallbackIrBranch(branch, condition) as IrBranch
-                    }
-
-                    return expression
-                }
+                condition == null -> return evaluator.fallbackIrWhen(expression, i, inclusive = false)
                 condition.asBoolean() -> {
                     evaluator.evalIrBranchResult(branch)
                     return branch.result
@@ -43,6 +36,6 @@ class OptimizerPrototype(irBuiltIns: IrBuiltIns) : PartialIrInterpreter(irBuiltI
                 // else -> ignore
             }
         }
-        return IrWhenImpl(expression.startOffset, expression.endOffset, expression.type, expression.origin, newBranches)
+        return expression
     }
 }

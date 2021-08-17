@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.ir.interpreter.pushCompoundInstruction
 import org.jetbrains.kotlin.ir.interpreter.pushSimpleInstruction
 import org.jetbrains.kotlin.ir.interpreter.state.State
 import org.jetbrains.kotlin.ir.interpreter.state.StateWithClosure
+import org.jetbrains.kotlin.ir.interpreter.state.UnknownState
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.fileOrNull
 
@@ -23,17 +24,18 @@ internal class CallStack {
     private val frames = ArrayDeque<Frame>()
     private val currentFrame get() = frames.last()
     internal val currentFrameOwner get() = currentFrame.currentSubFrameOwner
+    private var collectAllChanges = false
 
     fun newFrame(frameOwner: IrElement, irFile: IrFile? = null) {
-        frames.add(Frame(frameOwner, irFile))
+        frames.add(Frame(frameOwner, collectAllChanges, irFile))
     }
 
     fun newFrame(frameOwner: IrFunction) {
-        frames.add(Frame(frameOwner, frameOwner.fileOrNull))
+        frames.add(Frame(frameOwner, collectAllChanges, frameOwner.fileOrNull))
     }
 
     fun newSubFrame(frameOwner: IrElement) {
-        currentFrame.addSubFrame(frameOwner)
+        currentFrame.addSubFrame(frameOwner, collectAllChanges)
     }
 
     fun dropFrame() {
@@ -64,6 +66,26 @@ internal class CallStack {
                 dropSubFrame()
             }
         }
+    }
+
+    fun rollbackAllChanges(block: () -> Unit) {
+        val previous = collectAllChanges
+        collectAllChanges = true
+        currentFrame.addSubFrame(currentFrameOwner, collectAllChanges)
+        block()
+        currentFrame.rollbackAllCollectedChanges()
+        dropSubFrame()
+        collectAllChanges = previous
+    }
+
+    fun removeAllMutatedVariablesAndFields(block: () -> Unit) {
+        val previous = collectAllChanges
+        collectAllChanges = true
+        currentFrame.addSubFrame(currentFrameOwner, collectAllChanges)
+        block()
+        currentFrame.dropAllVariablesInHistory()
+        dropSubFrame()
+        collectAllChanges = previous
     }
 
     fun returnFromFrameWithResult(irReturn: IrReturn) {
@@ -183,6 +205,8 @@ internal class CallStack {
     fun containsStateInMemory(symbol: IrSymbol): Boolean = currentFrame.containsStateInMemory(symbol)
     fun loadState(symbol: IrSymbol): State = currentFrame.loadState(symbol)
     fun rewriteState(symbol: IrSymbol, newState: State) = currentFrame.rewriteState(symbol, newState)
+    fun setFieldForReceiver(receiver: IrSymbol, propertySymbol: IrSymbol, newField: State) = currentFrame.setFieldForReceiver(receiver, propertySymbol, newField)
+    fun dropState(symbol: IrSymbol) = currentFrame.rewriteState(symbol, UnknownState)
 
     // TODO save only necessary declarations
     fun storeUpValues(state: StateWithClosure) = currentFrame.copyMemoryInto(state)
