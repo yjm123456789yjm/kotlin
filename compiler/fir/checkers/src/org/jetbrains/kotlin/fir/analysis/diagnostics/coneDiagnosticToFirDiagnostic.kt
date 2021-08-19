@@ -202,6 +202,15 @@ private fun mapInapplicableCandidateError(
                 rootCause.argument,
                 rootCause.argument.smartcastStability.description
             )
+            is InferenceError -> {
+                rootCause.constraintError.toDiagnostic(
+                    source,
+                    qualifiedAccessSource,
+                    diagnostic.candidate.callInfo.session.typeContext,
+                    mutableSetOf(),
+                    diagnostic.candidate
+                )
+            }
             else -> genericDiagnostic
         }
     }.distinct()
