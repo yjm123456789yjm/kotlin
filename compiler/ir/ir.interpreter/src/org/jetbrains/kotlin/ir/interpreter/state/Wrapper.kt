@@ -63,6 +63,7 @@ internal class Wrapper(val value: Any, override val irClass: IrClass, environmen
     override fun getIrFunctionByIrCall(expression: IrCall): IrFunction? = null
 
     fun getMethod(irFunction: IrFunction): MethodHandle? {
+        if (!canBeEvaluated()) return null
         // if function is actually a getter, then use "get${property.name.capitalize()}" as method name
         val propertyName = (irFunction as? IrSimpleFunction)?.correspondingPropertySymbol?.owner?.name?.asString()
         val propertyCall = listOfNotNull(propertyName, "get${propertyName?.capitalizeAsciiOnly()}")
@@ -84,6 +85,10 @@ internal class Wrapper(val value: Any, override val irClass: IrClass, environmen
             else -> null
         }
     }
+
+    // Wrapper objects can't have fields, if it is not true then we can't work with given state
+    // main usage is to "delete" this object from memory if it is necessary
+    private fun canBeEvaluated(): Boolean = fields.isEmpty()
 
     override fun toString(): String {
         return value.toString()

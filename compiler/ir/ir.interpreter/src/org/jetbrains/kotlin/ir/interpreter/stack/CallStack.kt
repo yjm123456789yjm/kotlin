@@ -27,11 +27,11 @@ internal class CallStack {
     private var collectAllChanges = false
 
     fun newFrame(frameOwner: IrElement, irFile: IrFile? = null) {
-        frames.add(Frame(frameOwner, collectAllChanges, irFile))
+        frames.add(Frame(frameOwner, irFile))
     }
 
     fun newFrame(frameOwner: IrFunction) {
-        frames.add(Frame(frameOwner, collectAllChanges, frameOwner.fileOrNull))
+        frames.add(Frame(frameOwner, frameOwner.fileOrNull))
     }
 
     fun newSubFrame(frameOwner: IrElement) {
@@ -53,11 +53,12 @@ internal class CallStack {
         currentFrame.removeSubFrame()
     }
 
-    fun safeExecute(block: () -> Unit) {
+    fun safeExecute(block: () -> Unit): Boolean {
         val originalFrame = currentFrame
         val originalFrameOwner = currentFrameOwner
-        try {
+        return try {
             block()
+            true
         } catch (e: Exception) {
             while (currentFrame != originalFrame) {
                 dropFrame()
@@ -65,6 +66,7 @@ internal class CallStack {
             while (currentFrameOwner != originalFrameOwner) {
                 dropSubFrame()
             }
+            false
         }
     }
 

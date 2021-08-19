@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.util.capitalizeDecapitalize.capitalizeAsciiOnly
 
-internal class Frame(subFrameOwner: IrElement, collectAllChanges: Boolean, val irFile: IrFile? = null) {
-    private val innerStack = ArrayDeque<AbstractSubFrame>().apply { add(if (collectAllChanges) SubFrameWithHistory(subFrameOwner) else SubFrame(subFrameOwner)) }
+internal class Frame(subFrameOwner: IrElement, val irFile: IrFile? = null) {
+    private val innerStack = ArrayDeque<AbstractSubFrame>().apply { add(SubFrame(subFrameOwner)) }
     private var currentInstruction: Instruction? = null
 
     private val currentFrame get() = innerStack.last()
