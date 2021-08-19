@@ -1129,14 +1129,14 @@ class DeclarationsConverter(
                             isExternal = modifiers.hasExternal()
                         }
 
-                    val convertedAccessors = accessors.map { convertGetterOrSetter(it, returnType, propertyVisibility, modifiers) }
+                    val convertedAccessors = accessors.map { convertGetterOrSetter(it, returnType, propertyVisibility, symbol, modifiers) }
                     this.getter = convertedAccessors.find { it.isGetter }
                         ?: FirDefaultPropertyGetter(
                             property.toFirSourceElement(FirFakeSourceElementKind.DefaultAccessor),
                             moduleData,
                             FirDeclarationOrigin.Source,
                             returnType,
-                            propertyVisibility
+                            propertyVisibility, symbol,
                         ).also {
                             it.status = defaultAccessorStatus()
                             it.initContainingClassAttr()
@@ -1149,7 +1149,7 @@ class DeclarationsConverter(
                                 moduleData,
                                 FirDeclarationOrigin.Source,
                                 returnType,
-                                propertyVisibility
+                                propertyVisibility, symbol,
                             ).also {
                                 it.status = defaultAccessorStatus()
                                 it.initContainingClassAttr()
@@ -1251,6 +1251,7 @@ class DeclarationsConverter(
         getterOrSetter: LighterASTNode,
         propertyTypeRef: FirTypeRef,
         propertyVisibility: Visibility,
+        propertySymbol: FirPropertySymbol,
         propertyModifiers: Modifier
     ): FirPropertyAccessor {
         var modifiers = Modifier()
@@ -1298,6 +1299,7 @@ class DeclarationsConverter(
                     FirDeclarationOrigin.Source,
                     propertyTypeRefToUse,
                     accessorVisibility,
+                    propertySymbol,
                     isGetter
                 )
                 .also { accessor ->
@@ -1330,6 +1332,7 @@ class DeclarationsConverter(
                 this.contractDescription = it
             }
             context.firFunctionTargets.removeLast()
+            this.propertySymbol = propertySymbol
         }.also {
             target.bind(it)
             it.initContainingClassAttr()
