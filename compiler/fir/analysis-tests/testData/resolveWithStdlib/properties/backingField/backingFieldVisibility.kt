@@ -9,7 +9,7 @@ class A {
         internal field = 2
 
     val c: Number
-        <!INAPPLICABLE_BACKING_FIELD_VISIBILITY!>protected<!> field = 3
+        <!INAPPLICABLE_BACKING_FIELD_VISIBILITY, WRONG_MODIFIER_TARGET!>protected<!> field = 3
 
     val d: Number
         <!INAPPLICABLE_BACKING_FIELD_VISIBILITY!>public<!> field = 5
