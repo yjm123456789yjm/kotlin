@@ -74,6 +74,12 @@ public class IrPartialInterpreterTestGenerated extends AbstractIrPartialInterpre
     }
 
     @Test
+    @TestMetadata("tryCatch.kt")
+    public void testTryCatch() throws Exception {
+        runTest("compiler/testData/ir/interpreter/partial/tryCatch.kt");
+    }
+
+    @Test
     @TestMetadata("typeOperators.kt")
     public void testTypeOperators() throws Exception {
         runTest("compiler/testData/ir/interpreter/partial/typeOperators.kt");

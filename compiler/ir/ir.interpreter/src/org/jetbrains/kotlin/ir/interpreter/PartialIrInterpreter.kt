@@ -143,4 +143,13 @@ abstract class PartialIrInterpreter(val irBuiltIns: IrBuiltIns) : IrElementTrans
     override fun visitClassReference(expression: IrClassReference): IrExpression {
         return evaluator.fallbackIrClassReference(expression)
     }
+
+    override fun visitTry(aTry: IrTry): IrExpression {
+        return evaluator.fallbackIrTry(
+            aTry,
+            evaluator.evalIrTryExpression(aTry),
+            evaluator.evalIrTryCatches(aTry),
+            evaluator.evalIrTryFinallyExpression(aTry)
+        )
+    }
 }

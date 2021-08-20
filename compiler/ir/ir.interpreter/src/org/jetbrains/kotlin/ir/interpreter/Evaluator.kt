@@ -16,14 +16,6 @@ import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.interpreter.checker.EvaluationMode
 import org.jetbrains.kotlin.ir.interpreter.stack.CallStack
 import org.jetbrains.kotlin.ir.interpreter.state.*
-import org.jetbrains.kotlin.ir.interpreter.state.Common
-import org.jetbrains.kotlin.ir.interpreter.state.Complex
-import org.jetbrains.kotlin.ir.interpreter.state.State
-import org.jetbrains.kotlin.ir.interpreter.state.UnknownState
-import org.jetbrains.kotlin.ir.interpreter.state.Wrapper
-import org.jetbrains.kotlin.ir.interpreter.state.asBooleanOrNull
-import org.jetbrains.kotlin.ir.interpreter.state.convertToStringIfNeeded
-import org.jetbrains.kotlin.ir.interpreter.state.isUnit
 import org.jetbrains.kotlin.ir.symbols.impl.IrPropertySymbolImpl
 import org.jetbrains.kotlin.ir.types.getClass
 import org.jetbrains.kotlin.ir.util.*
@@ -425,6 +417,42 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
     fun fallbackIrClassReference(expression: IrClassReference): IrExpression {
         evaluate(expression, emptyList(), interpretOnly = true)
         return expression
+    }
+
+    fun evalIrTryExpression(aTry: IrTry): State? {
+        callStack.removeAllMutatedVariablesAndFields {
+            aTry.tryResult = aTry.tryResult.transform(transformer, null)
+            true
+        }
+        return callStack.tryToPopState()
+    }
+
+    fun evalIrTryCatches(aTry: IrTry): List<State?> {
+        callStack.removeAllMutatedVariablesAndFields {
+            aTry as IrTryImpl // TODO
+            aTry.catches.forEachIndexed { i, irCatch ->
+                callStack.rollbackAllChanges {
+                    aTry.catches[i] = irCatch.transform(transformer, null)
+                    true
+                }
+                callStack.tryToPopState()
+            }
+            true
+        }
+        return List(aTry.catches.size) { null }
+    }
+
+    fun evalIrTryFinallyExpression(aTry: IrTry): State? {
+        callStack.removeAllMutatedVariablesAndFields {
+            aTry.finallyExpression = aTry.finallyExpression?.transform(transformer, null)
+            true
+        }
+        callStack.tryToPopState()
+        return null
+    }
+
+    fun fallbackIrTry(aTry: IrTry, evalIrTryExpression: State?, evalIrTryCatches: List<State?>, evalIrTryFinallyExpression: State?): IrExpression {
+        return aTry
     }
 }
 
