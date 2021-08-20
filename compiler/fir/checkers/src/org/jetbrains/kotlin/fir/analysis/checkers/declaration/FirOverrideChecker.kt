@@ -118,8 +118,14 @@ object FirOverrideChecker : FirClassChecker() {
         context: CheckerContext
     ) {
         if (overriddenSymbols.isEmpty()) return
-        val visibilities = overriddenSymbols.map {
-            it to it.visibility
+        val visibilities = overriddenSymbols.mapNotNull {
+            // TODO: testOverriddenPropertiesWithExplicitBackingField.kt
+            @OptIn(SymbolInternals::class)
+            if (it.fir.status is FirResolvedDeclarationStatus) {
+                it to it.visibility
+            } else {
+                null
+            }
         }.sortedBy { pair ->
             // Regard `null` compare as Int.MIN so that we can report CANNOT_CHANGE_... first deterministically
             Visibilities.compare(visibility, pair.second) ?: Int.MIN_VALUE
