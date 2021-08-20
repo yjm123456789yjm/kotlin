@@ -22,6 +22,7 @@ enum class KotlinTarget(val description: String, val isDefault: Boolean = true) 
     FUNCTION("function"),                      // includes *_FUNCTION and FUNCTION_LITERAL
     PROPERTY_GETTER("getter"),
     PROPERTY_SETTER("setter"),
+    BACKING_FIELD("backing field"),
     TYPE("type usage", false),
     EXPRESSION("expression", false),           // includes FUNCTION_LITERAL, OBJECT_LITERAL
     FILE("file", false),

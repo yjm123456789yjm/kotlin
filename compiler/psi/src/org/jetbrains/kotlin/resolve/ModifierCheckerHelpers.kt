@@ -147,7 +147,8 @@ val featureDependenciesTargets = mapOf(
 val defaultVisibilityTargets: EnumSet<KotlinTarget> = EnumSet.of(
     KotlinTarget.CLASS_ONLY, KotlinTarget.OBJECT, KotlinTarget.INTERFACE, KotlinTarget.ENUM_CLASS, KotlinTarget.ANNOTATION_CLASS,
     KotlinTarget.MEMBER_FUNCTION, KotlinTarget.TOP_LEVEL_FUNCTION, KotlinTarget.PROPERTY_GETTER, KotlinTarget.PROPERTY_SETTER,
-    KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY, KotlinTarget.CONSTRUCTOR, KotlinTarget.TYPEALIAS
+    KotlinTarget.MEMBER_PROPERTY, KotlinTarget.TOP_LEVEL_PROPERTY, KotlinTarget.CONSTRUCTOR, KotlinTarget.TYPEALIAS,
+    KotlinTarget.BACKING_FIELD,
 )
 
 val possibleTargetMap = mapOf(
