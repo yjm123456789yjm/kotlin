@@ -44,6 +44,12 @@ public class IrPartialInterpreterTestGenerated extends AbstractIrPartialInterpre
     }
 
     @Test
+    @TestMetadata("enums.kt")
+    public void testEnums() throws Exception {
+        runTest("compiler/testData/ir/interpreter/partial/enums.kt");
+    }
+
+    @Test
     @TestMetadata("forLoop.kt")
     public void testForLoop() throws Exception {
         runTest("compiler/testData/ir/interpreter/partial/forLoop.kt");

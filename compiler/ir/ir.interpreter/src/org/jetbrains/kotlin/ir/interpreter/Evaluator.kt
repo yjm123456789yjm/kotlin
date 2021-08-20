@@ -454,6 +454,16 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
     fun fallbackIrTry(aTry: IrTry, evalIrTryExpression: State?, evalIrTryCatches: List<State?>, evalIrTryFinallyExpression: State?): IrExpression {
         return aTry
     }
+
+    fun fallbackIrGetObjectValue(expression: IrGetObjectValue): IrExpression {
+        evaluate(expression, emptyList(), interpretOnly = false)
+        return expression
+    }
+
+    fun fallbackIrGetEnumValue(expression: IrGetEnumValue): IrExpression {
+        evaluate(expression, emptyList(), interpretOnly = false)
+        return expression
+    }
 }
 
 private class ParentFinder : IrElementVisitorVoid {

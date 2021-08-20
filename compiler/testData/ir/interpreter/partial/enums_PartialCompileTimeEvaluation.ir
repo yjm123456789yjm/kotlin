@@ -1,0 +1,285 @@
+// --- IR for <main> after Evaluate and optimize function statements
+MODULE_FRAGMENT name:<main>
+  FILE fqName:<root> fileName:/enums.kt
+    CLASS ENUM_CLASS name:Numbers modality:FINAL visibility:public superTypes:[kotlin.Enum<<root>.Numbers>]
+      annotations:
+        CompileTimeCalculation
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:<root>.Numbers
+      CONSTRUCTOR visibility:private <> (number:kotlin.Int) returnType:<root>.Numbers [primary]
+        VALUE_PARAMETER name:number index:0 type:kotlin.Int
+        BLOCK_BODY
+          ENUM_CONSTRUCTOR_CALL 'public constructor <init> (name: kotlin.String, ordinal: kotlin.Int) [primary] declared in kotlin.Enum'
+            <E>: <root>.Numbers
+          INSTANCE_INITIALIZER_CALL classDescriptor='CLASS ENUM_CLASS name:Numbers modality:FINAL visibility:public superTypes:[kotlin.Enum<<root>.Numbers>]'
+      PROPERTY name:number visibility:public modality:FINAL [val]
+        FIELD PROPERTY_BACKING_FIELD name:number type:kotlin.Int visibility:private [final]
+          EXPRESSION_BODY
+            GET_VAR 'number: kotlin.Int declared in <root>.Numbers.<init>' type=kotlin.Int origin=INITIALIZE_PROPERTY_FROM_PARAMETER
+        FUN DEFAULT_PROPERTY_ACCESSOR name:<get-number> visibility:public modality:FINAL <> ($this:<root>.Numbers) returnType:kotlin.Int
+          correspondingProperty: PROPERTY name:number visibility:public modality:FINAL [val]
+          $this: VALUE_PARAMETER name:<this> type:<root>.Numbers
+          BLOCK_BODY
+            RETURN type=kotlin.Nothing from='public final fun <get-number> (): kotlin.Int declared in <root>.Numbers'
+              GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:number type:kotlin.Int visibility:private [final]' type=kotlin.Int origin=null
+                receiver: GET_VAR '<this>: <root>.Numbers declared in <root>.Numbers.<get-number>' type=<root>.Numbers origin=null
+      ENUM_ENTRY name:ONE
+        init: EXPRESSION_BODY
+          ENUM_CONSTRUCTOR_CALL 'private constructor <init> (number: kotlin.Int) [primary] declared in <root>.Numbers'
+            number: CONST Int type=kotlin.Int value=1
+      ENUM_ENTRY name:TWO
+        init: EXPRESSION_BODY
+          ENUM_CONSTRUCTOR_CALL 'private constructor <init> (number: kotlin.Int) [primary] declared in <root>.Numbers'
+            number: CONST Int type=kotlin.Int value=2
+      ENUM_ENTRY name:THREE
+        init: EXPRESSION_BODY
+          ENUM_CONSTRUCTOR_CALL 'private constructor <init> (number: kotlin.Int) [primary] declared in <root>.Numbers'
+            number: CONST Int type=kotlin.Int value=3
+      FUN FAKE_OVERRIDE name:clone visibility:protected modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>) returnType:kotlin.Any [fake_override]
+        overridden:
+          protected final fun clone (): kotlin.Any declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      FUN FAKE_OVERRIDE name:finalize visibility:protected/*protected and package*/ modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>) returnType:kotlin.Unit [fake_override]
+        overridden:
+          protected/*protected and package*/ final fun finalize (): kotlin.Unit declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      FUN FAKE_OVERRIDE name:getDeclaringClass visibility:public modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>) returnType:@[FlexibleNullability] java.lang.Class<@[FlexibleNullability] <root>.Numbers?>? [fake_override]
+        overridden:
+          public final fun getDeclaringClass (): @[FlexibleNullability] java.lang.Class<@[FlexibleNullability] E of kotlin.Enum?>? declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      FUN FAKE_OVERRIDE name:compareTo visibility:public modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>, other:<root>.Numbers) returnType:kotlin.Int [fake_override,operator]
+        overridden:
+          public final fun compareTo (other: E of kotlin.Enum): kotlin.Int [operator] declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+        VALUE_PARAMETER name:other index:0 type:<root>.Numbers
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public final fun equals (other: kotlin.Any?): kotlin.Boolean [operator] declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>) returnType:kotlin.Int [fake_override]
+        overridden:
+          public final fun hashCode (): kotlin.Int declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL [fake_override,val]
+        overridden:
+          public final name: kotlin.String [val]
+        FUN FAKE_OVERRIDE name:<get-name> visibility:public modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>) returnType:kotlin.String [fake_override]
+          correspondingProperty: PROPERTY FAKE_OVERRIDE name:name visibility:public modality:FINAL [fake_override,val]
+          overridden:
+            public final fun <get-name> (): kotlin.String declared in kotlin.Enum
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL [fake_override,val]
+        overridden:
+          public final ordinal: kotlin.Int [val]
+        FUN FAKE_OVERRIDE name:<get-ordinal> visibility:public modality:FINAL <> ($this:kotlin.Enum<<root>.Numbers>) returnType:kotlin.Int [fake_override]
+          correspondingProperty: PROPERTY FAKE_OVERRIDE name:ordinal visibility:public modality:FINAL [fake_override,val]
+          overridden:
+            public final fun <get-ordinal> (): kotlin.Int declared in kotlin.Enum
+          $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Enum<<root>.Numbers>) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String declared in kotlin.Enum
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Enum<<root>.Numbers>
+      FUN ENUM_CLASS_SPECIAL_MEMBER name:values visibility:public modality:FINAL <> () returnType:kotlin.Array<<root>.Numbers>
+        SYNTHETIC_BODY kind=ENUM_VALUES
+      FUN ENUM_CLASS_SPECIAL_MEMBER name:valueOf visibility:public modality:FINAL <> (value:kotlin.String) returnType:<root>.Numbers
+        VALUE_PARAMETER name:value index:0 type:kotlin.String
+        SYNTHETIC_BODY kind=ENUM_VALUEOF
+    FUN name:enumCount visibility:public modality:FINAL <> () returnType:kotlin.Int [inline]
+      annotations:
+        PartialEvaluation
+      BLOCK_BODY
+        RETURN type=kotlin.Nothing from='public final fun enumCount (): kotlin.Int [inline] declared in <root>'
+          CALL 'public final fun <get-size> (): kotlin.Int declared in kotlin.Array' type=kotlin.Int origin=GET_PROPERTY
+            $this: CALL 'public final fun values (): kotlin.Array<<root>.Numbers> declared in <root>.Numbers' type=kotlin.Array<<root>.Numbers> origin=null
+    FUN name:getListOfNumbers visibility:public modality:FINAL <> () returnType:kotlin.collections.List<kotlin.Int> [inline]
+      annotations:
+        PartialEvaluation
+      BLOCK_BODY
+        RETURN type=kotlin.Nothing from='public final fun getListOfNumbers (): kotlin.collections.List<kotlin.Int> [inline] declared in <root>'
+          CALL 'public final fun map <T, R> (transform: kotlin.Function1<T of <root>.map, R of <root>.map>): kotlin.collections.List<R of <root>.map> [inline] declared in <root>' type=kotlin.collections.List<kotlin.Int> origin=null
+            <T>: <root>.Numbers
+            <R>: kotlin.Int
+            $receiver: CALL 'public final fun values (): kotlin.Array<<root>.Numbers> declared in <root>.Numbers' type=kotlin.Array<<root>.Numbers> origin=null
+            transform: FUN_EXPR type=kotlin.Function1<<root>.Numbers, kotlin.Int> origin=LAMBDA
+              FUN LOCAL_FUNCTION_FOR_LAMBDA name:<anonymous> visibility:local modality:FINAL <> (it:<root>.Numbers) returnType:kotlin.Int
+                VALUE_PARAMETER name:it index:0 type:<root>.Numbers
+                BLOCK_BODY
+                  RETURN type=kotlin.Nothing from='local final fun <anonymous> (it: <root>.Numbers): kotlin.Int declared in <root>.getListOfNumbers'
+                    CALL 'public final fun <get-number> (): kotlin.Int declared in <root>.Numbers' type=kotlin.Int origin=GET_PROPERTY
+                      $this: GET_VAR 'it: <root>.Numbers declared in <root>.getListOfNumbers.<anonymous>' type=<root>.Numbers origin=null
+    FUN name:getNumber visibility:public modality:FINAL <> (enum:<root>.Numbers) returnType:kotlin.Int [inline]
+      annotations:
+        PartialEvaluation
+      VALUE_PARAMETER name:enum index:0 type:<root>.Numbers
+      BLOCK_BODY
+        RETURN type=kotlin.Nothing from='public final fun getNumber (enum: <root>.Numbers): kotlin.Int [inline] declared in <root>'
+          CALL 'public final fun <get-number> (): kotlin.Int declared in <root>.Numbers' type=kotlin.Int origin=GET_PROPERTY
+            $this: GET_VAR 'enum: <root>.Numbers declared in <root>.getNumber' type=<root>.Numbers origin=null
+    FUN name:map visibility:public modality:FINAL <T, R> ($receiver:kotlin.Array<out T of <root>.map>, transform:kotlin.Function1<T of <root>.map, R of <root>.map>) returnType:kotlin.collections.List<R of <root>.map> [inline]
+      annotations:
+        CompileTimeCalculation
+      TYPE_PARAMETER name:T index:0 variance: superTypes:[kotlin.Any?]
+      TYPE_PARAMETER name:R index:1 variance: superTypes:[kotlin.Any?]
+      $receiver: VALUE_PARAMETER name:<this> type:kotlin.Array<out T of <root>.map>
+      VALUE_PARAMETER name:transform index:0 type:kotlin.Function1<T of <root>.map, R of <root>.map>
+      BLOCK_BODY
+        VAR name:destination type:java.util.ArrayList<R of <root>.map>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val]
+          CONSTRUCTOR_CALL 'public constructor <init> (p0: kotlin.Int) declared in java.util.ArrayList' type=java.util.ArrayList<R of <root>.map> origin=null
+            <class: E>: R of <root>.map
+            p0: CALL 'public final fun <get-size> (): kotlin.Int declared in kotlin.Array' type=kotlin.Int origin=GET_PROPERTY
+              $this: GET_VAR '<this>: kotlin.Array<out T of <root>.map> declared in <root>.map' type=kotlin.Array<out T of <root>.map> origin=null
+        BLOCK type=kotlin.Unit origin=FOR_LOOP
+          VAR FOR_LOOP_ITERATOR name:tmp0_iterator type:kotlin.collections.Iterator<T of <root>.map> [val]
+            CALL 'public final fun iterator (): kotlin.collections.Iterator<T of kotlin.Array> [operator] declared in kotlin.Array' type=kotlin.collections.Iterator<T of <root>.map> origin=FOR_LOOP_ITERATOR
+              $this: GET_VAR '<this>: kotlin.Array<out T of <root>.map> declared in <root>.map' type=kotlin.Array<out T of <root>.map> origin=null
+          WHILE label=null origin=FOR_LOOP_INNER_WHILE
+            condition: CALL 'public abstract fun hasNext (): kotlin.Boolean [operator] declared in kotlin.collections.Iterator' type=kotlin.Boolean origin=FOR_LOOP_HAS_NEXT
+              $this: GET_VAR 'val tmp0_iterator: kotlin.collections.Iterator<T of <root>.map> [val] declared in <root>.map' type=kotlin.collections.Iterator<T of <root>.map> origin=null
+            body: BLOCK type=kotlin.Unit origin=FOR_LOOP_INNER_WHILE
+              VAR FOR_LOOP_VARIABLE name:item type:T of <root>.map [val]
+                CALL 'public abstract fun next (): T of kotlin.collections.Iterator [operator] declared in kotlin.collections.Iterator' type=T of <root>.map origin=FOR_LOOP_NEXT
+                  $this: GET_VAR 'val tmp0_iterator: kotlin.collections.Iterator<T of <root>.map> [val] declared in <root>.map' type=kotlin.collections.Iterator<T of <root>.map> origin=null
+              TYPE_OP type=kotlin.Unit origin=IMPLICIT_COERCION_TO_UNIT typeOperand=kotlin.Unit
+                CALL 'public open fun add (element: @[EnhancedNullability] E of java.util.ArrayList): kotlin.Boolean declared in java.util.ArrayList' type=kotlin.Boolean origin=null
+                  $this: GET_VAR 'val destination: java.util.ArrayList<R of <root>.map>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val] declared in <root>.map' type=java.util.ArrayList<R of <root>.map>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } origin=null
+                  element: CALL 'public abstract fun invoke (p1: P1 of kotlin.Function1): R of kotlin.Function1 [operator] declared in kotlin.Function1' type=R of <root>.map origin=INVOKE
+                    $this: GET_VAR 'transform: kotlin.Function1<T of <root>.map, R of <root>.map> declared in <root>.map' type=kotlin.Function1<T of <root>.map, R of <root>.map> origin=VARIABLE_AS_FUNCTION
+                    p1: GET_VAR 'val item: T of <root>.map [val] declared in <root>.map' type=T of <root>.map origin=null
+        RETURN type=kotlin.Nothing from='public final fun map <T, R> (transform: kotlin.Function1<T of <root>.map, R of <root>.map>): kotlin.collections.List<R of <root>.map> [inline] declared in <root>'
+          GET_VAR 'val destination: java.util.ArrayList<R of <root>.map>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val] declared in <root>.map' type=java.util.ArrayList<R of <root>.map>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } origin=null
+    PROPERTY name:a visibility:public modality:FINAL [val]
+      FIELD PROPERTY_BACKING_FIELD name:a type:kotlin.Int visibility:private [final,static]
+        EXPRESSION_BODY
+          RETURNABLE_BLOCK type=kotlin.Int origin=null
+            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
+              CONST Int type=kotlin.Int value=3
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a> visibility:public modality:FINAL <> () returnType:kotlin.Int
+        correspondingProperty: PROPERTY name:a visibility:public modality:FINAL [val]
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun <get-a> (): kotlin.Int declared in <root>'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:a type:kotlin.Int visibility:private [final,static]' type=kotlin.Int origin=null
+    PROPERTY name:b visibility:public modality:FINAL [val]
+      FIELD PROPERTY_BACKING_FIELD name:b type:kotlin.collections.List<kotlin.Int> visibility:private [final,static]
+        EXPRESSION_BODY
+          RETURNABLE_BLOCK type=kotlin.collections.List<kotlin.Int> origin=null
+            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.collections.List<kotlin.Int> origin=null'
+              RETURNABLE_BLOCK type=kotlin.collections.List<kotlin.Int> origin=null
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_map_0 type:kotlin.Array<<root>.Numbers> [val]
+                  BLOCK type=kotlin.Array<<root>.Numbers> origin=(InlinerExpressionLocationHint : FIELD PROPERTY_BACKING_FIELD name:b type:kotlin.collections.List<kotlin.Int> visibility:private [final,static] @null)
+                    CALL 'public final fun values (): kotlin.Array<<root>.Numbers> declared in <root>.Numbers' type=kotlin.Array<<root>.Numbers> origin=null
+                VAR name:destination_1 type:java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val]
+                  CONSTRUCTOR_CALL 'public constructor <init> (p0: kotlin.Int) declared in java.util.ArrayList' type=java.util.ArrayList<kotlin.Int> origin=null
+                    <class: E>: kotlin.Int
+                    p0: CALL 'public final fun <get-size> (): kotlin.Int declared in kotlin.Array' type=kotlin.Int origin=GET_PROPERTY
+                      $this: GET_VAR 'val tmp0_map_0: kotlin.Array<<root>.Numbers> [val] declared in <root>.b' type=kotlin.Array<<root>.Numbers> origin=null
+                BLOCK type=kotlin.Unit origin=null
+                  VAR FOR_LOOP_ITERATOR name:tmp0_iterator_2 type:kotlin.collections.Iterator<<root>.Numbers> [val]
+                    CALL 'public final fun iterator (): kotlin.collections.Iterator<T of kotlin.Array> [operator] declared in kotlin.Array' type=kotlin.collections.Iterator<<root>.Numbers> origin=FOR_LOOP_ITERATOR
+                      $this: GET_VAR 'val tmp0_map_0: kotlin.Array<<root>.Numbers> [val] declared in <root>.b' type=kotlin.Array<<root>.Numbers> origin=null
+                  BLOCK type=kotlin.Unit origin=null
+                    BLOCK type=kotlin.Unit origin=FOR_LOOP_INNER_WHILE
+                      VAR FOR_LOOP_VARIABLE name:item_3 type:<root>.Numbers [val]
+                        CALL 'public abstract fun next (): T of kotlin.collections.Iterator [operator] declared in kotlin.collections.Iterator' type=<root>.Numbers origin=FOR_LOOP_NEXT
+                          $this: GET_VAR 'val tmp0_iterator_2: kotlin.collections.Iterator<<root>.Numbers> [val] declared in <root>.b' type=kotlin.collections.Iterator<<root>.Numbers> origin=null
+                      TYPE_OP type=kotlin.Unit origin=IMPLICIT_COERCION_TO_UNIT typeOperand=kotlin.Unit
+                        CALL 'public open fun add (element: @[EnhancedNullability] E of java.util.ArrayList): kotlin.Boolean declared in java.util.ArrayList' type=kotlin.Boolean origin=null
+                          $this: GET_VAR 'val destination_1: java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val] declared in <root>.b' type=java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } origin=null
+                          element: RETURNABLE_BLOCK type=kotlin.Int origin=null
+                            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
+                              CONST Int type=kotlin.Int value=1
+                    BLOCK type=kotlin.Unit origin=FOR_LOOP_INNER_WHILE
+                      VAR FOR_LOOP_VARIABLE name:item_3 type:<root>.Numbers [val]
+                        CALL 'public abstract fun next (): T of kotlin.collections.Iterator [operator] declared in kotlin.collections.Iterator' type=<root>.Numbers origin=FOR_LOOP_NEXT
+                          $this: GET_VAR 'val tmp0_iterator_2: kotlin.collections.Iterator<<root>.Numbers> [val] declared in <root>.b' type=kotlin.collections.Iterator<<root>.Numbers> origin=null
+                      TYPE_OP type=kotlin.Unit origin=IMPLICIT_COERCION_TO_UNIT typeOperand=kotlin.Unit
+                        CALL 'public open fun add (element: @[EnhancedNullability] E of java.util.ArrayList): kotlin.Boolean declared in java.util.ArrayList' type=kotlin.Boolean origin=null
+                          $this: GET_VAR 'val destination_1: java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val] declared in <root>.b' type=java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } origin=null
+                          element: RETURNABLE_BLOCK type=kotlin.Int origin=null
+                            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
+                              CONST Int type=kotlin.Int value=2
+                    BLOCK type=kotlin.Unit origin=FOR_LOOP_INNER_WHILE
+                      VAR FOR_LOOP_VARIABLE name:item_3 type:<root>.Numbers [val]
+                        CALL 'public abstract fun next (): T of kotlin.collections.Iterator [operator] declared in kotlin.collections.Iterator' type=<root>.Numbers origin=FOR_LOOP_NEXT
+                          $this: GET_VAR 'val tmp0_iterator_2: kotlin.collections.Iterator<<root>.Numbers> [val] declared in <root>.b' type=kotlin.collections.Iterator<<root>.Numbers> origin=null
+                      TYPE_OP type=kotlin.Unit origin=IMPLICIT_COERCION_TO_UNIT typeOperand=kotlin.Unit
+                        CALL 'public open fun add (element: @[EnhancedNullability] E of java.util.ArrayList): kotlin.Boolean declared in java.util.ArrayList' type=kotlin.Boolean origin=null
+                          $this: GET_VAR 'val destination_1: java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val] declared in <root>.b' type=java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } origin=null
+                          element: RETURNABLE_BLOCK type=kotlin.Int origin=null
+                            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
+                              CONST Int type=kotlin.Int value=3
+                RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.collections.List<kotlin.Int> origin=null'
+                  GET_VAR 'val destination_1: java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val] declared in <root>.b' type=java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } origin=null
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-b> visibility:public modality:FINAL <> () returnType:kotlin.collections.List<kotlin.Int>
+        correspondingProperty: PROPERTY name:b visibility:public modality:FINAL [val]
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun <get-b> (): kotlin.collections.List<kotlin.Int> declared in <root>'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:b type:kotlin.collections.List<kotlin.Int> visibility:private [final,static]' type=kotlin.collections.List<kotlin.Int> origin=null
+    PROPERTY name:c1 visibility:public modality:FINAL [val]
+      FIELD PROPERTY_BACKING_FIELD name:c1 type:kotlin.Int visibility:private [final,static]
+        EXPRESSION_BODY
+          RETURNABLE_BLOCK type=kotlin.Int origin=null
+            VAR IR_TEMPORARY_VARIABLE name:tmp0_getNumber_0 type:<root>.Numbers [val]
+              BLOCK type=<root>.Numbers origin=(InlinerExpressionLocationHint : FIELD PROPERTY_BACKING_FIELD name:c1 type:kotlin.Int visibility:private [final,static] @null)
+                GET_ENUM 'ENUM_ENTRY name:ONE' type=<root>.Numbers
+            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
+              CONST Int type=kotlin.Int value=1
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-c1> visibility:public modality:FINAL <> () returnType:kotlin.Int
+        correspondingProperty: PROPERTY name:c1 visibility:public modality:FINAL [val]
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun <get-c1> (): kotlin.Int declared in <root>'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:c1 type:kotlin.Int visibility:private [final,static]' type=kotlin.Int origin=null
+    PROPERTY name:c2 visibility:public modality:FINAL [val]
+      FIELD PROPERTY_BACKING_FIELD name:c2 type:kotlin.Int visibility:private [final,static]
+        EXPRESSION_BODY
+          RETURNABLE_BLOCK type=kotlin.Int origin=null
+            VAR IR_TEMPORARY_VARIABLE name:tmp0_getNumber_0 type:<root>.Numbers [val]
+              BLOCK type=<root>.Numbers origin=(InlinerExpressionLocationHint : FIELD PROPERTY_BACKING_FIELD name:c2 type:kotlin.Int visibility:private [final,static] @null)
+                GET_ENUM 'ENUM_ENTRY name:TWO' type=<root>.Numbers
+            RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
+              CONST Int type=kotlin.Int value=2
+      FUN DEFAULT_PROPERTY_ACCESSOR name:<get-c2> visibility:public modality:FINAL <> () returnType:kotlin.Int
+        correspondingProperty: PROPERTY name:c2 visibility:public modality:FINAL [val]
+        BLOCK_BODY
+          RETURN type=kotlin.Nothing from='public final fun <get-c2> (): kotlin.Int declared in <root>'
+            GET_FIELD 'FIELD PROPERTY_BACKING_FIELD name:c2 type:kotlin.Int visibility:private [final,static]' type=kotlin.Int origin=null
+  FILE fqName:kotlin fileName:/CompileTimeCalculation.kt
+    CLASS ANNOTATION_CLASS name:CompileTimeCalculation modality:FINAL visibility:public superTypes:[kotlin.Annotation]
+      annotations:
+        Target(allowedTargets = [GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:FUNCTION' type=kotlin.annotation.AnnotationTarget, GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:PROPERTY' type=kotlin.annotation.AnnotationTarget])
+        Retention(value = GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:BINARY' type=kotlin.annotation.AnnotationRetention)
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:kotlin.CompileTimeCalculation
+      CONSTRUCTOR visibility:public <> () returnType:kotlin.CompileTimeCalculation [primary]
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in kotlin.Annotation
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in kotlin.Annotation
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in kotlin.Annotation
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+  FILE fqName:kotlin fileName:/PartialEvaluation.kt
+    CLASS ANNOTATION_CLASS name:PartialEvaluation modality:FINAL visibility:public superTypes:[kotlin.Annotation]
+      annotations:
+        Target(allowedTargets = [GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:FUNCTION' type=kotlin.annotation.AnnotationTarget])
+        Retention(value = GET_ENUM 'ENUM_ENTRY IR_EXTERNAL_DECLARATION_STUB name:BINARY' type=kotlin.annotation.AnnotationRetention)
+      $this: VALUE_PARAMETER INSTANCE_RECEIVER name:<this> type:kotlin.PartialEvaluation
+      CONSTRUCTOR visibility:public <> () returnType:kotlin.PartialEvaluation [primary]
+      FUN FAKE_OVERRIDE name:equals visibility:public modality:OPEN <> ($this:kotlin.Any, other:kotlin.Any?) returnType:kotlin.Boolean [fake_override,operator]
+        overridden:
+          public open fun equals (other: kotlin.Any?): kotlin.Boolean [fake_override,operator] declared in kotlin.Annotation
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+        VALUE_PARAMETER name:other index:0 type:kotlin.Any?
+      FUN FAKE_OVERRIDE name:hashCode visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.Int [fake_override]
+        overridden:
+          public open fun hashCode (): kotlin.Int [fake_override] declared in kotlin.Annotation
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any
+      FUN FAKE_OVERRIDE name:toString visibility:public modality:OPEN <> ($this:kotlin.Any) returnType:kotlin.String [fake_override]
+        overridden:
+          public open fun toString (): kotlin.String [fake_override] declared in kotlin.Annotation
+        $this: VALUE_PARAMETER name:<this> type:kotlin.Any

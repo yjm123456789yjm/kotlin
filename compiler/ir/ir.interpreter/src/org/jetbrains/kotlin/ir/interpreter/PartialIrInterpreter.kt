@@ -152,4 +152,12 @@ abstract class PartialIrInterpreter(val irBuiltIns: IrBuiltIns) : IrElementTrans
             evaluator.evalIrTryFinallyExpression(aTry)
         )
     }
+
+    override fun visitGetObjectValue(expression: IrGetObjectValue): IrExpression {
+        return evaluator.fallbackIrGetObjectValue(expression)
+    }
+
+    override fun visitGetEnumValue(expression: IrGetEnumValue): IrExpression {
+        return evaluator.fallbackIrGetEnumValue(expression)
+    }
 }
