@@ -21,7 +21,7 @@ FILE fqName:<root> fileName:/propertyTypeNarrowing.kt
       BLOCK_BODY
         RETURN type=kotlin.Nothing from='public final fun test (): kotlin.Int declared in <root>.A'
           CALL 'public final fun plus (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=PLUS
-            $this: CALL 'public final fun <get-it> (): kotlin.Int declared in <root>.A' type=kotlin.Number origin=GET_PROPERTY
+            $this: CALL 'public final fun <get-it> (): kotlin.Int declared in <root>.A' type=kotlin.Int origin=GET_PROPERTY
               $this: GET_VAR '<this>: <root>.A declared in <root>.A.test' type=<root>.A origin=null
             other: CONST Int type=kotlin.Int value=3
     PROPERTY name:p visibility:public modality:FINAL [val]

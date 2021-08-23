@@ -24,3 +24,5 @@ FILE: localVariablesWithBackingFields.kt
             }
 
     }
+    public final val R|A|.cc: R|kotlin/Number|
+        public get(): R|kotlin/Number|

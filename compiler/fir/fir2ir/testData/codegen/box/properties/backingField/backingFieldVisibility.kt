@@ -1,6 +1,3 @@
-// MODULE: lib
-// FILE: A.kt
-
 class A {
     val a: Number
         private field = 1

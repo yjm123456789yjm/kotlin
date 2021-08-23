@@ -9,10 +9,10 @@ class A {
         internal field = 2
 
     val c: Number
-        <!INAPPLICABLE_BACKING_FIELD_VISIBILITY, WRONG_MODIFIER_TARGET!>protected<!> field = 3
+        <!WRONG_MODIFIER_TARGET!>protected<!> field = 3
 
     val d: Number
-        <!INAPPLICABLE_BACKING_FIELD_VISIBILITY!>public<!> field = 5
+        <!WRONG_MODIFIER_TARGET!>public<!> field = 5
 
     fun rest() {
         val aI = A().a + 10

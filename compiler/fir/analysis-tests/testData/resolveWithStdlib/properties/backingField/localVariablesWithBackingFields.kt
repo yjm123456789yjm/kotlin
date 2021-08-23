@@ -13,3 +13,6 @@ class A {
     val c: Number by lazy { 2 }
         field = 10
 }
+
+val A.cc: Number
+    <!EXPLICIT_BACKING_FIELD_IN_EXTENSION!>field = 10<!>

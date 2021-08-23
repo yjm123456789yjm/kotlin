@@ -1,6 +1,4 @@
 // FIR_IDENTICAL
-// MODULE: lib
-// FILE: A.kt
 
 class A {
     val a: Number
