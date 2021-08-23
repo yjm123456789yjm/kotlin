@@ -2699,29 +2699,6 @@ internal class PropertyMustHaveSetterImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
-internal class AbstractPropertyInPrimaryConstructorParametersImpl(
-    firDiagnostic: FirPsiDiagnostic,
-    override val token: ValidityToken,
-) : KtFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters(), KtAbstractFirDiagnostic<KtModifierListOwner> {
-    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
-}
-
-internal class InapplicableBackingFieldVisibilityImpl(
-    override val modifier: KtModifierKeywordToken,
-    firDiagnostic: FirPsiDiagnostic,
-    override val token: ValidityToken,
-) : KtFirDiagnostic.InapplicableBackingFieldVisibility(), KtAbstractFirDiagnostic<PsiElement> {
-    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
-}
-
-internal class InapplicableBackingFieldModifierImpl(
-    override val modifier: KtModifierKeywordToken,
-    firDiagnostic: FirPsiDiagnostic,
-    override val token: ValidityToken,
-) : KtFirDiagnostic.InapplicableBackingFieldModifier(), KtAbstractFirDiagnostic<PsiElement> {
-    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
-}
-
 internal class ExplicitBackingFieldInInterfaceImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
@@ -2733,6 +2710,13 @@ internal class ExplicitBackingFieldInAbstractPropertyImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,
 ) : KtFirDiagnostic.ExplicitBackingFieldInAbstractProperty(), KtAbstractFirDiagnostic<KtBackingField> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
+internal class AbstractPropertyInPrimaryConstructorParametersImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.AbstractPropertyInPrimaryConstructorParameters(), KtAbstractFirDiagnostic<KtModifierListOwner> {
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
