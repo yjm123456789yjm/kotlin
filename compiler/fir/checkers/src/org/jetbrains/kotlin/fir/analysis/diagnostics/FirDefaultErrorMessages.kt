@@ -1253,11 +1253,11 @@ class FirDefaultErrorMessages {
             )
             map.put(
                 PROPERTY_MUST_HAVE_GETTER,
-                "This property needs a custom getter"
+                "This property needs a custom getter, because it's type is not a supertype of the backing field's type"
             )
             map.put(
                 PROPERTY_MUST_HAVE_SETTER,
-                "This property needs a custom setter"
+                "This property needs a custom setter, because it's type is not a subtype of the backing field's type"
             )
             map.put(ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS, "This property cannot be declared abstract")
 
