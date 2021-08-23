@@ -11,13 +11,13 @@ FILE: explicitBackingFieldType.kt
             public get(): R|kotlin/Number|
 
         public final val joke: R|kotlin/Number|
-
+            public get(): R|kotlin/Number|
 
         public final val incompatible: R|kotlin/Number|
-
+            public get(): R|kotlin/Number|
 
         public final val customGetterNeeded: R|kotlin/Int|
-
+            public get(): R|kotlin/Int|
 
         public final val invertedTypes: R|kotlin/Int|
             public get(): R|kotlin/Int| {
@@ -44,6 +44,6 @@ FILE: explicitBackingFieldType.kt
             public get(): R|kotlin/Int| {
                 ^ this@R|/A|.F|/A.setterNeeded|.R|kotlin/String.length|
             }
-
+            public set(value: R|kotlin/Int|): R|kotlin/Unit|
 
     }
