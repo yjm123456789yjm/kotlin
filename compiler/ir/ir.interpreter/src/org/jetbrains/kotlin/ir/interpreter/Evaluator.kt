@@ -117,36 +117,39 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
         return args.reversed()
     }
 
+    private fun IrFunctionAccessExpression.canBeEvaluated(): Boolean {
+        val owner = this.symbol.owner
+        return EvaluationMode.ONLY_BUILTINS.canEvaluateFunction(owner, this as? IrCall) ||
+                EvaluationMode.WITH_ANNOTATIONS.canEvaluateFunction(owner, this as? IrCall)
+    }
+
     fun fallbackIrCall(expression: IrCall, dispatchReceiver: State?, extensionReceiver: State?, args: List<State?>): IrCall {
-        val owner = expression.symbol.owner
         val actualArgs = listOfNotNull(dispatchReceiver, extensionReceiver, *args.toTypedArray())
         if (actualArgs.size != expression.getExpectedArgumentsCount()) {
             actualArgs.forEach { it.drop() }
             return expression
         }
 
-        if (owner.fqName.startsWith("kotlin.") || EvaluationMode.ONLY_BUILTINS.canEvaluateFunction(owner, expression) || EvaluationMode.WITH_ANNOTATIONS.canEvaluateFunction(owner, expression)) {
-            if (!checkForDefaultsAndEvaluate(expression, actualArgs)) {
-                actualArgs.forEach { it.drop() }
-            }
-            // TODO if result is Primitive -> return const
+        val owner = expression.symbol.owner
+        if (owner.fqName.startsWith("kotlin.") || expression.canBeEvaluated()) {
+            if (checkForDefaultsAndEvaluate(expression, actualArgs)) return expression
         }
+        actualArgs.forEach { it.drop() }
         return expression
     }
 
     fun fallbackIrConstructorCall(expression: IrConstructorCall, dispatchReceiver: State?, args: List<State?>): IrConstructorCall {
-        val actualArgs = listOf(dispatchReceiver, *args.toTypedArray()).filterNotNull()
+        val actualArgs = listOfNotNull(dispatchReceiver, *args.toTypedArray())
         if (actualArgs.size != expression.getExpectedArgumentsCount()) {
             actualArgs.forEach { it.drop() }
             return expression
         }
 
         val owner = expression.symbol.owner
-        if (EvaluationMode.ONLY_BUILTINS.canEvaluateFunction(owner) || EvaluationMode.WITH_ANNOTATIONS.canEvaluateFunction(owner) || Wrapper.mustBeHandledWithWrapper(owner.parentAsClass)) {
-            if (!checkForDefaultsAndEvaluate(expression, actualArgs)) {
-                actualArgs.forEach { it.drop() }
-            }
+        if (Wrapper.mustBeHandledWithWrapper(owner.parentAsClass) || expression.canBeEvaluated()) {
+            if (checkForDefaultsAndEvaluate(expression, actualArgs)) return expression
         }
+        actualArgs.forEach { it.drop() }
         return expression
     }
 
@@ -196,7 +199,6 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
                 val condition = if (!inclusive && i == beginFromIndex) null else evalIrBranchCondition(expression.branches[i])
                 fallbackIrBranch(expression.branches[i], condition)
             }
-            // TODO that to do if object is passed to some none compile time function? 1. only scan it and delete mutated fields 2. remove entire symbol from stack
             true
         }
         return expression
@@ -207,7 +209,15 @@ internal class Evaluator(val irBuiltIns: IrBuiltIns, val transformer: IrElementT
         return callStack.tryToPopState()
     }
 
-    fun fallbackIrSetValue(expression: IrSetValue, value: State?): IrExpression {
+    fun fallbackIrSetValue(setVal: IrSetValue, value: State?): IrExpression {
+        val expression = when {
+            // must convert `+=` and '-=' to simple `=` in case then setVal.value was replaced by single const
+            setVal.value is IrConst<*> && (setVal.origin == IrStatementOrigin.PLUSEQ || setVal.origin == IrStatementOrigin.MINUSEQ) -> {
+                IrSetValueImpl(setVal.startOffset, setVal.endOffset, setVal.type, setVal.symbol, setVal.value, IrStatementOrigin.EQ)
+            }
+            else -> setVal
+        }
+
         if (value == null) {
             callStack.dropState(expression.symbol)
             return expression

@@ -171,8 +171,7 @@ MODULE_FRAGMENT name:<main>
                 VAR name:destination_1 type:java.util.ArrayList<kotlin.Int>{ kotlin.collections.TypeAliasesKt.ArrayList<R of <root>.map> } [val]
                   CONSTRUCTOR_CALL 'public constructor <init> (p0: kotlin.Int) declared in java.util.ArrayList' type=java.util.ArrayList<kotlin.Int> origin=null
                     <class: E>: kotlin.Int
-                    p0: CALL 'public final fun <get-size> (): kotlin.Int declared in kotlin.Array' type=kotlin.Int origin=GET_PROPERTY
-                      $this: GET_VAR 'val tmp0_map_0: kotlin.Array<<root>.Numbers> [val] declared in <root>.b' type=kotlin.Array<<root>.Numbers> origin=null
+                    p0: CONST Int type=kotlin.Int value=3
                 BLOCK type=kotlin.Unit origin=null
                   VAR FOR_LOOP_ITERATOR name:tmp0_iterator_2 type:kotlin.collections.Iterator<<root>.Numbers> [val]
                     CALL 'public final fun iterator (): kotlin.collections.Iterator<T of kotlin.Array> [operator] declared in kotlin.Array' type=kotlin.collections.Iterator<<root>.Numbers> origin=FOR_LOOP_ITERATOR

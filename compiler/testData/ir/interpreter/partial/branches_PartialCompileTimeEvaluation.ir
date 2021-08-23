@@ -288,7 +288,10 @@ MODULE_FRAGMENT name:<main>
         EXPRESSION_BODY
           RETURNABLE_BLOCK type=kotlin.Boolean origin=null
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Boolean origin=null'
-              CONST Boolean type=kotlin.Boolean value=true
+              BLOCK type=kotlin.Boolean origin=WHEN
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_subject_1 type:kotlin.Int [val]
+                  CONST Int type=kotlin.Int value=15
+                CONST Boolean type=kotlin.Boolean value=true
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a> visibility:public modality:FINAL <> () returnType:kotlin.Boolean
         correspondingProperty: PROPERTY name:a visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -299,7 +302,10 @@ MODULE_FRAGMENT name:<main>
         EXPRESSION_BODY
           RETURNABLE_BLOCK type=kotlin.Boolean origin=null
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Boolean origin=null'
-              CONST Boolean type=kotlin.Boolean value=true
+              BLOCK type=kotlin.Boolean origin=WHEN
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_subject_1 type:kotlin.Int [val]
+                  CONST Int type=kotlin.Int value=15
+                CONST Boolean type=kotlin.Boolean value=true
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-b> visibility:public modality:FINAL <> () returnType:kotlin.Boolean
         correspondingProperty: PROPERTY name:b visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -315,10 +321,8 @@ MODULE_FRAGMENT name:<main>
               VAR IR_TEMPORARY_VARIABLE name:tmp0_subject_2 type:kotlin.Int [val]
                 CALL 'public final fun compileTimeInt (): kotlin.Int declared in <root>' type=kotlin.Int origin=null
               BLOCK type=kotlin.Unit origin=null
-                SET_VAR 'var a_1: kotlin.Int [var] declared in <root>.c' type=kotlin.Unit origin=PLUSEQ
-                  CALL 'public final fun plus (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=PLUSEQ
-                    $this: GET_VAR 'var a_1: kotlin.Int [var] declared in <root>.c' type=kotlin.Int origin=PLUSEQ
-                    other: CONST Int type=kotlin.Int value=4
+                SET_VAR 'var a_1: kotlin.Int [var] declared in <root>.c' type=kotlin.Unit origin=EQ
+                  CONST Int type=kotlin.Int value=4
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
               CONST Int type=kotlin.Int value=4
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-c> visibility:public modality:FINAL <> () returnType:kotlin.Int
@@ -343,10 +347,7 @@ MODULE_FRAGMENT name:<main>
                     GET_VAR 'val tmp0_rollbackFieldAfterWhen_0: <root>.A [val] declared in <root>.d' type=<root>.A origin=null
                   CALL 'public final fun <set-a> (<set-?>: kotlin.Int): kotlin.Unit declared in <root>.A' type=kotlin.Unit origin=PLUSEQ
                     $this: GET_VAR 'val tmp4_this_5: <root>.A [val] declared in <root>.d' type=<root>.A origin=null
-                    <set-?>: CALL 'public final fun plus (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=PLUSEQ
-                      $this: CALL 'public final fun <get-a> (): kotlin.Int declared in <root>.A' type=kotlin.Int origin=PLUSEQ
-                        $this: GET_VAR 'val tmp4_this_5: <root>.A [val] declared in <root>.d' type=<root>.A origin=null
-                      other: CONST Int type=kotlin.Int value=4
+                    <set-?>: CONST Int type=kotlin.Int value=4
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
               CONST Int type=kotlin.Int value=4
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-d> visibility:public modality:FINAL <> () returnType:kotlin.Int
@@ -370,12 +371,12 @@ MODULE_FRAGMENT name:<main>
                     arg1: CONST Int type=kotlin.Int value=0
                   then: BLOCK type=kotlin.Unit origin=null
                     SET_VAR 'var a_1: kotlin.Int [var] declared in <root>.e' type=kotlin.Unit origin=EQ
-                      CALL 'public final fun <get-constInt> (): kotlin.Int declared in <root>' type=kotlin.Int origin=GET_PROPERTY
+                      CONST Int type=kotlin.Int value=15
                 BRANCH
                   if: CONST Boolean type=kotlin.Boolean value=true
                   then: BLOCK type=kotlin.Unit origin=null
                     SET_VAR 'var a_1: kotlin.Int [var] declared in <root>.e' type=kotlin.Unit origin=EQ
-                      CALL 'public final fun <get-constInt> (): kotlin.Int declared in <root>' type=kotlin.Int origin=GET_PROPERTY
+                      CONST Int type=kotlin.Int value=15
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
               GET_VAR 'var a_1: kotlin.Int [var] declared in <root>.e' type=kotlin.Int origin=null
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-e> visibility:public modality:FINAL <> () returnType:kotlin.Int

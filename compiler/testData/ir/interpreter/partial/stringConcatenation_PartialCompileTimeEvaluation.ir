@@ -80,7 +80,7 @@ MODULE_FRAGMENT name:<main>
           RETURNABLE_BLOCK type=kotlin.String origin=null
             VAR IR_TEMPORARY_VARIABLE name:tmp0_simpleConcatenation_0 type:kotlin.Int [val]
               BLOCK type=kotlin.Int origin=(InlinerExpressionLocationHint : FIELD PROPERTY_BACKING_FIELD name:a1 type:kotlin.String visibility:private [final,static] @null)
-                CALL 'public final fun <get-constInt> (): kotlin.Int declared in <root>' type=kotlin.Int origin=GET_PROPERTY
+                CONST Int type=kotlin.Int value=15
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.String origin=null'
               CONST String type=kotlin.String value="(15)"
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a1> visibility:public modality:FINAL <> () returnType:kotlin.String
@@ -111,7 +111,7 @@ MODULE_FRAGMENT name:<main>
           RETURNABLE_BLOCK type=kotlin.String origin=null
             VAR IR_TEMPORARY_VARIABLE name:tmp0_concatenationWithConstructorCall_0 type:kotlin.Int [val]
               BLOCK type=kotlin.Int origin=(InlinerExpressionLocationHint : FIELD PROPERTY_BACKING_FIELD name:b1 type:kotlin.String visibility:private [final,static] @null)
-                CALL 'public final fun <get-constInt> (): kotlin.Int declared in <root>' type=kotlin.Int origin=GET_PROPERTY
+                CONST Int type=kotlin.Int value=15
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.String origin=null'
               CONST String type=kotlin.String value="(A=15)"
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-b1> visibility:public modality:FINAL <> () returnType:kotlin.String

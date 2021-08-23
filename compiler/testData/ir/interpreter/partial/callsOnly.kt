@@ -45,9 +45,18 @@ inline fun setValueNonCompileTime(): Int {
     return a // must not be set to zero
 }
 
+@PartialEvaluation
+inline fun incrementOnly(): Int {
+    var i = 0
+    i++
+    i++
+    return i
+}
+
 val a = singleCall(constInt)
 val b = withSingleVariable(constInt)
 val c = withCompileTimeCall()
 val d = withNotCompileTimeCode(constInt)
 val e = withNotCompileTimeArgs()
 val f = setValueNonCompileTime()
+val g = incrementOnly()

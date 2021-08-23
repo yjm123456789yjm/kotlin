@@ -14,7 +14,8 @@ fun bar(a: Int, b: Int = a * 2): Int {
 
 @PartialEvaluation
 inline fun funWithCallWithDefaults(a: Int): Int {
-    return bar(a)
+    val result = bar(a)
+    return result
 }
 
 val a = funWithDefaults(10)

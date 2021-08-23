@@ -213,7 +213,10 @@ MODULE_FRAGMENT name:<main>
                 CONSTRUCTOR_CALL 'public constructor <init> (a: kotlin.Int) [primary] declared in <root>.A' type=<root>.A origin=null
                   a: CONST Int type=kotlin.Int value=1
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
-              CONST Int type=kotlin.Int value=1
+              BLOCK type=kotlin.Int origin=WHEN
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_subject_1 type:<root>.Base [val]
+                  GET_VAR 'val tmp0_whenWithInstanceCheck_0: <root>.A [val] declared in <root>.a1' type=<root>.A origin=null
+                CONST Int type=kotlin.Int value=1
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a1> visibility:public modality:FINAL <> () returnType:kotlin.Int
         correspondingProperty: PROPERTY name:a1 visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -228,7 +231,10 @@ MODULE_FRAGMENT name:<main>
                 CONSTRUCTOR_CALL 'public constructor <init> (b: kotlin.Int) [primary] declared in <root>.B' type=<root>.B origin=null
                   b: CONST Int type=kotlin.Int value=2
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
-              CONST Int type=kotlin.Int value=2
+              BLOCK type=kotlin.Int origin=WHEN
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_subject_1 type:<root>.Base [val]
+                  GET_VAR 'val tmp0_whenWithInstanceCheck_0: <root>.B [val] declared in <root>.a2' type=<root>.B origin=null
+                CONST Int type=kotlin.Int value=2
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a2> visibility:public modality:FINAL <> () returnType:kotlin.Int
         correspondingProperty: PROPERTY name:a2 visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -243,7 +249,10 @@ MODULE_FRAGMENT name:<main>
                 CONSTRUCTOR_CALL 'public constructor <init> (c: kotlin.Int) [primary] declared in <root>.C' type=<root>.C origin=null
                   c: CONST Int type=kotlin.Int value=3
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
-              CONST Int type=kotlin.Int value=3
+              BLOCK type=kotlin.Int origin=WHEN
+                VAR IR_TEMPORARY_VARIABLE name:tmp0_subject_1 type:<root>.Base [val]
+                  GET_VAR 'val tmp0_whenWithInstanceCheck_0: <root>.C [val] declared in <root>.a3' type=<root>.C origin=null
+                CONST Int type=kotlin.Int value=3
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a3> visibility:public modality:FINAL <> () returnType:kotlin.Int
         correspondingProperty: PROPERTY name:a3 visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -258,7 +267,14 @@ MODULE_FRAGMENT name:<main>
                 CONSTRUCTOR_CALL 'public constructor <init> (a: kotlin.Int) [primary] declared in <root>.A' type=<root>.A origin=null
                   a: CONST Int type=kotlin.Int value=1
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.String origin=null'
-              CONST String type=kotlin.String value="1"
+              BLOCK type=kotlin.String? origin=SAFE_CALL
+                VAR IR_TEMPORARY_VARIABLE name:tmp1_safe_receiver_1 type:kotlin.Int? [val]
+                  BLOCK type=kotlin.Int? origin=SAFE_CALL
+                    VAR IR_TEMPORARY_VARIABLE name:tmp0_safe_receiver_2 type:<root>.A? [val]
+                      TYPE_OP type=<root>.A? origin=SAFE_CAST typeOperand=<root>.A
+                        GET_VAR 'val tmp0_castToA_0: <root>.A [val] declared in <root>.b1' type=<root>.A origin=null
+                    CONST Int type=kotlin.Int value=1
+                CONST String type=kotlin.String value="1"
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-b1> visibility:public modality:FINAL <> () returnType:kotlin.String
         correspondingProperty: PROPERTY name:b1 visibility:public modality:FINAL [val]
         BLOCK_BODY
@@ -273,7 +289,14 @@ MODULE_FRAGMENT name:<main>
                 CONSTRUCTOR_CALL 'public constructor <init> (b: kotlin.Int) [primary] declared in <root>.B' type=<root>.B origin=null
                   b: CONST Int type=kotlin.Int value=2
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.String origin=null'
-              CONST Null type=kotlin.Nothing? value=null
+              BLOCK type=kotlin.String? origin=SAFE_CALL
+                VAR IR_TEMPORARY_VARIABLE name:tmp1_safe_receiver_1 type:kotlin.Int? [val]
+                  BLOCK type=kotlin.Int? origin=SAFE_CALL
+                    VAR IR_TEMPORARY_VARIABLE name:tmp0_safe_receiver_2 type:<root>.A? [val]
+                      TYPE_OP type=<root>.A? origin=SAFE_CAST typeOperand=<root>.A
+                        GET_VAR 'val tmp0_castToA_0: <root>.B [val] declared in <root>.b2' type=<root>.B origin=null
+                    CONST Null type=kotlin.Nothing? value=null
+                CONST Null type=kotlin.Nothing? value=null
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-b2> visibility:public modality:FINAL <> () returnType:kotlin.String
         correspondingProperty: PROPERTY name:b2 visibility:public modality:FINAL [val]
         BLOCK_BODY

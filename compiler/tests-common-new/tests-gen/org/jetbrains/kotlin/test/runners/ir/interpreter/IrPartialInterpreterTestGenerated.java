@@ -68,6 +68,12 @@ public class IrPartialInterpreterTestGenerated extends AbstractIrPartialInterpre
     }
 
     @Test
+    @TestMetadata("partiallyCompileTimeObject.kt")
+    public void testPartiallyCompileTimeObject() throws Exception {
+        runTest("compiler/testData/ir/interpreter/partial/partiallyCompileTimeObject.kt");
+    }
+
+    @Test
     @TestMetadata("simpleCostructorCall.kt")
     public void testSimpleCostructorCall() throws Exception {
         runTest("compiler/testData/ir/interpreter/partial/simpleCostructorCall.kt");

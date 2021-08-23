@@ -358,8 +358,7 @@ MODULE_FRAGMENT name:<main>
                                       if: CALL 'public final fun greater (arg0: kotlin.Int, arg1: kotlin.Int): kotlin.Boolean declared in kotlin.internal.ir' type=kotlin.Boolean origin=GT
                                         arg0: BLOCK type=kotlin.Int origin=PREFIX_INCR
                                           SET_VAR 'var count_1: kotlin.Int [var] declared in <root>.NotData.asString' type=kotlin.Unit origin=PREFIX_INCR
-                                            CALL 'public final fun inc (): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=PREFIX_INCR
-                                              $this: GET_VAR 'var count_1: kotlin.Int [var] declared in <root>.NotData.asString' type=kotlin.Int origin=PREFIX_INCR
+                                            CONST Int type=kotlin.Int value=1
                                           GET_VAR 'var count_1: kotlin.Int [var] declared in <root>.NotData.asString' type=kotlin.Int origin=PREFIX_INCR
                                         arg1: CONST Int type=kotlin.Int value=1
                                       then: TYPE_OP type=kotlin.Unit origin=IMPLICIT_COERCION_TO_UNIT typeOperand=kotlin.Unit
@@ -475,7 +474,11 @@ MODULE_FRAGMENT name:<main>
                           RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=java.lang.StringBuilder{ kotlin.text.TypeAliasesKt.StringBuilder } origin=null'
                             GET_VAR 'val tmp2_joinTo_0: java.lang.StringBuilder [val] declared in <root>.NotData.asString' type=java.lang.StringBuilder origin=null
               RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.String origin=null'
-                CONST String type=kotlin.String value=")"
+                STRING_CONCATENATION type=kotlin.String
+                  CONST String type=kotlin.String value="NotData"
+                  CONST String type=kotlin.String value="("
+                  GET_VAR 'val propertiesFormatted_4: kotlin.String [val] declared in <root>.NotData.asString' type=kotlin.String origin=null
+                  CONST String type=kotlin.String value=")"
         FUN DEFAULT_PROPERTY_ACCESSOR name:<get-asString> visibility:private modality:FINAL <> ($this:<root>.NotData) returnType:kotlin.String
           correspondingProperty: PROPERTY name:asString visibility:private modality:FINAL [val]
           $this: VALUE_PARAMETER name:<this> type:<root>.NotData

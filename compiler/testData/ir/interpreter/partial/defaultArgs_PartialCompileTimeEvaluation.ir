@@ -43,18 +43,18 @@ MODULE_FRAGMENT name:<main>
         PartialEvaluation
       VALUE_PARAMETER name:a index:0 type:kotlin.Int
       BLOCK_BODY
-        RETURN type=kotlin.Nothing from='public final fun funWithCallWithDefaults (a: kotlin.Int): kotlin.Int [inline] declared in <root>'
+        VAR name:result type:kotlin.Int [val]
           CALL 'public final fun bar (a: kotlin.Int, b: kotlin.Int): kotlin.Int declared in <root>' type=kotlin.Int origin=null
             a: GET_VAR 'a: kotlin.Int declared in <root>.funWithCallWithDefaults' type=kotlin.Int origin=null
+        RETURN type=kotlin.Nothing from='public final fun funWithCallWithDefaults (a: kotlin.Int): kotlin.Int [inline] declared in <root>'
+          GET_VAR 'val result: kotlin.Int [val] declared in <root>.funWithCallWithDefaults' type=kotlin.Int origin=null
     PROPERTY name:a visibility:public modality:FINAL [val]
       FIELD PROPERTY_BACKING_FIELD name:a type:kotlin.Int visibility:private [final,static]
         EXPRESSION_BODY
           RETURNABLE_BLOCK type=kotlin.Int origin=null
             VAR IR_TEMPORARY_VARIABLE name:tmp0_funWithDefaults_0 type:kotlin.Int [val]
               BLOCK type=kotlin.Int origin=(InlinerExpressionLocationHint : FIELD PROPERTY_BACKING_FIELD name:a type:kotlin.Int visibility:private [final,static] @null)
-                CALL 'public final fun times (other: kotlin.Int): kotlin.Int [operator] declared in kotlin.Int' type=kotlin.Int origin=MUL
-                  $this: CONST Int type=kotlin.Int value=10
-                  other: CONST Int type=kotlin.Int value=2
+                CONST Int type=kotlin.Int value=20
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
               CONST Int type=kotlin.Int value=20
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-a> visibility:public modality:FINAL <> () returnType:kotlin.Int
@@ -66,6 +66,9 @@ MODULE_FRAGMENT name:<main>
       FIELD PROPERTY_BACKING_FIELD name:b type:kotlin.Int visibility:private [final,static]
         EXPRESSION_BODY
           RETURNABLE_BLOCK type=kotlin.Int origin=null
+            VAR name:result_1 type:kotlin.Int [val]
+              CALL 'public final fun bar (a: kotlin.Int, b: kotlin.Int): kotlin.Int declared in <root>' type=kotlin.Int origin=null
+                a: CONST Int type=kotlin.Int value=10
             RETURN type=kotlin.Nothing from='RETURNABLE_BLOCK type=kotlin.Int origin=null'
               CONST Int type=kotlin.Int value=20
       FUN DEFAULT_PROPERTY_ACCESSOR name:<get-b> visibility:public modality:FINAL <> () returnType:kotlin.Int
