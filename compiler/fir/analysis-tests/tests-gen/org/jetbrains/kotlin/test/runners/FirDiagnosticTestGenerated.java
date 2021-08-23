@@ -5539,6 +5539,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
                 }
 
                 @Test
+                @TestMetadata("backingFieldWithSmartTypeParameters.kt")
+                public void testBackingFieldWithSmartTypeParameters() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/backingFieldWithSmartTypeParameters.kt");
+                }
+
+                @Test
                 @TestMetadata("explicitBackingFieldInInterface.kt")
                 public void testExplicitBackingFieldInInterface() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldInInterface.kt");
