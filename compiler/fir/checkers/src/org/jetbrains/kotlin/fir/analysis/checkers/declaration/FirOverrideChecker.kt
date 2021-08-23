@@ -132,18 +132,25 @@ object FirOverrideChecker : FirClassChecker() {
         }
 
         if (this is FirPropertySymbol) {
-            getterSymbol?.checkVisibility(
-                containingClass,
-                reporter,
-                overriddenSymbols.map { (it as FirPropertySymbol).getterSymbol ?: it },
-                context
-            )
-            setterSymbol?.checkVisibility(
-                containingClass,
-                reporter,
-                overriddenSymbols.mapNotNull { (it as FirPropertySymbol).setterSymbol },
-                context
-            )
+            // TODO: testCharSequenceWithBackingField5.kt
+            @OptIn(SymbolInternals::class)
+            if (getterSymbol?.fir?.status is FirResolvedDeclarationStatus) {
+                getterSymbol?.checkVisibility(
+                    containingClass,
+                    reporter,
+                    overriddenSymbols.map { (it as FirPropertySymbol).getterSymbol ?: it },
+                    context
+                )
+            }
+            @OptIn(SymbolInternals::class)
+            if (setterSymbol?.fir?.status is FirResolvedDeclarationStatus) {
+                setterSymbol?.checkVisibility(
+                    containingClass,
+                    reporter,
+                    overriddenSymbols.mapNotNull { (it as FirPropertySymbol).setterSymbol },
+                    context
+                )
+            }
         } else {
             for ((overridden, overriddenVisibility) in visibilities) {
                 val compare = Visibilities.compare(visibility, overriddenVisibility)
