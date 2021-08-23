@@ -863,6 +863,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val PROPERTY_MUST_HAVE_SETTER by error<KtProperty>()
         val EXPLICIT_BACKING_FIELD_IN_INTERFACE by error<KtBackingField>()
         val EXPLICIT_BACKING_FIELD_IN_ABSTRACT_PROPERTY by error<KtBackingField>()
+        val EXPLICIT_BACKING_FIELD_IN_EXTENSION by error<KtBackingField>()
         val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error<KtModifierListOwner>(PositioningStrategy.ABSTRACT_MODIFIER)
     }
 
