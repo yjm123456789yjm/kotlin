@@ -118,39 +118,26 @@ object FirOverrideChecker : FirClassChecker() {
         context: CheckerContext
     ) {
         if (overriddenSymbols.isEmpty()) return
-        val visibilities = overriddenSymbols.mapNotNull {
-            // TODO: testOverriddenPropertiesWithExplicitBackingField.kt
-            @OptIn(SymbolInternals::class)
-            if (it.fir.status is FirResolvedDeclarationStatus) {
-                it to it.visibility
-            } else {
-                null
-            }
+        val visibilities = overriddenSymbols.map {
+            it to it.visibility
         }.sortedBy { pair ->
             // Regard `null` compare as Int.MIN so that we can report CANNOT_CHANGE_... first deterministically
             Visibilities.compare(visibility, pair.second) ?: Int.MIN_VALUE
         }
 
         if (this is FirPropertySymbol) {
-            // TODO: testCharSequenceWithBackingField5.kt
-            @OptIn(SymbolInternals::class)
-            if (getterSymbol?.fir?.status is FirResolvedDeclarationStatus) {
-                getterSymbol?.checkVisibility(
-                    containingClass,
-                    reporter,
-                    overriddenSymbols.map { (it as FirPropertySymbol).getterSymbol ?: it },
-                    context
-                )
-            }
-            @OptIn(SymbolInternals::class)
-            if (setterSymbol?.fir?.status is FirResolvedDeclarationStatus) {
-                setterSymbol?.checkVisibility(
-                    containingClass,
-                    reporter,
-                    overriddenSymbols.mapNotNull { (it as FirPropertySymbol).setterSymbol },
-                    context
-                )
-            }
+            getterSymbol?.checkVisibility(
+                containingClass,
+                reporter,
+                overriddenSymbols.map { (it as FirPropertySymbol).getterSymbol ?: it },
+                context
+            )
+            setterSymbol?.checkVisibility(
+                containingClass,
+                reporter,
+                overriddenSymbols.mapNotNull { (it as FirPropertySymbol).setterSymbol },
+                context
+            )
         } else {
             for ((overridden, overriddenVisibility) in visibilities) {
                 val compare = Visibilities.compare(visibility, overriddenVisibility)
