@@ -30,12 +30,17 @@ sealed class ResolutionMode {
     class WithExpectedTypeFromCast(
         val expectedTypeRef: FirTypeRef,
     ) : ResolutionMode()
+
+    class WithSuggestedType(
+        val suggestedTypeRef: FirTypeRef,
+    ) : ResolutionMode()
 }
 
 fun ResolutionMode.expectedType(components: BodyResolveComponents, allowFromCast: Boolean = false): FirTypeRef? = when (this) {
     is ResolutionMode.WithExpectedType -> expectedTypeRef
     is ResolutionMode.ContextIndependent -> components.noExpectedType
     is ResolutionMode.WithExpectedTypeFromCast -> expectedTypeRef.takeIf { allowFromCast }
+    is ResolutionMode.WithSuggestedType -> suggestedTypeRef
     else -> null
 }
 
