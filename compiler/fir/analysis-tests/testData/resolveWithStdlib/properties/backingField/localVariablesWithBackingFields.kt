@@ -16,3 +16,7 @@ class A {
 
 val A.cc: Number
     <!EXPLICIT_BACKING_FIELD_IN_EXTENSION!>field = 10<!>
+
+fun A.cc() {
+    val it = <!UNRESOLVED_REFERENCE!>a<!> + 2
+}
