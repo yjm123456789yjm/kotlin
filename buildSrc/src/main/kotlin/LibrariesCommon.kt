@@ -22,6 +22,7 @@ fun Project.configureJava9Compilation(
 
     tasks.named("compileJava9Kotlin", KotlinCompile::class.java) {
         configureTaskToolchain(JdkMajorVersion.JDK_9)
+        kotlinOptions.jvmTarget = JdkMajorVersion.JDK_9.targetName
     }
 
     tasks.named("compileJava9Java", JavaCompile::class.java) {
