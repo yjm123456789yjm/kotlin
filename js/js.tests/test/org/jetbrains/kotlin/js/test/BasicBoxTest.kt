@@ -1263,7 +1263,7 @@ class KotlinJsTestLogger {
 
 fun RuntimeDiagnostic.Companion.resolve(
     value: String?,
-): RuntimeDiagnostic? = when (value?.toLowerCase()) {
+): RuntimeDiagnostic? = when (value?.lowercase()) {
     K2JsArgumentConstants.RUNTIME_DIAGNOSTIC_LOG -> RuntimeDiagnostic.LOG
     K2JsArgumentConstants.RUNTIME_DIAGNOSTIC_EXCEPTION -> RuntimeDiagnostic.EXCEPTION
     null -> null

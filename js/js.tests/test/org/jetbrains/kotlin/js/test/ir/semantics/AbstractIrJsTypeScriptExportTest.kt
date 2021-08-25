@@ -22,10 +22,10 @@ abstract class AbstractIrJsTypeScriptExportTest(
     override val generateDts = true
     private val updateReferenceDtsFiles = getBoolean("kotlin.js.updateReferenceDtsFiles")
 
-    override fun performAdditionalChecks(inputFile: File, outputMainModuleDirectory: File) {
+    override fun performAdditionalChecks(inputFile: File, outputMainModuleDir: File) {
         if (skipRegularMode) return
         val referenceDtsFile = File(inputFile.parentFile, "JS_TESTS/index.d.ts")
-        val generatedDtsFile = File(outputMainModuleDirectory, "index.d.ts")
+        val generatedDtsFile = File(outputMainModuleDir, "index.d.ts")
 
         val generatedDts = generatedDtsFile.readText()
 

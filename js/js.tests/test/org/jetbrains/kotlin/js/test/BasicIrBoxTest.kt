@@ -211,21 +211,20 @@ abstract class BasicIrBoxTest(
                 }
             }
             val irFactory = if (lowerPerModule) PersistentIrFactory() else IrFactoryImpl
-
+            val mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null }
             fun compileToLoweredIr(dceDriven: Boolean, granularity: JsGenerationGranularity): LoweredIr =
                 compile(
                     prepareModule(true),
                     phaseConfig = phaseConfig,
                     irFactory = irFactory,
-                    mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null },
                     exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
                     dceDriven = dceDriven,
                     es6mode = runEs6Mode,
                     propertyLazyInitialization = propertyLazyInitialization,
+                    verifySignatures = !skipMangleVerification,
                     lowerPerModule = lowerPerModule,
                     safeExternalBoolean = safeExternalBoolean,
                     safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
-                    verifySignatures = !skipMangleVerification,
                     granularity = granularity
                 )
 

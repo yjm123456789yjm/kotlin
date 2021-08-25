@@ -49,7 +49,6 @@ fun compile(
     depsDescriptors: ModulesStructure,
     phaseConfig: PhaseConfig,
     irFactory: IrFactory,
-    mainArguments: List<String>?,
     exportedDeclarations: Set<FqName> = emptySet(),
     dceDriven: Boolean = false,
     dceRuntimeDiagnostic: RuntimeDiagnostic? = null,
@@ -67,7 +66,6 @@ fun compile(
     if (lowerPerModule) {
         return icCompile(
             depsDescriptors,
-            mainArguments,
             exportedDeclarations,
             dceRuntimeDiagnostic,
             es6mode,
@@ -79,8 +77,9 @@ fun compile(
         )
     }
 
-    val (moduleFragment: IrModuleFragment, dependencyModules, irBuiltIns, symbolTable, deserializer, moduleToName) =
+    val (moduleFragment: IrModuleFragment, dependencyModules, irBuiltIns, symbolTable, deserializer, _) =
         loadIr(depsDescriptors, irFactory, verifySignatures)
+
     val mainModule = depsDescriptors.mainModule
     val configuration = depsDescriptors.compilerConfiguration
 

@@ -334,14 +334,9 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             }
 
             val ir = compile(
-
-            val compiledModule = compile(
                 module,
                 phaseConfig,
                 if (arguments.irDceDriven) PersistentIrFactory() else IrFactoryImpl,
-                mainArguments = mainCallArguments,
-                generateFullJs = !arguments.irDce,
-                generateDceJs = arguments.irDce,
                 dceRuntimeDiagnostic = RuntimeDiagnostic.resolve(
                     arguments.irDceRuntimeDiagnostic,
                     messageCollector
