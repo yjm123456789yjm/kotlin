@@ -548,7 +548,7 @@ open class IncrementalJvmCache(
 }
 
 private object PathCollectionExternalizer :
-    CollectionExternalizer<String>(PathStringDescriptor, { THashSet(FileUtil.PATH_HASHING_STRATEGY) })
+    CollectionExternalizer<String, Collection<String>>(PathStringDescriptor, { THashSet(FileUtil.PATH_HASHING_STRATEGY) })
 
 sealed class ChangeInfo(val fqName: FqName) {
     open class MembersChanged(fqName: FqName, val names: Collection<String>) : ChangeInfo(fqName) {
