@@ -5,7 +5,8 @@
 
 package org.jetbrains.kotlin.commonizer.core
 
-import org.jetbrains.kotlin.commonizer.cir.*
+import org.jetbrains.kotlin.commonizer.cir.CirClassOrTypeAliasType
+import org.jetbrains.kotlin.commonizer.cir.CirTypeAlias
 import org.jetbrains.kotlin.commonizer.mergedtree.CirKnownClassifiers
 
 class TypeAliasCommonizer(

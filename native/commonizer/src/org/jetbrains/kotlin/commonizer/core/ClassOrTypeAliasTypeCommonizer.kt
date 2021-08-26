@@ -17,6 +17,7 @@ internal class ClassOrTypeAliasTypeCommonizer(
     override fun commonize(first: CirClassOrTypeAliasType, second: CirClassOrTypeAliasType): CirClassOrTypeAliasType? {
         if (first is CirClassType && second is CirClassType) {
             return ClassTypeCommonizer(classifiers).commonize(listOf(first, second))
+                ?: AliasedNumbersTypeCommonizer.commonize(first, second)
         }
 
         if (first is CirTypeAliasType && second is CirTypeAliasType) {
@@ -25,7 +26,7 @@ internal class ClassOrTypeAliasTypeCommonizer(
             try our luck with commonizing those class types
              */
             return TypeAliasTypeCommonizer(classifiers).commonize(listOf(first, second))
-                ?: ClassTypeCommonizer(classifiers).commonize(listOf(first.expandedType(), second.expandedType()))
+                ?: commonize(first.expandedType(), second.expandedType())
         }
 
         val classType = when {
@@ -47,7 +48,7 @@ internal class ClassOrTypeAliasTypeCommonizer(
         val typeAliasClassType = TypeAliasTypeCommonizer(classifiers).commonize(listOf(typeAliasType))?.expandedType()
             ?: typeAliasType.expandedType()
 
-        return ClassTypeCommonizer(classifiers).commonize(listOf(classType, typeAliasClassType))
+        return commonize(classType, typeAliasClassType)
     }
 }
 
