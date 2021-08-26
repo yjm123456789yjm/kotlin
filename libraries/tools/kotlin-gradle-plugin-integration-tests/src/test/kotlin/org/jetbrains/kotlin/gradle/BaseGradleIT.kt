@@ -258,6 +258,7 @@ abstract class BaseGradleIT {
         val customEnvironmentVariables: Map<String, String> = mapOf(),
         val dryRun: Boolean = false,
         val abiSnapshot: Boolean = false,
+        val enableAssertions: Boolean = true
     )
 
     enum class ConfigurationCacheProblems {
@@ -992,6 +993,11 @@ Finished executing task ':$taskName'|
             if (supportFailingBuildOnWarning && notUsingAgpWithWarnings && options.warningMode == WarningMode.Fail) {
                 add("--warning-mode=${WarningMode.Fail.name.toLowerCase()}")
             }
+
+            if(options.enableAssertions) {
+                add("-Dorg.gradle.jvmargs=-ea")
+            }
+
             addAll(options.freeCommandLineArgs)
         }
 
