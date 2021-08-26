@@ -5539,6 +5539,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 }
 
                 @Test
+                @TestMetadata("backingFieldWithSmartTypeParameters.kt")
+                public void testBackingFieldWithSmartTypeParameters() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/backingFieldWithSmartTypeParameters.kt");
+                }
+
+                @Test
                 @TestMetadata("explicitBackingFieldInInterface.kt")
                 public void testExplicitBackingFieldInInterface() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldInInterface.kt");
@@ -5548,6 +5554,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 @TestMetadata("explicitBackingFieldType.kt")
                 public void testExplicitBackingFieldType() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/explicitBackingFieldType.kt");
+                }
+
+                @Test
+                @TestMetadata("filePrivateBackingFieldAccess.kt")
+                public void testFilePrivateBackingFieldAccess() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/filePrivateBackingFieldAccess.kt");
                 }
 
                 @Test
