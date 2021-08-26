@@ -42,7 +42,7 @@ internal fun Configuration.setupAsLocalTargetSpecificConfigurationIfSupported(ta
     // fail to resolve as transitive dependencies of the platform modules, just as we don't mark their
     // `api/RuntimeElements` with the KotlinPlatformType
     if ((target !is KotlinWithJavaTarget<*> || target.platformType != KotlinPlatformType.common)) {
-        usesPlatformOf(target)
+        setupKotlinTarget(target)
         attributes.attribute(ProjectLocalConfigurations.ATTRIBUTE, ProjectLocalConfigurations.LOCAL_TO_PROJECT_PREFIX + target.project.path)
     }
 }

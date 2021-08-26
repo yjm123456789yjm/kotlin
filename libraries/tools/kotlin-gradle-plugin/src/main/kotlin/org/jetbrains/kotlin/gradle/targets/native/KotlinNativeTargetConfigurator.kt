@@ -14,7 +14,6 @@ import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.attributes.AttributeContainer
-import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
 import org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE
 import org.gradle.api.internal.artifacts.ArtifactAttributes
@@ -39,7 +38,9 @@ import org.jetbrains.kotlin.gradle.targets.native.internal.commonizeCInteropTask
 import org.jetbrains.kotlin.gradle.targets.native.internal.createCInteropApiElementsKlibArtifact
 import org.jetbrains.kotlin.gradle.targets.native.internal.locateOrCreateCInteropApiElementsConfiguration
 import org.jetbrains.kotlin.gradle.targets.native.internal.locateOrCreateCInteropDependencyConfiguration
-import org.jetbrains.kotlin.gradle.targets.native.tasks.*
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeHostTest
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeSimulatorTest
+import org.jetbrains.kotlin.gradle.targets.native.tasks.KotlinNativeTest
 import org.jetbrains.kotlin.gradle.tasks.*
 import org.jetbrains.kotlin.gradle.testing.internal.configureConventions
 import org.jetbrains.kotlin.gradle.testing.internal.kotlinTestRegistry
@@ -337,22 +338,15 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
             // all exported dependency are also added in the corresponding api configurations.
             // The check is performed during a link task execution.
             project.configurations.maybeCreate(it.apiConfigurationName).apply {
-                isCanBeResolved = true
-                usesPlatformOf(target)
-                attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+                setupResolvableKotlinLibraryDependencies(target, KotlinUsages.consumerApiUsage(target))
             }
         }
 
         target.binaries.withType(AbstractNativeLibrary::class.java).all { framework ->
             project.configurations.maybeCreate(framework.exportConfigurationName).apply {
+                setupResolvableKotlinLibraryDependencies(target, KotlinUsages.consumerApiUsage(target))
                 isVisible = false
                 isTransitive = false
-                isCanBeConsumed = false
-                isCanBeResolved = true
-                usesPlatformOf(target)
-                attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(target))
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
                 description = "Dependenceis to be exported in framework ${framework.name} for target ${target.targetName}"
             }
         }

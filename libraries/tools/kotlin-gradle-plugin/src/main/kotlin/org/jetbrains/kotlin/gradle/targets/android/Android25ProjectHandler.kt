@@ -16,7 +16,6 @@ import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.FileCollection
 import org.gradle.api.specs.Spec
-import org.gradle.api.tasks.PathSensitivity
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.api.tasks.compile.AbstractCompile
@@ -114,12 +113,12 @@ class Android25ProjectHandler(
         AbstractKotlinTargetConfigurator.defineConfigurationsForCompilation(compilation)
 
         compilation.compileDependencyFiles = variant.compileConfiguration.apply {
-            usesPlatformOf(compilation.target)
+            setupKotlinTarget(compilation.target)
             project.addExtendsFromRelation(name, compilation.compileDependencyConfigurationName)
         }
 
         compilation.runtimeDependencyFiles = variant.runtimeConfiguration.apply {
-            usesPlatformOf(compilation.target)
+            setupKotlinTarget(compilation.target)
             project.addExtendsFromRelation(name, compilation.runtimeDependencyConfigurationName)
         }
 
@@ -143,7 +142,7 @@ class Android25ProjectHandler(
         }
 
         listOf(apiElementsConfigurationName, runtimeElementsConfigurationName).forEach { outputConfigurationName ->
-            project.configurations.findByName(outputConfigurationName)?.usesPlatformOf(compilation.target)
+            project.configurations.findByName(outputConfigurationName)?.setupKotlinTarget(compilation.target)
         }
     }
 }

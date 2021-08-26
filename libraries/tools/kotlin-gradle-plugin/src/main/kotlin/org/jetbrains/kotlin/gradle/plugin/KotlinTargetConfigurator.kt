@@ -14,7 +14,6 @@ import org.gradle.api.artifacts.PublishArtifact
 import org.gradle.api.artifacts.type.ArtifactTypeDefinition
 import org.gradle.api.attributes.Category
 import org.gradle.api.attributes.Usage
-import org.gradle.api.attributes.Usage.USAGE_ATTRIBUTE
 import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.ArtifactAttributes
 import org.gradle.api.plugins.BasePlugin
@@ -30,9 +29,6 @@ import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.kotlinExtension
 import org.jetbrains.kotlin.gradle.internal.reorderPluginClasspathDependencies
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
-import org.jetbrains.kotlin.gradle.targets.js.KotlinJsTarget
-import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrTarget
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.tasks.withType
@@ -179,34 +175,34 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
         configurations.maybeCreate(target.apiElementsConfigurationName).apply {
             description = "API elements for main."
             isVisible = false
-            isCanBeResolved = false
-            isCanBeConsumed = true
-            attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.producerApiUsage(target))
-            attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+
             extendsFrom(configurations.maybeCreate(mainCompilation.apiConfigurationName))
             if (mainCompilation is KotlinCompilationToRunnableFiles) {
                 val runtimeConfiguration = configurations.findByName(mainCompilation.deprecatedRuntimeConfigurationName)
                 runtimeConfiguration?.let { extendsFrom(it) }
             }
-            usesPlatformOf(target)
+
             setupAsPublicConfigurationIfSupported(target)
+            setupConsumableKotlinLibraryElements(
+                target = target, usage = when (target) {
+                    is KotlinMetadataTarget -> project.usageByName(KotlinUsages.KOTLIN_METADATA)
+                    else -> KotlinUsages.producerApiUsage(target)
+                }
+            )
         }
 
         if (mainCompilation is KotlinCompilationToRunnableFiles<*>) {
             configurations.maybeCreate(target.runtimeElementsConfigurationName).apply {
                 description = "Elements of runtime for main."
                 isVisible = false
-                isCanBeConsumed = true
-                isCanBeResolved = false
-                attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.producerRuntimeUsage(target))
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+
                 val runtimeConfiguration = configurations.findByName(mainCompilation.deprecatedRuntimeConfigurationName)
                 extendsFrom(implementationConfiguration)
                 if (runtimeOnlyConfiguration != null)
                     extendsFrom(runtimeOnlyConfiguration)
                 runtimeConfiguration?.let { extendsFrom(it) }
-                usesPlatformOf(target)
                 setupAsPublicConfigurationIfSupported(target)
+                setupResolvableKotlinLibraryDependencies(target, KotlinUsages.producerRuntimeUsage(target))
             }
         }
 
@@ -321,22 +317,18 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
             }
 
             val compileOnlyConfiguration = configurations.maybeCreate(compilation.compileOnlyConfigurationName).apply {
-                isCanBeConsumed = false
                 setupAsLocalTargetSpecificConfigurationIfSupported(target)
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+                setupResolvableKotlinLibraryDependencies(project)
                 isVisible = false
-                isCanBeResolved = true // Needed for IDE import
                 description = "Compile only dependencies for $compilation."
             }
 
             configurations.maybeCreate(compilation.compileDependencyConfigurationName).apply {
                 extendsFrom(compileOnlyConfiguration, implementationConfiguration)
-                usesPlatformOf(target)
                 isVisible = false
                 isCanBeConsumed = false
-                attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.consumerApiUsage(compilation.target))
-                attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
                 description = "Compile classpath for $compilation."
+                setupResolvableKotlinLibraryDependencies(target, KotlinUsages.consumerApiUsage(compilation.target))
             }
 
             if (compilation is KotlinCompilationToRunnableFiles) {
@@ -360,13 +352,9 @@ abstract class AbstractKotlinTargetConfigurator<KotlinTargetType : KotlinTarget>
                 configurations.maybeCreate(compilation.runtimeDependencyConfigurationName).apply {
                     extendsFrom(runtimeOnlyConfiguration, implementationConfiguration)
                     runtimeConfiguration?.let { extendsFrom(it) }
-                    usesPlatformOf(target)
                     isVisible = false
-                    isCanBeConsumed = false
-                    isCanBeResolved = true
-                    attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.consumerRuntimeUsage(compilation.target))
-                    attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
                     description = "Runtime classpath of $compilation."
+                    setupResolvableKotlinLibraryDependencies(target, KotlinUsages.consumerRuntimeUsage(compilation.target))
                 }
             }
         }
@@ -504,23 +492,6 @@ internal fun Project.usageByName(usageName: String): Usage =
 internal fun Project.categoryByName(categoryName: String): Category =
     objects.named(Category::class.java, categoryName)
 
-fun Configuration.usesPlatformOf(target: KotlinTarget): Configuration {
-    attributes.attribute(KotlinPlatformType.attribute, target.platformType)
-
-    if (target is KotlinJsTarget) {
-        attributes.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.legacy)
-    }
-
-    if (target is KotlinJsIrTarget) {
-        attributes.attribute(KotlinJsCompilerAttribute.jsCompilerAttribute, KotlinJsCompilerAttribute.ir)
-    }
-
-    // TODO: Provide an universal way to copy attributes from the target.
-    if (target is KotlinNativeTarget) {
-        attributes.attribute(KotlinNativeTarget.konanTargetAttribute, target.konanTarget.name)
-    }
-    return this
-}
 
 internal val Project.commonKotlinPluginClasspath get() = configurations.getByName(PLUGIN_CLASSPATH_CONFIGURATION_NAME)
 internal val KotlinCompilation<*>.pluginConfigurationName

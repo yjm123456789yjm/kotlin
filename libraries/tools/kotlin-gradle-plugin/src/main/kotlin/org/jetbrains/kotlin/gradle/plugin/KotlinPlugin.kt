@@ -6,26 +6,29 @@
 package org.jetbrains.kotlin.gradle.plugin
 
 import com.android.build.gradle.*
-import com.android.build.gradle.BasePlugin
 import com.android.build.gradle.api.AndroidSourceSet
 import com.android.build.gradle.api.BaseVariant
 import com.android.build.gradle.api.SourceKind
 import org.gradle.api.*
 import org.gradle.api.artifacts.maven.Conf2ScopeMappingContainer
 import org.gradle.api.artifacts.maven.MavenResolver
-import org.gradle.api.attributes.Category
-import org.gradle.api.attributes.Usage
 import org.gradle.api.file.ConfigurableFileTree
 import org.gradle.api.file.Directory
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.logging.Logging
-import org.gradle.api.plugins.*
+import org.gradle.api.plugins.InvalidPluginException
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginConvention
+import org.gradle.api.plugins.MavenPluginConvention
 import org.gradle.api.provider.Provider
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPom
 import org.gradle.api.publish.maven.MavenPublication
-import org.gradle.api.tasks.*
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceTask
+import org.gradle.api.tasks.TaskProvider
+import org.gradle.api.tasks.Upload
 import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.jvm.tasks.Jar
 import org.gradle.tooling.provider.model.ToolingModelBuilderRegistry
@@ -574,17 +577,13 @@ internal abstract class AbstractKotlinPlugin(
             // platform-specific modules
             if (kotlinTarget.platformType != KotlinPlatformType.common) {
                 project.configurations.getByName(kotlinTarget.apiElementsConfigurationName).run {
-                    attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.producerApiUsage(kotlinTarget))
-                    attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+                    setupConsumableKotlinLibraryElements(kotlinTarget, KotlinUsages.producerApiUsage(kotlinTarget))
                     setupAsPublicConfigurationIfSupported(kotlinTarget)
-                    usesPlatformOf(kotlinTarget)
                 }
 
                 project.configurations.getByName(kotlinTarget.runtimeElementsConfigurationName).run {
-                    attributes.attribute(Usage.USAGE_ATTRIBUTE, KotlinUsages.producerRuntimeUsage(kotlinTarget))
-                    attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+                    setupConsumableKotlinLibraryElements(kotlinTarget, KotlinUsages.producerRuntimeUsage(kotlinTarget))
                     setupAsPublicConfigurationIfSupported(kotlinTarget)
-                    usesPlatformOf(kotlinTarget)
                 }
             }
         }

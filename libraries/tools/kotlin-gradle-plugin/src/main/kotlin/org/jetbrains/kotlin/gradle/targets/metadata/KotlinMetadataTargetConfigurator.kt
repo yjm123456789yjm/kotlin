@@ -96,8 +96,28 @@ class KotlinMetadataTargetConfigurator :
             setupDependencyTransformationForCommonSourceSets(target)
 
             target.project.configurations.getByName(target.apiElementsConfigurationName).run {
-                attributes.attribute(USAGE_ATTRIBUTE, target.project.usageByName(KotlinUsages.KOTLIN_METADATA))
-                attributes.attribute(CATEGORY_ATTRIBUTE, target.project.categoryByName(Category.LIBRARY))
+                // TODO: Remove this block after 1.6 release!
+                /* Expecting that usage was set up when configuration was created */
+                if (attributes.getAttribute(USAGE_ATTRIBUTE) != target.project.usageByName(KotlinUsages.KOTLIN_METADATA)) {
+                    assert(false) {
+                        "Unexpected/Missing USAGE_ATTRIBUTE on ${target.apiElementsConfigurationName}\n" +
+                                "target=${target.name}\n" +
+                                "attribute=${attributes.getAttribute(USAGE_ATTRIBUTE)}"
+                    }
+                    attributes.attribute(USAGE_ATTRIBUTE, target.project.usageByName(KotlinUsages.KOTLIN_METADATA))
+                }
+
+                // TODO: Remove this block after 1.6 release!
+                /* Expecting that category was set up when configuration was created */
+                if (attributes.getAttribute(CATEGORY_ATTRIBUTE) != target.project.categoryByName(Category.LIBRARY)) {
+                    assert(false) {
+                        "Unexpected/Missing CATEGORY_ATTRIBUTE on ${target.apiElementsConfigurationName}\n" +
+                                "target=${target.name}\n" +
+                                "attribute=${attributes.getAttribute(CATEGORY_ATTRIBUTE)}"
+                    }
+                    attributes.attribute(CATEGORY_ATTRIBUTE, target.project.categoryByName(Category.LIBRARY))
+                }
+
                 /** Note: to add this artifact here is enough to avoid duplicate artifacts in this configuration: the default artifact
                  * won't be added (later) if there's already an artifact in the configuration, see
                  * [KotlinOnlyTargetConfigurator.configureArchivesAndComponent] */
@@ -267,12 +287,7 @@ class KotlinMetadataTargetConfigurator :
     private fun createMergedAllSourceSetsConfigurations(target: KotlinMetadataTarget): Unit = with(target.project) {
         listOf(ALL_COMPILE_METADATA_CONFIGURATION_NAME, ALL_RUNTIME_METADATA_CONFIGURATION_NAME).forEach { configurationName ->
             project.configurations.create(configurationName).apply {
-                isCanBeConsumed = false
-                isCanBeResolved = true
-
-                usesPlatformOf(target)
-                attributes.attribute(USAGE_ATTRIBUTE, project.usageByName(KotlinUsages.KOTLIN_METADATA))
-                attributes.attribute(CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
+                setupResolvableKotlinLibraryDependencies(target, project.usageByName(KotlinUsages.KOTLIN_METADATA))
             }
         }
     }
@@ -448,13 +463,8 @@ class KotlinMetadataTargetConfigurator :
     private fun createCommonMainElementsConfiguration(target: KotlinMetadataTarget) {
         val project = target.project
         project.configurations.create(COMMON_MAIN_ELEMENTS_CONFIGURATION_NAME).apply {
-            isCanBeConsumed = true
-            isCanBeResolved = false
+            setupConsumableKotlinLibraryElements(target, KotlinUsages.producerApiUsage(target))
             setupAsPublicConfigurationIfSupported(target)
-            usesPlatformOf(target)
-
-            attributes.attribute(USAGE_ATTRIBUTE, KotlinUsages.producerApiUsage(target))
-            attributes.attribute(CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
 
             val commonMainApiConfiguration = project.sourceSetDependencyConfigurationByScope(
                 project.kotlinExtension.sourceSets.getByName(KotlinSourceSet.COMMON_MAIN_SOURCE_SET_NAME),

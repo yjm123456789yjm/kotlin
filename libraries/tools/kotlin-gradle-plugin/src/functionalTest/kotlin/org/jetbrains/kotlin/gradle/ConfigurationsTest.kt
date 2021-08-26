@@ -18,6 +18,11 @@ import kotlin.test.assertNotNull
 
 class ConfigurationsTest : MultiplatformExtensionTest() {
 
+    /**
+     * Test if 'LIBRARY' Category was set on configurations.
+     * Make sure to call setupConsumableKotlinLibraryElements or setupResolvableKotlinLibraryDependencies
+     * on configurations in order to properly configure those.
+     */
     @Test
     fun `consumable configurations with platform target are marked with Category LIBRARY`() {
         kotlin.linuxX64()

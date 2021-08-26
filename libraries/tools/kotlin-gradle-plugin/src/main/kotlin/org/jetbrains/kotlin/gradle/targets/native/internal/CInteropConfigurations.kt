@@ -7,7 +7,10 @@ package org.jetbrains.kotlin.gradle.targets.native.internal
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.attributes.*
+import org.gradle.api.attributes.AttributeCompatibilityRule
+import org.gradle.api.attributes.AttributesSchema
+import org.gradle.api.attributes.CompatibilityCheckDetails
+import org.gradle.api.attributes.LibraryElements
 import org.gradle.api.internal.artifacts.ArtifactAttributes
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -42,15 +45,10 @@ internal fun Project.locateOrCreateCInteropDependencyConfiguration(
     val implementationConfiguration = configurations.getByName(compilation.implementationConfigurationName)
 
     return configurations.maybeCreate(cinterop.dependencyConfigurationName).apply {
+        setupResolvableKotlinLibraryDependencies(target, usageByName(KotlinUsages.KOTLIN_API))
         extendsFrom(compileOnlyConfiguration, implementationConfiguration)
         isVisible = false
-        isCanBeResolved = true
-        isCanBeConsumed = false
-
-        usesPlatformOf(target)
         attributes.attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, cinteropKlibLibraryElements())
-        attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, KotlinUsages.KOTLIN_API))
-        attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
         description = "Dependencies for cinterop '${cinterop.name}' (compilation '${compilation.name}')."
     }
 }
@@ -60,14 +58,9 @@ internal fun Project.locateOrCreateCInteropApiElementsConfiguration(target: Kotl
     configurations.findByName(configurationName)?.let { return it }
 
     return configurations.create(configurationName).apply {
-        isCanBeResolved = false
-        isCanBeConsumed = true
+        setupConsumableKotlinLibraryElements(target, usageByName(KotlinUsages.KOTLIN_API))
         setupAsPublicConfigurationIfSupported(target)
-
-        usesPlatformOf(target)
         attributes.attribute(LibraryElements.LIBRARY_ELEMENTS_ATTRIBUTE, cinteropKlibLibraryElements())
-        attributes.attribute(Usage.USAGE_ATTRIBUTE, objects.named(Usage::class.java, KotlinUsages.KOTLIN_API))
-        attributes.attribute(Category.CATEGORY_ATTRIBUTE, project.categoryByName(Category.LIBRARY))
         attributes.attribute(ArtifactAttributes.ARTIFACT_FORMAT, NativeArtifactFormat.KLIB)
     }
 }
