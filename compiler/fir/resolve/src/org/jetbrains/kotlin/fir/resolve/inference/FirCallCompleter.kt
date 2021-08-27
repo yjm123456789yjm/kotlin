@@ -101,29 +101,29 @@ class FirCallCompleter(
             session.lookupTracker?.recordTypeResolveAsLookup(resolvedTypeRef, call.source, null)
         }
 
-        if (expectedTypeRef is FirResolvedTypeRef) {
-            if (shouldEnforceExpectedType) {
-                if (isFromCast) {
-                    if (candidate.isFunctionForExpectTypeFromCastFeature()) {
-                        candidate.system.addSubtypeConstraint(
-                            initialType, expectedTypeRef.type,
-                            ConeExpectedTypeConstraintPosition(expectedTypeMismatchIsReportedInChecker = false),
-                        )
-                    }
-                } else {
-                    val expectedTypeConstraintPosition = ConeExpectedTypeConstraintPosition(expectedTypeMismatchIsReportedInChecker)
-                    if (expectedTypeRef.coneType.isUnitOrFlexibleUnit && mayBeCoercionToUnitApplied) {
-                        if (candidate.system.notFixedTypeVariables.isNotEmpty()) {
-                            candidate.system.addSubtypeConstraintIfCompatible(
-                                initialType, expectedTypeRef.type, expectedTypeConstraintPosition
-                            )
-                        }
-                    } else {
-                        candidate.system.addSubtypeConstraint(initialType, expectedTypeRef.type, expectedTypeConstraintPosition)
-                    }
+        val expectedTypeConstraintPosition = ConeExpectedTypeConstraintPosition(expectedTypeMismatchIsReportedInChecker)
+
+        when {
+            expectedTypeRef !is FirResolvedTypeRef -> {
+                // nothing
+            }
+            !shouldEnforceExpectedType -> {
+                candidate.system.addSubtypeConstraintIfCompatible(
+                    initialType, expectedTypeRef.type, expectedTypeConstraintPosition
+                )
+            }
+            isFromCast -> when {
+                candidate.isFunctionForExpectTypeFromCastFeature() -> {
+                    candidate.system.addSubtypeConstraint(
+                        initialType, expectedTypeRef.type,
+                        ConeExpectedTypeConstraintPosition(expectedTypeMismatchIsReportedInChecker = false),
+                    )
                 }
-            } else {
-                val expectedTypeConstraintPosition = ConeExpectedTypeConstraintPosition(expectedTypeMismatchIsReportedInChecker)
+            }
+            !expectedTypeRef.coneType.isUnitOrFlexibleUnit || !mayBeCoercionToUnitApplied -> {
+                candidate.system.addSubtypeConstraint(initialType, expectedTypeRef.type, expectedTypeConstraintPosition)
+            }
+            candidate.system.notFixedTypeVariables.isNotEmpty() -> {
                 candidate.system.addSubtypeConstraintIfCompatible(
                     initialType, expectedTypeRef.type, expectedTypeConstraintPosition
                 )
