@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.cli.js.K2JSCompiler
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.metadata.K2MetadataCompiler
+import org.jetbrains.kotlin.config.KotlinCompilerVersion
 import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.daemon.common.*
 import org.jetbrains.kotlin.daemon.report.*
@@ -646,6 +647,14 @@ class CompileServiceImpl(
 
     override fun getDaemonInfo(): CompileService.CallResult<String> = ifAlive(minAliveness = Aliveness.Dying) {
         CompileService.CallResult.Good("Kotlin daemon on port $port")
+    }
+
+    override fun getKotlinVersion(): CompileService.CallResult<String> = ifAlive {
+        try {
+            CompileService.CallResult.Good(KotlinCompilerVersion.VERSION)
+        } catch (e: Exception) {
+            CompileService.CallResult.Error("Unknown Kotlin version")
+        }
     }
 
     override fun getDaemonOptions(): CompileService.CallResult<DaemonOptions> = ifAlive {
