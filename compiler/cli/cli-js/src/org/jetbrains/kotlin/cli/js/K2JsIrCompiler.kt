@@ -369,7 +369,13 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
             messageCollector.report(INFO, "Executable production duration: ${System.currentTimeMillis() - start}ms")
 
-            val outputs = if (arguments.irDce && !arguments.irDceDriven) compiledModule.outputsAfterDce!! else compiledModule.outputs!!
+
+
+            val outputs = if (arguments.irDce && !arguments.irDceDriven)
+                compiledModule.outputsAfterDce!!
+            else
+                compiledModule.outputs!!
+
             outputFile.write(outputs)
             outputs.dependencies.forEach { (name, content) ->
                 outputFile.resolveSibling("$name.js").write(content)
