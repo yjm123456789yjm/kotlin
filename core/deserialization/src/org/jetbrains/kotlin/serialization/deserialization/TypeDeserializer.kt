@@ -200,6 +200,8 @@ class TypeDeserializer(
     private fun transformRuntimeFunctionTypeToSuspendFunction(funType: KotlinType): SimpleType? {
         val continuationArgumentType = funType.getValueParameterTypesFromFunctionType().lastOrNull()?.type ?: return null
         val continuationArgumentFqName = continuationArgumentType.constructor.declarationDescriptor?.fqNameSafe
+        // Before 1.6 we put experimental continuation as last parameter of suspend functional types to .kotlin_metadata files.
+        // Read them as suspend functional types instead of ordinary types with experimental continuation parameter.
         if (continuationArgumentType.arguments.size != 1 ||
             !(continuationArgumentFqName == CONTINUATION_INTERFACE_FQ_NAME || continuationArgumentFqName == EXPERIMENTAL_CONTINUATION_FQ_NAME)
         ) {
