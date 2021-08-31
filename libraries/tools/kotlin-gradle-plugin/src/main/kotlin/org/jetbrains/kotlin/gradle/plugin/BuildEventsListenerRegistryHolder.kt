@@ -13,11 +13,7 @@ import javax.inject.Inject
 open class BuildEventsListenerRegistryHolder @Inject constructor(val listenerRegistry: BuildEventsListenerRegistry?) {
     companion object {
         fun getInstance(project: Project) = run {
-            if (isConfigurationCacheAvailable(project.gradle)) {
-                project.objects.newInstance(BuildEventsListenerRegistryHolder::class.java)
-            } else {
-                BuildEventsListenerRegistryHolder(null)
-            }
+            project.objects.newInstance(BuildEventsListenerRegistryHolder::class.java)
         }
     }
 }

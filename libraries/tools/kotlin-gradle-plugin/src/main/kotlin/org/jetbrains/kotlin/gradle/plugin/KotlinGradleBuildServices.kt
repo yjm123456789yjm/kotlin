@@ -78,9 +78,18 @@ internal class KotlinGradleBuildServices private constructor(
             val kotlinGradleEsListenerProvider = project.provider {
                 val listeners = project.rootProject.objects.listProperty(ReportStatistics::class.java)
                     .value(listOf<ReportStatistics>(ReportStatisticsToElasticSearch))
+                val buildUuid = UUID.randomUUID().toString()
                 project.rootProject.extensions.findByName("buildScan")
-                    ?.also { listeners.add(ReportStatisticsToBuildScan(it as BuildScanExtension, UUID.randomUUID().toString(), "kotlin_version")) }
-                KotlinBuildEsStatListener(project.rootProject.name, listeners.get(), UUID.randomUUID().toString())
+                    ?.also {
+                        listeners.add(
+                            ReportStatisticsToBuildScan(
+                                it as BuildScanExtension,
+                                buildUuid,
+                                System.getProperty("defaultSnapshotVersion")
+                            )
+                        )
+                    }
+                KotlinBuildEsStatListener(project.rootProject.name, listeners.get(), buildUuid)
             }
 
 
@@ -92,14 +101,8 @@ internal class KotlinGradleBuildServices private constructor(
 
             val gradle = project.gradle
             val services = KotlinGradleBuildServices(gradle, kotlinGradleListenerProvider, kotlinGradleEsListenerProvider)
-            if (isConfigurationCacheAvailable(gradle)) {
-                listenerRegistryHolder.listenerRegistry!!.onTaskCompletion(kotlinGradleListenerProvider)
-                listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
-            } else {
-                gradle.addBuildListener(services)
-                gradle.taskGraph.addTaskExecutionListener(kotlinGradleEsListenerProvider.get())
-                log.kotlinDebug(INIT_MESSAGE)
-            }
+            listenerRegistryHolder.listenerRegistry!!.onTaskCompletion(kotlinGradleListenerProvider)
+            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
             instance = services
 
             services.buildStarted()
