@@ -71,7 +71,6 @@ private fun configurePlainTextReportWriter(
         log.error("Kotlin build report cannot be created: '$reportDir' is a file")
         return null
     }
-    reportDir.mkdirs()
     val ts = SimpleDateFormat("yyyy-MM-dd-HH-mm-ss").format(Calendar.getInstance().time)
     val reportFile = reportDir.resolve("${gradle.rootProject.name}-build-$ts.txt")
 

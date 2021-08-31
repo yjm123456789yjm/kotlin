@@ -25,6 +25,7 @@ internal class PlainTextBuildReportWriter(
 
     override fun process(build: BuildExecutionData) {
         try {
+            outputFile.parentFile.mkdirs()
             outputFile.bufferedWriter().use { writer ->
                 p = Printer(writer)
                 printBuildReport(build)
