@@ -86,7 +86,8 @@ abstract class KtLightModifierList<out T : KtLightElement<KtModifierListOwner, P
                 else -> KtLightNullabilityAnnotation(modifierListOwner as KtLightElement<*, PsiModifierListOwner>, this)
             }
 
-            return annotationsForEntries + listOf(nullabilityAnnotation)
+            return annotationsForEntries +
+                    (if (nullabilityAnnotation.qualifiedName != null) listOf(nullabilityAnnotation) else emptyList())
         }
 
         return annotationsForEntries
