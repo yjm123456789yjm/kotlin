@@ -5585,6 +5585,12 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
                 public void testRandomWeirdBackingFields() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/randomWeirdBackingFields.kt");
                 }
+
+                @Test
+                @TestMetadata("redundantExplicitBackingField.kt")
+                public void testRedundantExplicitBackingField() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/redundantExplicitBackingField.kt");
+                }
             }
         }
 
