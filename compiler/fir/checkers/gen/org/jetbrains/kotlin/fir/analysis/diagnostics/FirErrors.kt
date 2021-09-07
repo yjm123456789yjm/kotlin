@@ -478,6 +478,7 @@ object FirErrors {
     val EXPLICIT_BACKING_FIELD_IN_INTERFACE by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
     val EXPLICIT_BACKING_FIELD_IN_ABSTRACT_PROPERTY by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
     val EXPLICIT_BACKING_FIELD_IN_EXTENSION by error0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
+    val REDUNDANT_EXPLICIT_BACKING_FIELD by warning0<KtBackingField>(SourceElementPositioningStrategies.FIELD_KEYWORD)
     val ABSTRACT_PROPERTY_IN_PRIMARY_CONSTRUCTOR_PARAMETERS by error0<KtModifierListOwner>(SourceElementPositioningStrategies.ABSTRACT_MODIFIER)
 
     // Multi-platform projects

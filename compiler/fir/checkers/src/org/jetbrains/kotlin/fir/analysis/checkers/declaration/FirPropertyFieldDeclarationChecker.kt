@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.typeContext
+import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isSubtypeOf
 
 object FirPropertyFieldTypeChecker : FirPropertyChecker() {
@@ -36,6 +37,11 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
 
         if (backingField.initializer is FirErrorExpression) {
             reporter.reportOn(backingField.source, FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER, context)
+        }
+
+        if (backingField.returnTypeRef.coneType == declaration.returnTypeRef.coneType) {
+            reporter.reportOn(backingField.source, FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD, context)
+            return
         }
 
         if (!backingField.isSubtypeOf(declaration, typeCheckerContext)) {
