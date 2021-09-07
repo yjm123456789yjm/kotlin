@@ -13,7 +13,7 @@ dependencies {
     testCompileOnly(toolsJarApi())
     testCompile(project(":kotlin-test:kotlin-test-junit"))
     testCompile(commonDep("junit:junit"))
-    testCompile(intellijDep()) { includeJars("asm-all", rootProject = rootProject) }
+    testCompile("org.jetbrains.intellij.deps:asm-all:9.1")
 }
 
 sourceSets {
