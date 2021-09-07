@@ -60,6 +60,7 @@ abstract class FirVisibilityChecker : FirSessionComponent {
         // This check prevents resolving protected and
         // public fields.
         if (
+            field.visibility == Visibilities.PrivateToThis ||
             field.visibility == Visibilities.Private ||
             field.visibility == Visibilities.Internal
         ) {
