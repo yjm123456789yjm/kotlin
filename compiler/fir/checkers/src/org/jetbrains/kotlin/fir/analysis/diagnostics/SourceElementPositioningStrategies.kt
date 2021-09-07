@@ -309,4 +309,9 @@ object SourceElementPositioningStrategies {
         LightTreePositioningStrategies.OPERATOR_MODIFIER,
         PositioningStrategies.OPERATOR_MODIFIER
     )
+
+    val FIELD_KEYWORD = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.FIELD_KEYWORD,
+        PositioningStrategies.FIELD_KEYWORD
+    )
 }

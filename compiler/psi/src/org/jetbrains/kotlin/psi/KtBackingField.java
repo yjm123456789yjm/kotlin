@@ -74,4 +74,8 @@ public class KtBackingField extends KtDeclarationStub<KotlinBackingFieldStub>
     public int getTextOffset() {
         return getNamePlaceholder().getTextRange().getStartOffset();
     }
+
+    public PsiElement getFieldKeyword() {
+        return findChildByType(KtTokens.FIELD_KEYWORD);
+    }
 }
