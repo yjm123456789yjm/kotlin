@@ -47,7 +47,7 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
         }
     }
 
-    private val FirPropertyAccessor?.isMissing
+    private val FirPropertyAccessor?.isNotExplicit
         get() = this == null || this is FirDefaultPropertyAccessor
 
     private fun checkAsPropertyNotSubtype(
@@ -55,7 +55,7 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        if (property.isVar && property.setter.isMissing) {
+        if (property.isVar && property.setter.isNotExplicit) {
             reporter.reportOn(property.source, FirErrors.PROPERTY_MUST_HAVE_SETTER, context)
         }
     }
@@ -65,7 +65,7 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        if (property.getter.isMissing) {
+        if (property.getter.isNotExplicit) {
             reporter.reportOn(property.source, FirErrors.PROPERTY_MUST_HAVE_GETTER, context)
         }
     }
