@@ -106,6 +106,12 @@ public class FirSpecificBlackBoxCodegenTestGenerated extends AbstractFirBlackBox
                 }
 
                 @Test
+                @TestMetadata("lateinitBackingFields.kt")
+                public void testLateinitBackingFields() throws Exception {
+                    runTest("compiler/fir/fir2ir/testData/codegen/box/properties/backingField/lateinitBackingFields.kt");
+                }
+
+                @Test
                 @TestMetadata("overriddenPropertiesWithExplicitBackingFields.kt")
                 public void testOverriddenPropertiesWithExplicitBackingFields() throws Exception {
                     runTest("compiler/fir/fir2ir/testData/codegen/box/properties/backingField/overriddenPropertiesWithExplicitBackingFields.kt");

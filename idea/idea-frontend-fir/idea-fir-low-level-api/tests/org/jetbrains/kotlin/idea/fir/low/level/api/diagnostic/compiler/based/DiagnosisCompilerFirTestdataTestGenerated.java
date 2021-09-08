@@ -5563,6 +5563,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 }
 
                 @Test
+                @TestMetadata("lateinitBackingFields.kt")
+                public void testLateinitBackingFields() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/lateinitBackingFields.kt");
+                }
+
+                @Test
                 @TestMetadata("localVariablesWithBackingFields.kt")
                 public void testLocalVariablesWithBackingFields() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/localVariablesWithBackingFields.kt");
@@ -5584,6 +5590,12 @@ public class DiagnosisCompilerFirTestdataTestGenerated extends AbstractDiagnosis
                 @TestMetadata("randomWeirdBackingFields.kt")
                 public void testRandomWeirdBackingFields() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/randomWeirdBackingFields.kt");
+                }
+
+                @Test
+                @TestMetadata("redundantExplicitBackingField.kt")
+                public void testRedundantExplicitBackingField() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/redundantExplicitBackingField.kt");
                 }
             }
         }

@@ -1,0 +1,12 @@
+FILE: lateinitBackingFields.kt
+    public final var that: R|kotlin/Int|
+        public get(): R|kotlin/Int| {
+            ^ F|/that|.R|kotlin/String.length|
+        }
+        public set(value: R|kotlin/Int|): R|kotlin/Unit| {
+            F|/that| = R|<local>/value|.R|kotlin/Any.toString|()
+        }
+    public final fun test(): R|kotlin/Unit| {
+        R|/that| = Int(1)
+        R|kotlin/io/println|(R|/that|)
+    }

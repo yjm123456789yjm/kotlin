@@ -5563,6 +5563,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
                 }
 
                 @Test
+                @TestMetadata("lateinitBackingFields.kt")
+                public void testLateinitBackingFields() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/lateinitBackingFields.kt");
+                }
+
+                @Test
                 @TestMetadata("localVariablesWithBackingFields.kt")
                 public void testLocalVariablesWithBackingFields() throws Exception {
                     runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/properties/backingField/localVariablesWithBackingFields.kt");
