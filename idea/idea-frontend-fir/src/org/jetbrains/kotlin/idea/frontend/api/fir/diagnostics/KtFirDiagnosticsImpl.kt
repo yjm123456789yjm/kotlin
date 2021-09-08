@@ -2685,6 +2685,13 @@ internal class PropertyFieldDeclarationMissingInitializerImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class LateinitPropertyFieldDeclarationWithInitializerImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.LateinitPropertyFieldDeclarationWithInitializer(), KtAbstractFirDiagnostic<KtBackingField> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class PropertyMustHaveGetterImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,

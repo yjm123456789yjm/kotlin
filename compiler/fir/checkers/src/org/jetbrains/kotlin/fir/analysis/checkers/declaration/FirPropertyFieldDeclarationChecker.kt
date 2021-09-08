@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.hasExplicitBackingField
+import org.jetbrains.kotlin.fir.declarations.utils.isLateInit
 import org.jetbrains.kotlin.fir.expressions.FirErrorExpression
 import org.jetbrains.kotlin.fir.typeContext
 import org.jetbrains.kotlin.fir.types.coneType
@@ -35,8 +36,10 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
             reporter.reportOn(declaration.initializer?.source, FirErrors.PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION, context)
         }
 
-        if (backingField.initializer == null) {
+        if (backingField.initializer == null && !backingField.isLateInit) {
             reporter.reportOn(backingField.source, FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER, context)
+        } else if (backingField.initializer != null && backingField.isLateInit) {
+            reporter.reportOn(backingField.source, FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER, context)
         }
 
         if (backingField.returnTypeRef.coneType == declaration.returnTypeRef.coneType) {

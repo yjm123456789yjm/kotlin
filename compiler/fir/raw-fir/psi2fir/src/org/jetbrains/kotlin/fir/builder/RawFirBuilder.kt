@@ -461,6 +461,7 @@ open class RawFirBuilder(
                         declaration?.hasModifier(INLINE_KEYWORD) == true
                 isExternal = property.hasModifier(EXTERNAL_KEYWORD) ||
                         declaration?.hasModifier(EXTERNAL_KEYWORD) == true
+                isLateInit = declaration?.hasModifier(LATEINIT_KEYWORD) == true
             }
         }
 

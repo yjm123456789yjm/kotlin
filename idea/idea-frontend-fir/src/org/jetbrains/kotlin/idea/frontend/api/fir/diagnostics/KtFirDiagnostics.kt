@@ -1670,6 +1670,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = PropertyFieldDeclarationMissingInitializer::class
     }
 
+    abstract class LateinitPropertyFieldDeclarationWithInitializer : KtFirDiagnostic<KtBackingField>() {
+        override val diagnosticClass get() = LateinitPropertyFieldDeclarationWithInitializer::class
+    }
+
     abstract class PropertyMustHaveGetter : KtFirDiagnostic<KtProperty>() {
         override val diagnosticClass get() = PropertyMustHaveGetter::class
     }

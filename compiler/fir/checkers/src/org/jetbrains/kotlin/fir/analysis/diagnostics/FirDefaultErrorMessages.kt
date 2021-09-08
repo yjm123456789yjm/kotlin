@@ -254,6 +254,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVISIBLE_REFEREN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.IS_ENUM_ENTRY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ITERATOR_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.KCLASS_WITH_NULLABLE_TYPE_PARAMETER_IN_SIGNATURE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LEAKED_IN_PLACE_LAMBDA
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LOCAL_ANNOTATION_CLASS_ERROR
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LOCAL_INTERFACE_NOT_ALLOWED
@@ -1254,6 +1255,10 @@ class FirDefaultErrorMessages {
             map.put(
                 PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER,
                 "Property backing field declaration must have an initializer"
+            )
+            map.put(
+                LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER,
+                "Lateinit backing field cannot have an initializer"
             )
             map.put(
                 PROPERTY_MUST_HAVE_GETTER,
