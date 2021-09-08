@@ -68,25 +68,28 @@ class DeclarationGenerator(val context: WasmModuleCodegenContext) : IrElementVis
         val watName = declaration.fqNameWhenAvailable.toString()
         val irParameters = declaration.getEffectiveValueParameters()
         // TODO: Exported types should be transformed in a separate lowering by creating shim functions for each export.
+        val isExported = declaration.isExported(context.backendContext)
         val resultType =
-            if (declaration.isExported(context.backendContext))
+            if (isExported)
                 context.transformExportedResultType(declaration.returnType)
             else
                 context.transformResultType(declaration.returnType)
+
+        val isExportedOrImported = isExported || importedName != null
         val wasmFunctionType =
             WasmFunctionType(
                 name = watName,
                 parameterTypes = irParameters.map {
                     val t = context.transformValueParameterType(it)
-                    if (importedName != null && t is WasmRefNullType) {
-                        WasmEqRef
+                    if (isExportedOrImported && t is WasmRefNullType) {
+                        WasmRefNullType(WasmHeapType.Simple.Data)
                     } else {
                         t
                     }
                 },
                 resultTypes = listOfNotNull(
                     resultType.let {
-                        if (importedName != null && it is WasmRefNullType) WasmEqRef else it
+                        if (isExportedOrImported && it is WasmRefNullType) WasmRefNullType(WasmHeapType.Simple.Data) else it
                     }
                 )
             )
@@ -378,4 +381,4 @@ fun IrFunction.getEffectiveValueParameters(): List<IrValueParameter> {
 }
 
 fun IrFunction.isExported(context: WasmBackendContext): Boolean =
-    visibility == DescriptorVisibilities.PUBLIC && fqNameWhenAvailable in context.additionalExportedDeclarations
+    fqNameWhenAvailable in context.additionalExportedDeclarations || isJsExport()
