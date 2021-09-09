@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageRenderer
 import org.jetbrains.kotlin.cli.common.messages.PrintingMessageCollector
 import org.jetbrains.kotlin.cli.common.output.writeAllTo
-import org.jetbrains.kotlin.cli.js.resolve
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.config.*
@@ -27,7 +26,6 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProviderImpl
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumerImpl
 import org.jetbrains.kotlin.incremental.js.TranslationResultValue
-import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.ic.SerializedIcData
 import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.js.backend.JsToStringGenerationVisitor
@@ -153,8 +151,7 @@ abstract class BasicBoxTest(
             if (errorPolicyMatcher.find()) ErrorTolerancePolicy.resolvePolicy(errorPolicyMatcher.group(1)) else ErrorTolerancePolicy.DEFAULT
 
         val skipDceDriven = SKIP_DCE_DRIVEN.matcher(fileContent).find()
-        val skipEsModules = SKIP_ES_MODULES.matcher(fileContent).find()
-        val skipOldModuleSystems = SKIP_OLD_MODULE_SYSTEMS.matcher(fileContent).find()
+        val esModules = ES_MODULES.matcher(fileContent).find()
 
         val splitPerModule = SPLIT_PER_MODULE.matcher(fileContent).find()
         val skipMangleVerification = SKIP_MANGLE_VERIFICATION.matcher(fileContent).find()
@@ -198,7 +195,7 @@ abstract class BasicBoxTest(
             val mainModule = modules[mainModuleName] ?: error("No module with name \"$mainModuleName\"")
             val icCache = mutableMapOf<String, SerializedIcData>()
 
-            if (skipOldModuleSystems) {
+            if (esModules) {
                 modules.forEach { _, m -> m.moduleKind = ModuleKind.COMMON_JS }
             }
 
@@ -237,8 +234,7 @@ abstract class BasicBoxTest(
                     isMainModule,
                     expectActualLinker,
                     skipDceDriven,
-                    skipEsModules,
-                    skipOldModuleSystems,
+                    esModules,
                     splitPerModule,
                     errorPolicy,
                     propertyLazyInitialization,
@@ -292,7 +288,7 @@ abstract class BasicBoxTest(
                 additionalFiles += additionalJsFile
             }
 
-            if (targetBackend != TargetBackend.JS && !skipEsModules) {
+            if (esModules) {
                 val additionalMainJsFile =
                     (filePath.removeSuffix("." + KotlinFileType.EXTENSION) + "__main.js").takeIf { File(it).exists() }
 
@@ -342,10 +338,12 @@ abstract class BasicBoxTest(
                 }
             }
 
-            if (skipOldModuleSystems)
+            if (esModules)
                 return
 
             // Old systems tests
+
+            additionalFiles.addAll(0, moduleEmulationFiles)
 
             val additionalMainFiles = mutableListOf<String>()
             val additionalMainJsFile = filePath.removeSuffix("." + KotlinFileType.EXTENSION) + "__main.js"
@@ -553,8 +551,7 @@ abstract class BasicBoxTest(
         isMainModule: Boolean,
         expectActualLinker: Boolean,
         skipDceDriven: Boolean,
-        skipEsModules: Boolean,
-        skipOldModuleSystems: Boolean,
+        esModules: Boolean,
         splitPerModule: Boolean,
         errorIgnorancePolicy: ErrorTolerancePolicy,
         propertyLazyInitialization: Boolean,
@@ -612,8 +609,7 @@ abstract class BasicBoxTest(
             needsFullIrRuntime,
             isMainModule,
             skipDceDriven,
-            skipEsModules,
-            skipOldModuleSystems,
+            esModules,
             splitPerModule,
             propertyLazyInitialization,
             safeExternalBoolean,
@@ -714,8 +710,7 @@ abstract class BasicBoxTest(
             needsFullIrRuntime,
             isMainModule = false,
             skipDceDriven = true,
-            skipEsModules = true,
-            skipOldModuleSystems = false,
+            esModules = false,
             splitPerModule = false,
             propertyLazyInitialization = false,
             safeExternalBoolean = false,
@@ -801,8 +796,7 @@ abstract class BasicBoxTest(
         needsFullIrRuntime: Boolean,
         isMainModule: Boolean,
         skipDceDriven: Boolean,
-        skipEsModules: Boolean,
-        skipOldModuleSystems: Boolean,
+        esModules: Boolean,
         splitPerModule: Boolean,
         propertyLazyInitialization: Boolean,
         safeExternalBoolean: Boolean,
@@ -1217,8 +1211,7 @@ abstract class BasicBoxTest(
         private val WITH_STDLIB = Pattern.compile("^// *WITH_STDLIB *\$", Pattern.MULTILINE)
         private val EXPECT_ACTUAL_LINKER = Pattern.compile("^// EXPECT_ACTUAL_LINKER *$", Pattern.MULTILINE)
         private val SKIP_DCE_DRIVEN = Pattern.compile("^// *SKIP_DCE_DRIVEN *$", Pattern.MULTILINE)
-        private val SKIP_ES_MODULES = Pattern.compile("^// *SKIP_ES_MODULES *$", Pattern.MULTILINE)
-        private val SKIP_OLD_MODULE_SYSTEMS = Pattern.compile("^// *SKIP_OLD_MODULE_SYSTEMS *$", Pattern.MULTILINE)
+        private val ES_MODULES = Pattern.compile("^// *ES_MODULES *$", Pattern.MULTILINE)
 
         private val SPLIT_PER_MODULE = Pattern.compile("^// *SPLIT_PER_MODULE *$", Pattern.MULTILINE)
         private val SKIP_MANGLE_VERIFICATION = Pattern.compile("^// *SKIP_MANGLE_VERIFICATION *$", Pattern.MULTILINE)

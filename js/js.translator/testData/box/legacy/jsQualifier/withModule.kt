@@ -1,4 +1,4 @@
-// SKIP_ES_MODULES
+
 // EXPECTED_REACHABLE_NODES: 1282
 // MODULE: lib
 // FILE: lib.kt

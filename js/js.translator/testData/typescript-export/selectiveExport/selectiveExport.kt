@@ -2,7 +2,7 @@
 // RUN_PLAIN_BOX_FUNCTION
 // SKIP_MINIFICATION
 // SKIP_NODE_JS
-// SKIP_ES_MODULES
+
 
 // FILE: file1.kt
 package foo

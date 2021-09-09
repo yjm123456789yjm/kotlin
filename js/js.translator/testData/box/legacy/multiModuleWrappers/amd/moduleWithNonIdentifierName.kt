@@ -1,4 +1,4 @@
-// SKIP_ES_MODULES
+
 // EXPECTED_REACHABLE_NODES: 1284
 // MODULE: module-1
 // FILE: bar.kt

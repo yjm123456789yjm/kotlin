@@ -1,5 +1,5 @@
 // DONT_TARGET_EXACT_BACKEND: JS
-// SKIP_OLD_MODULE_SYSTEMS
+// ES_MODULES
 // FILE: a.kt
 @file:JsModule("./externalPackage.mjs")
 package foo

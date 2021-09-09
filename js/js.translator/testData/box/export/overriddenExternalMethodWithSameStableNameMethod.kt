@@ -1,6 +1,7 @@
 // EXPECTED_REACHABLE_NODES: 1252
 // IGNORE_BACKEND: JS
 // INFER_MAIN_MODULE
+// ES_MODULES
 
 // MODULE: overriden-external-method-with-same-stable-name-method
 // FILE: lib.kt

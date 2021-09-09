@@ -1,5 +1,5 @@
 // DONT_TARGET_EXACT_BACKEND: JS
-// SKIP_OLD_MODULE_SYSTEMS
+// ES_MODULES
 // FILE: bar.kt
 @file:JsModule("./interfaces.mjs")
 @file:JsQualifier("foo")

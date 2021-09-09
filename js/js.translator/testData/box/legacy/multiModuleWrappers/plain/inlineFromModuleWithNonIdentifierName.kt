@@ -1,4 +1,4 @@
-// SKIP_ES_MODULES
+
 // EXPECTED_REACHABLE_NODES: 1282
 // MODULE: #my-libr@ry
 // FILE: bar.kt

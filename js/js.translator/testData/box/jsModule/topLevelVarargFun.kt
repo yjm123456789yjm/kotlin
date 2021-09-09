@@ -1,5 +1,5 @@
 // DONT_TARGET_EXACT_BACKEND: JS
-// SKIP_OLD_MODULE_SYSTEMS
+// ES_MODULES
 @JsModule("./topLevelVarargFun.mjs")
 external fun foo(vararg arg: String): String
 

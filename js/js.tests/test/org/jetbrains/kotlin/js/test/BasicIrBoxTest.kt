@@ -112,8 +112,7 @@ abstract class BasicIrBoxTest(
         needsFullIrRuntime: Boolean,
         isMainModule: Boolean,
         skipDceDriven: Boolean,
-        skipEsModules: Boolean,
-        skipOldModuleSystems: Boolean,
+        esModules: Boolean,
         splitPerModule: Boolean,
         propertyLazyInitialization: Boolean,
         safeExternalBoolean: Boolean,
@@ -247,7 +246,6 @@ abstract class BasicIrBoxTest(
             val options = JsGenerationOptions(generatePackageJson = true, generateTypeScriptDefinitions = generateDts)
 
             fun generateEsModules(ir: LoweredIr, outputDir: File, granularity: JsGenerationGranularity) {
-                if (skipEsModules) return
                 outputDir.deleteRecursively()
                 generateEsModules(ir, jsOutputSink(outputDir), mainArguments = mainArguments, granularity = granularity, options = options)
                 generateTestFile(outputDir)
@@ -256,9 +254,10 @@ abstract class BasicIrBoxTest(
             fun generateOldModuleSystems(
                 ir: LoweredIr,
                 outputFile: File,
-                granularity: JsGenerationGranularity
+                outputDceFile: File,
+                granularity: JsGenerationGranularity,
+                runDce: Boolean,
             ) {
-                if (skipOldModuleSystems) return
                 outputFile.deleteRecursively()
 
                 check(granularity != PER_FILE) { "Per file granularity is not supported for old module systems" }
@@ -266,7 +265,7 @@ abstract class BasicIrBoxTest(
                     ir.context,
                     mainArguments,
                     fullJs = true,
-                    dceJs = false,
+                    dceJs = runDce,
                     multiModule = granularity == PER_MODULE,
                     relativeRequirePath = false
                 )
@@ -276,6 +275,12 @@ abstract class BasicIrBoxTest(
                     outputFile,
                     config
                 )
+
+                generatedModule.outputsAfterDce?.writeTo(
+                    outputDceFile,
+                    config
+                )
+
 
                 if (generateDts) {
                     val dtsFile = outputFile.withReplacedExtensionOrNull("_v5.js", ".d.ts")!!
@@ -288,20 +293,24 @@ abstract class BasicIrBoxTest(
 
             if (!skipRegularMode) {
                 val ir = compileToLoweredIr(dceDriven = false, granularity)
-                generateEsModules(ir, outputFile.esModulesSubDir, granularity)
-                generateOldModuleSystems(ir, outputFile, granularity)
-
-                if (runIrDce) {
-                    eliminateDeadDeclarations(ir.allModules, ir.context)
-                    generateEsModules(ir, dceOutputFile.esModulesSubDir, granularity)
-                    generateOldModuleSystems(ir, dceOutputFile, granularity)
+                if (esModules) {
+                    generateEsModules(ir, outputFile.esModulesSubDir, granularity)
+                    if (runIrDce) {
+                        eliminateDeadDeclarations(ir.allModules, ir.context)
+                        generateEsModules(ir, dceOutputFile.esModulesSubDir, granularity)
+                    }
+                } else {
+                    generateOldModuleSystems(ir, outputFile, dceOutputFile, granularity, runIrDce)
                 }
             }
 
             if (runIrPir && !skipDceDriven) {
                 val ir = compileToLoweredIr(dceDriven = true, granularity)
-                generateEsModules(ir, pirOutputFile.esModulesSubDir, granularity)
-                generateOldModuleSystems(ir, pirOutputFile, granularity)
+                if (esModules) {
+                    generateEsModules(ir, pirOutputFile.esModulesSubDir, granularity)
+                } else {
+                    generateOldModuleSystems(ir, pirOutputFile, pirOutputFile, granularity, false)
+                }
             }
         } else {
             val module = prepareAnalyzedSourceModule(

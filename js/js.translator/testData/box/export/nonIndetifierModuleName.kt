@@ -2,7 +2,7 @@
 // SKIP_MINIFICATION
 // INFER_MAIN_MODULE
 // SKIP_NODE_JS
-// SKIP_OLD_MODULE_SYSTEMS
+// ES_MODULES
 
 // MODULE: non-identifier-module-name
 // FILE: lib.kt

@@ -1,4 +1,4 @@
-// SKIP_ES_MODULES
+
 // SKIP_MINIFICATION
 // Contains calls from external JS code
 

@@ -1,5 +1,5 @@
 // EXPECTED_REACHABLE_NODES: 1281
-// SKIP_OLD_MODULE_SYSTEMS
+// ES_MODULES
 external class TypeError(message: String?, fileName: String? = definedExternally, lineNumber: Int? = definedExternally) : Throwable
 
 fun box(): String {

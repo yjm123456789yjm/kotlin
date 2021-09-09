@@ -1,4 +1,4 @@
-// SKIP_ES_MODULES
+
 // MODULE: main
 // MODULE_KIND: COMMON_JS
 // FILE: lib.kt

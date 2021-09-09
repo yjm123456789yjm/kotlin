@@ -1,7 +1,7 @@
 // EXPECTED_REACHABLE_NODES: 1252
 // INFER_MAIN_MODULE
 
-// SKIP_OLD_MODULE_SYSTEMS
+// ES_MODULES
 // MODULE: overriden-chain-non-export-intermediate
 // FILE: lib.kt
 @JsExport
