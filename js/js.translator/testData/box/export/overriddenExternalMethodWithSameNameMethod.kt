@@ -1,5 +1,6 @@
 // EXPECTED_REACHABLE_NODES: 1252
 // INFER_MAIN_MODULE
+// DONT_TARGET_EXACT_BACKEND: JS
 // ES_MODULES
 
 // MODULE: overriden-external-method-with-same-name-method
