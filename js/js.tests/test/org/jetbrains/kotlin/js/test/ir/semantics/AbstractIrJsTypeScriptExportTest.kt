@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.js.test.ir.semantics
 import org.jetbrains.kotlin.js.test.BasicIrBoxTest
 import org.jetbrains.kotlin.test.KotlinTestUtils
 import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
 import java.io.File
 import java.lang.Boolean.getBoolean
 
@@ -22,10 +23,12 @@ abstract class AbstractIrJsTypeScriptExportTest(
     override val generateDts = true
     private val updateReferenceDtsFiles = getBoolean("kotlin.js.updateReferenceDtsFiles")
 
-    override fun performAdditionalChecks(inputFile: File, outputMainModuleDir: File) {
+    override fun performAdditionalChecks(inputFile: File, outputFile: File) {
         if (skipRegularMode) return
-        val referenceDtsFile = File(inputFile.parentFile, "JS_TESTS/index.d.ts")
-        val generatedDtsFile = File(outputMainModuleDir, "index.d.ts")
+        val referenceDtsFile = inputFile.withReplacedExtensionOrNull(".kt", ".d.ts")
+            ?: error("Can't find reference .d.ts file")
+        val generatedDtsFile = outputFile.withReplacedExtensionOrNull("_v5", ".d.ts")
+            ?: error("Can't find generated .d.ts file")
 
         val generatedDts = generatedDtsFile.readText()
 

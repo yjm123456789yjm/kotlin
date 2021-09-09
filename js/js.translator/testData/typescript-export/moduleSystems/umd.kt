@@ -2,6 +2,7 @@
 // SKIP_MINIFICATION
 // SKIP_NODE_JS
 // MODULE_KIND: UMD
+// SKIP_ES_MODULES
 
 @file:JsExport
 

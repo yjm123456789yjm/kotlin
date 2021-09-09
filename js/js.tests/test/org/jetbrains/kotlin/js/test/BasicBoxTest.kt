@@ -331,7 +331,6 @@ abstract class BasicBoxTest(
 
                 if (!skipRegularMode) {
                     runIrEsmTests(outputDir.getTestDir())
-                    performAdditionalChecks(file, File(outputDir.getTestDir().esModulesSubDir, mainModuleName))
 
                     if (runIrDce) {
                         runIrEsmTests(dceOutputDir.getTestDir())
@@ -343,28 +342,34 @@ abstract class BasicBoxTest(
                 }
             }
 
-            if (targetBackend != TargetBackend.JS || skipOldModuleSystems)
+            if (skipOldModuleSystems)
                 return
 
             // Old systems tests
 
-            val allJsFiles = moduleEmulationFiles + additionalFiles + inputJsFiles + generatedJsFiles.map { it.first } + globalCommonFiles + localCommonFiles +
-                    additionalCommonFiles
+            val additionalMainFiles = mutableListOf<String>()
+            val additionalMainJsFile = filePath.removeSuffix("." + KotlinFileType.EXTENSION) + "__main.js"
+            if (File(additionalMainJsFile).exists()) {
+                additionalMainFiles += additionalMainJsFile
+            }
 
-            val dceAllJsFiles = moduleEmulationFiles+ additionalFiles + inputJsFiles + generatedJsFiles.map {
+            val allJsFiles = additionalFiles + inputJsFiles + generatedJsFiles.map { it.first } + globalCommonFiles + localCommonFiles +
+                    additionalCommonFiles + additionalMainFiles
+
+            val dceAllJsFiles = additionalFiles + inputJsFiles + generatedJsFiles.map {
                 it.first.replace(
                     outputDir.absolutePath,
                     dceOutputDir.absolutePath
                 )
-            } + globalCommonFiles + localCommonFiles + additionalCommonFiles
+            } + globalCommonFiles + localCommonFiles + additionalCommonFiles + additionalMainFiles
 
-            val pirAllJsFiles = moduleEmulationFiles + additionalFiles + inputJsFiles + generatedJsFiles.map {
+            val pirAllJsFiles = additionalFiles + inputJsFiles + generatedJsFiles.map {
                 it.first.replace(
                     outputDir.absolutePath,
                     pirOutputDir.absolutePath
                 )
             } +
-                    globalCommonFiles + localCommonFiles + additionalCommonFiles
+                    globalCommonFiles + localCommonFiles + additionalCommonFiles + additionalMainFiles
 
             val dontRunGeneratedCode =
                 InTextDirectivesUtils.dontRunGeneratedCode(targetBackend, file)
@@ -479,7 +484,7 @@ abstract class BasicBoxTest(
     }
 
     protected open fun performAdditionalChecks(generatedJsFiles: List<String>, outputPrefixFile: File?, outputPostfixFile: File?) {}
-    protected open fun performAdditionalChecks(inputFile: File, outputMainModuleDir: File) {}
+    protected open fun performAdditionalChecks(inputFile: File, outputFile: File) {}
 
     private fun generateNodeRunner(
         files: Collection<String>,

@@ -1612,11 +1612,6 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             runTest("js/js.translator/testData/box/export/exportProtectedMembers.kt");
         }
 
-        @TestMetadata("nonIndetifierModuleName.kt")
-        public void testNonIndetifierModuleName() throws Exception {
-            runTest("js/js.translator/testData/box/export/nonIndetifierModuleName.kt");
-        }
-
         @TestMetadata("overriddenChainNonExportIntermediate.kt")
         public void testOverriddenChainNonExportIntermediate() throws Exception {
             runTest("js/js.translator/testData/box/export/overriddenChainNonExportIntermediate.kt");
