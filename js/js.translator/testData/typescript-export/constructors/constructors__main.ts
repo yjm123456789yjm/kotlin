@@ -1,4 +1,4 @@
-import {
+const {
     ClassWithDefaultCtor,
     ClassWithPrimaryCtor,
     ClassWithSecondaryCtor,
@@ -6,7 +6,7 @@ import {
     DerivedClassWithSecondaryCtor,
     OpenClassWithMixedConstructors,
     KotlinGreeter
-} from "./JS_TESTS/index.js";
+} = JS_TESTS;
 
 function box(): string {
     const o1 = new ClassWithDefaultCtor();
@@ -50,5 +50,3 @@ function box(): string {
 
     return "OK";
 }
-
-console.assert(box() == "OK");

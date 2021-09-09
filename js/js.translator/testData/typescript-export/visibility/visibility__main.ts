@@ -1,20 +1,18 @@
-import { publicFun, Class } from "./JS_TESTS/index.js";
+import Class = JS_TESTS.Class;
 
 function box(): string {
     const tens: number[] = [
-        publicFun(),
-        new Class().publicVal,
-        new Class().publicFun()
+        JS_TESTS.publicVal,
+        JS_TESTS.publicFun(),
+        new JS_TESTS.Class().publicVal,
+        new JS_TESTS.Class().publicFun()
     ];
 
     if (!tens.every(value => value === 10))
         return "Fail 1";
     if (!(new Class() instanceof Class))
         return "Fail 2";
-    // TODO: Fix nested classes
-    // if (!(new Class.publicClass() instanceof Class.publicClass))
-    //     return "Fail 3";
+    if (!(new Class.publicClass() instanceof Class.publicClass))
+        return "Fail 3";
     return "OK";
 }
-
-console.assert(box() == "OK");

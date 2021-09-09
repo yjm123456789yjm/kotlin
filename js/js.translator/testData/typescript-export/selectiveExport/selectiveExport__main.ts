@@ -1,11 +1,13 @@
-import { exportedFun, ExportedClass, fileLevelExportedFun, FileLevelExportedClass } from "./JS_TESTS/index.js";
+import foo = JS_TESTS.foo;
 
 function box(): string {
     const tens: number[] = [
-        exportedFun(),
-        new ExportedClass().value,
-        fileLevelExportedFun(),
-        new FileLevelExportedClass().value
+        foo.exportedVal,
+        foo.exportedFun(),
+        new foo.ExportedClass().value,
+        foo.fileLevelExportedVal,
+        foo.fileLevelExportedFun(),
+        new foo.FileLevelExportedClass().value
     ];
 
     if (tens.every((value) => value === 10))
@@ -13,5 +15,3 @@ function box(): string {
 
     return "FAIL";
 }
-
-console.assert(box() == "OK")

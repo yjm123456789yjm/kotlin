@@ -7,6 +7,9 @@
 package foo
 
 @JsExport
+val exportedVal = 10
+
+@JsExport
 fun exportedFun() = 10
 
 @JsExport
@@ -31,6 +34,7 @@ external interface ExternalInterface
 
 package foo
 
+val fileLevelExportedVal = 10
 fun fileLevelExportedFun() = 10
 class FileLevelExportedClass {
     val value = 10
