@@ -6315,11 +6315,6 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             runTest("js/js.translator/testData/box/native/eval.kt");
         }
 
-        @TestMetadata("exception.kt")
-        public void testException() throws Exception {
-            runTest("js/js.translator/testData/box/native/exception.kt");
-        }
-
         @TestMetadata("inheritanceFromNativeClass.kt")
         public void testInheritanceFromNativeClass() throws Exception {
             runTest("js/js.translator/testData/box/native/inheritanceFromNativeClass.kt");

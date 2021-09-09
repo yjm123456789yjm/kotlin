@@ -1,3 +1,4 @@
+// DONT_TARGET_EXACT_BACKEND: JS
 // EXPECTED_REACHABLE_NODES: 1281
 // ES_MODULES
 external class TypeError(message: String?, fileName: String? = definedExternally, lineNumber: Int? = definedExternally) : Throwable
