@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -17,15 +17,16 @@ import org.jetbrains.kotlin.asJava.elements.*
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.isSuspendFunctionType
 import org.jetbrains.kotlin.codegen.AsmUtil
-import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
-import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
-import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.codegen.AsmUtil.LABELED_THIS_PARAMETER
 import org.jetbrains.kotlin.codegen.AsmUtil.RECEIVER_PARAMETER_NAME
+import org.jetbrains.kotlin.codegen.coroutines.SUSPEND_FUNCTION_COMPLETION_PARAMETER_NAME
+import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
+import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
 import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.isPrivate
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 internal class KtUltraLightSuspendContinuationParameter(
     private val ktFunction: KtFunction,
@@ -57,11 +58,13 @@ internal class KtUltraLightSuspendContinuationParameter(
 
     override fun getType(): PsiType = psiType
 
-    override fun equals(other: Any?): Boolean =
-        other is KtUltraLightSuspendContinuationParameter && other.ktFunction === this.ktFunction
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtUltraLightSuspendContinuationParameter &&
+            other.ktFunction == ktFunction &&
+            other.method == method
 
     override fun isVarArgs(): Boolean = false
-    override fun hashCode(): Int = name.hashCode()
+    override fun hashCode(): Int = method.hashCode()
     override fun getModifierList(): PsiModifierList = lightModifierList
     override fun getNavigationElement(): PsiElement = ktFunction.navigationElement
     override fun getUseScope(): SearchScope = ktFunction.useScope
@@ -80,7 +83,7 @@ internal abstract class KtUltraLightParameter(
     override val kotlinOrigin: KtParameter?,
     protected val support: KtUltraLightSupport,
     private val ultraLightMethod: KtUltraLightMethod
-) : org.jetbrains.kotlin.asJava.elements.LightParameter(
+) : LightParameter(
     name,
     PsiType.NULL,
     ultraLightMethod,
@@ -129,14 +132,18 @@ internal abstract class KtUltraLightParameter(
     override fun getContainingFile(): PsiFile = method.containingFile
     override fun getParent(): PsiElement = method.parameterList
 
-    override fun equals(other: Any?): Boolean =
-        other is KtUltraLightParameter && other.kotlinOrigin == this.kotlinOrigin
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtUltraLightParameter &&
+            other.javaClass == javaClass &&
+            other.name == name &&
+            other.ultraLightMethod == ultraLightMethod &&
+            other.kotlinOrigin == kotlinOrigin
 
-    override fun hashCode(): Int = kotlinOrigin.hashCode()
-
+    override fun hashCode(): Int = ultraLightMethod.hashCode()
     abstract override fun isVarArgs(): Boolean
 }
 
+@Suppress("EqualsOrHashCode")
 internal abstract class KtAbstractUltraLightParameterForDeclaration(
     name: String,
     kotlinOrigin: KtParameter?,
@@ -156,6 +163,10 @@ internal abstract class KtAbstractUltraLightParameterForDeclaration(
 
     override fun getType(): PsiType = _parameterType
 
+    override fun equals(other: Any?): Boolean = super.equals(other) &&
+            other is KtAbstractUltraLightParameterForDeclaration &&
+            other.containingDeclaration == containingDeclaration
+
     override val qualifiedNameForNullabilityAnnotation: String? by lazyPub {
         computeQualifiedNameForNullabilityAnnotation(tryGetKotlinType())
     }
@@ -173,20 +184,17 @@ internal class KtUltraLightParameterForSource(
 
     override fun isVarArgs(): Boolean = kotlinOrigin.isVarArg && method.parameterList.parameters.last() == this
 
-    override fun setName(@NonNls name: String): PsiElement {
+    override fun setName(@NonNls name: String): PsiElement = also {
         kotlinOrigin.setName(name)
-        return this
     }
 
-    override val givenAnnotations: List<KtLightAbstractAnnotation>?
-        get() {
-            return if (kotlinOrigin.hasValOrVar()) {
-                val entriesWithoutJvmField = kotlinOrigin.annotationEntries.filter { it.shortName?.identifier != "JvmField" }
-                entriesWithoutJvmField.toLightAnnotations(this, null) +
-                        entriesWithoutJvmField.toLightAnnotations(this, AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER)
-            } else {
-                kotlinOrigin.annotationEntries.toLightAnnotations(this, null)
-            }
+    override val givenAnnotations: List<KtLightAbstractAnnotation>
+        get() = if (kotlinOrigin.hasValOrVar()) {
+            val entriesWithoutJvmField = kotlinOrigin.annotationEntries.filter { it.shortName?.identifier != "JvmField" }
+            entriesWithoutJvmField.toLightAnnotations(this, null) +
+                    entriesWithoutJvmField.toLightAnnotations(this, AnnotationUseSiteTarget.CONSTRUCTOR_PARAMETER)
+        } else {
+            kotlinOrigin.annotationEntries.toLightAnnotations(this, null)
         }
 
     override fun getText(): String? = kotlinOrigin.text
@@ -203,16 +211,15 @@ internal class KtUltraLightParameterForSource(
 internal class KtUltraLightParameterForSetterParameter(
     name: String,
     // KtProperty or KtParameter from primary constructor
-    private val property: KtDeclaration,
+    property: KtCallableDeclaration,
     support: KtUltraLightSupport,
     method: KtUltraLightMethod,
-    containingDeclaration: KtCallableDeclaration
-) : KtAbstractUltraLightParameterForDeclaration(name, null, support, method, containingDeclaration) {
+) : KtAbstractUltraLightParameterForDeclaration(name, null, support, method, property) {
 
-    override fun tryGetKotlinType(): KotlinType? = property.getKotlinType()
+    override fun tryGetKotlinType(): KotlinType? = containingDeclaration.getKotlinType()
 
-    override val givenAnnotations: List<KtLightAbstractAnnotation>?
-        get() = property.annotationEntries.toLightAnnotations(this, AnnotationUseSiteTarget.SETTER_PARAMETER)
+    override val givenAnnotations: List<KtLightAbstractAnnotation>
+        get() = containingDeclaration.annotationEntries.toLightAnnotations(this, AnnotationUseSiteTarget.SETTER_PARAMETER)
 
     override fun isVarArgs(): Boolean = false
 }
@@ -230,35 +237,30 @@ internal class KtUltraLightReceiverParameter(
     containingDeclaration = containingDeclaration
 ) {
 
-    override val givenAnnotations: List<KtLightAbstractAnnotation>? =
-        containingDeclaration
-            .receiverTypeReference
-            ?.modifierList
-            ?.annotationEntries
-            ?.toLightAnnotations(this, AnnotationUseSiteTarget.RECEIVER)
-            ?: emptyList()
+    override val givenAnnotations: List<KtLightAbstractAnnotation> = containingDeclaration.receiverTypeReference
+        ?.modifierList
+        ?.annotationEntries
+        ?.toLightAnnotations(this, AnnotationUseSiteTarget.RECEIVER)
+        ?: emptyList()
 
     override fun isVarArgs(): Boolean = false
 
-    override fun tryGetKotlinType(): KotlinType? =
-        tryGetContainingDescriptor()?.extensionReceiverParameter?.type
+    override fun tryGetKotlinType(): KotlinType? = tryGetContainingDescriptor()?.extensionReceiverParameter?.type
 }
 
 internal class KtUltraLightParameterForDescriptor(
     descriptor: ParameterDescriptor,
     support: KtUltraLightSupport,
     method: KtUltraLightMethod
-) : KtUltraLightParameter(
-    if (descriptor.name.isSpecial) "\$self" else descriptor.name.identifier,
-    null, support, method
-) {
+) : KtUltraLightParameter(if (descriptor.name.isSpecial) "\$self" else descriptor.name.identifier, null, support, method) {
     // This is greedy realization of UL class.
     // This means that all data that depends on descriptor evaluated in ctor so the descriptor will be released on the end.
-    // Be aware to save descriptor in class instance or any depending references
+    // Be aware to save descriptor in class instance or any depending on references
 
     private val lazyInitializers = mutableListOf<Lazy<*>>()
-    private inline fun <T> getAndAddLazy(crossinline initializer: () -> T): Lazy<T> =
-        lazyPub { initializer() }.also { lazyInitializers.add(it) }
+    private inline fun <T> getAndAddLazy(crossinline initializer: () -> T): Lazy<T> = lazyPub {
+        initializer()
+    }.also { lazyInitializers.add(it) }
 
     override val qualifiedNameForNullabilityAnnotation: String? by getAndAddLazy {
         computeQualifiedNameForNullabilityAnnotation(descriptor.type)

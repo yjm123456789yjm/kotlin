@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.asJava.classes
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Comparing
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
@@ -53,7 +52,7 @@ import org.jetbrains.kotlin.psi.psiUtil.hasExpectModifier
 import org.jetbrains.kotlin.psi.psiUtil.parentsWithSelf
 import org.jetbrains.kotlin.psi.stubs.KotlinClassOrObjectStub
 import org.jetbrains.kotlin.resolve.DescriptorUtils
-import java.util.*
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
 private class KtLightClassModifierList(containingClass: KtLightClassForSourceDeclaration, computeModifiers: () -> Set<String>) :
@@ -79,7 +78,7 @@ abstract class KtLightClassForSourceDeclaration(
         lazyCreator = LightClassesLazyCreator(project)
     )
 
-    private val lightIdentifier = KtLightIdentifier(this, classOrObject)
+    private val _lightIdentifier by lazyPub { KtLightIdentifier(this, classOrObject) }
 
     override fun getText() = kotlinOrigin.text ?: ""
 
@@ -111,8 +110,7 @@ abstract class KtLightClassForSourceDeclaration(
 
     private fun getJavaFileStub(): PsiJavaFileStub = getLightClassDataHolder().javaFileStub
 
-    fun getDescriptor() =
-        LightClassGenerationSupport.getInstance(project).resolveToDescriptor(classOrObject) as? ClassDescriptor
+    fun getDescriptor() = LightClassGenerationSupport.getInstance(project).resolveToDescriptor(classOrObject) as? ClassDescriptor
 
     protected fun getLightClassDataHolder(): LightClassDataHolder.ForClass {
         val lightClassData = getLightClassDataHolder(classOrObject)
@@ -141,7 +139,7 @@ abstract class KtLightClassForSourceDeclaration(
                 // We have to explicitly process package declarations if current file belongs to default package
                 // so that Java resolve can find classes located in that package
                 val packageName = packageName
-                if (!packageName.isEmpty()) return true
+                if (packageName.isNotEmpty()) return true
 
                 val aPackage = JavaPsiFacade.getInstance(myManager.project).findPackage(packageName)
                 if (aPackage != null && !aPackage.processDeclarations(processor, state, null, place)) return false
@@ -158,21 +156,16 @@ abstract class KtLightClassForSourceDeclaration(
     override fun isEquivalentTo(another: PsiElement?): Boolean =
         kotlinOrigin.isEquivalentTo(another) ||
                 equals(another) ||
-                (qualifiedName != null && another is KtLightClassForSourceDeclaration && qualifiedName == another.qualifiedName)
+                qualifiedName?.let { it == another.safeAs<KtLightClassForSourceDeclaration>()?.qualifiedName } == true
 
-    override fun getElementIcon(flags: Int): Icon? =
-        throw UnsupportedOperationException("This should be done by JetIconProvider")
+    override fun getElementIcon(flags: Int): Icon? = throw UnsupportedOperationException("This should be done by KtIconProvider")
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class.java != other::class.java) return false
-
-        val aClass = other as KtLightClassForSourceDeclaration
-
-        if (classOrObject != aClass.classOrObject) return false
-
-        return true
-    }
+    override fun equals(other: Any?): Boolean = this === other ||
+            other is KtLightClassForSourceDeclaration &&
+            other.javaClass == javaClass &&
+            other.classOrObject == classOrObject &&
+            other.jvmDefaultMode == jvmDefaultMode &&
+            other.forceUsingOldLightClasses == forceUsingOldLightClasses
 
     override fun hashCode(): Int = classOrObject.hashCode()
 
@@ -261,7 +254,7 @@ abstract class KtLightClassForSourceDeclaration(
 
     override fun isEnum(): Boolean = classOrObject is KtClass && classOrObject.isEnum()
 
-    override fun hasTypeParameters(): Boolean = classOrObject is KtClass && !classOrObject.typeParameters.isEmpty()
+    override fun hasTypeParameters(): Boolean = classOrObject is KtClass && classOrObject.typeParameters.isNotEmpty()
 
     override fun isValid(): Boolean = classOrObject.isValid
 
@@ -318,7 +311,7 @@ abstract class KtLightClassForSourceDeclaration(
     override fun getElementType(): IStubElementType<out StubElement<*>, *>? = classOrObject.elementType
     override fun getStub(): KotlinClassOrObjectStub<out KtClassOrObject>? = classOrObject.stub
 
-    override fun getNameIdentifier(): KtLightIdentifier? = lightIdentifier
+    override fun getNameIdentifier(): KtLightIdentifier? = _lightIdentifier
 
     override fun getExtendsList(): PsiReferenceList? = _extendsList
     override fun getImplementsList(): PsiReferenceList? = _implementsList
@@ -483,34 +476,27 @@ abstract class KtLightClassForSourceDeclaration(
     }
 
     override fun getSuperTypes(): Array<PsiClassType> {
-        if (classOrObject.superTypeListEntries.isEmpty()) {
-            return getSupertypeByPsi()?.let { arrayOf<PsiClassType>(it) } ?: emptyArray()
+        classOrObject.superTypeListEntries.ifEmpty {
+            return getSupertypeByPsi()?.let { arrayOf(it) } ?: emptyArray()
         }
         return clsDelegate.superTypes
     }
 
-    private fun getSupertypeByPsi(): PsiImmediateClassType? {
-        return classOrObject.defaultJavaAncestorQualifiedName()?.let { ancestorFqName ->
-            JavaPsiFacade.getInstance(project).findClass(ancestorFqName, resolveScope)?.let {
-                PsiImmediateClassType(it, createSubstitutor(it))
-            }
+    private fun getSupertypeByPsi(): PsiImmediateClassType? = classOrObject.defaultJavaAncestorQualifiedName()?.let { ancestorFqName ->
+        JavaPsiFacade.getInstance(project).findClass(ancestorFqName, resolveScope)?.let {
+            PsiImmediateClassType(it, createSubstitutor(it))
         }
     }
 
     private fun createSubstitutor(ancestor: PsiClass): PsiSubstitutor {
-        if (ancestor.qualifiedName != CommonClassNames.JAVA_LANG_ENUM) {
-            return PsiSubstitutor.EMPTY
-        }
+        if (ancestor.qualifiedName != CommonClassNames.JAVA_LANG_ENUM) return PsiSubstitutor.EMPTY
         val javaLangEnumsTypeParameter = ancestor.typeParameters.firstOrNull() ?: return PsiSubstitutor.EMPTY
         return PsiSubstitutor.createSubstitutor(
-            mapOf(
-                javaLangEnumsTypeParameter to PsiImmediateClassType(this, PsiSubstitutor.EMPTY)
-            )
+            mapOf(javaLangEnumsTypeParameter to PsiImmediateClassType(this, PsiSubstitutor.EMPTY))
         )
     }
 
-    override val originKind: LightClassOriginKind
-        get() = LightClassOriginKind.SOURCE
+    override val originKind: LightClassOriginKind get() = LightClassOriginKind.SOURCE
 
     open fun isFinal(isFinalByPsi: Boolean): Boolean {
         // annotations can make class open via 'allopen' plugin
@@ -523,10 +509,8 @@ abstract class KtLightClassForSourceDeclaration(
 fun KtLightClassForSourceDeclaration.isPossiblyAffectedByAllOpen() =
     !isAnnotationType && !isInterface && kotlinOrigin.annotationEntries.isNotEmpty()
 
-fun getOutermostClassOrObject(classOrObject: KtClassOrObject): KtClassOrObject {
-    return KtPsiUtil.getOutermostClassOrObject(classOrObject)
-        ?: throw IllegalStateException("Attempt to build a light class for a local class: " + classOrObject.text)
-}
+fun getOutermostClassOrObject(classOrObject: KtClassOrObject): KtClassOrObject = KtPsiUtil.getOutermostClassOrObject(classOrObject)
+    ?: throw IllegalStateException("Attempt to build a light class for a local class: " + classOrObject.text)
 
 interface LightClassInheritanceHelper {
     fun isInheritor(

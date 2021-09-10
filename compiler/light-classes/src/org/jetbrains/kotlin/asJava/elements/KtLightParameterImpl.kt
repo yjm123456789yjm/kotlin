@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -16,7 +16,10 @@ import com.intellij.util.IncorrectOperationException
 import org.jetbrains.annotations.NonNls
 import org.jetbrains.kotlin.asJava.classes.lazyPub
 import org.jetbrains.kotlin.idea.KotlinLanguage
-import org.jetbrains.kotlin.psi.*
+import org.jetbrains.kotlin.psi.KtFunction
+import org.jetbrains.kotlin.psi.KtParameter
+import org.jetbrains.kotlin.psi.KtProperty
+import org.jetbrains.kotlin.psi.KtPropertyAccessor
 import org.jetbrains.kotlin.psi.psiUtil.isExtensionDeclaration
 
 internal class KtLightParameterImpl(
@@ -113,9 +116,12 @@ internal class KtLightParameterImpl(
         })
     }
 
-    override fun equals(other: Any?): Boolean {
-        return other is PsiElement && isEquivalentTo(other)
-    }
+    override fun equals(other: Any?): Boolean = this === other ||
+            other is KtLightParameterImpl &&
+            other.index == index &&
+            other.dummyDelegate == dummyDelegate &&
+            other.method == method &&
+            other.kotlinOrigin == kotlinOrigin
 
-    override fun hashCode(): Int = kotlinOrigin?.hashCode() ?: 0
+    override fun hashCode(): Int = name.hashCode() + 31 * method.hashCode()
 }

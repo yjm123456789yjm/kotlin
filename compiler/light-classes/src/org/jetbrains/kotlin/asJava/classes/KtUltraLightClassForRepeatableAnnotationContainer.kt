@@ -44,8 +44,11 @@ class KtUltraLightClassForRepeatableAnnotationContainer(classOrObject: KtClassOr
         KtUltraLightModifierListForRepeatableAnnotationContainer(this, support)
     }
 
-    override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean =
-        baseClass.qualifiedName == CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION
+    override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
+        val qualifiedName = baseClass.qualifiedName
+        return qualifiedName == CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION ||
+                qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
+    }
 
     override fun setName(name: String): PsiElement =
         throw IncorrectOperationException("Impossible to rename ${JvmAbi.REPEATABLE_ANNOTATION_CONTAINER_NAME}")

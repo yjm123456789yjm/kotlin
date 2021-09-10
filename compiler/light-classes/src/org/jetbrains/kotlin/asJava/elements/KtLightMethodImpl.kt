@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava.elements
@@ -39,12 +28,13 @@ import org.jetbrains.kotlin.psi.*
 import org.jetbrains.kotlin.psi.psiUtil.getStrictParentOfType
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.jvm.KotlinJavaPsiFacade
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 open class KtLightMethodImpl protected constructor(
     computeRealDelegate: () -> PsiMethod,
     lightMemberOrigin: LightMemberOrigin?,
     containingClass: KtLightClass,
-    private val dummyDelegate: PsiMethod? = null
+    dummyDelegate: PsiMethod? = null
 ) : KtLightMemberImpl<PsiMethod>(computeRealDelegate, lightMemberOrigin, containingClass, dummyDelegate), KtLightMethod {
     private val returnTypeElem by lazyPub {
         val delegateTypeElement = clsDelegate.returnTypeElement as? ClsTypeElementImpl
@@ -54,7 +44,7 @@ open class KtLightMethodImpl protected constructor(
     private val calculatingReturnType = ThreadLocal<Boolean>()
 
     private val paramsList: PsiParameterList by lazyPub {
-        KtLightParameterList(this, dummyDelegate?.parameterList?.parametersCount ?: clsDelegate.parameterList.parametersCount) {
+        KtLightParameterList(this, this.dummyDelegate?.parameterList?.parametersCount ?: clsDelegate.parameterList.parametersCount) {
             buildParametersForList()
         }
     }
@@ -73,14 +63,12 @@ open class KtLightMethodImpl protected constructor(
 
     private val typeParamsList: PsiTypeParameterList? by lazyPub { buildTypeParameterList() }
 
-    protected open fun buildTypeParameterList(): PsiTypeParameterList? {
-        val origin = (lightMemberOrigin as? LightMemberOriginForDeclaration)?.originalElement
-        return when {
-            origin is KtClassOrObject -> KotlinLightTypeParameterListBuilder(this)
-            origin != null -> LightClassUtil.buildLightTypeParameterList(this, origin)
-            else -> clsDelegate.typeParameterList
+    protected open fun buildTypeParameterList(): PsiTypeParameterList? =
+        when (val origin = lightMemberOrigin.safeAs<LightMemberOriginForDeclaration>()?.originalElement) {
+            null -> clsDelegate.typeParameterList
+            is KtClassOrObject -> KotlinLightTypeParameterListBuilder(this)
+            else -> LightClassUtil.buildLightTypeParameterList(this, origin)
         }
-    }
 
     override fun accept(visitor: PsiElementVisitor) {
         if (visitor is JavaElementVisitor) {
@@ -134,25 +122,18 @@ open class KtLightMethodImpl protected constructor(
 
     override fun hasTypeParameters() = typeParameters.isNotEmpty()
 
-    override fun getSignature(substitutor: PsiSubstitutor): MethodSignature {
-        if (substitutor == PsiSubstitutor.EMPTY) {
-            return clsDelegate.getSignature(substitutor)
-        }
-        return MethodSignatureBackedByPsiMethod.create(this, substitutor)
-    }
+    override fun getSignature(substitutor: PsiSubstitutor): MethodSignature =
+        if (substitutor == PsiSubstitutor.EMPTY) clsDelegate.getSignature(substitutor)
+        else MethodSignatureBackedByPsiMethod.create(this, substitutor)
 
-    override fun copy(): PsiElement {
-        return Factory.create(clsDelegate, lightMemberOrigin?.copy(), containingClass)
-    }
+    override fun copy(): PsiElement = create(clsDelegate, lightMemberOrigin?.copy(), containingClass)
 
     override fun processDeclarations(
         processor: PsiScopeProcessor,
         state: ResolveState,
         lastParent: PsiElement?,
         place: PsiElement
-    ): Boolean {
-        return typeParameters.all { processor.execute(it, state) }
-    }
+    ): Boolean = typeParameters.all { processor.execute(it, state) }
 
     protected open val memberIndex: MemberIndex?
         get() = (dummyDelegate ?: clsDelegate).memberIndex
@@ -161,18 +142,23 @@ open class KtLightMethodImpl protected constructor(
             for compiled elements origin contains delegate
             for source elements index is unique to each member
             */
-    override fun equals(other: Any?): Boolean =
-        this === other ||
-                (other is KtLightMethodImpl &&
-                        this.name == other.name &&
-                        this.containingClass == other.containingClass &&
-                        this.lightMemberOrigin == other.lightMemberOrigin &&
-                        this.memberIndex == other.memberIndex)
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtLightMethodImpl &&
+            other.javaClass == javaClass &&
+            other.containingClass == containingClass &&
+            other.lightMemberOrigin == lightMemberOrigin &&
+            other.dummyDelegate == dummyDelegate &&
+            other.memberIndex == memberIndex
 
-    override fun hashCode(): Int = ((name.hashCode() * 31 + (lightMemberOrigin?.hashCode()
-        ?: 0)) * 31 + containingClass.hashCode()) * 31 + (memberIndex?.hashCode() ?: 0)
+    override fun hashCode(): Int {
+        var result = name.hashCode()
+        result = 31 * result + lightMemberOrigin.hashCode()
+        result = 31 * result + containingClass.hashCode()
+        result = 31 * result + memberIndex.hashCode()
+        return result
+    }
 
-    override fun getDefaultValue() = (clsDelegate as? PsiAnnotationMethod)?.defaultValue
+    override fun getDefaultValue() = clsDelegate.safeAs<PsiAnnotationMethod>()?.defaultValue
 
     // override getReturnType() so return type resolves to type parameters of this method not delegate's
     // which is relied upon by java type inference
@@ -220,21 +206,17 @@ open class KtLightMethodImpl protected constructor(
 
         fun create(
             delegate: PsiMethod, origin: LightMemberOrigin?, containingClass: KtLightClass
-        ): KtLightMethodImpl {
-            return KtLightMethodImpl({ delegate }, origin, containingClass)
-        }
+        ): KtLightMethodImpl = KtLightMethodImpl({ delegate }, origin, containingClass)
 
         fun lazy(
             dummyDelegate: PsiMethod?,
             containingClass: KtLightClass,
             origin: LightMemberOriginForDeclaration?,
             computeRealDelegate: () -> PsiMethod
-        ): KtLightMethodImpl {
-            return KtLightMethodImpl(computeRealDelegate, origin, containingClass, dummyDelegate)
-        }
+        ): KtLightMethodImpl = KtLightMethodImpl(computeRealDelegate, origin, containingClass, dummyDelegate)
 
         fun fromClsMethods(delegateClass: PsiClass, containingClass: KtLightClass) = delegateClass.methods.map {
-            KtLightMethodImpl.create(it, getOrigin(it), containingClass)
+            create(it, getOrigin(it), containingClass)
         }
 
         fun getOrigin(method: PsiMethod) = adjustMethodOrigin(getMemberOrigin(method))
@@ -248,21 +230,21 @@ open class KtLightMethodImpl protected constructor(
 
     override fun getHierarchicalMethodSignature() = clsDelegate.hierarchicalMethodSignature
 
-    override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean) =
+    override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean): List<MethodSignatureBackedByPsiMethod> =
         clsDelegate.findSuperMethodSignaturesIncludingStatic(checkAccess)
 
-    override fun getBody() = null
+    override fun getBody(): PsiCodeBlock? = null
 
     @Suppress("DEPRECATION")
     override fun findDeepestSuperMethod() = clsDelegate.findDeepestSuperMethod()
 
-    override fun findDeepestSuperMethods() = clsDelegate.findDeepestSuperMethods()
+    override fun findDeepestSuperMethods(): Array<PsiMethod> = clsDelegate.findDeepestSuperMethods()
 
-    override fun findSuperMethods() = clsDelegate.findSuperMethods()
+    override fun findSuperMethods(): Array<PsiMethod> = clsDelegate.findSuperMethods()
 
-    override fun findSuperMethods(checkAccess: Boolean) = clsDelegate.findSuperMethods(checkAccess)
+    override fun findSuperMethods(checkAccess: Boolean): Array<PsiMethod> = clsDelegate.findSuperMethods(checkAccess)
 
-    override fun findSuperMethods(parentClass: PsiClass?) = clsDelegate.findSuperMethods(parentClass)
+    override fun findSuperMethods(parentClass: PsiClass?): Array<PsiMethod> = clsDelegate.findSuperMethods(parentClass)
 }
 
 fun KtLightMethod.isTraitFakeOverride(): Boolean {

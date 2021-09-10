@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -53,19 +53,6 @@ internal open class KtLightClassForAnonymousDeclaration(classOrObject: KtClassOr
     }
 
     override fun getName(): String? = null
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class.java != other::class.java) return false
-
-        val aClass = other as KtLightClassForAnonymousDeclaration
-
-        return classOrObject == aClass.classOrObject
-    }
-
-    override fun hashCode(): Int {
-        return classOrObject.hashCode()
-    }
 
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
         if (baseClass is KtLightClassForSourceDeclaration) {

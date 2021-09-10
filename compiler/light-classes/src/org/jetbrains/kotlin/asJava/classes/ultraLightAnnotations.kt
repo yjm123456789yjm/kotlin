@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -76,6 +76,13 @@ class KtUltraLightSimpleAnnotation(
 
         override val kotlinOrigin: KtElement? get() = null
     }
+
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtUltraLightSimpleAnnotation &&
+            other.annotationFqName == annotationFqName &&
+            other.argumentsList == argumentsList
+
+    override fun hashCode(): Int = annotationFqName.hashCode()
 
     override fun getText() = "@$qualifiedName(" + parameterList.attributes.joinToString { it.name + "=" + it.value?.text } + ")"
 }

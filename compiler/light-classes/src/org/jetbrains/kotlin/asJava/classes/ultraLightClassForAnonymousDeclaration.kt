@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -33,15 +33,6 @@ open class KtUltraLightClassForAnonymousDeclaration(classOrObject: KtClassOrObje
 
     override fun getBaseClassType(): PsiClassType = _baseClassType
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other == null || this::class.java != other::class.java) return false
-
-        val aClass = other as KtUltraLightClassForAnonymousDeclaration
-
-        return classOrObject == aClass.classOrObject
-    }
-
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
         if (baseClass is KtLightClassForSourceDeclaration) {
             return super.isInheritor(baseClass, checkDeep)
@@ -50,7 +41,6 @@ open class KtUltraLightClassForAnonymousDeclaration(classOrObject: KtClassOrObje
         return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep)
     }
 
-    override fun hashCode(): Int = classOrObject.hashCode()
     override fun getArgumentList(): PsiExpressionList? = null
     override fun isInQualifiedNew(): Boolean = false
     override fun getName(): String? = null

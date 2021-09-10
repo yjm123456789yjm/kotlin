@@ -1,17 +1,6 @@
 /*
- * Copyright 2010-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
 package org.jetbrains.kotlin.asJava.classes
@@ -62,35 +51,32 @@ open class KtLightClassForFacadeImpl constructor(
 
     private val firstFileInFacade by lazyPub { files.iterator().next() }
 
-    private val hashCode: Int =
-        computeHashCode()
-
-    private val packageFqName: FqName =
-        facadeClassFqName.parent()
-
-    private val modifierList: PsiModifierList =
+    private val _modifierList: PsiModifierList by lazyPub {
         LightModifierList(manager, KotlinLanguage.INSTANCE, PsiModifier.PUBLIC, PsiModifier.FINAL)
+    }
 
-    private val implementsList: LightEmptyImplementsList =
+    private val _implementsList: LightEmptyImplementsList by lazyPub {
         LightEmptyImplementsList(manager)
+    }
 
-    private val packageClsFile = FakeFileForLightClass(
-        firstFileInFacade,
-        lightClass = { this },
-        stub = { javaFileStub },
-        packageFqName = packageFqName
-    )
+    private val packageClsFile by lazyPub {
+        FakeFileForLightClass(
+            firstFileInFacade,
+            lightClass = { this },
+            stub = { javaFileStub },
+            packageFqName = facadeClassFqName.parent()
+        )
+    }
 
     override fun getParent(): PsiElement = containingFile
 
     override val kotlinOrigin: KtClassOrObject? get() = null
 
-    val fqName: FqName
-        get() = facadeClassFqName
+    val fqName: FqName get() = facadeClassFqName
 
-    override fun getModifierList() = modifierList
+    override fun getModifierList() = _modifierList
 
-    override fun hasModifierProperty(@NonNls name: String) = modifierList.hasModifierProperty(name)
+    override fun hasModifierProperty(@NonNls name: String) = _modifierList.hasModifierProperty(name)
 
     override fun getExtendsList(): PsiReferenceList? = null
 
@@ -114,7 +100,7 @@ open class KtLightClassForFacadeImpl constructor(
 
     override fun getDocComment(): Nothing? = null
 
-    override fun getImplementsList() = implementsList
+    override fun getImplementsList() = _implementsList
 
     override fun getImplementsListTypes(): Array<out PsiClassType> = PsiClassType.EMPTY_ARRAY
 
@@ -182,8 +168,7 @@ open class KtLightClassForFacadeImpl constructor(
 
     override fun isValid() = files.all { it.isValid && it.hasTopLevelCallables() && facadeClassFqName == it.javaFileFacadeFqName }
 
-    override fun copy(): KtLightClassForFacade =
-        KtLightClassForFacadeImpl(manager, facadeClassFqName, lightClassDataCache, files)
+    override fun copy(): KtLightClassForFacade = KtLightClassForFacadeImpl(manager, facadeClassFqName, lightClassDataCache, files)
 
     override fun getNavigationElement() = firstFileInFacade
 
@@ -191,53 +176,38 @@ open class KtLightClassForFacadeImpl constructor(
         equals(another) ||
                 (another is KtLightClassForFacade && another.facadeClassFqName == facadeClassFqName)
 
-    override fun getElementIcon(flags: Int): Icon? = throw UnsupportedOperationException("This should be done by JetIconProvider")
+    override fun getElementIcon(flags: Int): Icon? = throw UnsupportedOperationException("This should be done by KtIconProvider")
 
-    override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
-        return baseClass.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
-    }
+    override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean =
+        baseClass.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
 
     override fun getSuperClass(): PsiClass? {
         return JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope)
     }
 
-    override fun getSupers(): Array<PsiClass> {
-        return superClass?.let { arrayOf(it) } ?: arrayOf()
-    }
+    override fun getSupers(): Array<PsiClass> = superClass?.let { arrayOf(it) } ?: arrayOf()
 
-    override fun getSuperTypes(): Array<PsiClassType> {
-        return arrayOf(PsiType.getJavaLangObject(manager, resolveScope))
-    }
+    override fun getSuperTypes(): Array<PsiClassType> = arrayOf(PsiType.getJavaLangObject(manager, resolveScope))
 
-    override fun hashCode() = hashCode
+    private val _hashCode: Int by lazyPub { computeHashCode() }
+
+    override fun hashCode() = _hashCode
 
     private fun computeHashCode(): Int {
-        var result = manager.hashCode()
-        result = 31 * result + files.hashCode()
+        var result = files.hashCode()
         result = 31 * result + facadeClassFqName.hashCode()
         return result
     }
 
-    override fun equals(other: Any?): Boolean {
-        if (other == null || this::class.java != other::class.java) {
-            return false
-        }
-
-        val lightClass = other as KtLightClassForFacadeImpl
-        if (this === other) return true
-
-        if (this.hashCode != lightClass.hashCode) return false
-        if (manager != lightClass.manager) return false
-        if (files != lightClass.files) return false
-        if (facadeClassFqName != lightClass.facadeClassFqName) return false
-
-        return true
-    }
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtLightClassForFacadeImpl &&
+            other.javaClass == javaClass &&
+            other.facadeClassFqName == facadeClassFqName &&
+            other.files == files
 
     override fun toString() = "${KtLightClassForFacadeImpl::class.java.simpleName}:$facadeClassFqName"
 
-    override val originKind: LightClassOriginKind
-        get() = LightClassOriginKind.SOURCE
+    override val originKind: LightClassOriginKind get() = LightClassOriginKind.SOURCE
 
     override fun getText() = firstFileInFacade.text ?: ""
 
@@ -261,8 +231,7 @@ open class KtLightClassForFacadeImpl constructor(
             if (sources.isEmpty()) return null
 
             val stubProvider = LightClassDataProviderForFileFacade.ByProjectSource(project, fqName, searchScope)
-            val stubValue = CachedValuesManager.getManager(project)
-                .createCachedValue(stubProvider, false)
+            val stubValue = CachedValuesManager.getManager(project).createCachedValue(stubProvider, false)
 
             val manager = PsiManager.getInstance(project)
 

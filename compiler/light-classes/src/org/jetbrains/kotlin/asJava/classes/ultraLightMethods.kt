@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -121,34 +121,31 @@ internal abstract class KtUltraLightMethod(
 
     override fun findDeepestSuperMethod() = PsiSuperMethodImplUtil.findDeepestSuperMethod(this)
 
-    override fun findDeepestSuperMethods(): Array<out PsiMethod> = PsiSuperMethodImplUtil.findDeepestSuperMethods(this)
+    override fun findDeepestSuperMethods(): Array<PsiMethod> = PsiSuperMethodImplUtil.findDeepestSuperMethods(this)
 
-    override fun findSuperMethods(): Array<out PsiMethod> = PsiSuperMethodImplUtil.findSuperMethods(this)
+    override fun findSuperMethods(): Array<PsiMethod> = PsiSuperMethodImplUtil.findSuperMethods(this)
 
-    override fun findSuperMethods(checkAccess: Boolean): Array<out PsiMethod> =
+    override fun findSuperMethods(checkAccess: Boolean): Array<PsiMethod> =
         PsiSuperMethodImplUtil.findSuperMethods(this, checkAccess)
 
-    override fun findSuperMethods(parentClass: PsiClass?): Array<out PsiMethod> =
+    override fun findSuperMethods(parentClass: PsiClass?): Array<PsiMethod> =
         PsiSuperMethodImplUtil.findSuperMethods(this, parentClass)
 
     override fun getSignature(substitutor: PsiSubstitutor): MethodSignature =
         MethodSignatureBackedByPsiMethod.create(this, substitutor)
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is KtUltraLightMethod) return false
-        if (methodIndex != other.methodIndex) return false
-        if (this.javaClass != other.javaClass) return false
-        if (containingClass != other.containingClass) return false
-        if (kotlinOrigin === null || other.kotlinOrigin === null) return false
-        return kotlinOrigin == other.kotlinOrigin
-    }
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtUltraLightMethod &&
+            other.methodIndex == methodIndex &&
+            other.delegate == delegate &&
+            super.equals(other)
 
-    override fun hashCode(): Int = name.hashCode()
+    override fun hashCode(): Int = delegate.hashCode()
 
     override fun isDeprecated(): Boolean = _deprecated
 }
 
+@Suppress("EqualsOrHashCode")
 internal class KtUltraLightMethodForSourceDeclaration(
     delegate: PsiMethod,
     lightMemberOrigin: LightMemberOrigin?,
@@ -191,6 +188,11 @@ internal class KtUltraLightMethodForSourceDeclaration(
         else LightTypeParameterListBuilder(manager, language)
     }
 
+    override fun equals(other: Any?): Boolean = this === other ||
+            other is KtUltraLightMethodForSourceDeclaration &&
+            other.forceToSkipNullabilityAnnotation == forceToSkipNullabilityAnnotation &&
+            super.equals(other)
+
     private val methodDescriptor get() = kotlinOrigin?.resolve() as? FunctionDescriptor
 
     private val _throwsList: PsiReferenceList by lazyPub { computeThrowsList(methodDescriptor) }
@@ -214,7 +216,7 @@ internal class KtUltraLightMethodForDescriptor(
 ) {
     // This is greedy realization of UL class.
     // This means that all data that depends on descriptor evaluated in ctor so the descriptor will be released on the end.
-    // Be aware to save descriptor in class instance or any depending references
+    // Be aware to save descriptor in class instance or any depending on references
 
     private val lazyInitializers = mutableListOf<Lazy<*>>()
     private inline fun <T> getAndAddLazy(crossinline initializer: () -> T): Lazy<T> =
