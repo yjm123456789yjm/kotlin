@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.JsConfig
@@ -191,7 +192,7 @@ abstract class BasicIrBoxTest(
                 icUseStdlibCache = runIcMode,
                 icCache = icCache
             )
-            val irFactory = IrFactoryImpl
+            val irFactory = if (skipRegularMode) PersistentIrFactory() else IrFactoryImpl
 
             val jsOutputFile = if (recompile) File(outputFile.parentFile, outputFile.nameWithoutExtension + "-recompiled.js")
             else outputFile
@@ -204,6 +205,7 @@ abstract class BasicIrBoxTest(
                 exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
                 generateFullJs = true,
                 generateDceJs = runIrDce,
+                dceDriven = skipRegularMode,
                 es6mode = runEs6Mode,
                 multiModule = splitPerModule || perModule,
                 propertyLazyInitialization = propertyLazyInitialization,
@@ -213,7 +215,9 @@ abstract class BasicIrBoxTest(
                 verifySignatures = !skipMangleVerification,
             )
 
-            compiledModule.outputs!!.writeTo(jsOutputFile, config)
+            val finalOutputFile = if (skipRegularMode) pirOutputFile else jsOutputFile
+
+            compiledModule.outputs!!.writeTo(finalOutputFile, config)
 
             compiledModule.outputsAfterDce?.writeTo(dceOutputFile, config)
 

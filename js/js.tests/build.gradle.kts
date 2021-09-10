@@ -286,10 +286,10 @@ projectTest("jsEs6IrTest", true) {
     setUpBoxTests()
 }
 
-//projectTest("jsPirTest", true) {
-//    systemProperty("kotlin.js.ir.skipRegularMode", "true")
-//    setUpJsBoxTests(jsEnabled = false, jsIrEnabled = true)
-//}
+projectTest("jsPirTest", true) {
+    systemProperty("kotlin.js.ir.skipRegularMode", "true")
+    setUpJsBoxTests(jsEnabled = false, jsIrEnabled = true)
+}
 
 projectTest("quickTest", true) {
     setUpJsBoxTests(jsEnabled = true, jsIrEnabled = false)
