@@ -37,11 +37,9 @@ open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script
     protected open fun getLightClassDataHolder(): LightClassDataHolder.ForScript =
         getLightClassCachedValue(script).value
 
-    override val lightClassData: LightClassData
-        get() = getLightClassDataHolder().findDataForScript(script.fqName)
+    override val lightClassData: LightClassData get() = getLightClassDataHolder().findDataForScript(script.fqName)
 
-    protected open val javaFileStub: PsiJavaFileStub?
-        get() = getLightClassDataHolder().javaFileStub
+    protected open val javaFileStub: PsiJavaFileStub? get() = getLightClassDataHolder().javaFileStub
 
     private val _hashCode: Int by lazyPub { computeHashCode() }
 
@@ -158,7 +156,7 @@ open class KtLightClassForScript(val script: KtScript) : KtLazyLightClass(script
 
     private fun computeHashCode(): Int = script.hashCode()
 
-    override fun equals(other: Any?): Boolean = this === other ||
+    override fun equals(other: Any?): Boolean = other === this ||
             other is KtLightClassForScript &&
             other.javaClass == javaClass &&
             other.script == script

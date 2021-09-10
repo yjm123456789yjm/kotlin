@@ -61,6 +61,7 @@ abstract class KtLightAbstractAnnotation(parent: PsiElement, computeDelegate: La
 
     abstract override fun equals(other: Any?): Boolean
     abstract override fun hashCode(): Int
+    abstract override fun copy(): PsiElement?
 }
 
 class KtLightAnnotationForSourceEntry(
@@ -124,8 +125,7 @@ class KtLightAnnotationForSourceEntry(
 
     override fun getParameterList(): PsiAnnotationParameterList = ktLightAnnotationParameterList
 
-    inner class KtLightAnnotationParameterList : KtLightElementBase(this),
-        PsiAnnotationParameterList {
+    inner class KtLightAnnotationParameterList : KtLightElementBase(this), PsiAnnotationParameterList {
         override val kotlinOrigin: KtElement? get() = null
 
         private fun checkIfToArrayConversionExpected(callEntry: Map.Entry<ValueParameterDescriptor, ResolvedValueArgument>): Boolean {
@@ -227,6 +227,13 @@ class KtLightAnnotationForSourceEntry(
             other.kotlinOrigin == kotlinOrigin
 
     override fun hashCode() = kotlinOrigin.hashCode()
+    override fun copy(): PsiElement = KtLightAnnotationForSourceEntry(
+        name,
+        lazyQualifiedName,
+        kotlinOrigin,
+        parent,
+        lazyClsDelegate
+    )
 
     override fun <T : PsiAnnotationMemberValue?> setDeclaredAttributeValue(attributeName: String?, value: T?) = cannotModify()
 }
@@ -244,6 +251,7 @@ class KtLightNonSourceAnnotation(
             other.clsDelegate == clsDelegate
 
     override fun hashCode(): Int = clsDelegate.hashCode()
+    override fun copy(): PsiElement = KtLightNonSourceAnnotation(parent, clsDelegate)
 }
 
 class KtLightNonExistentAnnotation(parent: KtLightElement<*, *>) : KtLightElementBase(parent), PsiAnnotation {
@@ -258,11 +266,18 @@ class KtLightNonExistentAnnotation(parent: KtLightElement<*, *>) : KtLightElemen
     override fun getOwner(): PsiAnnotationOwner? = parent as? PsiAnnotationOwner
     override fun findDeclaredAttributeValue(attributeName: String?): PsiAnnotationMemberValue? = null
     override fun getParameterList(): KtLightEmptyAnnotationParameterList = KtLightEmptyAnnotationParameterList(this)
+    override fun copy(): PsiElement = KtLightNonExistentAnnotation(parent as KtLightElement<*, *>)
 }
 
 class KtLightEmptyAnnotationParameterList(parent: PsiElement) : KtLightElementBase(parent), PsiAnnotationParameterList {
     override val kotlinOrigin: KtElement? get() = null
     override fun getAttributes(): Array<PsiNameValuePair> = emptyArray()
+    override fun copy(): PsiElement = KtLightEmptyAnnotationParameterList(parent)
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtLightEmptyAnnotationParameterList &&
+            other.parent == parent
+
+    override fun hashCode(): Int = parent.hashCode()
 }
 
 open class KtLightNullabilityAnnotation<D : KtLightElement<*, PsiModifierListOwner>>(val member: D, parent: PsiElement) :
@@ -280,6 +295,7 @@ open class KtLightNullabilityAnnotation<D : KtLightElement<*, PsiModifierListOwn
             other.member == member
 
     override fun hashCode(): Int = member.hashCode()
+    override fun copy(): PsiElement? = KtLightNullabilityAnnotation(member, parent)
 
     override fun fqNameMatches(fqName: String): Boolean {
         if (!isNullabilityAnnotation(fqName)) return false
@@ -384,12 +400,8 @@ private fun KtElement.getResolvedCall(): ResolvedCall<out CallableDescriptor>? {
 fun convertToLightAnnotationMemberValue(lightParent: PsiElement, argument: KtExpression): PsiAnnotationMemberValue {
     @Suppress("NAME_SHADOWING") val argument = unwrapCall(argument)
     when (argument) {
-        is KtClassLiteralExpression -> {
-            return KtLightPsiClassObjectAccessExpression(argument, lightParent)
-        }
-        is KtStringTemplateExpression, is KtConstantExpression -> {
-            return KtLightPsiLiteral(argument, lightParent)
-        }
+        is KtClassLiteralExpression -> return KtLightPsiClassObjectAccessExpression(argument, lightParent)
+        is KtStringTemplateExpression, is KtConstantExpression -> return KtLightPsiLiteral(argument, lightParent)
         is KtCallExpression -> {
             val arguments = argument.valueArguments
             val annotationName = argument.calleeExpression?.let { getAnnotationName(it) }
@@ -413,6 +425,7 @@ fun convertToLightAnnotationMemberValue(lightParent: PsiElement, argument: KtExp
                     }
                 }
         }
+
         is KtCollectionLiteralExpression -> {
             val arguments = argument.getInnerExpressions()
             if (arguments.isNotEmpty())
@@ -444,10 +457,12 @@ private fun getAnnotationName(callee: KtExpression): String? {
         val ktClass = resultingDescriptor.constructedClass.source.getPsi() as? KtClass
         if (ktClass?.isAnnotation() == true) return ktClass.fqName?.toString()
     }
+
     if (resultingDescriptor is JavaClassConstructorDescriptor) {
         val psiClass = resultingDescriptor.constructedClass.source.getPsi() as? PsiClass
         if (psiClass?.isAnnotationType == true) return psiClass.qualifiedName
     }
+
     return null
 }
 

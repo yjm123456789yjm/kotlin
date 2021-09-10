@@ -18,9 +18,8 @@ internal open class KtLightClassForAnonymousDeclaration(classOrObject: KtClassOr
 
     private var cachedBaseType: SoftReference<PsiClassType>? = null
 
-    override fun getBaseClassReference(): PsiJavaCodeReferenceElement {
-        return JavaPsiFacade.getElementFactory(classOrObject.project).createReferenceElementByType(baseClassType)
-    }
+    override fun getBaseClassReference(): PsiJavaCodeReferenceElement =
+        JavaPsiFacade.getElementFactory(classOrObject.project).createReferenceElementByType(baseClassType)
 
     @Synchronized
     override fun getBaseClassType(): PsiClassType {
@@ -48,9 +47,7 @@ internal open class KtLightClassForAnonymousDeclaration(classOrObject: KtClassOr
 
     override fun getArgumentList(): PsiExpressionList? = null
 
-    override fun isInQualifiedNew(): Boolean {
-        return false
-    }
+    override fun isInQualifiedNew(): Boolean = false
 
     override fun getName(): String? = null
 
@@ -73,7 +70,7 @@ internal open class KtLightClassForAnonymousDeclaration(classOrObject: KtClassOr
     override fun getTypeParameterList(): PsiTypeParameterList? = null
     override fun isEnum() = false
 
-    override fun copy(): PsiElement = KtLightClassForAnonymousDeclaration(classOrObject)
+    override fun copy(): PsiElement = KtLightClassForAnonymousDeclaration(classOrObject.copy() as KtClassOrObject)
 
     companion object {
         fun KtLightClassForSourceDeclaration.getFirstSupertypeFQNameForAnonymousDeclaration(): String {

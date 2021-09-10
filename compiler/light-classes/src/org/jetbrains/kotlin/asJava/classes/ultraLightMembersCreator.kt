@@ -160,6 +160,7 @@ internal class UltraLightMembersCreator(
 
         override fun getDefaultValue(): PsiAnnotationMemberValue = value
         override fun getSourceElement(): PsiElement? = psiMethod.sourceElement
+        override fun copy(): PsiElement = KtUltraLightAnnotationMethod(psiMethod, expression)
     }
 
     private fun asJavaMethod(
@@ -254,6 +255,16 @@ internal class UltraLightMembersCreator(
         private val forceStatic: Boolean,
         private val forcePrivate: Boolean = false
     ) : LightModifierList(declaration.manager, declaration.language) {
+        override fun copy() = UltraLightModifierListForMember(declaration, accessedProperty, outerDeclaration, forceStatic, forcePrivate)
+        override fun equals(other: Any?): Boolean = other === this ||
+                other is UltraLightModifierListForMember &&
+                other.forceStatic == forceStatic &&
+                other.forcePrivate == forcePrivate &&
+                other.declaration == declaration &&
+                other.accessedProperty == accessedProperty &&
+                other.outerDeclaration == outerDeclaration
+
+        override fun hashCode(): Int = declaration.hashCode() + 31 * outerDeclaration.hashCode()
 
         override fun hasModifierProperty(name: String): Boolean {
 
@@ -518,19 +529,15 @@ internal class UltraLightMembersCreator(
         return result
     }
 
-    private fun KtCallableDeclaration.hasReifiedParameters(): Boolean =
-        typeParameters.any { it.hasModifier(REIFIED_KEYWORD) }
+    private fun KtCallableDeclaration.hasReifiedParameters(): Boolean = typeParameters.any { it.hasModifier(REIFIED_KEYWORD) }
 
-    private fun KtCallableDeclaration.isConstOrJvmField() =
-        hasModifier(CONST_KEYWORD) || isJvmField()
+    private fun KtCallableDeclaration.isConstOrJvmField() = hasModifier(CONST_KEYWORD) || isJvmField()
 
     private fun KtCallableDeclaration.isJvmField() = hasAnnotation(JvmAbi.JVM_FIELD_ANNOTATION_FQ_NAME)
 
-    private fun isFinal(declaration: KtDeclaration): Boolean {
-        if (declaration.hasModifier(FINAL_KEYWORD)) return true
-        return declaration !is KtPropertyAccessor &&
-                !declaration.hasModifier(OPEN_KEYWORD) &&
-                !declaration.hasModifier(OVERRIDE_KEYWORD) &&
-                !declaration.hasModifier(ABSTRACT_KEYWORD)
-    }
+    private fun isFinal(declaration: KtDeclaration): Boolean = declaration.hasModifier(FINAL_KEYWORD) ||
+            declaration !is KtPropertyAccessor &&
+            !declaration.hasModifier(OPEN_KEYWORD) &&
+            !declaration.hasModifier(OVERRIDE_KEYWORD) &&
+            !declaration.hasModifier(ABSTRACT_KEYWORD)
 }

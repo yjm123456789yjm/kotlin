@@ -9,7 +9,6 @@ import com.intellij.openapi.util.UserDataHolder
 import com.intellij.psi.*
 import com.intellij.psi.impl.compiled.ClsRepositoryPsiElement
 import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory.ORIGIN
-import org.jetbrains.kotlin.asJava.builder.LightElementOrigin
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.builder.LightMemberOriginForDeclaration
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -33,7 +32,8 @@ abstract class KtLightMemberImpl<out D : PsiMember>(
     private val _modifierList by lazyPub {
         if (lightMemberOrigin is LightMemberOriginForDeclaration)
             KtLightMemberModifierList(this, dummyDelegate?.modifierList)
-        else clsDelegate.modifierList!!
+        else
+            clsDelegate.modifierList!!
     }
 
     override fun hasModifierProperty(name: String) = _modifierList.hasModifierProperty(name)
@@ -54,15 +54,11 @@ abstract class KtLightMemberImpl<out D : PsiMember>(
 
     override fun isDeprecated() = (clsDelegate as PsiDocCommentOwner).isDeprecated
 
-    override fun isValid(): Boolean {
-        return parent.isValid && lightMemberOrigin?.isValid() != false
-    }
+    override fun isValid(): Boolean = parent.isValid && lightMemberOrigin?.isValid() != false
 
-    override fun isEquivalentTo(another: PsiElement?): Boolean {
-        return this == another ||
-                lightMemberOrigin?.isEquivalentTo(another) == true ||
-                another is KtLightMember<*> && lightMemberOrigin?.isEquivalentTo(another.lightMemberOrigin) == true
-    }
+    override fun isEquivalentTo(another: PsiElement?): Boolean = this == another ||
+            lightMemberOrigin?.isEquivalentTo(another) == true ||
+            another is KtLightMember<*> && lightMemberOrigin?.isEquivalentTo(another.lightMemberOrigin) == true
 }
 
 internal fun getMemberOrigin(member: PsiMember): LightMemberOriginForDeclaration? {
@@ -70,14 +66,14 @@ internal fun getMemberOrigin(member: PsiMember): LightMemberOriginForDeclaration
 
     val stubElement = member.stub as? UserDataHolder ?: return null
 
-    return stubElement.getUserData<LightElementOrigin>(ORIGIN) as? LightMemberOriginForDeclaration ?: return null
+    return stubElement.getUserData(ORIGIN) as? LightMemberOriginForDeclaration
 }
 
 private val visibilityModifiers = arrayOf(PsiModifier.PRIVATE, PsiModifier.PACKAGE_LOCAL, PsiModifier.PROTECTED, PsiModifier.PUBLIC)
 
-private class KtLightMemberModifierList(
-    owner: KtLightMember<*>, private val dummyDelegate: PsiModifierList?
-) : KtLightModifierList<KtLightMember<*>>(owner) {
+@Suppress("EqualsOrHashCode")
+private class KtLightMemberModifierList(owner: KtLightMember<*>, private val dummyDelegate: PsiModifierList?) :
+    KtLightModifierList<KtLightMember<*>>(owner) {
     override fun hasModifierProperty(name: String) = when {
         name == PsiModifier.ABSTRACT && isImplementationInInterface() -> false
         // pretend this method behaves like a default method
@@ -85,13 +81,12 @@ private class KtLightMemberModifierList(
         name == PsiModifier.FINAL && ((owner.containingClass as? KtLightClassForSourceDeclaration)?.isPossiblyAffectedByAllOpen()
             ?: false) ->
             clsDelegate.hasModifierProperty(name)
-        dummyDelegate != null -> {
-            when {
-                name in visibilityModifiers && isMethodOverride() ->
-                    clsDelegate.hasModifierProperty(name)
-                else -> dummyDelegate.hasModifierProperty(name)
-            }
+
+        dummyDelegate != null -> when {
+            name in visibilityModifiers && isMethodOverride() -> clsDelegate.hasModifierProperty(name)
+            else -> dummyDelegate.hasModifierProperty(name)
         }
+
         else -> clsDelegate.hasModifierProperty(name)
     }
 
@@ -105,5 +100,7 @@ private class KtLightMemberModifierList(
         owner.containingClass.isInterface && owner is KtLightMethod && owner.kotlinOrigin?.hasBody() ?: false
 
     override fun copy() = KtLightMemberModifierList(owner, dummyDelegate)
+    override fun equals(other: Any?): Boolean =
+        super.equals(other) && other is KtLightMemberModifierList && other.dummyDelegate == dummyDelegate
 }
 

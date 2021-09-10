@@ -124,4 +124,5 @@ internal class KtLightParameterImpl(
             other.kotlinOrigin == kotlinOrigin
 
     override fun hashCode(): Int = name.hashCode() + 31 * method.hashCode()
+    override fun copy(): PsiElement = KtLightParameterImpl(dummyDelegate, clsDelegateProvider, index, method)
 }

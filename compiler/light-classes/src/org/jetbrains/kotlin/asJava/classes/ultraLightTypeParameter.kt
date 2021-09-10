@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -20,10 +20,8 @@ internal class KtUltraLightTypeParameter(
     private val myOwner: PsiTypeParameterListOwner,
     private val myParent: PsiElement,
     index: Int,
-    referenceListBuilder: (PsiElement) -> KotlinLightReferenceListBuilder
-) :
-    LightTypeParameterBuilder(name, myOwner, index),
-    PsiElementWithOrigin<KtTypeParameter> {
+    private val referenceListBuilder: (PsiElement) -> KotlinLightReferenceListBuilder
+) : LightTypeParameterBuilder(name, myOwner, index), PsiElementWithOrigin<KtTypeParameter> {
 
     private val superList: LightReferenceListBuilder by lazyPub { referenceListBuilder(this) }
 
@@ -36,4 +34,5 @@ internal class KtUltraLightTypeParameter(
     override fun getContainingFile(): PsiFile = myOwner.containingFile
 
     override fun getUseScope() = origin.useScope
+    override fun copy(): PsiElement = KtUltraLightTypeParameter(name, myOwner, myParent, index, referenceListBuilder)
 }

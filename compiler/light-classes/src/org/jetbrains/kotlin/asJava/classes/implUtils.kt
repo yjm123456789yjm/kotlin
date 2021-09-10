@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -50,12 +50,10 @@ fun PsiReferenceList.addSuperTypeEntry(
     }
 }
 
-fun KtClassOrObject.getExternalDependencies(): List<ModificationTracker> {
-    return with(KotlinModificationTrackerService.getInstance(project)) {
-        if (!this@getExternalDependencies.isLocal) return listOf(outOfBlockModificationTracker)
-        else when (val file = containingFile) {
-            is KtFile -> listOf(outOfBlockModificationTracker, fileModificationTracker(file))
-            else -> listOf(outOfBlockModificationTracker)
-        }
+fun KtClassOrObject.getExternalDependencies(): List<ModificationTracker> = with(KotlinModificationTrackerService.getInstance(project)) {
+    if (!this@getExternalDependencies.isLocal) return listOf(outOfBlockModificationTracker)
+    else when (val file = containingFile) {
+        is KtFile -> listOf(outOfBlockModificationTracker, fileModificationTracker(file))
+        else -> listOf(outOfBlockModificationTracker)
     }
 }

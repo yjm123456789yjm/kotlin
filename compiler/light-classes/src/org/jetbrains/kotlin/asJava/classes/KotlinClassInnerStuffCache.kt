@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -55,33 +55,30 @@ class KotlinClassInnerStuffCache(
 
     private val _getFieldsMap: Map<String, PsiField> by get { this.getFieldsMap() }
 
-    fun findFieldByName(name: String, checkBases: Boolean): PsiField? {
-        return if (checkBases) {
+    fun findFieldByName(name: String, checkBases: Boolean): PsiField? =
+        if (checkBases) {
             PsiClassImplUtil.findFieldByName(myClass, name, true)
         } else {
             _getFieldsMap[name]
         }
-    }
 
     private val _getMethodsMap: Map<String, Array<PsiMethod>> by get { this.getMethodsMap() }
 
-    fun findMethodsByName(name: String, checkBases: Boolean): Array<PsiMethod> {
-        return if (checkBases) {
+    fun findMethodsByName(name: String, checkBases: Boolean): Array<PsiMethod> =
+        if (checkBases) {
             PsiClassImplUtil.findMethodsByName(myClass, name, true)
         } else {
             copy(_getMethodsMap[name] ?: PsiMethod.EMPTY_ARRAY)
         }
-    }
 
     private val _getInnerClassesMap: Map<String, PsiClass> by get { this.getInnerClassesMap() }
 
-    fun findInnerClassByName(name: String, checkBases: Boolean): PsiClass? {
-        return if (checkBases) {
+    fun findInnerClassByName(name: String, checkBases: Boolean): PsiClass? =
+        if (checkBases) {
             PsiClassImplUtil.findInnerByName(myClass, name, true)
         } else {
             _getInnerClassesMap[name]
         }
-    }
 
     private val _makeValuesMethod: PsiMethod by get { this.makeValuesMethod() }
 

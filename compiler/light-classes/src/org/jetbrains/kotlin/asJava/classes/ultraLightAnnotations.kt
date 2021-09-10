@@ -25,6 +25,7 @@ class KtUltraLightNullabilityAnnotation(
     parent: PsiElement
 ) : KtLightNullabilityAnnotation<KtUltraLightElementWithNullabilityAnnotation<*, *>>(member, parent) {
     override fun getQualifiedName(): String? = member.qualifiedNameForNullabilityAnnotation
+    override fun copy(): PsiElement = KtUltraLightNullabilityAnnotation(member, parent)
 }
 
 fun AnnotationDescriptor.toLightAnnotation(ultraLightSupport: KtUltraLightSupport, parent: PsiElement) =
@@ -85,6 +86,8 @@ class KtUltraLightSimpleAnnotation(
     override fun hashCode(): Int = annotationFqName.hashCode()
 
     override fun getText() = "@$qualifiedName(" + parameterList.attributes.joinToString { it.name + "=" + it.value?.text } + ")"
+    override fun copy(): PsiElement =
+        KtUltraLightSimpleAnnotation(annotationFqName, argumentsList, ultraLightSupport, parent, nameReferenceElementProvider)
 }
 
 private class PsiNameValuePairForAnnotationArgument(
@@ -108,18 +111,28 @@ private class PsiNameValuePairForAnnotationArgument(
     override fun getLiteralValue(): String? = (value as? PsiLiteralExpression)?.value?.toString()
 
     override fun getName() = _name
+
+    override fun copy(): PsiElement = PsiNameValuePairForAnnotationArgument(_name, constantValue, ultraLightSupport, parent)
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is PsiNameValuePairForAnnotationArgument &&
+            other._name == _name &&
+            other.constantValue == constantValue &&
+            other.parent == parent
+
+    override fun hashCode(): Int {
+        var result = _name.hashCode()
+        result = 31 * result + constantValue.hashCode()
+        return result
+    }
 }
 
 private fun ConstantValue<*>.toAnnotationMemberValue(
     parent: PsiElement, ultraLightSupport: KtUltraLightSupport
 ): PsiAnnotationMemberValue? = when (this) {
-
     is AnnotationValue -> value.toLightAnnotation(ultraLightSupport, parent)
-
-    is ArrayValue ->
-        KtUltraLightPsiArrayInitializerMemberValue(lightParent = parent) { arrayLiteralParent ->
-            this.value.mapNotNull { element -> element.toAnnotationMemberValue(arrayLiteralParent, ultraLightSupport) }
-        }
+    is ArrayValue -> KtUltraLightPsiArrayInitializerMemberValue(lightParent = parent) { arrayLiteralParent ->
+        this.value.mapNotNull { element -> element.toAnnotationMemberValue(arrayLiteralParent, ultraLightSupport) }
+    }
 
     is ErrorValue -> null
     else -> createPsiLiteral(parent)
@@ -138,4 +151,5 @@ private class KtUltraLightPsiArrayInitializerMemberValue(
     override fun isPhysical(): Boolean = false
 
     override fun getText(): String = "{" + initializers.joinToString { it.text } + "}"
+    override fun copy(): PsiElement = KtUltraLightPsiArrayInitializerMemberValue(lightParent, arguments)
 }

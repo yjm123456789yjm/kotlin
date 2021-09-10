@@ -82,7 +82,7 @@ internal abstract class KtUltraLightParameter(
     name: String,
     override val kotlinOrigin: KtParameter?,
     protected val support: KtUltraLightSupport,
-    private val ultraLightMethod: KtUltraLightMethod
+    protected val ultraLightMethod: KtUltraLightMethod
 ) : LightParameter(
     name,
     PsiType.NULL,
@@ -141,6 +141,7 @@ internal abstract class KtUltraLightParameter(
 
     override fun hashCode(): Int = ultraLightMethod.hashCode()
     abstract override fun isVarArgs(): Boolean
+    abstract override fun copy(): PsiElement?
 }
 
 @Suppress("EqualsOrHashCode")
@@ -206,6 +207,7 @@ internal class KtUltraLightParameterForSource(
     override fun getContainingFile(): PsiFile = parent.containingFile
     override fun getPresentation(): ItemPresentation? = kotlinOrigin.let { ItemPresentationProviders.getItemPresentation(it) }
     override fun findElementAt(offset: Int): PsiElement? = kotlinOrigin.findElementAt(offset)
+    override fun copy(): PsiElement = KtUltraLightParameterForSource(name, kotlinOrigin, support, ultraLightMethod, containingDeclaration)
 }
 
 internal class KtUltraLightParameterForSetterParameter(
@@ -222,6 +224,7 @@ internal class KtUltraLightParameterForSetterParameter(
         get() = containingDeclaration.annotationEntries.toLightAnnotations(this, AnnotationUseSiteTarget.SETTER_PARAMETER)
 
     override fun isVarArgs(): Boolean = false
+    override fun copy(): PsiElement = KtUltraLightParameterForSetterParameter(name, containingDeclaration, support, ultraLightMethod)
 }
 
 internal class KtUltraLightReceiverParameter(
@@ -246,6 +249,7 @@ internal class KtUltraLightReceiverParameter(
     override fun isVarArgs(): Boolean = false
 
     override fun tryGetKotlinType(): KotlinType? = tryGetContainingDescriptor()?.extensionReceiverParameter?.type
+    override fun copy(): PsiElement = KtUltraLightReceiverParameter(containingDeclaration, support, ultraLightMethod)
 }
 
 internal class KtUltraLightParameterForDescriptor(
@@ -289,4 +293,6 @@ internal class KtUltraLightParameterForDescriptor(
             clear()
         }
     }
+
+    override fun copy(): PsiElement? = null
 }

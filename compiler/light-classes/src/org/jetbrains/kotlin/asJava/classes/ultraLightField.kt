@@ -31,6 +31,7 @@ import org.jetbrains.kotlin.resolve.jvm.annotations.TRANSIENT_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.annotations.VOLATILE_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOriginKind
 import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 private class KtUltraLightFieldModifierList(
     support: KtUltraLightSupport,
@@ -55,6 +56,12 @@ private class KtUltraLightFieldModifierList(
     }
 
     override fun copy() = KtUltraLightFieldModifierList(support, declaration, owner, modifiers)
+    override fun equals(other: Any?): Boolean = super.equals(other) &&
+            other is KtUltraLightFieldModifierList &&
+            other.modifiers == modifiers &&
+            other.declaration == declaration
+
+    override fun hashCode(): Int = declaration.hashCode()
 }
 
 internal class KtUltraLightFieldForSourceDeclaration(
@@ -78,6 +85,7 @@ internal class KtUltraLightFieldForSourceDeclaration(
     override fun getContainingFile(): PsiFile = parent.containingFile
     override fun getPresentation(): ItemPresentation? = kotlinOrigin.let { ItemPresentationProviders.getItemPresentation(it) }
     override fun findElementAt(offset: Int): PsiElement? = kotlinOrigin.findElementAt(offset)
+    override fun copy(): PsiElement = KtUltraLightFieldForSourceDeclaration(declaration, name, containingClass, support, modifiers)
 
     // Workaround for KT-42137 until we update the bootstrap compiler.
     override val kotlinOrigin: KtNamedDeclaration get() = super.kotlinOrigin
@@ -87,8 +95,8 @@ internal open class KtUltraLightFieldImpl protected constructor(
     protected val declaration: KtNamedDeclaration,
     name: String,
     private val containingClass: KtLightClass,
-    private val support: KtUltraLightSupport,
-    modifiers: Set<String>,
+    protected val support: KtUltraLightSupport,
+    protected val modifiers: Set<String>,
 ) : LightFieldBuilder(name, PsiType.NULL, declaration), KtLightField,
     KtUltraLightElementWithNullabilityAnnotation<KtDeclaration, PsiField> {
 
@@ -127,15 +135,13 @@ internal open class KtUltraLightFieldImpl protected constructor(
         }
 
     override val qualifiedNameForNullabilityAnnotation: String?
-        get() =
-            when (declaration) {
-                is KtObjectDeclaration -> NotNull::class.java.name
-                is KtEnumEntry -> null
-                else -> computeQualifiedNameForNullabilityAnnotation(kotlinType)
-            }
+        get() = when (declaration) {
+            is KtObjectDeclaration -> NotNull::class.java.name
+            is KtEnumEntry -> null
+            else -> computeQualifiedNameForNullabilityAnnotation(kotlinType)
+        }
 
-    override val psiTypeForNullabilityAnnotation: PsiType?
-        get() = type
+    override val psiTypeForNullabilityAnnotation: PsiType? get() = type
 
     private val _type: PsiType by lazyPub {
         fun nonExistent() = JavaPsiFacade.getElementFactory(project).createTypeFromText("error.NonExistentClass", declaration)
@@ -161,9 +167,7 @@ internal open class KtUltraLightFieldImpl protected constructor(
     override fun getContainingClass() = containingClass
     override fun getContainingFile(): PsiFile? = containingClass.containingFile
 
-    private val _initializer by lazyPub {
-        _constantInitializer?.createPsiLiteral(declaration)
-    }
+    private val _initializer by lazyPub { _constantInitializer?.createPsiLiteral(declaration) }
 
     override fun getInitializer(): PsiExpression? = _initializer
 
@@ -188,10 +192,18 @@ internal open class KtUltraLightFieldImpl protected constructor(
 
     override val lightMemberOrigin = LightMemberOriginForDeclaration(declaration, JvmDeclarationOriginKind.OTHER)
 
-    override fun setName(@NonNls name: String): PsiElement {
-        (kotlinOrigin as? KtNamedDeclaration)?.setName(name)
-        return this
+    override fun setName(@NonNls name: String): PsiElement = also {
+        kotlinOrigin.safeAs<KtNamedDeclaration>()?.setName(name)
     }
 
     override fun setInitializer(initializer: PsiExpression?) = cannotModify()
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtUltraLightFieldImpl &&
+            other.javaClass == javaClass &&
+            other.modifiers == modifiers &&
+            other.declaration == declaration &&
+            other.containingClass == containingClass
+
+    override fun hashCode(): Int = declaration.hashCode()
+    override fun copy(): PsiElement = KtUltraLightFieldImpl(declaration, name, containingClass, support, modifiers)
 }

@@ -104,13 +104,13 @@ open class KtLightClassForFacadeImpl constructor(
 
     override fun getImplementsListTypes(): Array<out PsiClassType> = PsiClassType.EMPTY_ARRAY
 
-    override fun getInterfaces(): Array<out PsiClass> = PsiClass.EMPTY_ARRAY
+    override fun getInterfaces(): Array<PsiClass> = PsiClass.EMPTY_ARRAY
 
-    override fun getInnerClasses(): Array<out PsiClass> = PsiClass.EMPTY_ARRAY
+    override fun getInnerClasses(): Array<PsiClass> = PsiClass.EMPTY_ARRAY
 
     override fun getOwnInnerClasses(): List<PsiClass> = listOf()
 
-    override fun getAllInnerClasses(): Array<out PsiClass> = PsiClass.EMPTY_ARRAY
+    override fun getAllInnerClasses(): Array<PsiClass> = PsiClass.EMPTY_ARRAY
 
     override fun getInitializers(): Array<out PsiClassInitializer> = PsiClassInitializer.EMPTY_ARRAY
 
@@ -181,9 +181,7 @@ open class KtLightClassForFacadeImpl constructor(
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean =
         baseClass.qualifiedName == CommonClassNames.JAVA_LANG_OBJECT
 
-    override fun getSuperClass(): PsiClass? {
-        return JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope)
-    }
+    override fun getSuperClass(): PsiClass? = JavaPsiFacade.getInstance(project).findClass(CommonClassNames.JAVA_LANG_OBJECT, resolveScope)
 
     override fun getSupers(): Array<PsiClass> = superClass?.let { arrayOf(it) } ?: arrayOf()
 
@@ -246,9 +244,7 @@ open class KtLightClassForFacadeImpl constructor(
             manager: PsiManager,
             facadeClassFqName: FqName,
             searchScope: GlobalSearchScope
-        ): KtLightClassForFacade? {
-            return FacadeCache.getInstance(manager.project)[facadeClassFqName, searchScope]
-        }
+        ): KtLightClassForFacade? = FacadeCache.getInstance(manager.project)[facadeClassFqName, searchScope]
 
         fun createForSyntheticFile(
             facadeClassFqName: FqName,

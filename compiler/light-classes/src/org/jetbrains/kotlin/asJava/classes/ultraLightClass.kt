@@ -52,7 +52,7 @@ open class KtUltraLightClass(classOrObject: KtClassOrObject, internal val suppor
     KtLightClassImpl(classOrObject, support.languageVersionSettings.getFlag(JvmAnalysisFlags.jvmDefaultMode)) {
 
     private class KtUltraLightClassModifierList(
-        private val containingClass: KtLightClassForSourceDeclaration,
+        containingClass: KtLightClassForSourceDeclaration,
         support: KtUltraLightSupport,
         private val computeModifiers: () -> Set<String>
     ) : KtUltraLightModifierList<KtLightClassForSourceDeclaration>(containingClass, support) {
@@ -61,7 +61,7 @@ open class KtUltraLightClass(classOrObject: KtClassOrObject, internal val suppor
         override fun hasModifierProperty(name: String): Boolean =
             if (name != PsiModifier.FINAL) name in modifiers else owner.isFinal(PsiModifier.FINAL in modifiers)
 
-        override fun copy(): PsiElement = KtUltraLightClassModifierList(containingClass, support, computeModifiers)
+        override fun copy(): PsiElement = KtUltraLightClassModifierList(owner, support, computeModifiers)
     }
 
 

@@ -45,7 +45,7 @@ internal abstract class KtUltraLightMethod(
     lightMemberOrigin: LightMemberOrigin?,
     protected val support: KtUltraLightSupport,
     containingClass: KtLightClass,
-    private val methodIndex: Int
+    protected val methodIndex: Int
 ) : KtLightMethodImpl(
     { delegate },
     lightMemberOrigin,
@@ -141,6 +141,7 @@ internal abstract class KtUltraLightMethod(
             super.equals(other)
 
     override fun hashCode(): Int = delegate.hashCode()
+    abstract override fun copy(): PsiElement?
 
     override fun isDeprecated(): Boolean = _deprecated
 }
@@ -192,6 +193,15 @@ internal class KtUltraLightMethodForSourceDeclaration(
             other is KtUltraLightMethodForSourceDeclaration &&
             other.forceToSkipNullabilityAnnotation == forceToSkipNullabilityAnnotation &&
             super.equals(other)
+
+    override fun copy(): PsiElement = KtUltraLightMethodForSourceDeclaration(
+        delegate,
+        lightMemberOrigin,
+        support,
+        containingClass,
+        forceToSkipNullabilityAnnotation,
+        methodIndex,
+    )
 
     private val methodDescriptor get() = kotlinOrigin?.resolve() as? FunctionDescriptor
 
@@ -272,4 +282,6 @@ internal class KtUltraLightMethodForDescriptor(
             clear()
         }
     }
+
+    override fun copy(): PsiElement? = null
 }

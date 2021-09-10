@@ -51,6 +51,13 @@ abstract class KtLightModifierList<out T : KtLightElement<KtModifierListOwner, P
     override fun isEquivalentTo(another: PsiElement?) =
         another is KtLightModifierList<*> && owner == another.owner
 
+    override fun equals(other: Any?): Boolean = other === this ||
+            other is KtLightModifierList<*> &&
+            other.javaClass == javaClass &&
+            other.owner == owner
+
+    override fun hashCode(): Int = owner.hashCode()
+
     override fun isWritable() = false
 
     override fun toString() = "Light modifier list of $owner"
@@ -96,15 +103,19 @@ abstract class KtLightModifierList<out T : KtLightElement<KtModifierListOwner, P
 
         return annotationsForEntries
     }
+
+    abstract override fun copy(): PsiElement?
 }
 
+@Suppress("EqualsOrHashCode")
 class KtUltraLightSimpleModifierList(
     owner: KtLightElement<KtModifierListOwner, PsiModifierListOwner>,
     private val modifiers: Set<String>,
 ) : KtUltraLightModifierListBase<KtLightElement<KtModifierListOwner, PsiModifierListOwner>>(owner) {
     override fun hasModifierProperty(name: String) = name in modifiers
-
     override fun copy() = KtUltraLightSimpleModifierList(owner, modifiers)
+    override fun equals(other: Any?): Boolean =
+        super.equals(other) && other is KtUltraLightSimpleModifierList && other.modifiers == modifiers
 }
 
 abstract class KtUltraLightModifierList<out T : KtLightElement<KtModifierListOwner, PsiModifierListOwner>>(
@@ -115,11 +126,9 @@ abstract class KtUltraLightModifierList<out T : KtLightElement<KtModifierListOwn
     protected open fun PsiAnnotation.additionalConverter(): KtLightAbstractAnnotation? = null
 
     override fun nonSourceAnnotationsForAnnotationType(sourceAnnotations: List<PsiAnnotation>): List<KtLightAbstractAnnotation> {
-
         if (sourceAnnotations.isEmpty()) return listOf(createRetentionRuntimeAnnotation(support, this))
 
         return mutableListOf<KtLightAbstractAnnotation>().also { result ->
-
             sourceAnnotations.mapNotNullTo(result) { sourceAnnotation ->
                 sourceAnnotation.additionalConverter()
                     ?: sourceAnnotation.tryConvertAsTarget(support)
@@ -138,27 +147,22 @@ abstract class KtUltraLightModifierList<out T : KtLightElement<KtModifierListOwn
 abstract class KtUltraLightModifierListBase<out T : KtLightElement<KtModifierListOwner, PsiModifierListOwner>>(
     owner: T
 ) : KtLightModifierList<T>(owner) {
-
     override val clsDelegate: PsiModifierList get() = invalidAccess()
-
     private fun throwInvalidOperation(): Nothing = throw IncorrectOperationException()
-
     override fun setModifierProperty(name: String, value: Boolean): Unit = throwInvalidOperation()
-
     override fun checkSetModifierProperty(name: String, value: Boolean): Unit = throwInvalidOperation()
-
     override fun addAnnotation(qualifiedName: String): PsiAnnotation = throwInvalidOperation()
-
     override fun nonSourceAnnotationsForAnnotationType(sourceAnnotations: List<PsiAnnotation>): List<KtLightAbstractAnnotation> =
         emptyList()
 }
 
-class KtLightSimpleModifierList(
-    owner: KtLightElement<KtModifierListOwner, PsiModifierListOwner>, private val modifiers: Set<String>
-) : KtLightModifierList<KtLightElement<KtModifierListOwner, PsiModifierListOwner>>(owner) {
+@Suppress("EqualsOrHashCode")
+class KtLightSimpleModifierList(owner: KtLightElement<KtModifierListOwner, PsiModifierListOwner>, private val modifiers: Set<String>) :
+    KtLightModifierList<KtLightElement<KtModifierListOwner, PsiModifierListOwner>>(owner) {
     override fun hasModifierProperty(name: String) = name in modifiers
-
     override fun copy() = KtLightSimpleModifierList(owner, modifiers)
+    override fun equals(other: Any?): Boolean =
+        super.equals(other) && other is KtLightSimpleModifierList && other.modifiers == modifiers
 }
 
 private fun lightAnnotationsForEntries(lightModifierList: KtLightModifierList<*>): List<KtLightAnnotationForSourceEntry> {
@@ -229,6 +233,7 @@ private fun getAnnotationDescriptors(
     val annotatedDescriptor = when {
         descriptor is ClassDescriptor && annotatedLightElement is KtLightMethod && annotatedLightElement.isConstructor ->
             descriptor.unsubstitutedPrimaryConstructor
+
         descriptor !is PropertyDescriptor -> descriptor
         annotatedLightElement is KtLightFieldImpl.KtLightEnumConstant -> descriptor
         annotatedLightElement is KtLightField -> descriptor.backingField

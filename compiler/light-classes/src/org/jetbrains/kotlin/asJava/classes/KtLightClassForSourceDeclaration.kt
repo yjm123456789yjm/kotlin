@@ -55,7 +55,7 @@ import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import javax.swing.Icon
 
-private class KtLightClassModifierList(containingClass: KtLightClassForSourceDeclaration, computeModifiers: () -> Set<String>) :
+private class KtLightClassModifierList(containingClass: KtLightClassForSourceDeclaration, private val computeModifiers: () -> Set<String>) :
     KtLightModifierList<KtLightClassForSourceDeclaration>(containingClass) {
 
     private val modifiers by lazyPub { computeModifiers() }
@@ -63,6 +63,7 @@ private class KtLightClassModifierList(containingClass: KtLightClassForSourceDec
     override fun hasModifierProperty(name: String): Boolean =
         if (name != PsiModifier.FINAL) name in modifiers else owner.isFinal(PsiModifier.FINAL in modifiers)
 
+    override fun copy(): PsiElement = KtLightClassModifierList(owner.copy() as KtLightClassForSourceDeclaration, computeModifiers)
 }
 
 abstract class KtLightClassForSourceDeclaration(
@@ -160,7 +161,7 @@ abstract class KtLightClassForSourceDeclaration(
 
     override fun getElementIcon(flags: Int): Icon? = throw UnsupportedOperationException("This should be done by KtIconProvider")
 
-    override fun equals(other: Any?): Boolean = this === other ||
+    override fun equals(other: Any?): Boolean = other === this ||
             other is KtLightClassForSourceDeclaration &&
             other.javaClass == javaClass &&
             other.classOrObject == classOrObject &&

@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2019 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -54,11 +54,12 @@ abstract class KtFakeLightClass(override val kotlinOrigin: KtClassOrObject) :
 
 class KtDescriptorBasedFakeLightClass(kotlinOrigin: KtClassOrObject) : KtFakeLightClass(kotlinOrigin) {
 
-    override fun copy(): KtFakeLightClass = KtDescriptorBasedFakeLightClass(kotlinOrigin)
+    override fun copy(): KtFakeLightClass = KtDescriptorBasedFakeLightClass(kotlinOrigin.copy() as KtClassOrObject)
 
     private val _containingClass: KtFakeLightClass? by lazy {
         kotlinOrigin.containingClassOrObject?.let { KtDescriptorBasedFakeLightClass(it) }
     }
+
     override fun getContainingClass(): KtFakeLightClass? = _containingClass
 
     override fun isInheritor(baseClass: PsiClass, checkDeep: Boolean): Boolean {
