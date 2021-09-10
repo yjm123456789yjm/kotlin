@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.ConstantRef
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.descriptors.SourceFile
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.ir.util.IdSignature
@@ -86,7 +87,7 @@ class ConstLowering(val context: JvmBackendContext) : IrElementTransformerVoid()
         if (!field.isFinal || !field.isStatic) return
 
         val sourceFile = field.toIrBasedDescriptor().containingDeclaration.toSourceElement.containingFile
-        if (sourceFile.toString().lowercase().endsWith(".kt")) return
+        if (sourceFile == SourceFile.NO_SOURCE_FILE || sourceFile.toString().lowercase().endsWith(".kt")) return
 
         for (file: KtFile in context.state.files) {
             val fileName = file.virtualFilePath
