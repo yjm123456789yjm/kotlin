@@ -192,39 +192,59 @@ abstract class BasicIrBoxTest(
                 icUseStdlibCache = runIcMode,
                 icCache = icCache
             )
-            val irFactory = if (runIrPir) PersistentIrFactory() else IrFactoryImpl
 
-            val jsOutputFile = if (recompile) File(outputFile.parentFile, outputFile.nameWithoutExtension + "-recompiled.js")
-            else outputFile
+            if (!skipRegularMode) {
+                val compiledModule = compile(
+                    module,
+                    phaseConfig = phaseConfig,
+                    irFactory = IrFactoryImpl,
+                    mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null },
+                    exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
+                    generateFullJs = true,
+                    generateDceJs = runIrDce,
+                    dceDriven = false,
+                    es6mode = runEs6Mode,
+                    multiModule = splitPerModule || perModule,
+                    propertyLazyInitialization = propertyLazyInitialization,
+                    lowerPerModule = lowerPerModule,
+                    safeExternalBoolean = safeExternalBoolean,
+                    safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
+                    verifySignatures = !skipMangleVerification,
+                )
 
-            val compiledModule = compile(
-                module,
-                phaseConfig = phaseConfig,
-                irFactory = irFactory,
-                mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null },
-                exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
-                generateFullJs = true,
-                generateDceJs = runIrDce,
-                dceDriven = runIrPir,
-                es6mode = runEs6Mode,
-                multiModule = splitPerModule || perModule,
-                propertyLazyInitialization = propertyLazyInitialization,
-                lowerPerModule = lowerPerModule,
-                safeExternalBoolean = safeExternalBoolean,
-                safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
-                verifySignatures = !skipMangleVerification,
-            )
+                val jsOutputFile = if (recompile) File(outputFile.parentFile, outputFile.nameWithoutExtension + "-recompiled.js")
+                else outputFile
 
-            val finalOutputFile = if (runIrPir) pirOutputFile else jsOutputFile
+                compiledModule.outputs!!.writeTo(jsOutputFile, config)
 
-            compiledModule.outputs!!.writeTo(finalOutputFile, config)
+                compiledModule.outputsAfterDce?.writeTo(dceOutputFile, config)
 
-            compiledModule.outputsAfterDce?.writeTo(dceOutputFile, config)
+                if (generateDts) {
+                    val dtsFile = outputFile.withReplacedExtensionOrNull("_v5.js", ".d.ts")!!
+                    logger.logFile("Output d.ts", dtsFile)
+                    dtsFile.write(compiledModule.tsDefinitions ?: error("No ts definitions"))
+                }
+            }
 
-            if (generateDts) {
-                val dtsFile = outputFile.withReplacedExtensionOrNull("_v5.js", ".d.ts")!!
-                logger.logFile("Output d.ts", dtsFile)
-                dtsFile.write(compiledModule.tsDefinitions ?: error("No ts definitions"))
+            if (runIrPir) {
+                val compiledModule = compile(
+                    module,
+                    phaseConfig = phaseConfig,
+                    irFactory = PersistentIrFactory(),
+                    mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null },
+                    exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
+                    generateFullJs = true,
+                    generateDceJs = runIrDce,
+                    dceDriven = true,
+                    es6mode = runEs6Mode,
+                    multiModule = splitPerModule || perModule,
+                    propertyLazyInitialization = propertyLazyInitialization,
+                    lowerPerModule = lowerPerModule,
+                    safeExternalBoolean = safeExternalBoolean,
+                    safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
+                    verifySignatures = !skipMangleVerification,
+                )
+                compiledModule.outputs!!.writeTo(pirOutputFile, config)
             }
         }
     }
