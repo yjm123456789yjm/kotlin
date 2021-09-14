@@ -1,0 +1,3 @@
+FILE: explicitBackingFieldUnsupported.kt
+    public final val that: R|kotlin/Number|
+        public get(): R|kotlin/Number|
