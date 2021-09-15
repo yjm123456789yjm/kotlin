@@ -40,7 +40,7 @@ internal class NativeInlineFunctionResolver(override val context: Context) : Def
 
         SharedVariablesLowering(context).lower(body, function)
 
-        OuterThisLowering(context).lower(body, function)
+        OuterThisLowering(context).lower(function)
 
         LocalClassesInInlineLambdasLowering(context).lower(body, function)
 

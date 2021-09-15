@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.backend.konan.Context
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
-import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrGetValue
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
@@ -31,19 +30,17 @@ internal class OuterThisLowering(val context: Context) : ClassLoweringPass {
         irClass.transformChildrenVoid(Transformer(irClass, irClass))
     }
 
-    fun lower(irBody: IrBody, container: IrDeclaration) {
-        var irClass = container as? IrClass
-        if (irClass == null) {
-            var parent = container.parent
-            while (parent !is IrPackageFragment) {
-                irClass = parent as? IrClass
-                if (irClass != null) break
-                parent = (parent as IrDeclaration).parent
-            }
+    fun lower(irFunction: IrFunction) {
+        var parent = irFunction.parent
+        var irClass: IrClass? = null
+        while (parent !is IrPackageFragment) {
+            irClass = parent as? IrClass
+            if (irClass != null) break
+            parent = (parent as IrDeclaration).parent
         }
         if (irClass == null || !irClass.isInner) return
 
-        irBody.transformChildrenVoid(Transformer(irClass, container))
+        irFunction.body?.transformChildrenVoid(Transformer(irClass, irFunction))
     }
 
     private inner class Transformer(val irClass: IrClass, val container: IrDeclaration) : IrElementTransformerVoidWithContext() {
