@@ -128,6 +128,12 @@ internal val inventNamesForLocalClasses = makeKonanModuleLoweringPhase(
         description = "Invent names for local classes and anonymous objects"
 )
 
+internal val outerThisLoweringPhase = makeKonanModuleLoweringPhase(
+        ::OuterThisLowering,
+        name = "OuterThisLoweringPhase",
+        description = "Replace references to outer this with field reads"
+)
+
 internal val extractLocalClassesFromInlineBodies = NamedCompilerPhase(
         lower = object : SameTypeCompilerPhase<Context, IrModuleFragment> {
             override fun invoke(phaseConfig: PhaseConfig, phaserState: PhaserState<IrModuleFragment>, context: Context, input: IrModuleFragment): IrModuleFragment {
