@@ -20,14 +20,16 @@ val builtInsSources by task<Sync> {
 
     val excluded = listOf(
         // JS-specific optimized version of emptyArray() already defined
-        "core/builtins/src/kotlin/ArrayIntrinsics.kt"
+        "ArrayIntrinsics.kt",
+        // Included with K/N collections
+        "Collections.kt", "Iterator.kt", "Iterators.kt"
     )
 
     sources.forEach { path ->
         from("$rootDir/$path") {
             into(path.dropLastWhile { it != '/' })
-            excluded.filter { it.startsWith(path) }.forEach {
-                exclude(it.substring(path.length))
+            excluded.forEach {
+                exclude(it)
             }
         }
     }
@@ -51,6 +53,26 @@ val commonMainSources by task<Sync> {
     into("$buildDir/commonMainSources")
 }
 
+val nativeCollectionsSources by task<Sync> {
+    val source = "kotlin-native/runtime/src/main/kotlin/kotlin/collections"
+
+    val excluded = listOf(
+        // JS-specific optimized version of emptyArray() already defined
+        "ArrayUtil.kt"
+    ).map { "$source/$it" }
+
+    source.let { path ->
+        from("$rootDir/$path") {
+            into(path.dropLastWhile { it != '/' })
+            excluded.filter { it.startsWith(path) }.forEach {
+                exclude(it.substring(path.length))
+            }
+        }
+    }
+
+    into("$buildDir/nativeCollectionSources")
+}
+
 kotlin {
     js(IR) {
         nodejs()
@@ -59,6 +81,7 @@ kotlin {
         val jsMain by getting {
             kotlin.srcDirs("builtins", "internal", "runtime", "src", "stubs")
             kotlin.srcDirs(files(builtInsSources.map { it.destinationDir }))
+            kotlin.srcDirs(files(nativeCollectionsSources.map { it.destinationDir }))
         }
 
         val commonMain by getting {
@@ -84,6 +107,7 @@ tasks.withType<KotlinCompile<*>>().configureEach {
 tasks.named("compileKotlinJs") {
     (this as KotlinCompile<*>).kotlinOptions.freeCompilerArgs += "-Xir-module-name=kotlin"
     dependsOn(commonMainSources)
+    dependsOn(nativeCollectionsSources)
     dependsOn(builtInsSources)
 }
 
