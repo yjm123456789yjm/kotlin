@@ -58,6 +58,10 @@ object CommonConfigurationKeys {
     @JvmField
     val PARALLEL_BACKEND_THREADS =
         CompilerConfigurationKey.create<Int>("When using the IR backend, run lowerings by file in N parallel threads")
+
+    @JvmField
+    val INCREMENTAL_COMPILATION =
+        CompilerConfigurationKey.create<Boolean>("Enable incremental compilation")
 }
 
 var CompilerConfiguration.languageVersionSettings: LanguageVersionSettings

@@ -42,7 +42,8 @@ class KotlinModuleXmlBuilder {
         targetTypeId: String,
         isTests: Boolean,
         directoriesToFilterOut: Set<File>,
-        friendDirs: Iterable<File>
+        friendDirs: Iterable<File>,
+        isIncrementalCompilation: Boolean
     ): KotlinModuleXmlBuilder {
         assert(!done) { "Already done" }
 
@@ -67,7 +68,7 @@ class KotlinModuleXmlBuilder {
         }
 
         processJavaSourceRoots(javaSourceRoots)
-        processClasspath(classpathRoots, directoriesToFilterOut)
+        processClasspath(classpathRoots, directoriesToFilterOut, isIncrementalCompilation)
 
         if (modularJdkRoot != null) {
             p.println("<", MODULAR_JDK_ROOT, " ", PATH, "=\"", getEscapedPath(modularJdkRoot), "\"/>")
@@ -79,10 +80,11 @@ class KotlinModuleXmlBuilder {
 
     private fun processClasspath(
             files: Iterable<File>,
-            directoriesToFilterOut: Set<File>) {
+            directoriesToFilterOut: Set<File>,
+            isIncrementalCompilation: Boolean) {
         p.println("<!-- Classpath -->")
         for (file in files) {
-            val isOutput = directoriesToFilterOut.contains(file) && !IncrementalCompilation.isEnabledForJvm()
+            val isOutput = directoriesToFilterOut.contains(file) && !isIncrementalCompilation
             if (isOutput) {
                 // For IDEA's make (incremental compilation) purposes, output directories of the current module and its dependencies
                 // appear on the class path, so we are at risk of seeing the results of the previous build, i.e. if some class was

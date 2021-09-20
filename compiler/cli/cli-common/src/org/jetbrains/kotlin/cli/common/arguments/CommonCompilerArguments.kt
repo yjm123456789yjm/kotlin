@@ -382,6 +382,9 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     )
     var contextReceivers: Boolean by FreezableVar(false)
 
+    @Argument(value = "-Xenable-incremental-compilation", description = "Enable incremental compilation")
+    var incrementalCompilation: Boolean? by FreezableVar(null)
+
     open fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         return HashMap<AnalysisFlag<*>, Any>().apply {
             put(AnalysisFlags.skipMetadataVersionCheck, skipMetadataVersionCheck)

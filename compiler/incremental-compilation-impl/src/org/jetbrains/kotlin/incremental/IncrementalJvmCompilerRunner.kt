@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.build.report.ICReporterBase
 import org.jetbrains.kotlin.build.report.metrics.*
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.ExitCode
+import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.cli.common.messages.FilteringMessageCollector
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
@@ -79,7 +80,7 @@ fun makeIncrementally(
     args.javaSourceRoots = sourceRoots.map { it.absolutePath }.toTypedArray()
     val buildReporter = BuildReporter(icReporter = reporter, buildMetricsReporter = DoNothingBuildMetricsReporter)
 
-    withIC {
+    withIC(args) {
         val compiler = IncrementalJvmCompilerRunner(
             cachesDir,
             buildReporter,
@@ -105,11 +106,15 @@ object EmptyICReporter : ICReporterBase() {
     override fun reportMarkDirty(affectedFiles: Iterable<File>, reason: String) {}
 }
 
-inline fun <R> withIC(enabled: Boolean = true, fn: () -> R): R {
+@Suppress("DEPRECATION")
+inline fun <R> withIC(args: CommonCompilerArguments, enabled: Boolean = true, fn: () -> R): R {
     val isEnabledBackup = IncrementalCompilation.isEnabledForJvm()
     IncrementalCompilation.setIsEnabledForJvm(enabled)
 
     try {
+        if (args.incrementalCompilation == null) {
+            args.incrementalCompilation = enabled
+        }
         return fn()
     } finally {
         IncrementalCompilation.setIsEnabledForJvm(isEnabledBackup)
@@ -132,9 +137,6 @@ class IncrementalJvmCompilerRunner(
     additionalOutputFiles = outputFiles,
     buildHistoryFile = buildHistoryFile
 ) {
-    override fun isICEnabled(): Boolean =
-        IncrementalCompilation.isEnabledForJvm()
-
     override fun createCacheManager(args: K2JVMCompilerArguments, projectDir: File?): IncrementalJvmCachesManager =
         IncrementalJvmCachesManager(
             cacheDirectory,
