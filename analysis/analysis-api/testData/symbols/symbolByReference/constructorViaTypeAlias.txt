@@ -8,7 +8,7 @@ KtFirConstructorSymbol:
   hasStableParameterNames: false
   isExtension: false
   isPrimary: false
-  origin: JAVA
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: [

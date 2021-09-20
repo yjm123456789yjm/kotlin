@@ -1,0 +1,24 @@
+KtFirFunctionSymbol:
+  annotatedType: [] kotlin/Unit
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: /Foo.foo
+  dispatchType: Foo
+  hasStableParameterNames: true
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: false
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  modality: ABSTRACT
+  name: foo
+  origin: INTERSECTION_OVERRIDE
+  receiverType: null
+  symbolKind: MEMBER
+  typeParameters: []
+  valueParameters: []
+  visibility: Public
+  deprecationStatus: null

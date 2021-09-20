@@ -77,6 +77,22 @@ public enum class KtSymbolOrigin {
     SAM_CONSTRUCTOR,
 
     /**
+     * Example of substitution override:
+     *
+     * ```
+     * interface A<T> { fun foo(x: T) }
+     *
+     * abstract class B : A<String>
+     * ```
+     *
+     * Member scope of `B` class will have `fun foo(x: String)` member, but in fact it has no real declaration. Because of that
+     * it will be marked as [SUBSTITUTION_OVERRIDE].
+     *
+     * See [org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin.SubstitutionOverride]
+     */
+    SUBSTITUTION_OVERRIDE,
+
+    /**
      * Consider the following code:
      * ```
      * interface A { fun x() }

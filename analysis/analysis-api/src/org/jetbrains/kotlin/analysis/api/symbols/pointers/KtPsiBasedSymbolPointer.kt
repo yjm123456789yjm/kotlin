@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolOrigin
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtObjectLiteralExpression
 import org.jetbrains.kotlin.psi.psiUtil.createSmartPointer
+import java.util.*
 
 public class KtPsiBasedSymbolPointer<S : KtSymbol>(private val psiPointer: SmartPsiElementPointer<out KtDeclaration>) :
     KtSymbolPointer<S>() {
@@ -24,14 +25,32 @@ public class KtPsiBasedSymbolPointer<S : KtSymbol>(private val psiPointer: Smart
     }
 
     public companion object {
-        public fun <S : KtSymbol> createForSymbolFromSource(symbol: S): KtPsiBasedSymbolPointer<S>? {
-            if (symbol.origin == KtSymbolOrigin.LIBRARY) return null
+        private val originsWithoutProperSource: Set<KtSymbolOrigin> = EnumSet.of(
+            /**
+             * Library might have no PSI at all, so we do not try to create a pointer by it.
+             */
+            KtSymbolOrigin.LIBRARY,
 
             /**
              * If symbol points to a generated member, we won't be able to recover it later on, because there is no corresponding
              * psi by which it can be found
              */
-            if (symbol.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED) return null
+            KtSymbolOrigin.SOURCE_MEMBER_GENERATED,
+
+            /**
+             * If symbol points to a substituted member, the PSI will be pointing to the original (base) declaration. Because
+             * of that the recovery is impossible.
+             */
+            KtSymbolOrigin.SUBSTITUTION_OVERRIDE,
+
+            /**
+             * Same goes for the intersection overrides.
+             */
+            KtSymbolOrigin.INTERSECTION_OVERRIDE,
+        )
+
+        public fun <S : KtSymbol> createForSymbolFromSource(symbol: S): KtPsiBasedSymbolPointer<S>? {
+            if (symbol.origin in originsWithoutProperSource) return null
 
             val psi = when (val psi = symbol.psi) {
                 is KtDeclaration -> psi

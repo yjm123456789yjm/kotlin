@@ -41,6 +41,7 @@ internal class KtFirSymbolContainingDeclarationProvider(
             KtSymbolOrigin.LIBRARY, KtSymbolOrigin.JAVA, KtSymbolOrigin.JAVA_SYNTHETIC_PROPERTY ->
                 getContainingDeclarationForLibrarySymbol(symbol)
             KtSymbolOrigin.PROPERTY_BACKING_FIELD -> getContainingDeclarationForBackingFieldSymbol(symbol)
+            KtSymbolOrigin.SUBSTITUTION_OVERRIDE -> TODO()
             KtSymbolOrigin.INTERSECTION_OVERRIDE -> TODO()
             KtSymbolOrigin.SAM_CONSTRUCTOR -> null
             KtSymbolOrigin.DELEGATED -> TODO()

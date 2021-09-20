@@ -1,0 +1,26 @@
+KtFirFunctionSymbol:
+  annotatedType: [] kotlin/Unit
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: /Foo.takeT
+  dispatchType: Foo
+  hasStableParameterNames: true
+  isExtension: false
+  isExternal: false
+  isInfix: false
+  isInline: false
+  isOperator: false
+  isOverride: false
+  isStatic: false
+  isSuspend: false
+  modality: ABSTRACT
+  name: takeT
+  origin: SUBSTITUTION_OVERRIDE
+  receiverType: null
+  symbolKind: MEMBER
+  typeParameters: []
+  valueParameters: [
+    KtFirValueParameterSymbol(t)
+  ]
+  visibility: Public
+  deprecationStatus: null

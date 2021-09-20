@@ -366,7 +366,7 @@ KtFirFunctionSymbol:
   isSuspend: false
   modality: ABSTRACT
   name: contains
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: []
@@ -393,7 +393,7 @@ KtFirFunctionSymbol:
   isSuspend: false
   modality: ABSTRACT
   name: containsAll
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: []
@@ -420,7 +420,7 @@ KtFirFunctionSymbol:
   isSuspend: false
   modality: ABSTRACT
   name: get
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: []
@@ -447,7 +447,7 @@ KtFirFunctionSymbol:
   isSuspend: false
   modality: ABSTRACT
   name: indexOf
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: []
@@ -474,7 +474,7 @@ KtFirFunctionSymbol:
   isSuspend: false
   modality: ABSTRACT
   name: isEmpty
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: []
@@ -524,7 +524,7 @@ KtFirFunctionSymbol:
   isSuspend: false
   modality: ABSTRACT
   name: lastIndexOf
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   symbolKind: MEMBER
   typeParameters: []
@@ -554,7 +554,7 @@ KtFirKotlinPropertySymbol:
   isVal: true
   modality: ABSTRACT
   name: size
-  origin: LIBRARY
+  origin: SUBSTITUTION_OVERRIDE
   receiverType: null
   setter: null
   symbolKind: MEMBER

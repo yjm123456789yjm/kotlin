@@ -37,6 +37,18 @@ public class SymbolByReferenceTestGenerated extends AbstractSymbolByReferenceTes
     }
 
     @Test
+    @TestMetadata("functionIntersectionOverrides.kt")
+    public void testFunctionIntersectionOverrides() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/functionIntersectionOverrides.kt");
+    }
+
+    @Test
+    @TestMetadata("functionSubstitutionOverride.kt")
+    public void testFunctionSubstitutionOverride() throws Exception {
+        runTest("analysis/analysis-api/testData/symbols/symbolByReference/functionSubstitutionOverride.kt");
+    }
+
+    @Test
     @TestMetadata("samConstructor.kt")
     public void testSamConstructor() throws Exception {
         runTest("analysis/analysis-api/testData/symbols/symbolByReference/samConstructor.kt");
