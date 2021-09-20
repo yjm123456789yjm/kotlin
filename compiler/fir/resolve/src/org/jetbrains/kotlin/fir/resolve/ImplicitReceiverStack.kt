@@ -5,11 +5,12 @@
 
 package org.jetbrains.kotlin.fir.resolve
 
+import kotlinx.collections.immutable.PersistentList
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitDispatchReceiverValue
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitReceiverValue
 
 abstract class ImplicitReceiverStack : Iterable<ImplicitReceiverValue<*>> {
-    abstract operator fun get(name: String?): ImplicitReceiverValue<*>?
+    abstract operator fun get(name: String?): PersistentList<ImplicitReceiverValue<*>>
 
     abstract fun lastDispatchReceiver(): ImplicitDispatchReceiverValue?
     abstract fun lastDispatchReceiver(lookupCondition: (ImplicitReceiverValue<*>) -> Boolean): ImplicitDispatchReceiverValue?

@@ -1320,6 +1320,10 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND by error<PsiElement>(PositioningStrategy.REFERENCED_NAME_BY_QUALIFIED)
         val RETURN_FOR_BUILT_IN_SUSPEND by error<KtReturnExpression>()
     }
+
+    val LABEL by object : DiagnosticGroup("label") {
+        val AMBIGUOUS_LABEL by error<KtExpression>(PositioningStrategy.LABEL)
+    }
 }
 
 private val exposedVisibilityDiagnosticInit: DiagnosticBuilder.() -> Unit = {

@@ -10,11 +10,7 @@ import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.canNarrowDownGetterType
-import org.jetbrains.kotlin.fir.declarations.utils.expandedConeType
-import org.jetbrains.kotlin.fir.declarations.utils.isFinal
-import org.jetbrains.kotlin.fir.declarations.utils.isInner
-import org.jetbrains.kotlin.fir.declarations.utils.isLocal
+import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.ConeStubDiagnostic
@@ -29,6 +25,7 @@ import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
 import org.jetbrains.kotlin.fir.resolve.calls.FirPropertyWithExplicitBackingFieldResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitDispatchReceiverValue
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeAmbiguousLabelError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnresolvedNameError
 import org.jetbrains.kotlin.fir.resolve.inference.inferenceComponents
 import org.jetbrains.kotlin.fir.resolve.inference.isBuiltinFunctionalType
@@ -232,28 +229,54 @@ fun <T : FirResolvable> BodyResolveComponents.typeFromCallee(access: T): FirReso
         }
         is FirThisReference -> {
             val labelName = newCallee.labelName
-            val implicitReceiver = implicitReceiverStack[labelName]
-            buildResolvedTypeRef {
-                source = null
-                type = implicitReceiver?.type ?: ConeKotlinErrorType(
-                    ConeSimpleDiagnostic(
-                        "Unresolved this@$labelName",
-                        DiagnosticKind.UnresolvedLabel
+            val implicitReceivers = implicitReceiverStack[labelName]
+            val implicitReceiverSymbols = implicitReceivers.map { it.boundSymbol }.toSet()
+            when (implicitReceiverSymbols.size) {
+                0 -> buildResolvedTypeRef {
+                    source = null
+                    type = ConeKotlinErrorType(
+                        ConeSimpleDiagnostic(
+                            "Unresolved this@$labelName",
+                            DiagnosticKind.UnresolvedLabel
+                        )
+
                     )
-                )
+                }
+                1 -> buildResolvedTypeRef {
+                    source = null
+                    type = implicitReceivers.single().type
+                }
+                else -> buildResolvedTypeRef {
+                    source = null
+                    type = ConeKotlinErrorType(
+                        ConeAmbiguousLabelError(
+                            labelName!!,
+                            implicitReceivers.map { it.boundSymbol }
+                        )
+
+                    )
+                }
             }
         }
         is FirSuperReference -> {
             val labelName = newCallee.labelName
-            val implicitReceiver =
-                if (labelName != null) implicitReceiverStack[labelName] as? ImplicitDispatchReceiverValue
+            val implicitReceivers = implicitReceiverStack[labelName]
+            val implicitReceiverSymbols = implicitReceivers.map { it.boundSymbol }.toSet()
+            if (implicitReceiverSymbols.size > 1) {
+                buildErrorTypeRef {
+                    source = newCallee.source
+                    diagnostic = ConeAmbiguousLabelError(labelName!!, implicitReceivers.map { it.boundSymbol })
+                }
+            } else {
+                val implicitReceiver = if (labelName != null) implicitReceivers.lastOrNull() as? ImplicitDispatchReceiverValue
                 else implicitReceiverStack.lastDispatchReceiver()
-            val resolvedTypeRef =
-                newCallee.superTypeRef as? FirResolvedTypeRef
-                    ?: implicitReceiver?.boundSymbol?.fir?.superTypeRefs?.singleOrNull() as? FirResolvedTypeRef
-            resolvedTypeRef ?: buildErrorTypeRef {
-                source = newCallee.source
-                diagnostic = ConeUnresolvedNameError(Name.identifier("super"))
+                val resolvedTypeRef =
+                    newCallee.superTypeRef as? FirResolvedTypeRef
+                        ?: implicitReceiver?.boundSymbol?.fir?.superTypeRefs?.singleOrNull() as? FirResolvedTypeRef
+                resolvedTypeRef ?: buildErrorTypeRef {
+                    source = newCallee.source
+                    diagnostic = ConeUnresolvedNameError(Name.identifier("super"))
+                }
             }
         }
         else -> error("Failed to extract type from: $newCallee")

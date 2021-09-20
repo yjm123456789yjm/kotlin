@@ -92,12 +92,18 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
             // TODO: there was FirExplicitThisReference
             is FirThisReference -> {
                 val labelName = callee.labelName
-                val implicitReceiver = implicitReceiverStack[labelName]
+                val implicitReceivers = implicitReceiverStack[labelName]
+                val implicitReceiverSymbols = implicitReceivers.map { it.boundSymbol }.toSet()
+                val implicitReceiver = implicitReceivers.lastOrNull()
                 implicitReceiver?.boundSymbol?.let {
                     callee.replaceBoundSymbol(it)
                 }
                 val implicitType = implicitReceiver?.originalType
                 qualifiedAccessExpression.resultType = when {
+                    labelName != null && implicitReceiverSymbols.size > 1 -> buildErrorTypeRef {
+                        source = qualifiedAccessExpression.source
+                        diagnostic = ConeAmbiguousLabelError(labelName, implicitReceiverSymbols)
+                    }
                     implicitReceiver is InaccessibleImplicitReceiverValue -> buildErrorTypeRef {
                         source = qualifiedAccessExpression.source
                         diagnostic = ConeInstanceAccessBeforeSuperCall("<this>")
@@ -187,14 +193,21 @@ open class FirExpressionsResolveTransformer(transformer: FirBodyResolveTransform
         val implicitReceiver =
             // Only report label issues if the label is set and the receiver stack is not empty
             if (labelName != null && lastDispatchReceiver != null) {
-                val labeledReceiver = implicitReceiverStack[labelName] as? ImplicitDispatchReceiverValue
-                if (labeledReceiver == null) {
+                val implicitReceivers = implicitReceiverStack[labelName]
+                val implicitReceiverSymbols = implicitReceivers.map { it.boundSymbol }.toSet()
+                if (implicitReceiverSymbols.size > 1) {
                     return markSuperReferenceError(
-                        ConeSimpleDiagnostic("Unresolved label", DiagnosticKind.UnresolvedLabel),
+                        ConeAmbiguousLabelError(labelName, implicitReceiverSymbols),
                         superReferenceContainer,
                         superReference
                     )
                 }
+                val labeledReceiver = implicitReceivers.lastOrNull() as? ImplicitDispatchReceiverValue
+                    ?: return markSuperReferenceError(
+                        ConeSimpleDiagnostic("Unresolved label", DiagnosticKind.UnresolvedLabel),
+                        superReferenceContainer,
+                        superReference
+                    )
                 labeledReceiver
             } else {
                 lastDispatchReceiver

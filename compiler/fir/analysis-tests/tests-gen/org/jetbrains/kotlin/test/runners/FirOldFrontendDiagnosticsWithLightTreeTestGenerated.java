@@ -30186,6 +30186,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("ambigousLabelOnThis2.kt")
+            public void testAmbigousLabelOnThis2() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/thisAndSuper/ambigousLabelOnThis2.kt");
+            }
+
+            @Test
             @TestMetadata("genericQualifiedSuperOverridden.kt")
             public void testGenericQualifiedSuperOverridden() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/thisAndSuper/genericQualifiedSuperOverridden.kt");

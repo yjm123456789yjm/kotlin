@@ -5,10 +5,7 @@
 
 package org.jetbrains.kotlin.fir.resolve
 
-import kotlinx.collections.immutable.PersistentList
-import kotlinx.collections.immutable.PersistentMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.persistentMapOf
+import kotlinx.collections.immutable.*
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitDispatchReceiverValue
 import org.jetbrains.kotlin.fir.resolve.calls.ImplicitReceiverValue
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -51,9 +48,9 @@ class PersistentImplicitReceiverStack private constructor(
         )
     }
 
-    override operator fun get(name: String?): ImplicitReceiverValue<*>? {
-        if (name == null) return stack.lastOrNull()
-        return indexesPerLabel[Name.identifier(name)].lastOrNull()?.let { stack[it] }
+    override operator fun get(name: String?): PersistentList<ImplicitReceiverValue<*>> {
+        if (name == null) return persistentListOf(stack.lastOrNull() ?: return persistentListOf())
+        return indexesPerLabel[Name.identifier(name)].map { stack[it] }.toPersistentList()
     }
 
     override fun lastDispatchReceiver(): ImplicitDispatchReceiverValue? {
