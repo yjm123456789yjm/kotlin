@@ -118,7 +118,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             return scriptingEvaluator.eval(arguments, configuration, projectEnv)
         }
 
-        if (arguments.freeArgs.isEmpty() && !IncrementalCompilation.isEnabledForJs()) {
+        if (arguments.freeArgs.isEmpty() && !(true == arguments.incrementalCompilation)) {
             if (arguments.version) {
                 return OK
             }
@@ -170,7 +170,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             return ExitCode.COMPILATION_ERROR
         }
 
-        if (sourcesFiles.isEmpty() && !IncrementalCompilation.isEnabledForJs() && arguments.includes.isNullOrEmpty()) {
+        if (sourcesFiles.isEmpty() && (true != arguments.incrementalCompilation) && arguments.includes.isNullOrEmpty()) {
             messageCollector.report(ERROR, "No source files", null)
             return COMPILATION_ERROR
         }
