@@ -42,7 +42,7 @@ class WasmTypeTransformer(
         }
 
     fun IrType.toWasmGcRefType(): WasmType =
-        WasmRefNullType(WasmHeapType.Type(context.referenceGcType(erasedUpperBound?.symbol ?: builtIns.anyClass)))
+        WasmRefNullType(WasmHeapType.Type(context.referenceGcType(getRuntimeClass?.symbol ?: builtIns.anyClass)))
 
     fun IrType.toBoxedInlineClassType(): WasmType =
         toWasmGcRefType()
@@ -103,7 +103,7 @@ class WasmTypeTransformer(
 
 
 // Return null if upper bound is Any
-val IrTypeParameter.erasedUpperBound: IrClass?
+private val IrTypeParameter.erasedUpperBound: IrClass?
     get() {
         // Pick the (necessarily unique) non-interface upper bound if it exists
         for (type in superTypes) {
@@ -118,7 +118,10 @@ val IrType.erasedUpperBound: IrClass?
         is IrClassSymbol -> classifier.owner
         is IrTypeParameterSymbol -> classifier.owner.erasedUpperBound
         else -> throw IllegalStateException()
-    }.let {
+    }
+
+val IrType.getRuntimeClass: IrClass?
+    get() = erasedUpperBound.let {
         if (it?.isInterface == true) null
         else it
     }
