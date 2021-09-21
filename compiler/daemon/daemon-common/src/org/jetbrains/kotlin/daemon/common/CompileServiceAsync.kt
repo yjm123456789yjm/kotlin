@@ -16,6 +16,8 @@ interface CompileServiceAsync {
 
     suspend fun getUsedMemory(): CompileService.CallResult<Long>
 
+    suspend fun getPid(): CompileService.CallResult<String>
+
     suspend fun getDaemonOptions(): CompileService.CallResult<DaemonOptions>
 
     suspend fun getDaemonInfo(): CompileService.CallResult<String>

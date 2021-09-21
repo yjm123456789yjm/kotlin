@@ -294,6 +294,11 @@ class CompileServiceServerSideImpl(
     override suspend fun getUsedMemory(): CompileService.CallResult<Long> =
         ifAlive { CompileService.CallResult.Good(usedMemory(withGC = true)) }
 
+    override suspend fun getPid(): CompileService.CallResult<String> {
+        throw RuntimeException("eee")
+    }
+
+
     override suspend fun shutdown(): CompileService.CallResult<Nothing> =
         ifAliveExclusive(minAliveness = Aliveness.LastSession) {
             shutdownWithDelay()

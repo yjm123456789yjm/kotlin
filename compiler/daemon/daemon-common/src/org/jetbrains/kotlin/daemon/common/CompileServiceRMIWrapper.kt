@@ -136,6 +136,10 @@ class CompileServiceClientRMIWrapper(
         asyncCompileService.getUsedMemory()
     }
 
+    override fun getPid() = runBlocking {
+        asyncCompileService.getPid()
+    }
+
     override fun getDaemonOptions() = runBlocking {
         asyncCompileService.getDaemonOptions()
     }

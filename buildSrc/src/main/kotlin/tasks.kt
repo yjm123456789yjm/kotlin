@@ -183,7 +183,7 @@ fun Project.projectTest(
             "-Djna.nosys=true"
         )
 
-        maxHeapSize = "1600m"
+        maxHeapSize = "12000m"
         systemProperty("idea.is.unit.test", "true")
         systemProperty("idea.home.path", project.intellijRootDir().canonicalPath)
         systemProperty("java.awt.headless", "true")

@@ -131,6 +131,11 @@ class CompileServiceClientSideImpl(
         return readMessage(id)
     }
 
+    override suspend fun getPid(): CompileService.CallResult<String> {
+        val id = sendMessage(GetUsedMemoryMessage())
+        return readMessage(id)
+    }
+
 
     override suspend fun getDaemonOptions(): CompileService.CallResult<DaemonOptions> {
         val id = sendMessage(GetDaemonOptionsMessage())

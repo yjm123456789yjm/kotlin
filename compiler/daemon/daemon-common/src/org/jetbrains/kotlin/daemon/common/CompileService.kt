@@ -75,6 +75,9 @@ interface CompileService : Remote {
     fun getUsedMemory(): CallResult<Long>
 
     @Throws(RemoteException::class)
+    fun getPid(): CallResult<String>
+
+    @Throws(RemoteException::class)
     fun getDaemonOptions(): CallResult<DaemonOptions>
 
     @Throws(RemoteException::class)

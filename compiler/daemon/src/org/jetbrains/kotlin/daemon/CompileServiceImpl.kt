@@ -58,6 +58,7 @@ import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import java.io.BufferedOutputStream
 import java.io.File
 import java.io.PrintStream
+import java.lang.management.ManagementFactory
 import java.rmi.NoSuchObjectException
 import java.rmi.registry.Registry
 import java.rmi.server.UnicastRemoteObject
@@ -707,6 +708,10 @@ class CompileServiceImpl(
 
     override fun getUsedMemory(): CompileService.CallResult<Long> =
         ifAlive { CompileService.CallResult.Good(usedMemory(withGC = true)) }
+
+    override fun getPid(): CompileService.CallResult<String> =
+        ifAlive { CompileService.CallResult.Good(java.lang.management.ManagementFactory.getRuntimeMXBean().getName()) }
+
 
     override fun shutdown(): CompileService.CallResult<Nothing> = ifAliveExclusive(minAliveness = Aliveness.LastSession) {
         shutdownWithDelay()

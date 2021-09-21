@@ -388,7 +388,7 @@ object KotlinCompilerClient {
                    COMPILER_DAEMON_CLASS_FQN +
                    daemonOptions.mappers.flatMap { it.toArgs(COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX) } +
                    compilerId.mappers.flatMap { it.toArgs(COMPILE_DAEMON_CMDLINE_OPTIONS_PREFIX) }
-        reportingTargets.report(DaemonReportCategory.DEBUG, "starting the daemon as: " + args.joinToString(" "))
+        reportingTargets.report(DaemonReportCategory.INFO, "starting the daemon as: " + args.joinToString(" "))
         val processBuilder = ProcessBuilder(args)
         processBuilder.redirectErrorStream(true)
         val workingDir = File(daemonOptions.runFilesPath).apply { mkdirs() }
@@ -399,30 +399,48 @@ object KotlinCompilerClient {
         val isEchoRead = Semaphore(1)
         isEchoRead.acquire()
 
-        val stdoutThread =
-            thread {
-                try {
-                    daemon.inputStream
-                        .reader()
-                        .forEachLine {
-                            if (Thread.currentThread().isInterrupted) return@forEachLine
-                            if (it == COMPILE_DAEMON_IS_READY_MESSAGE) {
-                                reportingTargets.report(DaemonReportCategory.DEBUG, "Received the message signalling that the daemon is ready")
-                                isEchoRead.release()
-                                return@forEachLine
-                            } else {
-                                reportingTargets.report(DaemonReportCategory.INFO, it, "daemon")
-                            }
-                        }
-                } catch (_: Throwable) {
-                    // Ignore, assuming all exceptions as interrupt exceptions
-                } finally {
-                    daemon.inputStream.close()
-                    daemon.outputStream.close()
-                    daemon.errorStream.close()
-                    isEchoRead.release()
+
+        thread(isDaemon = true) {
+            try {
+                val sb1 = StringBuilder()
+                val sb2 = StringBuilder()
+                val is1 = daemon.inputStream
+                val is2 = daemon.errorStream
+
+                var signalGot = false
+                while (true) {
+                    if (is1.available() + is2.available() == 0) {
+                        Thread.sleep(11)
+                    }
+                    while (is1.available() > 0) {
+                        sb1.append(is1.read().toChar())
+                    }
+                    while (is2.available() > 0) {
+                        sb2.append(is2.read().toChar())
+                    }
+                    if ((!signalGot) && sb1.contains(COMPILE_DAEMON_IS_READY_MESSAGE)) {
+                        println( "Received the message signalling that the daemon is ready")
+                        isEchoRead.release()
+                        signalGot = true
+                    }
+                    if (sb1.contains("\n")) {
+                        println("DAEMON out: ${sb1.toString().trim()}")
+                        sb1.clear()
+                    }
+                    if (sb2.contains("\n")) {
+                        println("DAEMON out: ${sb2.toString().trim()}")
+                        sb2.clear()
+                    }
+
                 }
+
+            } catch (_: Throwable) {
+                // Ignore, assuming all exceptions as interrupt exceptions
+            } finally {
+                println("DAEMON. Stdout thread exited")
+                isEchoRead.release()
             }
+        }
         try {
             // trying to wait for process
             val daemonStartupTimeout = CompilerSystemProperties.COMPILE_DAEMON_STARTUP_TIMEOUT_PROPERTY.value?.let {
@@ -454,11 +472,6 @@ object KotlinCompilerClient {
             return true
         }
         finally {
-            // assuming that all important output is already done, the rest should be routed to the log by the daemon itself
-            if (stdoutThread.isAlive) {
-                // TODO: find better method to stop the thread, but seems it will require asynchronous consuming of the stream
-                stdoutThread.interrupt()
-            }
             reportingTargets.out?.flush()
         }
     }

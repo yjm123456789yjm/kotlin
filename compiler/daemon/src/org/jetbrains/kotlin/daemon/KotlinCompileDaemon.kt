@@ -165,11 +165,11 @@ abstract class KotlinCompileDaemonBase {
 
                 // this supposed to stop redirected streams reader(s) on the client side and prevent some situations with hanging threads, but doesn't work reliably
                 // TODO: implement more reliable scheme
-                System.out.close()
-                System.err.close()
-
-                System.setErr(PrintStream(LogStream("stderr")))
-                System.setOut(PrintStream(LogStream("stdout")))
+//                System.out.close()
+//                System.err.close()
+//
+//                System.setErr(PrintStream(LogStream("stderr")))
+//                System.setOut(PrintStream(LogStream("stdout")))
             }
             catch (e: Exception) {
                 System.err.println("Exception: " + e.message)
@@ -188,7 +188,34 @@ object KotlinCompileDaemon : KotlinCompileDaemonBase() {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        mainImpl(args)
+        val errFile = File("c:\\JB\\tmp\\${System.currentTimeMillis()}.txt")
+        errFile.appendText("PID=${ManagementFactory.getRuntimeMXBean().name}\r\n")
+        var x: Throwable? = null
+        try {
+            mainImpl(args)
+        } catch (e: Throwable) {
+            errFile.appendText("Exiting, exception = ${e.toString()}")
+        } finally {
+            errFile.appendText("Exiting, exception = ${x?.toString()}")
+            log.info("Exited!!!")
+            log.info("${System.currentTimeMillis()} PID=${ManagementFactory.getRuntimeMXBean().name}")
+        }
+        try {
+            while (!Thread.interrupted()) {
+
+                val maxM = Runtime.getRuntime().maxMemory()
+                val totalM = Runtime.getRuntime().totalMemory()
+                val freeM = Runtime.getRuntime().freeMemory()
+                val text = "${System.currentTimeMillis()} is alive Max=${maxM} totalM=${totalM} freeM=${freeM}\r\n"
+                errFile.appendText(text)
+                println(text)
+                Thread.sleep(1000)
+            }
+            errFile.appendText("Thread is interrupted2")
+        } finally {
+            errFile.appendText("Entered finally block")
+        }
+
     }
 
     override fun getCompileServiceAndPort(

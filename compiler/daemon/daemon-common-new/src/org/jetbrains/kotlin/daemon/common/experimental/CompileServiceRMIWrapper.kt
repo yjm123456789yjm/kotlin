@@ -36,6 +36,10 @@ class CompileServiceRMIWrapper(val server: CompileServiceServerSide, daemonOptio
         server.getUsedMemory()
     }
 
+    override fun getPid() = runBlocking {
+        server.getPid()
+    }
+
     override fun getDaemonOptions() = runBlocking {
         server.getDaemonOptions()
     }

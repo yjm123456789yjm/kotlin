@@ -23,7 +23,7 @@ abstract class KotlinPm20GradlePlugin @Inject constructor(
     @Inject private val softwareComponentFactory: SoftwareComponentFactory
 ) : Plugin<Project> {
     override fun apply(project: Project) {
-        checkGradleCompatibility("the Kotlin Multiplatform plugin", GradleVersion.version("6.1"))
+        checkGradleCompatibility("the Kotlin Multiplatform plugin", GradleVersion.version("6.3"))
 
         // Gradle sets up the attribute schema for consuming JVM dependencies in the JavaBasePlugin
         project.plugins.apply(JavaBasePlugin::class.java)

@@ -28,8 +28,10 @@ import org.jetbrains.kotlin.incremental.ChangedFiles
 import org.jetbrains.kotlin.incremental.IncrementalModuleInfo
 import org.slf4j.LoggerFactory
 import java.io.*
+import java.net.SocketException
 import java.net.URLClassLoader
 import java.rmi.RemoteException
+import java.rmi.UnmarshalException
 import java.util.*
 import java.util.concurrent.Callable
 import java.util.concurrent.Executors
@@ -227,8 +229,9 @@ internal class GradleKotlinCompilerWork @Inject constructor(
         }
         val bufferingMessageCollector = GradleBufferingMessageCollector()
         val exitCode = try {
+            val pid = daemon.getPid()
             val res = if (isIncremental) {
-                incrementalCompilationWithDaemon(daemon, sessionId, targetPlatform, bufferingMessageCollector)
+                incrementalCompilationWithDaemon(daemon, sessionId, targetPlatform, bufferingMessageCollector, pid.get())
             } else {
                 nonIncrementalCompilationWithDaemon(daemon, sessionId, targetPlatform, bufferingMessageCollector)
             }
@@ -283,7 +286,8 @@ internal class GradleKotlinCompilerWork @Inject constructor(
         daemon: CompileService,
         sessionId: Int,
         targetPlatform: CompileService.TargetPlatform,
-        bufferingMessageCollector: GradleBufferingMessageCollector
+        bufferingMessageCollector: GradleBufferingMessageCollector,
+        pid: String
     ): CompileService.CallResult<Int> {
         val icEnv = incrementalCompilationEnvironment ?: error("incrementalCompilationEnvironment is null!")
         val knownChangedFiles = icEnv.changedFiles as? ChangedFiles.Known
@@ -310,7 +314,14 @@ internal class GradleKotlinCompilerWork @Inject constructor(
         val servicesFacade = GradleIncrementalCompilerServicesFacadeImpl(log, bufferingMessageCollector)
         val compilationResults = GradleCompilationResults(log, projectRootFile)
         return metrics.measure(BuildTime.RUN_COMPILER) {
-            daemon.compile(sessionId, compilerArgs, compilationOptions, servicesFacade, compilationResults)
+            println("Starting compilation with daemon ${pid}. Time ${System.currentTimeMillis()}")
+            try {
+                daemon.compile(sessionId, compilerArgs, compilationOptions, servicesFacade, compilationResults)
+            } catch (e: UnmarshalException) {
+                println("Problem with daemon ${pid}. Time ${System.currentTimeMillis()}")
+                e.printStackTrace()
+                throw e
+            }
         }.also {
             metrics.addMetrics(compilationResults.buildMetrics)
             icLogLines = compilationResults.icLogLines

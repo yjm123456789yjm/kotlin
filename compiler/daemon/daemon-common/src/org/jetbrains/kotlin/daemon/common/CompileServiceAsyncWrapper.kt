@@ -51,6 +51,9 @@ class CompileServiceAsyncWrapper(
     override suspend fun getUsedMemory() =
         rmiCompileService.getUsedMemory()
 
+    override suspend fun getPid() =
+        rmiCompileService.getPid()
+
     override suspend fun getDaemonOptions() =
         rmiCompileService.getDaemonOptions()
 
