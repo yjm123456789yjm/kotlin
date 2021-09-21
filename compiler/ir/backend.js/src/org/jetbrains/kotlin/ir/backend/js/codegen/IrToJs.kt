@@ -387,7 +387,7 @@ class IrToJs(
         }
 
         if (options.generateTypeScriptDefinitions && exportedDeclarations.isNotEmpty()) {
-            val dts = ExportedModule(moduleName, moduleKind = ModuleKind.COMMON_JS, exportedDeclarations).toTypeScript()
+            val dts = ExportedModule(moduleName, moduleKind = ModuleKind.ES, exportedDeclarations).toTypeScript()
             outputSink.write(moduleName, "index.d.ts", dts)
         }
     }

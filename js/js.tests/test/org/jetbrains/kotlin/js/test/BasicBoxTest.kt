@@ -196,7 +196,7 @@ abstract class BasicBoxTest(
             val icCache = mutableMapOf<String, SerializedIcData>()
 
             if (esModules) {
-                modules.forEach { _, m -> m.moduleKind = ModuleKind.COMMON_JS }
+                modules.forEach { _, m -> m.moduleKind = ModuleKind.ES }
             }
 
             val customTestModule: String? = inputFiles.find { it.testEntryEsModule }?.let { File(it.fileName).readText() }
@@ -862,6 +862,8 @@ abstract class BasicBoxTest(
                         "$content\n"
 
             ModuleKind.PLAIN -> content
+
+            ModuleKind.ES -> error("Module emulation markers are not supported for ES modules")
         }
     }
 
