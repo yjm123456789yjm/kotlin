@@ -1,10 +1,9 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-
+// MODULE_KIND: COMMON_JS
 // SKIP_DCE_DRIVEN
 // SKIP_MINIFICATION
-// ES_MODULES
 
 // FILE: api.kt
+package api
 
 @JsExport
 data class Point(val x: Int, val y: Int) {
@@ -24,7 +23,7 @@ external interface JsResult {
     val component2: Int
 }
 
-@JsModule("./dataClass.mjs")
+@JsModule("lib")
 external fun jsBox(): JsResult
 
 fun box(): String {

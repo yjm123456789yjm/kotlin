@@ -850,7 +850,9 @@ private val loweringList = listOf<Lowering>(
     captureStackTraceInThrowablesPhase,
     callsLoweringPhase,
     cleanupLoweringPhase,
-    moveOpenClassesToSeparatePlaceLowering,
+    // Currently broken due to static members lowering making single-open-class
+    // files non-recognizable as single-class files
+    // moveOpenClassesToSeparatePlaceLowering,
     validateIrAfterLowering,
     jsSuspendArityStorePhase,
 )

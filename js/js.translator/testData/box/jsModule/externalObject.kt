@@ -1,8 +1,8 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
+// EXPECTED_REACHABLE_NODES: 1285
+// MODULE_KIND: AMD
 package foo
 
-@JsModule("./externalObject.mjs")
+@JsModule("lib")
 external object A {
     val x: Int = definedExternally
 

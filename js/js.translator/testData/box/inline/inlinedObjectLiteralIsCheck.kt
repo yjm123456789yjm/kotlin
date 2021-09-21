@@ -1,7 +1,7 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
 
-// FILE: main.kt
+// EXPECTED_REACHABLE_NODES: 1282
+// TARGET_BACKEND: JS_IR
+
 interface I {
     fun ok(): String
 }
@@ -22,14 +22,9 @@ inline fun convolutedOk(): I {
     return ok()
 }
 
-@JsExport
-fun testOk(ok: Any): String {
+fun box(): String {
+    val ok = js("_").convolutedOk()
     if (ok !is I) return "fail"
+
     return ok.ok()
 }
-
-// FILE: entry.mjs
-// ENTRY_ES_MODULE
-import { convolutedOk, testOk } from "./JS_TESTS/index.js";
-
-console.assert(testOk(convolutedOk()) == "OK");

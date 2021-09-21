@@ -3,7 +3,6 @@
 // SKIP_NODE_JS
 // MODULE_KIND: COMMON_JS
 
-
 @file:JsExport
 
 package foo

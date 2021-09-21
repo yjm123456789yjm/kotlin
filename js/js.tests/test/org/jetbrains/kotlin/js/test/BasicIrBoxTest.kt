@@ -113,7 +113,7 @@ abstract class BasicIrBoxTest(
         isMainModule: Boolean,
         skipDceDriven: Boolean,
         esModules: Boolean,
-        splitPerModule: Boolean,
+        granularity: JsGenerationGranularity,
         propertyLazyInitialization: Boolean,
         safeExternalBoolean: Boolean,
         safeExternalBooleanDiagnostic: RuntimeDiagnostic?,
@@ -289,7 +289,8 @@ abstract class BasicIrBoxTest(
                 }
             }
 
-            val granularity = if (splitPerModule || perModule) PER_MODULE else WHOLE_PROGRAM
+            @Suppress("NAME_SHADOWING")
+            val granularity = if (perModule) PER_MODULE else granularity
 
             if (!skipRegularMode) {
                 val ir = compileToLoweredIr(dceDriven = false, granularity)

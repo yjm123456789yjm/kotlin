@@ -1,20 +1,25 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
-// FILE: lib-1.mjs
-export default function foo() {
-    return "OK";
-}
+// EXPECTED_REACHABLE_NODES: 1316
+// MODULE: lib-1
+// FILE: lib-1.js
+define("lib-1", [], function() {
+    return function() {
+        return "OK";
+    }
+})
 
-// MODULE: lib2
+// MODULE: lib2(lib-1)
 // FILE: lib2.kt
-@JsModule("./lib-1.mjs")
+// MODULE_KIND: AMD
+@JsModule("lib-1")
 external fun foo(): String
 
 // MODULE: lib3(lib2)
 // FILE: lib3.kt
+// MODULE_KIND: AMD
 inline fun bar() = foo()
 
 // MODULE: main(lib3)
 // FILE: main.kt
+// MODULE_KIND: AMD
 
 fun box() = bar()

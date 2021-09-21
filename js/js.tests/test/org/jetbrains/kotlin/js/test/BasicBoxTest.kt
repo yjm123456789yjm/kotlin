@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.idea.KotlinFileType
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProviderImpl
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumerImpl
 import org.jetbrains.kotlin.incremental.js.TranslationResultValue
+import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.ic.SerializedIcData
 import org.jetbrains.kotlin.js.JavaScript
 import org.jetbrains.kotlin.js.backend.JsToStringGenerationVisitor
@@ -154,6 +155,14 @@ abstract class BasicBoxTest(
         val esModules = ES_MODULES.matcher(fileContent).find()
 
         val splitPerModule = SPLIT_PER_MODULE.matcher(fileContent).find()
+        val splitPerFile = SPLIT_PER_FILE.matcher(fileContent).find()
+
+        val granularity = when {
+            splitPerModule -> JsGenerationGranularity.PER_MODULE
+            splitPerFile -> JsGenerationGranularity.PER_FILE
+            else -> JsGenerationGranularity.WHOLE_PROGRAM
+        }
+
         val skipMangleVerification = SKIP_MANGLE_VERIFICATION.matcher(fileContent).find()
 
         val propertyLazyInitialization = PROPERTY_LAZY_INITIALIZATION.matcher(fileContent).find()
@@ -235,7 +244,7 @@ abstract class BasicBoxTest(
                     expectActualLinker,
                     skipDceDriven,
                     esModules,
-                    splitPerModule,
+                    granularity,
                     errorPolicy,
                     propertyLazyInitialization,
                     safeExternalBoolean,
@@ -552,7 +561,7 @@ abstract class BasicBoxTest(
         expectActualLinker: Boolean,
         skipDceDriven: Boolean,
         esModules: Boolean,
-        splitPerModule: Boolean,
+        granularity: JsGenerationGranularity,
         errorIgnorancePolicy: ErrorTolerancePolicy,
         propertyLazyInitialization: Boolean,
         safeExternalBoolean: Boolean,
@@ -610,7 +619,7 @@ abstract class BasicBoxTest(
             isMainModule,
             skipDceDriven,
             esModules,
-            splitPerModule,
+            granularity,
             propertyLazyInitialization,
             safeExternalBoolean,
             safeExternalBooleanDiagnostic,
@@ -711,7 +720,7 @@ abstract class BasicBoxTest(
             isMainModule = false,
             skipDceDriven = true,
             esModules = false,
-            splitPerModule = false,
+            granularity = JsGenerationGranularity.WHOLE_PROGRAM,
             propertyLazyInitialization = false,
             safeExternalBoolean = false,
             safeExternalBooleanDiagnostic = null,
@@ -797,7 +806,7 @@ abstract class BasicBoxTest(
         isMainModule: Boolean,
         skipDceDriven: Boolean,
         esModules: Boolean,
-        splitPerModule: Boolean,
+        granularity: JsGenerationGranularity,
         propertyLazyInitialization: Boolean,
         safeExternalBoolean: Boolean,
         safeExternalBooleanDiagnostic: RuntimeDiagnostic?,
@@ -1216,6 +1225,7 @@ abstract class BasicBoxTest(
         private val ES_MODULES = Pattern.compile("^// *ES_MODULES *$", Pattern.MULTILINE)
 
         private val SPLIT_PER_MODULE = Pattern.compile("^// *SPLIT_PER_MODULE *$", Pattern.MULTILINE)
+        private val SPLIT_PER_FILE = Pattern.compile("^// *SPLIT_PER_FILE *$", Pattern.MULTILINE)
         private val SKIP_MANGLE_VERIFICATION = Pattern.compile("^// *SKIP_MANGLE_VERIFICATION *$", Pattern.MULTILINE)
 
         private val ERROR_POLICY_PATTERN = Pattern.compile("^// *ERROR_POLICY: *(.+)$", Pattern.MULTILINE)

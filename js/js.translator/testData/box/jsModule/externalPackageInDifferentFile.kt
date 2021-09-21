@@ -1,7 +1,7 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
+// EXPECTED_REACHABLE_NODES: 1290
+// MODULE_KIND: AMD
 // FILE: lib.kt
-@file:JsModule("./externalPackageInDifferentFile.mjs")
+@file:JsModule("lib")
 package foo
 
 external class A(x: Int = definedExternally) {
@@ -19,6 +19,8 @@ external object B {
 external fun foo(y: Int): Int = definedExternally
 
 external val bar: Int = definedExternally
+
+external var mbar: Int = definedExternally
 
 // FILE: lib2.kt
 package foo
@@ -42,6 +44,9 @@ fun box(): String {
     assertEquals(423, bar)
 
     assertEquals(12345, C.f())
+
+    mbar = 523
+    assertEquals(523, mbar)
 
     return "OK"
 }

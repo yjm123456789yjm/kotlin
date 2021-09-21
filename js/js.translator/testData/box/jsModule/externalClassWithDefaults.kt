@@ -1,10 +1,8 @@
 // EXPECTED_REACHABLE_NODES: 1284
-// ES_MODULES
-// DONT_TARGET_EXACT_BACKEND: JS
-
+// MODULE_KIND: AMD
 package foo
 
-@JsModule("./externalClassWithDefaults.mjs")
+@JsModule("lib")
 external open class A(ss: String = definedExternally) {
     val s: String
     fun foo(y: String = definedExternally): String = definedExternally

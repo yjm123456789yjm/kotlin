@@ -1,10 +1,8 @@
 // EXPECTED_REACHABLE_NODES: 1252
 // IGNORE_BACKEND: JS
+// RUN_PLAIN_BOX_FUNCTION
 // INFER_MAIN_MODULE
 // SKIP_DCE_DRIVEN
-
-// TODO: Support export of nested classes
-// IGNORE_BACKEND: JS_IR
 
 // MODULE: export-nested-class
 // FILE: lib.kt
@@ -27,6 +25,6 @@ class B {
 }
 
 // FILE: test.js
-// ENTRY_ES_MODULE
-import { B } from "./export-nested-class/index.js";
-console.assert(new B.Foo().bar("K") == "OK");
+function box() {
+    return new this["export-nested-class"].B.Foo().bar("K");
+}

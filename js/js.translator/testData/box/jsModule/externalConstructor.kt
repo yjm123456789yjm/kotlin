@@ -1,10 +1,8 @@
 // EXPECTED_REACHABLE_NODES: 1334
-// ES_MODULES
-// DONT_TARGET_EXACT_BACKEND: JS
-
+// MODULE_KIND: AMD
 package foo
 
-@JsModule("./externalConstructor.mjs")
+@JsModule("lib")
 open external class A(data: String) {
     constructor(data: Int)
     constructor(data: Boolean)

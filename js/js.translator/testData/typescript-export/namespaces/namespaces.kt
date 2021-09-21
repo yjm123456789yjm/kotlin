@@ -3,7 +3,6 @@
 // SKIP_MINIFICATION
 // SKIP_NODE_JS
 
-
 // FILE: file1.kt
 
 package foo.bar.baz

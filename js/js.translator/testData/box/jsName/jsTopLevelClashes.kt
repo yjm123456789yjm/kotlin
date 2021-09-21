@@ -1,15 +1,14 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
 // MODULE: main
+// MODULE_KIND: COMMON_JS
 // FILE: lib.kt
-@file:JsModule("./foo.mjs")
+@file:JsModule("foo")
 package lib
 
 @JsName("test")
 external val foo: Int
 
 // FILE: lib2.kt
-@file:JsModule("./bar.mjs")
+@file:JsModule("bar")
 package lib
 
 @JsName("test")
@@ -25,8 +24,16 @@ fun box(): String {
     return "OK"
 }
 
-// FILE: foo.mjs
-export var test = 23;
+// FILE: hello.js
 
-// FILE: bar.mjs
-export var test = 45;
+$kotlin_test_internal$.beginModule("foo");
+module.exports = {
+    "test": 23
+}
+$kotlin_test_internal$.endModule("foo");
+
+$kotlin_test_internal$.beginModule("bar");
+module.exports = {
+    "test": 45
+}
+$kotlin_test_internal$.endModule("bar");

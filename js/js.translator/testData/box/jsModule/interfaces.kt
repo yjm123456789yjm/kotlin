@@ -1,7 +1,7 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
+// EXPECTED_REACHABLE_NODES: 1238
+// MODULE_KIND: COMMON_JS
 // FILE: bar.kt
-@file:JsModule("./interfaces.mjs")
+@file:JsModule("lib")
 @file:JsQualifier("foo")
 package foo
 
@@ -10,7 +10,7 @@ external interface Bar {
 }
 
 // FILE: baz.kt
-@file:JsModule("./interfaces.mjs")
+@file:JsModule("lib")
 package boo
 
 external interface Baz {
@@ -18,7 +18,7 @@ external interface Baz {
 }
 
 // FILE: root.kt
-@file:JsModule("./interfaces.mjs")
+@file:JsModule("lib")
 import foo.Bar
 import boo.Baz
 
@@ -31,3 +31,19 @@ fun box(): String {
 
     return "OK"
 }
+
+// FILE: test.js
+$kotlin_test_internal$.beginModule();
+module.exports = {
+    bar : {
+        ping() {
+            return "ping"
+        }
+    },
+    baz : {
+        pong() {
+            return 194
+        }
+    }
+};
+$kotlin_test_internal$.endModule("lib");

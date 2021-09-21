@@ -2,7 +2,6 @@
 // SKIP_MINIFICATION
 // SKIP_NODE_JS
 
-
 @file:JsExport
 
 package foo

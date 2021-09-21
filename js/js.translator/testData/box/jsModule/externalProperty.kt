@@ -1,8 +1,8 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
+// EXPECTED_REACHABLE_NODES: 1284
+// MODULE_KIND: AMD
 package foo
 
-@JsModule("./externalProperty.mjs")
+@JsModule("lib")
 external val foo: Int = definedExternally
 
 fun box(): String {

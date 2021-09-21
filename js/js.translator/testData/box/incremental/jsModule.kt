@@ -1,14 +1,14 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
+// EXPECTED_REACHABLE_NODES: 1283
 
 // MODULE: lib
 // FILE: a.kt
-@file:JsModule("./foo.mjs")
+// MODULE_KIND: AMD
+@file:JsModule("foo")
 
 external fun fooF(): String
 
 // FILE: b.kt
-@file:JsModule("./bar.mjs")
+@file:JsModule("bar")
 
 external fun barF(): String
 
@@ -18,6 +18,7 @@ fun dummyF() = "dummy"
 
 // MODULE: main(lib)
 // FILE: main.kt
+// MODULE_KIND: AMD
 
 fun box(): String {
     val foo = fooF()
@@ -29,13 +30,3 @@ fun box(): String {
     return "OK"
 }
 
-
-// FILE: foo.mjs
-export function fooF() {
-    return "foo";
-}
-
-// FILE: bar.mjs
-export function barF() {
-    return "bar";
-}

@@ -1,6 +1,6 @@
-// DONT_TARGET_EXACT_BACKEND: JS
-// ES_MODULES
-@JsModule("./topLevelVarargFun.mjs")
+// EXPECTED_REACHABLE_NODES: 1283
+// MODULE_KIND: AMD
+@JsModule("bar")
 external fun foo(vararg arg: String): String
 
 fun box(): String {

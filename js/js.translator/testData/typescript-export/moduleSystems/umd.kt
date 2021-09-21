@@ -3,7 +3,6 @@
 // SKIP_NODE_JS
 // MODULE_KIND: UMD
 
-
 @file:JsExport
 
 package foo
