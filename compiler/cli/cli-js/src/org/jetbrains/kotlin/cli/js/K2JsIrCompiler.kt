@@ -353,15 +353,12 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                 lowerPerModule = icCaches.isNotEmpty(),
                 granularity = granularity
             )
-            if (arguments.irDce) {
-                eliminateDeadDeclarations(ir.allModules, ir.context)
-            }
 
             val transformer = IrModuleToJsTransformer(
                 ir.context,
                 mainCallArguments,
                 fullJs = true,
-                dceJs = false,
+                dceJs = arguments.irDce,
                 multiModule = arguments.irPerModule,
                 relativeRequirePath = false
             )
