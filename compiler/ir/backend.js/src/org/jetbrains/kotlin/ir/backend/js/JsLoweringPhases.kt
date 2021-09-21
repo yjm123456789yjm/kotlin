@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.backend.common.lower.optimizations.FoldConstantLower
 import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorInlineLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.calls.CallsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.cleanup.CleanupLowering
@@ -743,7 +744,10 @@ private val cleanupLoweringPhase = makeBodyLoweringPhase(
     description = "Clean up IR before codegen"
 )
 private val moveOpenClassesToSeparatePlaceLowering = makeCustomJsModulePhase(
-    { _, module -> moveOpenClassesToSeparateFiles(module) },
+    { context, module ->
+        if (context.granularity == JsGenerationGranularity.PER_FILE)
+            moveOpenClassesToSeparateFiles(module)
+    },
     name = "MoveOpenClassesToSeparateFiles",
     description = "Move open classes to separate files"
 ).toModuleLowering()
