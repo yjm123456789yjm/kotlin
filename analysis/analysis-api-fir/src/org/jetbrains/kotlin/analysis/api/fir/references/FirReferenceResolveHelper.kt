@@ -6,6 +6,11 @@
 package org.jetbrains.kotlin.idea.references
 
 import com.intellij.psi.tree.TokenSet
+import org.jetbrains.kotlin.analysis.api.fir.*
+import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
+import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.builder.buildImport
@@ -18,6 +23,7 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.references.*
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.calls.FirSyntheticPropertySymbol
+import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeAmbiguousLabelError
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnmatchedTypeArgumentsError
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.resolve.transformers.FirImportResolveTransformer
@@ -26,15 +32,6 @@ import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.analysis.api.fir.getCandidateSymbols
-import org.jetbrains.kotlin.analysis.api.fir.isImplicitFunctionCall
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFir
-import org.jetbrains.kotlin.analysis.low.level.api.fir.api.getOrBuildFirSafe
-import org.jetbrains.kotlin.analysis.api.fir.KtFirAnalysisSession
-import org.jetbrains.kotlin.analysis.api.fir.KtSymbolByFirBuilder
-import org.jetbrains.kotlin.analysis.api.fir.buildSymbol
-import org.jetbrains.kotlin.analysis.api.fir.symbols.KtFirPackageSymbol
-import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
@@ -289,6 +286,20 @@ internal object FirReferenceResolveHelper {
         session: FirSession,
         symbolBuilder: KtSymbolByFirBuilder
     ): Collection<KtSymbol> {
+        if (expression is KtLabelReferenceExpression &&
+            (fir is FirPropertyAccessExpression || // for labeled super expression
+                    fir is FirThisReceiverExpression) // for labeled this expression
+        ) {
+            require(fir is FirQualifiedAccessExpression)
+            // If the type ref has an ambiguous label error, use the symbols in that error
+            val typeRef = fir.typeRef
+            if (typeRef is FirErrorTypeRef) {
+                val diagnostic = typeRef.diagnostic
+                if (diagnostic is ConeAmbiguousLabelError) {
+                    return diagnostic.symbols.map { it.fir.buildSymbol(symbolBuilder) }
+                }
+            }
+        }
         val calleeReference =
             if (fir is FirFunctionCall
                 && fir.isImplicitFunctionCall()

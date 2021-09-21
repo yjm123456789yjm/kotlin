@@ -433,9 +433,69 @@ public class ReferenceResolveTestGenerated extends AbstractReferenceResolveTest 
     }
 
     @Test
+    @TestMetadata("super.kt")
+    public void testSuper() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/super.kt");
+    }
+
+    @Test
+    @TestMetadata("superWithAmbiguousLabel.kt")
+    public void testSuperWithAmbiguousLabel() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/superWithAmbiguousLabel.kt");
+    }
+
+    @Test
+    @TestMetadata("superWithLabel.kt")
+    public void testSuperWithLabel() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/superWithLabel.kt");
+    }
+
+    @Test
     @TestMetadata("SyntheticProperty.kt")
     public void testSyntheticProperty() throws Exception {
         runTest("analysis/analysis-api/testData/referenceResolve/SyntheticProperty.kt");
+    }
+
+    @Test
+    @TestMetadata("thisDispatchReceiver.kt")
+    public void testThisDispatchReceiver() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisDispatchReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("thisExtensionReceiver.kt")
+    public void testThisExtensionReceiver() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisExtensionReceiver.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithAmbiguousLabelBetweenClassAndFunction.kt")
+    public void testThisWithAmbiguousLabelBetweenClassAndFunction() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithAmbiguousLabelBetweenClassAndFunction.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithAmbiguousLabelBetweenClasses.kt")
+    public void testThisWithAmbiguousLabelBetweenClasses() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithAmbiguousLabelBetweenClasses.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithAmbiguousLabelBetweenFunctions.kt")
+    public void testThisWithAmbiguousLabelBetweenFunctions() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithAmbiguousLabelBetweenFunctions.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithLabelToClass.kt")
+    public void testThisWithLabelToClass() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithLabelToClass.kt");
+    }
+
+    @Test
+    @TestMetadata("thisWithLabelToFunction.kt")
+    public void testThisWithLabelToFunction() throws Exception {
+        runTest("analysis/analysis-api/testData/referenceResolve/thisWithLabelToFunction.kt");
     }
 
     @Test

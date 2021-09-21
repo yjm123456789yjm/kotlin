@@ -1,0 +1,3 @@
+Resolved to:
+0: (in Foo) inner class Foo : A
+1: (in ROOT) class Foo : A
