@@ -1,6 +1,4 @@
-
 // EXPECTED_REACHABLE_NODES: 1282
-// TARGET_BACKEND: JS_IR
 
 interface I {
     fun ok(): String

@@ -5714,6 +5714,11 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             runTest("js/js.translator/testData/box/jsModule/externalClass.kt");
         }
 
+        @TestMetadata("externalClassNameClash.kt")
+        public void testExternalClassNameClash() throws Exception {
+            runTest("js/js.translator/testData/box/jsModule/externalClassNameClash.kt");
+        }
+
         @TestMetadata("externalClassWithDefaults.kt")
         public void testExternalClassWithDefaults() throws Exception {
             runTest("js/js.translator/testData/box/jsModule/externalClassWithDefaults.kt");
@@ -6630,6 +6635,11 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
         @TestMetadata("eval.kt")
         public void testEval() throws Exception {
             runTest("js/js.translator/testData/box/native/eval.kt");
+        }
+
+        @TestMetadata("exception.kt")
+        public void testException() throws Exception {
+            runTest("js/js.translator/testData/box/native/exception.kt");
         }
 
         @TestMetadata("inheritanceFromNativeClass.kt")
