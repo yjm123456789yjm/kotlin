@@ -84,7 +84,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                     }
                 }
                 is IrClass -> {
-                    error("Nested classes must be lowered at this point: ${declaration.fqNameWhenAvailable}")
+//                    classBlock.statements += JsClassGenerator(declaration, context).generate()
                 }
                 is IrField -> {
                 }
