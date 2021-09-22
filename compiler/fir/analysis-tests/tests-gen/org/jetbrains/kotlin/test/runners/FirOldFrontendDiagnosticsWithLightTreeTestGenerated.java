@@ -15850,6 +15850,12 @@ public class FirOldFrontendDiagnosticsWithLightTreeTestGenerated extends Abstrac
             }
 
             @Test
+            @TestMetadata("superCallDepecationWarning.kt")
+            public void testSuperCallDepecationWarning() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/inline/superCallDepecationWarning.kt");
+            }
+
+            @Test
             @TestMetadata("unsupportedConstruction.kt")
             public void testUnsupportedConstruction() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/inline/unsupportedConstruction.kt");
