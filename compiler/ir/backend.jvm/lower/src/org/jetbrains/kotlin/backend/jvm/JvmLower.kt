@@ -411,8 +411,8 @@ private val jvmFilePhases = listOf(
 
     jvmArgumentNullabilityAssertions,
     toArrayPhase,
+    jvmSafeCallFoldingPhase,
     jvmOptimizationLoweringPhase,
-    ifNullExpressionsFusionPhase,
     additionalClassAnnotationPhase,
     typeOperatorLowering,
     replaceKFunctionInvokeWithFunctionInvokePhase,
