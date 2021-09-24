@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.psi.KtExpressionWithLabel
 import org.jetbrains.kotlin.psi.KtFunction
 import org.jetbrains.kotlin.psi.KtIfExpression
 import org.jetbrains.kotlin.psi.KtImportDirective
+import org.jetbrains.kotlin.psi.KtLabelReferenceExpression
 import org.jetbrains.kotlin.psi.KtModifierListOwner
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 import org.jetbrains.kotlin.psi.KtNamedDeclaration
@@ -2571,6 +2572,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
 
     abstract class ReturnForBuiltInSuspend : KtFirDiagnostic<KtReturnExpression>() {
         override val diagnosticClass get() = ReturnForBuiltInSuspend::class
+    }
+
+    abstract class RedundantLabelWarning : KtFirDiagnostic<KtLabelReferenceExpression>() {
+        override val diagnosticClass get() = RedundantLabelWarning::class
     }
 
     abstract class ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement>() {
