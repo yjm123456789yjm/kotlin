@@ -22,10 +22,7 @@ import org.jetbrains.kotlin.incremental.components.NoLookupLocation
 import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.descriptors.IrBuiltInsOverDescriptors
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.typeWith
@@ -417,19 +414,19 @@ internal class KonanSymbols(
     val kFunctionImpl =  symbolTable.referenceClass(context.reflectionTypes.kFunctionImpl)
     val kSuspendFunctionImpl =  symbolTable.referenceClass(context.reflectionTypes.kSuspendFunctionImpl)
 
-    val kMutableProperty0 = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty0)
-    val kMutableProperty1 = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty1)
-    val kMutableProperty2 = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty2)
+    override val kMutableProperty0 = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty0)
+    override val kMutableProperty1 = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty1)
+    override val kMutableProperty2 = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty2)
 
-    val kProperty0Impl = symbolTable.referenceClass(context.reflectionTypes.kProperty0Impl)
-    val kProperty1Impl = symbolTable.referenceClass(context.reflectionTypes.kProperty1Impl)
-    val kProperty2Impl = symbolTable.referenceClass(context.reflectionTypes.kProperty2Impl)
-    val kMutableProperty0Impl = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty0Impl)
-    val kMutableProperty1Impl = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty1Impl)
-    val kMutableProperty2Impl = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty2Impl)
+    override val kProperty0Impl = symbolTable.referenceClass(context.reflectionTypes.kProperty0Impl)
+    override val kProperty1Impl = symbolTable.referenceClass(context.reflectionTypes.kProperty1Impl)
+    override val kProperty2Impl = symbolTable.referenceClass(context.reflectionTypes.kProperty2Impl)
+    override val kMutableProperty0Impl = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty0Impl)
+    override val kMutableProperty1Impl = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty1Impl)
+    override val kMutableProperty2Impl = symbolTable.referenceClass(context.reflectionTypes.kMutableProperty2Impl)
 
-    val kLocalDelegatedPropertyImpl = symbolTable.referenceClass(context.reflectionTypes.kLocalDelegatedPropertyImpl)
-    val kLocalDelegatedMutablePropertyImpl = symbolTable.referenceClass(context.reflectionTypes.kLocalDelegatedMutablePropertyImpl)
+    override val kLocalDelegatedPropertyImpl = symbolTable.referenceClass(context.reflectionTypes.kLocalDelegatedPropertyImpl)
+    override val kLocalDelegatedMutablePropertyImpl = symbolTable.referenceClass(context.reflectionTypes.kLocalDelegatedMutablePropertyImpl)
 
     val typeOf = symbolTable.referenceSimpleFunction(context.reflectionTypes.typeOf)
 

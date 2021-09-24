@@ -14,10 +14,7 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.IrPackageFragment
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
-import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
-import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.defaultType
@@ -233,6 +230,29 @@ abstract class Symbols<out T : CommonBackendContext>(
     open val setWithoutBoundCheckName: Name? = null
 
     open val arraysContentEquals: Map<IrType, IrSimpleFunctionSymbol>? = null
+
+    open val kMutableProperty0: IrClassSymbol
+        get() = error("Not implemented")
+    open val kMutableProperty1: IrClassSymbol
+        get() = error("Not implemented")
+    open val kMutableProperty2: IrClassSymbol
+        get() = error("Not implemented")
+    open val kProperty0Impl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kProperty1Impl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kProperty2Impl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kMutableProperty0Impl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kMutableProperty1Impl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kMutableProperty2Impl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kLocalDelegatedPropertyImpl: IrClassSymbol
+        get() = error("Not implemented")
+    open val kLocalDelegatedMutablePropertyImpl: IrClassSymbol
+        get() = error("Not implemented")
 
     companion object {
         fun isLateinitIsInitializedPropertyGetter(symbol: IrFunctionSymbol): Boolean =

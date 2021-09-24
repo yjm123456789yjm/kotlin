@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -146,6 +148,21 @@ class WasmSymbols(
     val exportString = getInternalFunction("exportString")
     val unsafeGetScratchRawMemory = getInternalFunction("unsafeGetScratchRawMemory")
 
+    // KProperty implementations
+    override val kLocalDelegatedPropertyImpl: IrClassSymbol = this.getInternalClass("KLocalDelegatedPropertyImpl")
+    override val kLocalDelegatedMutablePropertyImpl: IrClassSymbol = this.getInternalClass("KLocalDelegatedMutablePropertyImpl")
+    override val kProperty0Impl: IrClassSymbol = this.getInternalClass("KProperty0Impl")
+    override val kProperty1Impl: IrClassSymbol = this.getInternalClass("KProperty1Impl")
+    override val kProperty2Impl: IrClassSymbol = this.getInternalClass("KProperty2Impl")
+    override val kMutableProperty0Impl: IrClassSymbol = this.getInternalClass("KMutableProperty0Impl")
+    override val kMutableProperty1Impl: IrClassSymbol = this.getInternalClass("KMutableProperty1Impl")
+    override val kMutableProperty2Impl: IrClassSymbol = this.getInternalClass("KMutableProperty2Impl")
+    override val kMutableProperty0: IrClassSymbol = getIrClass(FqName("kotlin.reflect.KMutableProperty0"))
+    override val kMutableProperty1: IrClassSymbol = getIrClass(FqName("kotlin.reflect.KMutableProperty1"))
+    override val kMutableProperty2: IrClassSymbol = getIrClass(FqName("kotlin.reflect.KMutableProperty2"))
+
+    val kTypeStub = getInternalFunction("kTypeStub")
+
     private val functionNInterfaces = (0..22).map { arity ->
         getIrClass(FqName("kotlin.wasm.internal.Function$arity"))
     }
@@ -187,4 +204,8 @@ class WasmSymbols(
     private fun getInternalFunction(name: String) = getFunction(name, wasmInternalPackage)
 
     private fun getIrClass(fqName: FqName): IrClassSymbol = symbolTable.referenceClass(getClass(fqName))
+    private fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
+    fun getKFunctionType(type: IrType, list: List<IrType>): IrType {
+        return irBuiltIns.functionN(list.size).typeWith(list + type)
+    }
 }

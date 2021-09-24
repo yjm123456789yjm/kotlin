@@ -301,7 +301,7 @@ internal val testProcessorPhase = makeKonanFileOpPhase(
 )
 
 internal val delegationPhase = makeKonanFileLoweringPhase(
-        ::PropertyDelegationLowering,
+        ::KonanPropertyDelegationLowering,
         name = "Delegation",
         description = "Delegation lowering"
 )

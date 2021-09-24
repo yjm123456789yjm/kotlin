@@ -1,6 +1,6 @@
 // DONT_TARGET_EXACT_BACKEND: WASM
-// WASM_MUTE_REASON: PROPERTY_REFERENCES
-class Generic<P : Any>(val p: P)
+// WASM_MUTE_REASON: CLASS_REFERENCES
+// class Generic<P : Any>(val p: P)
 
 class Host {
     fun t() {}
