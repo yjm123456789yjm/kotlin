@@ -24,6 +24,10 @@ import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
 import org.jetbrains.kotlin.fir.declarations.utils.isSealed
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
+import org.jetbrains.kotlin.fir.resolve.ScopeSession
+import org.jetbrains.kotlin.fir.scopes.getDirectOverriddenFunctions
+import org.jetbrains.kotlin.fir.scopes.getDirectOverriddenProperties
+import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.lexer.KtModifierKeywordToken
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -49,21 +53,36 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
         val containingMemberDeclaration = context.findClosest<FirMemberDeclaration>()
         require(containingMemberDeclaration is FirDeclaration?)
 
-        val redundantVisibility = when {
-            explicitVisibility == implicitVisibility -> implicitVisibility
-            explicitVisibility == Visibilities.Internal && containingMemberDeclaration?.isLocalMember == true -> Visibilities.Internal
-            else -> return
+        val isInternalInLocal = explicitVisibility == Visibilities.Internal && containingMemberDeclaration?.isLocalMember == true
+
+        if (explicitVisibility != implicitVisibility && !isInternalInLocal) {
+            return
         }
 
-        if (
-            redundantVisibility == Visibilities.Public
-            && element is FirProperty
-            && source.treeStructure.overrideModifier(source.lighterASTNode) != null
-            && element.isVar
-            && element.setter?.visibility == Visibilities.Public
-        ) return
+        if (element.isPublicOverriddenWithNonPublicBase(containingMemberDeclaration, context)) {
+            return
+        }
 
         reporter.reportOn(source, FirErrors.REDUNDANT_VISIBILITY_MODIFIER, context)
+    }
+
+    private fun FirDeclaration.isPublicOverriddenWithNonPublicBase(
+        container: FirMemberDeclaration?,
+        context: CheckerContext,
+    ): Boolean {
+        if (container !is FirClass) {
+            return false
+        }
+
+        val scope = container.unsubstitutedScope(context.session, ScopeSession(), false)
+
+        val overridden = when (this) {
+            is FirProperty -> scope.getDirectOverriddenProperties(symbol)
+            is FirSimpleFunction -> scope.getDirectOverriddenFunctions(symbol)
+            else -> return false
+        }
+
+        return overridden.any { it.visibility != Visibilities.Public }
     }
 
     private fun FirDeclaration.implicitVisibility(context: CheckerContext): Visibility {
