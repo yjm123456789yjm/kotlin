@@ -15,7 +15,8 @@ import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
 open class KotlinJsIrTargetPreset(
-    project: Project
+    project: Project,
+    isWasm: Boolean,
 ) : KotlinOnlyTargetPreset<KotlinJsIrTarget, KotlinJsIrCompilation>(
     project
 ) {
@@ -24,8 +25,11 @@ open class KotlinJsIrTargetPreset(
     open val isMpp: Boolean
         get() = true
 
-    override val platformType: KotlinPlatformType
-        get() = KotlinPlatformType.js
+    override val platformType: KotlinPlatformType =
+        if (isWasm)
+            KotlinPlatformType.wasm
+        else
+            KotlinPlatformType.js
 
     override fun instantiateTarget(name: String): KotlinJsIrTarget {
         return project.objects.newInstance(KotlinJsIrTarget::class.java, project, platformType, mixedMode).apply {
@@ -63,7 +67,11 @@ open class KotlinJsIrTargetPreset(
     override fun createKotlinTargetConfigurator(): KotlinOnlyTargetConfigurator<KotlinJsIrCompilation, KotlinJsIrTarget> =
         KotlinJsIrTargetConfigurator()
 
-    override fun getName(): String = PRESET_NAME
+    override fun getName(): String = when (platformType) {
+        KotlinPlatformType.wasm -> WASM_PRESET_NAME
+        KotlinPlatformType.js -> JS_PRESET_NAME
+        else -> error("Unsupported platform type")
+    }
 
     //TODO[Ilya Goncharov] remove public morozov
     public override fun createCompilationFactory(
@@ -72,17 +80,19 @@ open class KotlinJsIrTargetPreset(
         KotlinJsIrCompilationFactory(project, forTarget)
 
     companion object {
-        val PRESET_NAME = lowerCamelCaseName(
+        val JS_PRESET_NAME = lowerCamelCaseName(
             "js",
             KotlinJsCompilerType.IR.lowerName
         )
+        private const val WASM_PRESET_NAME = "wasm"
     }
 }
 
 class KotlinJsIrSingleTargetPreset(
     project: Project
 ) : KotlinJsIrTargetPreset(
-    project
+    project,
+    isWasm = false,
 ) {
     override val isMpp: Boolean
         get() = false

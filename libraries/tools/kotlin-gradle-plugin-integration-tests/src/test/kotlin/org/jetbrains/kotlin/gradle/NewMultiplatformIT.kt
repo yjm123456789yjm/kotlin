@@ -1848,6 +1848,26 @@ class NewMultiplatformIT : BaseGradleIT() {
         }
     }
 
+    @Test
+    fun testWasmJs() = with(Project("new-mpp-wasm-js", gradleVersion)) {
+        setupWorkingDir()
+        gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
+        build("build") {
+            assertSuccessful()
+            assertTasksExecuted(":compileKotlinJs")
+            assertTasksExecuted(":compileKotlinWasm")
+
+            val outputPrefix = "build/js/packages/"
+
+            val jsOutput = outputPrefix + "redefined-js-module-name/kotlin/"
+            assertFileExists(jsOutput + "redefined-js-module-name.js")
+
+            val wasmOutput = outputPrefix + "redefined-wasm-module-name/kotlin/"
+            assertFileExists(wasmOutput + "redefined-wasm-module-name.js")
+            assertFileExists(wasmOutput + "redefined-wasm-module-name.wasm")
+        }
+    }
+
     private fun detectNativeEnabledCompilation(): String = when {
         HostManager.hostIsLinux -> "linuxX64"
         HostManager.hostIsMingw -> "mingwX64"
