@@ -1377,6 +1377,12 @@ public class JvmOldAgainstIrBoxInlineTestGenerated extends AbstractJvmOldAgainst
         }
 
         @Test
+        @TestMetadata("recursiveGeneric.kt")
+        public void testRecursiveGeneric() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/complex/recursiveGeneric.kt");
+        }
+
+        @Test
         @TestMetadata("swapAndWith.kt")
         public void testSwapAndWith() throws Exception {
             runTest("compiler/testData/codegen/boxInline/complex/swapAndWith.kt");

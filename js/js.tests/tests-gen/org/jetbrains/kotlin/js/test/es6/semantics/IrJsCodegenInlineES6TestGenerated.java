@@ -1055,6 +1055,11 @@ public class IrJsCodegenInlineES6TestGenerated extends AbstractIrJsCodegenInline
             runTest("compiler/testData/codegen/boxInline/complex/kt44429.kt");
         }
 
+        @TestMetadata("recursiveGeneric.kt")
+        public void testRecursiveGeneric() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/complex/recursiveGeneric.kt");
+        }
+
         @TestMetadata("swapAndWith.kt")
         public void testSwapAndWith() throws Exception {
             runTest("compiler/testData/codegen/boxInline/complex/swapAndWith.kt");
