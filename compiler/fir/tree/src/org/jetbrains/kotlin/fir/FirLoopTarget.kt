@@ -8,7 +8,8 @@ package org.jetbrains.kotlin.fir
 import org.jetbrains.kotlin.fir.expressions.FirLoop
 
 class FirLoopTarget(
-    labelName: String?
+    labelName: String?,
+    override val shadowOuterLabels: Boolean = false
 ) : FirAbstractTarget<FirLoop>(labelName) {
     override lateinit var _labeledElement: FirLoop
 }

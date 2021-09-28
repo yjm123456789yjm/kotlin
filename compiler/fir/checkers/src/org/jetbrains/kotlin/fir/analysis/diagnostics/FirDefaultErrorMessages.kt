@@ -250,6 +250,7 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.INVISIBLE_REFEREN
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.IS_ENUM_ENTRY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.ITERATOR_AMBIGUITY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.KCLASS_WITH_NULLABLE_TYPE_PARAMETER_IN_SIGNATURE
+import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LABEL_NAME_CLASH
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_FIELD_IN_VAL_PROPERTY
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_NULLABLE_BACKING_FIELD
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER
@@ -1723,6 +1724,9 @@ class FirDefaultErrorMessages {
                 "Calls having a form of ''suspend {}'' are deprecated because ''suspend'' in the context will have a meaning of a modifier. Add empty argument list to the call: ''suspend() { ... }''"
             )
             map.put(RETURN_FOR_BUILT_IN_SUSPEND, "Using implicit label for this lambda is prohibited")
+
+            // Label
+            map.put(LABEL_NAME_CLASH, "There is more than one label with such a name in this scope");
 
             // Extended checkers group
             map.put(REDUNDANT_VISIBILITY_MODIFIER, "Redundant visibility modifier")

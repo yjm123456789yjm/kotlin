@@ -267,10 +267,16 @@ object BuilderConfigurator : AbstractBuilderConfigurator<FirTreeBuilder>(FirTree
 
         builder(breakExpression) {
             parents += loopJumpBuilder
+            defaultFalse("isLabeled")
         }
 
         builder(continueExpression) {
             parents += loopJumpBuilder
+            defaultFalse("isLabeled")
+        }
+
+        builder(returnExpression) {
+            defaultFalse("isLabeled")
         }
 
         builder(valueParameter, type = "FirValueParameterImpl") {

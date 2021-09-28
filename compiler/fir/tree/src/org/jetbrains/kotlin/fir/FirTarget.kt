@@ -5,11 +5,15 @@
 
 package org.jetbrains.kotlin.fir
 
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
+
 // Reference to some label
 interface FirTarget<E : FirTargetElement> {
     val labelName: String?
 
     val labeledElement: E
+
+    val shadowOuterLabels: Boolean
 
     fun bind(element: E)
 }

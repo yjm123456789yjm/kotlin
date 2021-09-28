@@ -390,30 +390,30 @@ open class RawFirBuilder(
                         this.isGetter = isGetter
                         this.status = status
                         extractAnnotationsTo(this)
-                        this@RawFirBuilder.context.firFunctionTargets += accessorTarget
-                        extractValueParametersTo(this, propertyTypeRefToUse)
-                        if (!isGetter && valueParameters.isEmpty()) {
-                            valueParameters += buildDefaultSetterValueParameter {
-                                this.source = source.fakeElement(FirFakeSourceElementKind.DefaultAccessor)
-                                moduleData = baseModuleData
-                                origin = FirDeclarationOrigin.Source
-                                returnTypeRef = propertyTypeRefToUse
-                                symbol = FirValueParameterSymbol(DEFAULT_VALUE_PARAMETER)
+                        this@RawFirBuilder.context.withFunctionTarget(accessorTarget) {
+                            extractValueParametersTo(this, propertyTypeRefToUse)
+                            if (!isGetter && valueParameters.isEmpty()) {
+                                valueParameters += buildDefaultSetterValueParameter {
+                                    this.source = source.fakeElement(FirFakeSourceElementKind.DefaultAccessor)
+                                    moduleData = baseModuleData
+                                    origin = FirDeclarationOrigin.Source
+                                    returnTypeRef = propertyTypeRefToUse
+                                    symbol = FirValueParameterSymbol(DEFAULT_VALUE_PARAMETER)
+                                }
                             }
+                            symbol = FirPropertyAccessorSymbol()
+                            val outerContractDescription = this@toFirPropertyAccessor.obtainContractDescription()
+                            val bodyWithContractDescription = this@toFirPropertyAccessor.buildFirBody()
+                            this.body = bodyWithContractDescription.first
+                            val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
+                            contractDescription?.let {
+                                this.contractDescription = it
+                            }
+                            this.propertySymbol = propertySymbol
                         }
-                        symbol = FirPropertyAccessorSymbol()
-                        val outerContractDescription = this@toFirPropertyAccessor.obtainContractDescription()
-                        val bodyWithContractDescription = this@toFirPropertyAccessor.buildFirBody()
-                        this.body = bodyWithContractDescription.first
-                        val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
-                        contractDescription?.let {
-                            this.contractDescription = it
-                        }
-                        this.propertySymbol = propertySymbol
                     }.also {
                         it.initContainingClassAttr()
                         bindFunctionTarget(accessorTarget, it)
-                        this@RawFirBuilder.context.firFunctionTargets.removeLast()
                     }
                 }
                 isGetter || property.isVar -> {
@@ -1209,35 +1209,35 @@ open class RawFirBuilder(
                 origin = FirDeclarationOrigin.Source
                 returnTypeRef = returnType
 
-                context.firFunctionTargets += target
-                function.extractAnnotationsTo(this)
-                if (this is FirSimpleFunctionBuilder) {
-                    function.extractTypeParametersTo(this, symbol)
-                }
-                for (valueParameter in function.valueParameters) {
-                    valueParameters += convertValueParameter(
-                        valueParameter,
-                        null,
-                        if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.OTHER
-                    )
-                }
-                val actualTypeParameters = if (this is FirSimpleFunctionBuilder)
-                    this.typeParameters
-                else
-                    listOf()
-                withCapturedTypeParameters(true, actualTypeParameters) {
-                    val outerContractDescription = function.obtainContractDescription()
-                    val bodyWithContractDescription = function.buildFirBody()
-                    this.body = bodyWithContractDescription.first
-                    val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
-                    contractDescription?.let {
-                        // TODO: add error reporting for contracts on lambdas
-                        if (this is FirSimpleFunctionBuilder) {
-                            this.contractDescription = it
+                context.withFunctionTarget(target) {
+                    function.extractAnnotationsTo(this)
+                    if (this is FirSimpleFunctionBuilder) {
+                        function.extractTypeParametersTo(this, symbol)
+                    }
+                    for (valueParameter in function.valueParameters) {
+                        valueParameters += convertValueParameter(
+                            valueParameter,
+                            null,
+                            if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.OTHER
+                        )
+                    }
+                    val actualTypeParameters = if (this is FirSimpleFunctionBuilder)
+                        this.typeParameters
+                    else
+                        listOf()
+                    withCapturedTypeParameters(true, actualTypeParameters) {
+                        val outerContractDescription = function.obtainContractDescription()
+                        val bodyWithContractDescription = function.buildFirBody()
+                        this.body = bodyWithContractDescription.first
+                        val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
+                        contractDescription?.let {
+                            // TODO: add error reporting for contracts on lambdas
+                            if (this is FirSimpleFunctionBuilder) {
+                                this.contractDescription = it
+                            }
                         }
                     }
                 }
-                context.firFunctionTargets.removeLast()
             }.build().also {
                 bindFunctionTarget(target, it)
                 if (it is FirSimpleFunction) {
@@ -1330,30 +1330,29 @@ open class RawFirBuilder(
                         name = it.asString()
                     }
                 }
-                target = FirFunctionTarget(label?.name, isLambda = true).also {
-                    context.firFunctionTargets += it
-                }
-                val ktBody = literal.bodyExpression
-                body = if (ktBody == null) {
-                    val errorExpression = buildErrorExpression(source, ConeSimpleDiagnostic("Lambda has no body", DiagnosticKind.Syntax))
-                    FirSingleExpressionBlock(errorExpression.toReturn())
-                } else {
-                    configureBlockWithoutBuilding(ktBody).apply {
-                        if (statements.isEmpty()) {
-                            statements.add(
-                                buildReturnExpression {
-                                    source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitReturn)
-                                    this.target = target
-                                    result = buildUnitExpression {
-                                        source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitUnit)
+                target = FirFunctionTarget(label?.name, isLambda = true)
+                context.withFunctionTarget(target) {
+                    val ktBody = literal.bodyExpression
+                    body = if (ktBody == null) {
+                        val errorExpression = buildErrorExpression(source, ConeSimpleDiagnostic("Lambda has no body", DiagnosticKind.Syntax))
+                        FirSingleExpressionBlock(errorExpression.toReturn())
+                    } else {
+                        configureBlockWithoutBuilding(ktBody).apply {
+                            if (statements.isEmpty()) {
+                                statements.add(
+                                    buildReturnExpression {
+                                        source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitReturn)
+                                        this.target = target
+                                        result = buildUnitExpression {
+                                            source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitUnit)
+                                        }
                                     }
-                                }
-                            )
-                        }
-                        statements.addAll(0, destructuringStatements)
-                    }.build()
+                                )
+                            }
+                            statements.addAll(0, destructuringStatements)
+                        }.build()
+                    }
                 }
-                context.firFunctionTargets.removeLast()
             }.also {
                 bindFunctionTarget(target, it)
             }
@@ -1388,15 +1387,15 @@ open class RawFirBuilder(
                     delegatedSuperTypeRef,
                     delegatedSelfTypeRef,
                 )
-                this@RawFirBuilder.context.firFunctionTargets += target
-                extractAnnotationsTo(this)
-                typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
-                extractValueParametersTo(this)
+                this@RawFirBuilder.context.withFunctionTarget(target) {
+                    extractAnnotationsTo(this)
+                    typeParameters += constructorTypeParametersFromConstructedClass(ownerTypeParameters)
+                    extractValueParametersTo(this)
 
 
-                val (body, _) = buildFirBody()
-                this.body = body
-                this@RawFirBuilder.context.firFunctionTargets.removeLast()
+                    val (body, _) = buildFirBody()
+                    this.body = body
+                }
             }.also {
                 it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
                 bindFunctionTarget(target, it)

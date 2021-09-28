@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.fir
 
+import org.jetbrains.kotlin.fir.diagnostics.ConeDiagnostic
+
 abstract class FirAbstractTarget<E : FirTargetElement>(
     override val labelName: String?
 ) : FirTarget<E> {

@@ -176,6 +176,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                     bindToErrorFunction("Cannot bind unlabeled return to a function", DiagnosticKind.ReturnNotAllowed)
                 }
             } else {
+                isLabeled = true
                 for (functionTarget in context.firFunctionTargets.asReversed()) {
                     if (functionTarget.labelName == labelName) {
                         target = functionTarget
@@ -221,7 +222,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
 
     fun FirLoopBuilder.prepareTarget(label: FirLabel?): FirLoopTarget {
         this.label = label
-        val target = FirLoopTarget(label?.name)
+        val target = FirLoopTarget(label?.name, context.isLabelAlreadyExisted(label?.name))
         context.firLoopTargets += target
         return target
     }
@@ -251,6 +252,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
                 )
             }
         } else {
+            isLabeled = true
             for (firLoopTarget in context.firLoopTargets.asReversed()) {
                 if (firLoopTarget.labelName == labelName) {
                     target = firLoopTarget

@@ -4097,6 +4097,13 @@ internal class ReturnForBuiltInSuspendImpl(
     override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
 }
 
+internal class LabelNameClashImpl(
+    firDiagnostic: FirPsiDiagnostic,
+    override val token: ValidityToken,
+) : KtFirDiagnostic.LabelNameClash(), KtAbstractFirDiagnostic<KtExpression> {
+    override val firDiagnostic: FirPsiDiagnostic by weakRef(firDiagnostic)
+}
+
 internal class ConflictingJvmDeclarationsImpl(
     firDiagnostic: FirPsiDiagnostic,
     override val token: ValidityToken,

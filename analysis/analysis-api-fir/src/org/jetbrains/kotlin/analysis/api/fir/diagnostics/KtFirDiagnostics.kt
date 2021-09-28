@@ -2530,6 +2530,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = ReturnForBuiltInSuspend::class
     }
 
+    abstract class LabelNameClash : KtFirDiagnostic<KtExpression>() {
+        override val diagnosticClass get() = LabelNameClash::class
+    }
+
     abstract class ConflictingJvmDeclarations : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = ConflictingJvmDeclarations::class
     }

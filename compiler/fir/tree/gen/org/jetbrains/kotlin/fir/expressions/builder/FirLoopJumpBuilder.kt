@@ -23,5 +23,6 @@ interface FirLoopJumpBuilder {
     abstract var source: FirSourceElement?
     abstract val annotations: MutableList<FirAnnotation>
     abstract var target: FirTarget<FirLoop>
+    abstract var isLabeled: Boolean
     fun build(): FirLoopJump
 }

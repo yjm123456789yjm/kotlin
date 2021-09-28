@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 fun test(x: List<Int>): Int {
     x myMap {
         return@myMap

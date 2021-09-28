@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.fir.lightTree.fir.modifier.TypeProjectionModifier
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitSuperReference
 import org.jetbrains.kotlin.fir.references.builder.buildExplicitThisReference
 import org.jetbrains.kotlin.fir.references.builder.buildSimpleNamedReference
-import org.jetbrains.kotlin.fir.references.impl.FirReferencePlaceholderForResolvedAnnotations
 import org.jetbrains.kotlin.fir.scopes.FirScopeProvider
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.*
@@ -914,13 +913,13 @@ class DeclarationsConverter(
             symbol = FirConstructorSymbol(callableIdForClassConstructor())
             delegatedConstructor = constructorDelegationCall
 
-            context.firFunctionTargets += target
-            annotations += modifiers.annotations
-            typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
-            valueParameters += firValueParameters.map { it.firValueParameter }
-            val (body, _) = convertFunctionBody(block, null)
-            this.body = body
-            context.firFunctionTargets.removeLast()
+            context.withFunctionTarget(target) {
+                annotations += modifiers.annotations
+                typeParameters += constructorTypeParametersFromConstructedClass(classWrapper.classBuilder.typeParameters)
+                valueParameters += firValueParameters.map { it.firValueParameter }
+                val (body, _) = convertFunctionBody(block, null)
+                this.body = body
+            }
         }.also {
             it.containingClassForStaticMemberAttr = currentDispatchReceiverType()!!.lookupTag
             target.bind(it)
@@ -1316,21 +1315,22 @@ class DeclarationsConverter(
             symbol = FirPropertyAccessorSymbol()
             this.isGetter = isGetter
             this.status = status
-            context.firFunctionTargets += target
-            annotations += modifiers.annotations
 
-            if (!isGetter) {
-                valueParameters += firValueParameters
-            }
+            context.withFunctionTarget(target) {
+                annotations += modifiers.annotations
 
-            val hasContractEffectList = outerContractDescription != null
-            val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)
-            this.body = bodyWithContractDescription.first
-            val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
-            contractDescription?.let {
-                this.contractDescription = it
+                if (!isGetter) {
+                    valueParameters += firValueParameters
+                }
+
+                val hasContractEffectList = outerContractDescription != null
+                val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)
+                this.body = bodyWithContractDescription.first
+                val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
+                contractDescription?.let {
+                    this.contractDescription = it
+                }
             }
-            context.firFunctionTargets.removeLast()
             this.propertySymbol = propertySymbol
         }.also {
             target.bind(it)
@@ -1554,36 +1554,36 @@ class DeclarationsConverter(
             origin = FirDeclarationOrigin.Source
             returnTypeRef = returnType!!
 
-            context.firFunctionTargets += target
-            annotations += modifiers.annotations
+            context.withFunctionTarget(target) {
+                annotations += modifiers.annotations
 
-            val actualTypeParameters = if (this is FirSimpleFunctionBuilder) {
-                typeParameters += firTypeParameters
-                typeParameters
-            } else {
-                listOf()
-            }
-
-            withCapturedTypeParameters(true, actualTypeParameters) {
-                valueParametersList?.let { list ->
-                    valueParameters += convertValueParameters(
-                        list,
-                        if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.OTHER
-                    ).map { it.firValueParameter }
+                val actualTypeParameters = if (this is FirSimpleFunctionBuilder) {
+                    typeParameters += firTypeParameters
+                    typeParameters
+                } else {
+                    listOf()
                 }
 
-                val hasContractEffectList = outerContractDescription != null
-                val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)
-                this.body = bodyWithContractDescription.first
-                val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
-                contractDescription?.let {
-                    // TODO: add error reporting for contracts on lambdas
-                    if (this is FirSimpleFunctionBuilder) {
-                        this.contractDescription = it
+                withCapturedTypeParameters(true, actualTypeParameters) {
+                    valueParametersList?.let { list ->
+                        valueParameters += convertValueParameters(
+                            list,
+                            if (isAnonymousFunction) ValueParameterDeclaration.LAMBDA else ValueParameterDeclaration.OTHER
+                        ).map { it.firValueParameter }
+                    }
+
+                    val hasContractEffectList = outerContractDescription != null
+                    val bodyWithContractDescription = convertFunctionBody(block, expression, hasContractEffectList)
+                    this.body = bodyWithContractDescription.first
+                    val contractDescription = outerContractDescription ?: bodyWithContractDescription.second
+                    contractDescription?.let {
+                        // TODO: add error reporting for contracts on lambdas
+                        if (this is FirSimpleFunctionBuilder) {
+                            this.contractDescription = it
+                        }
                     }
                 }
             }
-            context.firFunctionTargets.removeLast()
         }.build().also {
             target.bind(it)
             if (it is FirSimpleFunction) {

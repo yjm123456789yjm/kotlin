@@ -32,12 +32,14 @@ class FirBreakExpressionBuilder : FirLoopJumpBuilder, FirAnnotationContainerBuil
     override var source: FirSourceElement? = null
     override val annotations: MutableList<FirAnnotation> = mutableListOf()
     override lateinit var target: FirTarget<FirLoop>
+    override var isLabeled: Boolean = false
 
     override fun build(): FirBreakExpression {
         return FirBreakExpressionImpl(
             source,
             annotations,
             target,
+            isLabeled,
         )
     }
 

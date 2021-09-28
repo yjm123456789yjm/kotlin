@@ -37,7 +37,7 @@ fun case_3() {
     funWithExactlyOnceCallsInPlace {
         funWithExactlyOnceCallsInPlace {
             funWithExactlyOnceCallsInPlace {
-                return@funWithExactlyOnceCallsInPlace
+                return<!LABEL_NAME_CLASH!>@funWithExactlyOnceCallsInPlace<!>
             }
             println("1")
         }

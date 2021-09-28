@@ -14,6 +14,8 @@ class FirFunctionTarget(
 ) : FirAbstractTarget<FirFunction>(labelName) {
     private lateinit var targetSymbol: FirFunctionSymbol<*>
 
+    override var shadowOuterLabels: Boolean = false
+
     override var _labeledElement: FirFunction
         get() = targetSymbol.fir
         set(value) {

@@ -26,6 +26,7 @@ internal class FirReturnExpressionImpl(
     override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotation>,
     override val target: FirTarget<FirFunction>,
+    override val isLabeled: Boolean,
     override var result: FirExpression,
 ) : FirReturnExpression() {
     override var typeRef: FirTypeRef = FirImplicitNothingTypeRef(source?.fakeElement(FirFakeSourceElementKind.ImplicitTypeRef))

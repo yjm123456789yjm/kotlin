@@ -21,6 +21,7 @@ abstract class FirLoopJump : FirJump<FirLoop>() {
     abstract override val typeRef: FirTypeRef
     abstract override val annotations: List<FirAnnotation>
     abstract override val target: FirTarget<FirLoop>
+    abstract override val isLabeled: Boolean
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitLoopJump(this, data)
 

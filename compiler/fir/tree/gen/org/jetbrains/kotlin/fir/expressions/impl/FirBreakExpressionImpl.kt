@@ -25,6 +25,7 @@ internal class FirBreakExpressionImpl(
     override val source: FirSourceElement?,
     override val annotations: MutableList<FirAnnotation>,
     override val target: FirTarget<FirLoop>,
+    override val isLabeled: Boolean,
 ) : FirBreakExpression() {
     override var typeRef: FirTypeRef = FirImplicitNothingTypeRef(source?.fakeElement(FirFakeSourceElementKind.ImplicitTypeRef))
 

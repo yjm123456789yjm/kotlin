@@ -22,6 +22,7 @@ abstract class FirReturnExpression : FirJump<FirFunction>() {
     abstract override val typeRef: FirTypeRef
     abstract override val annotations: List<FirAnnotation>
     abstract override val target: FirTarget<FirFunction>
+    abstract override val isLabeled: Boolean
     abstract val result: FirExpression
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitReturnExpression(this, data)

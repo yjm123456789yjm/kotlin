@@ -18,10 +18,18 @@ class Context<T> {
     lateinit var packageFqName: FqName
     var className: FqName = FqName.ROOT
     var forcedLocalContext: Boolean = false
-    val inLocalContext get() = forcedLocalContext || firFunctionTargets.isNotEmpty()
+
+    @OptIn(PrivateForInline::class)
+    val inLocalContext
+        get() = forcedLocalContext || _firFunctionTargets.isNotEmpty()
     val currentClassId get() = ClassId(packageFqName, className, inLocalContext)
 
-    val firFunctionTargets = mutableListOf<FirFunctionTarget>()
+    @PrivateForInline
+    val _firFunctionTargets = mutableListOf<FirFunctionTarget>()
+
+    @OptIn(PrivateForInline::class)
+    val firFunctionTargets: List<FirFunctionTarget>
+        get() = _firFunctionTargets
     val calleeNamesForLambda = mutableListOf<Name>()
 
     @PrivateForInline
@@ -111,6 +119,24 @@ class Context<T> {
     fun forwardLabelUsagePermission(currentUserNode: Any, newUserNode: Any?) {
         if (currentUserNode == firLabelUserNode) {
             firLabelUserNode = newUserNode
+        }
+    }
+
+    @OptIn(PrivateForInline::class)
+    fun isLabelAlreadyExisted(labelName: String?): Boolean {
+        if (labelName == null) return false
+        return _firFunctionTargets.any { it.labelName == labelName } || firLoopTargets.any { it.labelName == labelName }
+    }
+
+    @OptIn(PrivateForInline::class)
+    inline fun <T> withFunctionTarget(target: FirFunctionTarget, block: () -> T): T {
+        target.shadowOuterLabels = isLabelAlreadyExisted(target.labelName)
+        try {
+            _firFunctionTargets.add(target)
+            return block()
+        } finally {
+            _firFunctionTargets.removeLast()
+
         }
     }
 

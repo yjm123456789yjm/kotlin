@@ -3631,6 +3631,12 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
+    add(FirErrors.LABEL_NAME_CLASH) { firDiagnostic ->
+        LabelNameClashImpl(
+            firDiagnostic as FirPsiDiagnostic,
+            token,
+        )
+    }
     add(FirJvmErrors.CONFLICTING_JVM_DECLARATIONS) { firDiagnostic ->
         ConflictingJvmDeclarationsImpl(
             firDiagnostic as FirPsiDiagnostic,

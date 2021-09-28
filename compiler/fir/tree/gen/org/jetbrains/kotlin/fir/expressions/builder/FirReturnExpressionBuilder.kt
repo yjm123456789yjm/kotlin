@@ -32,6 +32,7 @@ class FirReturnExpressionBuilder : FirAnnotationContainerBuilder, FirExpressionB
     override var source: FirSourceElement? = null
     override val annotations: MutableList<FirAnnotation> = mutableListOf()
     lateinit var target: FirTarget<FirFunction>
+    var isLabeled: Boolean = false
     lateinit var result: FirExpression
 
     override fun build(): FirReturnExpression {
@@ -39,6 +40,7 @@ class FirReturnExpressionBuilder : FirAnnotationContainerBuilder, FirExpressionB
             source,
             annotations,
             target,
+            isLabeled,
             result,
         )
     }

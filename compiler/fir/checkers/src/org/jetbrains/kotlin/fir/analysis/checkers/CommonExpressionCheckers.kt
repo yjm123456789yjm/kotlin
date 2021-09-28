@@ -84,6 +84,11 @@ object CommonExpressionCheckers : ExpressionCheckers() {
             FirLoopConditionChecker,
         )
 
+    override val jumpCheckers: Set<FirJumpChecker>
+        get() = setOf(
+            FirLabelNameClashChecker
+        )
+
     override val loopJumpCheckers: Set<FirLoopJumpChecker>
         get() = setOf(
             FirBreakOrContinueJumpsAcrossFunctionBoundaryChecker

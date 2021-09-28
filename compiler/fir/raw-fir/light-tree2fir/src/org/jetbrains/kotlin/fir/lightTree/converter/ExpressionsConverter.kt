@@ -149,57 +149,57 @@ class ExpressionsConverter(
                 }
             }
             target = FirFunctionTarget(labelName = label?.name, isLambda = true)
-            context.firFunctionTargets += target
-            val destructuringStatements = mutableListOf<FirStatement>()
-            for (valueParameter in valueParameterList) {
-                val multiDeclaration = valueParameter.destructuringDeclaration
-                valueParameters += if (multiDeclaration != null) {
-                    val name = SpecialNames.DESTRUCT
-                    val multiParameter = buildValueParameter {
-                        source = valueParameter.firValueParameter.source
-                        moduleData = baseModuleData
-                        origin = FirDeclarationOrigin.Source
-                        returnTypeRef = valueParameter.firValueParameter.returnTypeRef
-                        this.name = name
-                        symbol = FirValueParameterSymbol(name)
-                        defaultValue = null
-                        isCrossinline = false
-                        isNoinline = false
-                        isVararg = false
-                    }
-                    destructuringStatements += generateDestructuringBlock(
-                        baseModuleData,
-                        multiDeclaration,
-                        multiParameter,
-                        tmpVariable = false
-                    ).statements
-                    multiParameter
-                } else {
-                    valueParameter.firValueParameter
-                }
-            }
-
-            body = if (block != null) {
-                declarationsConverter.withOffset(expressionSource.startOffset) {
-                    declarationsConverter.convertBlockExpressionWithoutBuilding(block!!).apply {
-                        if (statements.isEmpty()) {
-                            statements.add(
-                                buildReturnExpression {
-                                    source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitReturn)
-                                    this.target = target
-                                    result = buildUnitExpression {
-                                        source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitUnit)
-                                    }
-                                }
-                            )
+            context.withFunctionTarget(target) {
+                val destructuringStatements = mutableListOf<FirStatement>()
+                for (valueParameter in valueParameterList) {
+                    val multiDeclaration = valueParameter.destructuringDeclaration
+                    valueParameters += if (multiDeclaration != null) {
+                        val name = SpecialNames.DESTRUCT
+                        val multiParameter = buildValueParameter {
+                            source = valueParameter.firValueParameter.source
+                            moduleData = baseModuleData
+                            origin = FirDeclarationOrigin.Source
+                            returnTypeRef = valueParameter.firValueParameter.returnTypeRef
+                            this.name = name
+                            symbol = FirValueParameterSymbol(name)
+                            defaultValue = null
+                            isCrossinline = false
+                            isNoinline = false
+                            isVararg = false
                         }
-                        statements.addAll(0, destructuringStatements)
-                    }.build()
+                        destructuringStatements += generateDestructuringBlock(
+                            baseModuleData,
+                            multiDeclaration,
+                            multiParameter,
+                            tmpVariable = false
+                        ).statements
+                        multiParameter
+                    } else {
+                        valueParameter.firValueParameter
+                    }
                 }
-            } else {
-                buildSingleExpressionBlock(buildErrorExpression(null, ConeSimpleDiagnostic("Lambda has no body", DiagnosticKind.Syntax)))
+
+                body = if (block != null) {
+                    declarationsConverter.withOffset(expressionSource.startOffset) {
+                        declarationsConverter.convertBlockExpressionWithoutBuilding(block!!).apply {
+                            if (statements.isEmpty()) {
+                                statements.add(
+                                    buildReturnExpression {
+                                        source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitReturn)
+                                        this.target = target
+                                        result = buildUnitExpression {
+                                            source = expressionSource.fakeElement(FirFakeSourceElementKind.ImplicitUnit)
+                                        }
+                                    }
+                                )
+                            }
+                            statements.addAll(0, destructuringStatements)
+                        }.build()
+                    }
+                } else {
+                    buildSingleExpressionBlock(buildErrorExpression(null, ConeSimpleDiagnostic("Lambda has no body", DiagnosticKind.Syntax)))
+                }
             }
-            context.firFunctionTargets.removeLast()
         }.also {
             target.bind(it)
         }

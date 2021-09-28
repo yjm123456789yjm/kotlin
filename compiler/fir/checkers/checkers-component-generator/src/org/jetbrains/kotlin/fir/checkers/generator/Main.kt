@@ -34,6 +34,7 @@ fun main(args: Array<String>) {
         alias<FirVariableAssignment>("VariableAssignmentChecker")
         alias<FirTryExpression>("TryExpressionChecker")
         alias<FirWhenExpression>("WhenExpressionChecker")
+        alias<FirJump<*>>("JumpChecker")
         alias<FirLoop>("LoopExpressionChecker")
         alias<FirLoopJump>("LoopJumpChecker")
         alias<FirBinaryLogicExpression>("LogicExpressionChecker")

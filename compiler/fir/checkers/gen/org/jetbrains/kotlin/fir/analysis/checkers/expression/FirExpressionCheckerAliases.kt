@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.expressions.FirElvisExpression
 import org.jetbrains.kotlin.fir.expressions.FirEqualityOperatorCall
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirGetClassCall
+import org.jetbrains.kotlin.fir.expressions.FirJump
 import org.jetbrains.kotlin.fir.expressions.FirLoop
 import org.jetbrains.kotlin.fir.expressions.FirLoopJump
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
@@ -49,6 +50,7 @@ typealias FirFunctionCallChecker = FirExpressionChecker<FirFunctionCall>
 typealias FirVariableAssignmentChecker = FirExpressionChecker<FirVariableAssignment>
 typealias FirTryExpressionChecker = FirExpressionChecker<FirTryExpression>
 typealias FirWhenExpressionChecker = FirExpressionChecker<FirWhenExpression>
+typealias FirJumpChecker = FirExpressionChecker<FirJump<*>>
 typealias FirLoopExpressionChecker = FirExpressionChecker<FirLoop>
 typealias FirLoopJumpChecker = FirExpressionChecker<FirLoopJump>
 typealias FirLogicExpressionChecker = FirExpressionChecker<FirBinaryLogicExpression>

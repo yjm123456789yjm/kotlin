@@ -22,6 +22,7 @@ sealed class FirJump<E : FirTargetElement> : FirExpression() {
     abstract override val typeRef: FirTypeRef
     abstract override val annotations: List<FirAnnotation>
     abstract val target: FirTarget<E>
+    abstract val isLabeled: Boolean
 
     override fun <R, D> accept(visitor: FirVisitor<R, D>, data: D): R = visitor.visitJump(this, data)
 

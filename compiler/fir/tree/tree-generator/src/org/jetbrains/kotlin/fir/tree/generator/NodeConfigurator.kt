@@ -140,6 +140,7 @@ object NodeConfigurator : AbstractFieldConfigurator<FirTreeBuilder>(FirTreeBuild
         jump.configure {
             withArg("E", targetElement)
             +field("target", jumpTargetType.withArgs("E"))
+            +booleanField("isLabeled")
         }
 
         loopJump.configure {
