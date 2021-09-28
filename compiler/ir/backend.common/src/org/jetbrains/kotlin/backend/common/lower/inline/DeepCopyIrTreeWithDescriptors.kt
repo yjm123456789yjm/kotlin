@@ -97,7 +97,6 @@ internal class DeepCopyIrTreeWithSymbolsForInliner(
             if (erasedParameters != null && substitutedType != null && (classifier as? IrTypeParameterSymbol)?.owner?.isReified == false) {
 
                 if (classifier in erasedParameters) {
-                    erasedParameters.remove(classifier)
                     return null
                 }
 
@@ -110,8 +109,12 @@ internal class DeepCopyIrTreeWithSymbolsForInliner(
                 }
 
                 val upperBound = superClass ?: superTypes.first()
+
+                // TODO: Think about how to reduce complexity from k^N to N^k
                 val erasedUpperBound = remapTypeAndOptionallyErase(upperBound, erasedParameters)
                     ?: error("Cannot erase upperbound ${upperBound.render()}")
+
+                erasedParameters.remove(classifier)
 
                 return if (type.hasQuestionMark) erasedUpperBound.makeNullable() else erasedUpperBound
             }
