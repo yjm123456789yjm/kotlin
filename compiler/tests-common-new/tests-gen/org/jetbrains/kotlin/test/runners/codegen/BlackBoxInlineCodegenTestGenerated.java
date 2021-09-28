@@ -1383,6 +1383,12 @@ public class BlackBoxInlineCodegenTestGenerated extends AbstractBlackBoxInlineCo
         }
 
         @Test
+        @TestMetadata("recursiveGeneric2.kt")
+        public void testRecursiveGeneric2() throws Exception {
+            runTest("compiler/testData/codegen/boxInline/complex/recursiveGeneric2.kt");
+        }
+
+        @Test
         @TestMetadata("swapAndWith.kt")
         public void testSwapAndWith() throws Exception {
             runTest("compiler/testData/codegen/boxInline/complex/swapAndWith.kt");
