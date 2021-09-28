@@ -244,7 +244,7 @@ public abstract class ExpressionTypingVisitorDispatcher extends KtVisitor<Kotlin
             // This trows AssertionError in CLI and reports the error in the IDE
             LOG.error(
                     new KotlinExceptionWithAttachments("Exception while analyzing expression at " + PsiDiagnosticUtils.atLocation(expression), e)
-                        .withAttachment("expression.kt", expression.getText())
+                        .withPsiAttachment("expression.kt", expression)
             );
         }
         catch (AssertionError errorFromLogger) {
