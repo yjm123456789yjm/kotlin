@@ -32,6 +32,14 @@ open class KotlinJsIrTargetPreset(
             KotlinPlatformType.js
 
     override fun instantiateTarget(name: String): KotlinJsIrTarget {
+        if (platformType == KotlinPlatformType.wasm && !PropertiesProvider(project).wasmStabilityNoWarn) {
+            project.logger.warn(
+                """
+                    New 'wasm' target is Work-in-Progress and is subject to change without notice.
+                """.trimIndent()
+            )
+        }
+
         return project.objects.newInstance(KotlinJsIrTarget::class.java, project, platformType, mixedMode).apply {
             this.isMpp = this@KotlinJsIrTargetPreset.isMpp
             if (!mixedMode) {
