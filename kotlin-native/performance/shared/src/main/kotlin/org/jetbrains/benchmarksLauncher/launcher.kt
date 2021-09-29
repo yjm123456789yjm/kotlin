@@ -19,6 +19,8 @@ package org.jetbrains.benchmarksLauncher
 import org.jetbrains.report.BenchmarkResult
 import kotlinx.cli.*
 
+import kotlin.native.internal.MetricCollector
+
 data class RecordTimeMeasurement(
     val status: BenchmarkResult.Status,
     val iteration: Int,
@@ -32,20 +34,26 @@ abstract class Launcher {
         benchmarks[name] = benchmark
     }
 
-    fun runBenchmark(benchmarkInstance: Any?, benchmark: AbstractBenchmarkEntry, repeatNumber: Int): Long {
+    fun runBenchmark(name: String, benchmarkInstance: Any?, benchmark: AbstractBenchmarkEntry, repeatNumber: Int): Long {
         var i = repeatNumber
         return if (benchmark is BenchmarkEntryWithInit) {
-            cleanup()
-            measureNanoTime {
+            // cleanup()
+            MetricCollector.zoneStart(name)
+            val result = measureNanoTime {
                 while (i-- > 0) benchmark.lambda(benchmarkInstance!!)
-                cleanup()
+                // cleanup()
             }
+            MetricCollector.zoneEnd(name)
+            result
         } else if (benchmark is BenchmarkEntry) {
-            cleanup()
-            measureNanoTime {
+            // cleanup()
+            MetricCollector.zoneStart(name)
+            val result = measureNanoTime {
                 while (i-- > 0) benchmark.lambda()
-                cleanup()
+                // cleanup()
             }
+            MetricCollector.zoneEnd(name)
+            result
         } else if (benchmark is BenchmarkEntryManual) {
             error("runBenchmark cannot run manual benchmark")
         } else {
@@ -75,22 +83,24 @@ abstract class Launcher {
                      benchmark: AbstractBenchmarkEntry) {
         val benchmarkInstance = (benchmark as? BenchmarkEntryWithInit)?.ctor?.invoke()
         logger.log("Warm up iterations for benchmark $name\n")
-        runBenchmark(benchmarkInstance, benchmark, numWarmIterations)
+        runBenchmark(name, benchmarkInstance, benchmark, numWarmIterations)
         val expectedDuration = 1000L * 1_000_000 // 1s
-        var autoEvaluatedNumberOfMeasureIteration = 1
+        var autoEvaluatedNumberOfMeasureIteration = 3
+        /*
         if (benchmark.useAutoEvaluatedNumberOfMeasure) {
-            val time = runBenchmark(benchmarkInstance, benchmark, 1)
+            val time = runBenchmark(name, benchmarkInstance, benchmark, 1)
             if (time < expectedDuration)
                 // Made auto evaluated number of measurements to be a multiple of 4.
                 // Loops which iteration number is a multiple of 4 execute optimally,
                 // because of different optimizations on processor (e.g. LSD)
                 autoEvaluatedNumberOfMeasureIteration = ((expectedDuration / time).toInt() / 4 + 1) * 4
         }
+        */
         logger.log("Running benchmark $name ")
         for (k in 0.until(numberOfAttempts)) {
             logger.log(".", usePrefix = false)
             var i = autoEvaluatedNumberOfMeasureIteration
-            val time = runBenchmark(benchmarkInstance, benchmark, i)
+            val time = runBenchmark(name, benchmarkInstance, benchmark, i)
             val scaledTime = time * 1.0 / autoEvaluatedNumberOfMeasureIteration
             // Save benchmark object
             recordMeasurement(RecordTimeMeasurement(BenchmarkResult.Status.PASSED, k, numWarmIterations, scaledTime))
@@ -128,7 +138,8 @@ abstract class Launcher {
                     it.warmupCount))
             }
             try {
-                runBenchmark(logger, numWarmIterations, numberOfAttempts, name, recordMeasurement, benchmark)
+                cleanup()
+                runBenchmark(logger, numWarmIterations, numberOfAttempts, "$prefix$name", recordMeasurement, benchmark)
             } catch (e: Throwable) {
                 printStderr("Failure while running benchmark $name: $e\n")
                 benchmarkResults.add(BenchmarkResult(

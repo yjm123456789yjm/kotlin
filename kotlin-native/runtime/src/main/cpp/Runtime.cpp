@@ -21,6 +21,7 @@
 #include "Exceptions.h"
 #include "KAssert.h"
 #include "Memory.h"
+#include "MetricCollector.hpp"
 #include "ObjCExportInit.h"
 #include "Porting.h"
 #include "Runtime.h"
@@ -151,6 +152,7 @@ RuntimeState* initRuntime() {
 void deinitRuntime(RuntimeState* state, bool destroyRuntime) {
   AssertThreadState(state->memoryState, kotlin::ThreadState::kRunnable);
   RuntimeAssert(state->status == RuntimeStatus::kRunning, "Runtime must be in the running state");
+  kotlin::ThreadDone();
   state->status = RuntimeStatus::kDestroying;
   // This may be called after TLS is zeroed out, so ::runtimeState and ::memoryState in Memory cannot be trusted.
   // TODO: This may in fact reallocate TLS without guarantees that it'll be deallocated again.
@@ -232,6 +234,7 @@ void Kotlin_shutdownRuntime() {
             break;
     }
     if (!needsFullShutdown) {
+        kotlin::ThreadDone();
         auto lastStatus = compareAndSwap(&globalRuntimeStatus, kGlobalRuntimeRunning, kGlobalRuntimeShutdown);
         RuntimeAssert(lastStatus == kGlobalRuntimeRunning, "Invalid runtime status for shutdown");
         return;

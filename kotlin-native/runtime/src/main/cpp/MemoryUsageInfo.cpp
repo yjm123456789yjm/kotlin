@@ -56,6 +56,32 @@ size_t kotlin::GetPeakResidentSetSizeBytes() noexcept {
 
 #endif
 
+#if KONAN_MACOSX
+
+#include <mach/mach_init.h>
+#include <mach/mach_types.h>
+#include <mach/task_info.h>
+#include <mach/task.h>
+#include <unistd.h>
+
+size_t kotlin::GetResidentSetSizeBytes() noexcept {
+    task_basic_info info;
+    mach_msg_type_number_t info_count = TASK_BASIC_INFO_COUNT;
+    task_t task = MACH_PORT_NULL;
+    task_for_pid(current_task(), getpid(), &task);
+    task_info(task, TASK_BASIC_INFO, (task_info_t)&info, &info_count);
+    return info.resident_size;
+}
+
+#else
+
+// TODO: Support more platforms
+size_t kotlin::GetResidentSetSizeBytes() noexcept {
+    return 0;
+}
+
+#endif
+
 extern "C" RUNTIME_NOTHROW KLong Kotlin_MemoryUsageInfo_getPeakResidentSetSizeBytes() {
     auto result = kotlin::GetPeakResidentSetSizeBytes();
     // TODO: Need a common implementation for such conversions.

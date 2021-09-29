@@ -37,6 +37,12 @@ OBJ_GETTER(StringFromUtf8Buffer, const char* start, size_t size);
 }
 #endif
 
+namespace kotlin {
+
+KStdString CreateStdStringFromString(KString string) noexcept;
+
+}
+
 template <typename T>
 int binarySearchRange(const T* array, int arrayLength, T needle) {
   int bottom = 0;

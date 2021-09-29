@@ -19,6 +19,7 @@
 
 #include <cstddef> // for offsetof
 #include <mutex>
+#include "MemoryUsageInfo.hpp"
 
 // Allow concurrent global cycle collector.
 #define USE_CYCLIC_GC 0
@@ -53,6 +54,7 @@
 #include "Utils.hpp"
 #include "WorkerBoundReference.h"
 #include "Weak.h"
+#include "MetricCollector.hpp"
 
 #ifdef KONAN_OBJC_INTEROP
 #include "ObjCMMAPI.h"
@@ -152,6 +154,7 @@ FrameOverlay exportFrameOverlay;
 
 // Current number of allocated containers.
 volatile int allocCount = 0;
+volatile int64_t allocCountBytes = 0;
 volatile int aliveMemoryStatesCount = 0;
 
 #if USE_CYCLIC_GC
@@ -682,6 +685,7 @@ struct MemoryState {
   // Set of all containers.
   ContainerHeaderSet* containers;
 #endif
+  std::map<ContainerHeader*, int64_t> containerSizes;
 
   ThreadLocalStorage tls;
 
@@ -758,6 +762,8 @@ struct MemoryState {
   #define DEINIT_STAT(state)
   #define PRINT_STAT(state)
 #endif // COLLECT_STATISTIC
+
+  uint64_t lastGCTimestampUs_ = 0;
 };
 
 namespace {
@@ -1066,8 +1072,13 @@ ContainerHeader* allocContainer(MemoryState* state, size_t size) {
     if (state != nullptr)
         state->allocSinceLastGc += size;
 #endif
-    result = konanConstructSizedInstance<ContainerHeader>(alignUp(size, kObjectAlignment));
+    int64_t realSize = alignUp(size, kObjectAlignment);
+    result = konanConstructSizedInstance<ContainerHeader>(realSize);
     atomicAdd(&allocCount, 1);
+    if (state != nullptr) {
+        atomicAdd(&allocCountBytes, realSize);
+        state->containerSizes.emplace(result, realSize);
+    }
   }
   if (state != nullptr) {
     CONTAINER_ALLOC_EVENT(state, size, result);
@@ -1106,6 +1117,11 @@ void processFinalizerQueue(MemoryState* state) {
 #if TRACE_MEMORY
     state->containers->erase(container);
 #endif
+    auto it = state->containerSizes.find(container);
+    if (it != state->containerSizes.end()) {
+        atomicAdd(&allocCountBytes, -1 * it->second);
+        state->containerSizes.erase(it);
+    }
     CONTAINER_DESTROY_EVENT(state, container)
     konanFreeMemory(container);
     atomicAdd(&allocCount, -1);
@@ -1847,6 +1863,18 @@ void decrementStack(MemoryState* state) {
 void garbageCollect(MemoryState* state, bool force) {
   RuntimeAssert(!state->gcInProgress, "Recursive GC is disallowed");
 
+  auto suspendAt = konan::getTimeNanos();
+  auto rssBefore = kotlin::GetResidentSetSizeBytes();
+  kotlin::Post("rss_before_kb", rssBefore / 1024);
+  auto objectsBeforeBytes = allocCountBytes;
+  auto objectsBefore = allocCount;
+  kotlin::Post("objects_before_bytes", objectsBeforeBytes);
+  kotlin::Post("objects_before", objectsBefore);
+  if (state->lastGCTimestampUs_ != 0) {
+      kotlin::Post("between_gc_us", suspendAt / 1000 - state->lastGCTimestampUs_);
+  }
+  state->lastGCTimestampUs_ = suspendAt / 1000;
+
 #if TRACE_GC
   uint64_t allocSinceLastGc = state->allocSinceLastGc;
 #endif  // TRACE_GC
@@ -1952,7 +1980,19 @@ void garbageCollect(MemoryState* state, bool force) {
   }
 #endif
 
-  GC_LOG("<<< GC: toFree %zu toRelease %zu\n", state->toFree->size(), state->toRelease->size())
+  auto resumeAt = konan::getTimeNanos();
+  auto suspendedFor = resumeAt - suspendAt;
+  kotlin::Post("suspend_time_us", suspendedFor / 1000);
+
+  auto objectsAfterBytes = allocCountBytes;
+  auto objectsAfter = allocCount;
+  kotlin::Post("objects_after_bytes", objectsAfterBytes);
+  kotlin::Post("objects_after", objectsAfter);
+
+  auto rssAfter = kotlin::GetResidentSetSizeBytes();
+  kotlin::Post("rss_after_kb", rssAfter / 1024);
+
+  GC_LOG("<<< GC: toFree %zu toRelease %zu\n", state->toFree->size(), state->toRelease->size());
 }
 
 void rememberNewContainer(ContainerHeader* container) {
