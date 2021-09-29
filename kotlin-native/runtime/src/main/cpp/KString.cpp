@@ -104,6 +104,14 @@ int threeWayCompare(T a, T b) {
 
 } // namespace
 
+KStdString kotlin::CreateStdStringFromString(KString kstring) noexcept {
+    const KChar* utf16 = CharArrayAddressOfElementAt(kstring, 0);
+    KStdString utf8;
+    utf8.reserve(kstring->count_);
+    utf8::unchecked::utf16to8(utf16, utf16 + kstring->count_, back_inserter(utf8));
+    return utf8;
+}
+
 extern "C" {
 
 OBJ_GETTER(CreateStringFromCString, const char* cstring) {
@@ -117,10 +125,7 @@ OBJ_GETTER(CreateStringFromUtf8, const char* utf8, uint32_t lengthBytes) {
 char* CreateCStringFromString(KConstRef kref) {
   if (kref == nullptr) return nullptr;
   KString kstring = kref->array();
-  const KChar* utf16 = CharArrayAddressOfElementAt(kstring, 0);
-  KStdString utf8;
-  utf8.reserve(kstring->count_);
-  utf8::unchecked::utf16to8(utf16, utf16 + kstring->count_, back_inserter(utf8));
+  KStdString utf8 = kotlin::CreateStdStringFromString(kstring);
   char* result = reinterpret_cast<char*>(konan::calloc(1, utf8.size() + 1));
   ::memcpy(result, utf8.c_str(), utf8.size());
   return result;

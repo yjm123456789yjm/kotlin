@@ -11,6 +11,7 @@
 #include <mutex>
 
 #include "Logging.hpp"
+#include "MetricCollector.hpp"
 #include "StackTrace.hpp"
 
 namespace {
@@ -53,6 +54,7 @@ std::atomic<bool> kotlin::mm::internal::gSuspensionRequested = false;
 NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequestedSlowPath() noexcept {
     std::unique_lock lock(gSuspensionMutex);
     if (IsThreadSuspensionRequested()) {
+        auto suspendAt = konan::getTimeNanos();
         auto threadId = konan::currentThreadId();
         auto suspendStartMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Suspending thread %d", threadId);
@@ -61,6 +63,9 @@ NO_EXTERNAL_CALLS_CHECK void kotlin::mm::ThreadSuspensionData::suspendIfRequeste
         auto suspendEndMs = konan::getTimeMicros();
         RuntimeLogDebug({kTagGC, kTagMM}, "Resuming thread %d after %" PRIu64 " microseconds of suspension",
                         threadId, suspendEndMs - suspendStartMs);
+        auto resumedAt = konan::getTimeNanos();
+        auto suspendedFor = resumedAt - suspendAt;
+        kotlin::Post("suspend_time_us", suspendedFor / 1000);
     }
 }
 

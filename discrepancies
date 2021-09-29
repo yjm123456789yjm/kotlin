@@ -1,0 +1,111 @@
+TODO:
+  # >10x max suspend time. Collected later. Max heap size ~2 smaller.
+  Cinterop::enum
+  ObjCInterop::generateNumbersSequence
+  Ring::String.summarizeSplittedCsv
+
+  # >10x max suspend time. Collected later. Max heap size ~same.
+  Cinterop::intMatrix
+  ObjCInterop::sumComplex
+  ObjCInterop::categoryMethods
+  Ring::IntArray.copyManual
+  Ring::IntList.copyManual
+
+  # >10x max suspend time. Collected later. Max heap size ~1.5 larger.
+  ObjCInterop::subComplex
+  ObjCInterop::fft
+  ObjCInterop::invertFft
+  Ring::ClassList.mapWithLambda
+  Ring::IntBaseline.allocateListAndFill
+
+  # >10x max suspend time. Collected later. Max heap size ~2x larger.
+  ObjCInterop::stringFromObjC
+  Ring::ClassArray.countFiltered
+  Ring::ClassArray.countFilteredLocal
+  Ring::ClassArray.filterAndCount
+  Ring::ClassArray.filterAndMap
+  Ring::ClassArray.filterManual
+  Ring::ClassBaseline.consume
+  Ring::ClassList.countFiltered
+  Ring::ClassList.countFilteredManual
+  Ring::ClassList.filter
+  Ring::ClassList.filterAndCount
+  Ring::ClassList.filterAndMap
+  Ring::ClassList.filterAndMapManual
+  Ring::ClassList.filterAndMapWithLambdaAsSequence
+  Ring::ClassList.reduce
+  Ring::ClassStream.countFiltered
+  Ring::ClassStream.countFilteredManual
+  Ring::ClassStream.filter
+  Ring::ClassStream.filterAndCount
+  Ring::ClassStream.filterAndMap
+  Ring::ClassStream.filterAndMapManual
+  Ring::ClassStream.filterManual
+  Ring::ClassStream.reduce
+  Ring::CoordinatesSolver.solve
+  Ring::Euler.problem1bySequence
+  Ring::Euler.problem4
+  Ring::IntArray.countFiltered
+  Ring::IntArray.countFilteredLocal
+  Ring::IntArray.countFilteredManual
+  Ring::IntArray.filter
+  Ring::IntArray.filterAndCount
+  Ring::IntArray.filterAndMap
+  Ring::IntArray.filterAndMapManual
+  Ring::IntArray.filterManual
+  Ring::IntArray.reduce
+  Ring::IntBaseline.consume
+  Ring::IntList.countFiltered
+  Ring::IntList.countFilteredLocal
+  Ring::IntList.countFilteredManual
+  Ring::IntList.filter
+  Ring::IntList.filterAndCount
+  Ring::IntList.filterAndMap
+  Ring::IntList.filterAndMapManual
+  Ring::IntList.filterManual
+  Ring::IntList.reduce
+  Ring::IntStream.countFiltered
+  Ring::IntStream.countFilteredLocal
+  Ring::IntStream.countFilteredManual
+  Ring::IntStream.filter
+  Ring::IntStream.filterAndCount
+  Ring::IntStream.filterAndMap
+  Ring::IntStream.filterAndMapManual
+  Ring::IntStream.filterManual
+  Ring::IntStream.reduce
+  Ring::Lambda.mutatingLambdaNoInline
+  Ring::Loop.rangeLoop
+  Ring::PrimeList.calcDirect
+  Ring::WithIndicies.withIndicies
+  Ring::WithIndicies.withIndiciesManual
+  swiftInterop::availableTransportOnMap
+  swiftInterop::getAllPlacesWithStraightRoutesTo
+  swiftInterop::goToAllAvailablePlaces
+
+  # TODO: Weird about massive overhead of RSS, objects in legacy. Investigate more.
+  # Max suspend time is lower, but total gcTime is higher. Collected later. Max heap is ~10 smaller.
+  swiftInterop::simpleFunction
+   trgt suspend_time_us cnt=196  avg=55136 p0=679 p50=31249 p90=105057 p95=110101 p99=207845 p100=210240
+   base suspend_time_us cnt=2530 avg=2915  p0=50  p50=193   p90=2568   p95=5320   p99=7787   p100=2244236
+  swiftInterop::stringInterop
+   trgt suspend_time_us cnt=354  avg=41264 p0=115 p50=30521 p90=95934 p95=104329 p99=124427 p100=139086
+   base suspend_time_us cnt=3001 avg=3473  p0=50  p50=209   p90=4555  p95=5127   p99=7510   p100=2290756
+
+Triaged:
+  # The timer at 200ms
+  Numerical::BellardPi
+
+  # Kotlin allocations trigger GC w/o any cooldown
+  Ring::BunnymarkBenchmark.testBunnymark
+  Ring::String.stringConcat
+  Ring::String.stringConcatNullable
+
+Coroutines:
+  # Generally small min between time. A lot of allocations?
+
+  # Rather large suspend time (>400ms). A lot of objects are created, mark is fast ~500us, sweep is slow ~200ms.
+  sync.MutexStressTest
+  sync.SemaphoreStressTest
+
+  # Somewhat large gcTime(>40%) given that runtime is 16.5s. A lot of objects are created, mark is fast ~20us, sweep is slow ~85ms.
+  ImmediateYieldTest

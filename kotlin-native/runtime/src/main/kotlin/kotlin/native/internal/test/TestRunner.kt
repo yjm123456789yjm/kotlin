@@ -10,6 +10,9 @@ import kotlin.system.getTimeMillis
 import kotlin.system.measureTimeMillis
 import kotlin.text.StringBuilder
 
+import kotlin.native.internal.MetricCollector
+import kotlin.native.internal.GC
+
 internal class TestRunner(val suites: List<TestSuite>, args: Array<String>) {
     private val filters = mutableListOf<(TestCase) -> Boolean>()
     private val listeners = mutableSetOf<TestListener>()
@@ -233,8 +236,12 @@ internal class TestRunner(val suites: List<TestSuite>, args: Array<String>) {
             return
         }
 
+        val name = this.name.removePrefix("kotlinx.coroutines.")
+        GC.collect()
+        MetricCollector.zoneStart(name)
         // Normal path: run all hooks and execute test cases.
         doBeforeClass()
+        for (i in 0..100) {
         testCases.values.forEach { testCase ->
             if (testCase.ignored) {
                 sendToListeners { ignore(testCase) }
@@ -252,7 +259,9 @@ internal class TestRunner(val suites: List<TestSuite>, args: Array<String>) {
                 }
             }
         }
+        }
         doAfterClass()
+        MetricCollector.zoneEnd(name)
     }
 
     private fun runIteration(iteration: Int) {

@@ -24,6 +24,31 @@ namespace mm {
 
 namespace internal {
 
+inline SpinLock<MutexThreadStateHandling::kIgnore>& SizesMutex() noexcept {
+    [[clang::no_destroy]] static SpinLock<MutexThreadStateHandling::kIgnore> mutex;
+    return mutex;
+}
+
+inline std::map<void*, size_t>& Sizes() noexcept {
+    [[clang::no_destroy]] static std::map<void*, size_t> sizes;
+    return sizes;
+}
+
+inline void SizesErase(void* thing) noexcept {
+    std::lock_guard guard(SizesMutex());
+    Sizes().erase(thing);
+}
+
+inline void SizesEmplace(void* thing, size_t size) noexcept {
+    std::lock_guard guard(SizesMutex());
+    Sizes().emplace(thing, size);
+}
+
+inline size_t SizesFind(void* thing) noexcept {
+    std::lock_guard guard(SizesMutex());
+    return Sizes().find(thing)->second;
+}
+
 // A queue that is constructed by collecting subqueues from several `Producer`s.
 // This is essentially a heterogeneous `MultiSourceQueue` on top of a singly linked list that
 // uses `Allocator` to allocate and free memory.
@@ -51,7 +76,9 @@ public:
         constexpr static size_t DataOffset() noexcept { return AlignUp(sizeof(Node), DataAlignment); }
 
     public:
-        ~Node() = default;
+        ~Node() {
+            SizesErase(this);
+        }
 
         static Node& FromData(void* data) noexcept {
             constexpr size_t kDataOffset = DataOffset();
@@ -79,7 +106,7 @@ public:
 
         Node() noexcept = default;
 
-        static unique_ptr<Node> Create(Allocator& allocator, size_t dataSize) noexcept {
+        static std::pair<unique_ptr<Node>, size_t> Create(Allocator& allocator, size_t dataSize) noexcept {
             size_t dataSizeAligned = AlignUp(dataSize, DataAlignment);
             size_t totalAlignment = std::max(alignof(Node), DataAlignment);
             size_t totalSize = AlignUp(sizeof(Node) + dataSizeAligned, totalAlignment);
@@ -92,7 +119,9 @@ public:
                 konan::abort();
             }
             RuntimeAssert(IsAligned(ptr, totalAlignment), "Allocator returned unaligned to %zu pointer %p", totalAlignment, ptr);
-            return unique_ptr<Node>(new (ptr) Node());
+            auto result = unique_ptr<Node>(new (ptr) Node());
+            SizesEmplace(result.get(), totalSize);
+            return std::make_pair(std::move(result), totalSize);
         }
 
         unique_ptr<Node> next_;
@@ -130,7 +159,7 @@ public:
 
         Node& Insert(size_t dataSize) noexcept {
             AssertCorrect();
-            auto node = Node::Create(allocator_, dataSize);
+            auto [node, totalSize] = Node::Create(allocator_, dataSize);
             auto* nodePtr = node.get();
             if (!root_) {
                 root_ = std::move(node);
@@ -140,6 +169,7 @@ public:
 
             last_ = nodePtr;
             ++size_;
+            sizeBytes_ += totalSize;
             RuntimeAssert(root_ != nullptr, "Must not be empty");
             AssertCorrect();
             return *nodePtr;
@@ -176,7 +206,9 @@ public:
             owner_.last_ = last_;
             last_ = nullptr;
             owner_.size_ += size_;
+            owner_.sizeBytes_ += sizeBytes_;
             size_ = 0;
+            sizeBytes_ = 0;
 
             RuntimeAssert(root_ == nullptr, "Must be empty");
             AssertCorrect();
@@ -192,6 +224,7 @@ public:
             root_.reset();
             last_ = nullptr;
             size_ = 0;
+            sizeBytes_ = 0;
         }
 
     private:
@@ -211,6 +244,7 @@ public:
         unique_ptr<Node> root_;
         Node* last_ = nullptr;
         size_t size_ = 0;
+        size_t sizeBytes_ = 0;
     };
 
     class Iterator {
@@ -369,10 +403,13 @@ public:
 
     size_t GetSizeUnsafe() const noexcept { return size_; }
 
+    size_t GetSizeBytesUnsafe() const noexcept { return sizeBytes_; }
+
     void ClearForTests() {
         root_.reset();
         last_ = nullptr;
         size_ = 0;
+        sizeBytes_ = 0;
     }
 
 private:
@@ -384,21 +421,25 @@ private:
         if (previousNode == nullptr) {
             // Extracting the root.
             auto node = std::move(root_);
+            auto totalSize = SizesFind(node.get());
             root_ = std::move(node->next_);
             if (!root_) {
                 last_ = nullptr;
             }
             --size_;
+            sizeBytes_ -= totalSize;
             AssertCorrectUnsafe();
             return {std::move(node), root_.get()};
         }
 
         auto node = std::move(previousNode->next_);
+        auto totalSize = SizesFind(node.get());
         previousNode->next_ = std::move(node->next_);
         if (!previousNode->next_) {
             last_ = previousNode;
         }
         --size_;
+        sizeBytes_ -= totalSize;
 
         AssertCorrectUnsafe();
         return {std::move(node), previousNode->next_.get()};
@@ -417,6 +458,7 @@ private:
     unique_ptr<Node> root_;
     Node* last_ = nullptr;
     size_t size_ = 0;
+    size_t sizeBytes_ = 0;
     SpinLock<MutexThreadStateHandling::kIgnore> mutex_;
 };
 
@@ -694,6 +736,7 @@ public:
     Iterable LockForIter() noexcept { return Iterable(*this); }
 
     size_t GetSizeUnsafe() const noexcept { return storage_.GetSizeUnsafe(); }
+    size_t GetSizeBytesUnsafe() const noexcept { return storage_.GetSizeBytesUnsafe(); }
 
     void ClearForTests() { storage_.ClearForTests(); }
 

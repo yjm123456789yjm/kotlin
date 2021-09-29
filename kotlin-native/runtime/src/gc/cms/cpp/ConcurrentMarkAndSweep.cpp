@@ -12,6 +12,8 @@
 #include "Logging.hpp"
 #include "MarkAndSweepUtils.hpp"
 #include "Memory.h"
+#include "MemoryUsageInfo.hpp"
+#include "MetricCollector.hpp"
 #include "RootSet.hpp"
 #include "Runtime.h"
 #include "ThreadData.hpp"
@@ -75,9 +77,12 @@ void gc::ConcurrentMarkAndSweep::ThreadData::SafePointAllocation(size_t size) no
     }
 }
 void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
+    auto suspendAt = konan::getTimeNanos();
     ThreadStateGuard guard(ThreadState::kNative);
     auto scheduled_epoch = gc_.state_.schedule();
     gc_.state_.waitEpochFinished(scheduled_epoch);
+    auto suspendedFor = konan::getTimeNanos() - suspendAt;
+    kotlin::Post("suspend_time_us", suspendedFor / 1000);
 }
 
 void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
@@ -178,7 +183,17 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to suspend threads by thread %d", konan::currentThreadId());
     auto timeStartUs = konan::getTimeMicros();
     RequestThreadsSuspension();
+    static std::optional<int64_t> lastGCTimestampUs = std::nullopt;
+    if (lastGCTimestampUs) {
+        kotlin::Post("between_gc_us", timeStartUs - *lastGCTimestampUs);
+    }
+    lastGCTimestampUs = timeStartUs;
     RuntimeLogDebug({kTagGC}, "Requested thread suspension by thread %d", konan::currentThreadId());
+
+    auto rssBefore = GetResidentSetSizeBytes();
+    auto rssPeakBefore = GetPeakResidentSetSizeBytes();
+    kotlin::Post("rss_before_kb", rssBefore / 1024);
+    kotlin::Post("rss_peak_before_kb", rssPeakBefore / 1024);
 
     RuntimeAssert(!kotlin::mm::IsCurrentThreadRegistered(), "Concurrent GC must run on unregistered thread");
 
@@ -195,6 +210,9 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     auto timeRootSetUs = konan::getTimeMicros();
     // Can be unsafe, because we've stopped the world.
     auto objectsCountBefore = mm::GlobalData::Instance().objectFactory().GetSizeUnsafe();
+    auto objectsCountBeforeBytes = mm::GlobalData::Instance().objectFactory().GetSizeBytesUnsafe();
+    kotlin::Post("objects_before_bytes", objectsCountBeforeBytes);
+    kotlin::Post("objects_before", objectsCountBefore);
     KStdVector<ObjHeader*> graySet = collectRootSet();
     RuntimeLogInfo(
             {kTagGC}, "Collected root set of size %zu in %" PRIu64 " microseconds", graySet.size(),
@@ -225,6 +243,13 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     auto finalizersCount = finalizerQueue.size();
     auto collectedCount = objectsCountBefore - objectsCountAfter - finalizersCount;
+
+    auto objectsCountAfterBytes = mm::GlobalData::Instance().objectFactory().GetSizeBytesUnsafe();
+    kotlin::Post("objects_after_bytes", objectsCountAfterBytes);
+    kotlin::Post("objects_after", objectsCountAfter);
+
+    auto rssAfter = GetResidentSetSizeBytes();
+    kotlin::Post("rss_after_kb", rssAfter / 1024);
 
     if (finalizersCount) {
         StartFinalizerThreadIfNone();

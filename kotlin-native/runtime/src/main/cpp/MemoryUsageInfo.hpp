@@ -11,6 +11,7 @@
 namespace kotlin {
 
 size_t GetPeakResidentSetSizeBytes() noexcept;
+size_t GetResidentSetSizeBytes() noexcept;
 
 }
 

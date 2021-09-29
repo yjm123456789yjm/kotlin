@@ -9,6 +9,8 @@
 #include <atomic>
 
 #include "Memory.h"
+#include "MetricCollector.hpp"
+#include "Porting.h"
 
 namespace kotlin {
 namespace mm {

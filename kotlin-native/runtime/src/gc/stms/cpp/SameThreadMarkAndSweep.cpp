@@ -12,6 +12,8 @@
 #include "Logging.hpp"
 #include "MarkAndSweepUtils.hpp"
 #include "Memory.h"
+#include "MemoryUsageInfo.hpp"
+#include "MetricCollector.hpp"
 #include "RootSet.hpp"
 #include "Runtime.h"
 #include "ThreadData.hpp"
@@ -81,11 +83,15 @@ void gc::SameThreadMarkAndSweep::ThreadData::SafePointAllocation(size_t size) no
 }
 
 void gc::SameThreadMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
+    auto suspendAt = konan::getTimeNanos();
     auto didGC = gc_.PerformFullGC();
 
     if (!didGC) {
         // If we failed to suspend threads, someone else might be asking to suspend them.
         threadData_.suspensionData().suspendIfRequested();
+    } else {
+        auto suspendedFor = konan::getTimeNanos() - suspendAt;
+        kotlin::Post("suspend_time_us", suspendedFor / 1000);
     }
 }
 
@@ -129,8 +135,18 @@ bool gc::SameThreadMarkAndSweep::PerformFullGC() noexcept {
         // TODO: This breaks if suspension is used by something apart from GC.
         return false;
     }
+    static std::optional<int64_t> lastGCTimestampUs = std::nullopt;
+    if (lastGCTimestampUs) {
+        kotlin::Post("between_gc_us", timeStartUs - *lastGCTimestampUs);
+    }
+    lastGCTimestampUs = timeStartUs;
     RuntimeLogDebug({kTagGC}, "Requested thread suspension by thread %d", konan::currentThreadId());
     gSafepointFlag = SafepointFlag::kNeedsSuspend;
+
+    auto rssBefore = GetResidentSetSizeBytes();
+    auto rssPeakBefore = GetPeakResidentSetSizeBytes();
+    kotlin::Post("rss_before_kb", rssBefore / 1024);
+    kotlin::Post("rss_peak_before_kb", rssPeakBefore / 1024);
 
     mm::ObjectFactory<gc::SameThreadMarkAndSweep>::FinalizerQueue finalizerQueue;
     {
@@ -150,6 +166,9 @@ bool gc::SameThreadMarkAndSweep::PerformFullGC() noexcept {
         auto timeRootSetUs = konan::getTimeMicros();
         // Can be unsafe, because we've stopped the world.
         auto objectsCountBefore = mm::GlobalData::Instance().objectFactory().GetSizeUnsafe();
+        auto objectsCountBeforeBytes = mm::GlobalData::Instance().objectFactory().GetSizeBytesUnsafe();
+        kotlin::Post("objects_before_bytes", objectsCountBeforeBytes);
+        kotlin::Post("objects_before", objectsCountBefore);
 
         RuntimeLogInfo(
                 {kTagGC}, "Collected root set of size %zu in %" PRIu64 " microseconds", graySet.size(),
@@ -177,13 +196,17 @@ bool gc::SameThreadMarkAndSweep::PerformFullGC() noexcept {
         auto finalizersCount = finalizerQueue.size();
         auto collectedCount = objectsCountBefore - objectsCountAfter - finalizersCount;
 
+        auto objectsCountAfterBytes = mm::GlobalData::Instance().objectFactory().GetSizeBytesUnsafe();
+        kotlin::Post("objects_after_bytes", objectsCountAfterBytes);
+        kotlin::Post("objects_after", objectsCountAfter);
+
         RuntimeLogInfo(
                 {kTagGC},
                 "Finished GC epoch %zu. Collected %zu objects, to be finalized %zu objects, %zu objects and %zd extra data objects remain. Total pause time %" PRIu64
                 " microseconds",
                 epoch_, collectedCount, finalizersCount, objectsCountAfter, extraObjectsCountAfter, timeResumeUs - timeStartUs);
         ++epoch_;
-        lastGCTimestampUs_ = timeResumeUs;
+        // lastGCTimestampUs_ = timeResumeUs;
     }
 
     // Finalizers are run after threads are resumed, because finalizers may request GC themselves, which would
@@ -197,6 +220,11 @@ bool gc::SameThreadMarkAndSweep::PerformFullGC() noexcept {
     finalizerQueue.Finalize();
     auto timeAfterUs = konan::getTimeMicros();
     RuntimeLogInfo({kTagGC}, "Finished running finalizers in %" PRIu64 " microseconds", timeAfterUs - timeBeforeUs);
+
+    auto rssAfter = GetResidentSetSizeBytes();
+    kotlin::Post("rss_after_kb", rssAfter / 1024);
+
+    lastGCTimestampUs_ = timeAfterUs;
 
     return true;
 }
