@@ -308,6 +308,14 @@ class KotlinMetadataTargetConfigurator :
             if (!isHostSpecific) {
                 val metadataContent = project.filesWithUnpackedArchives(this@apply.output.allOutputs, setOf("klib"))
                 allMetadataJar.configure { it.from(metadataContent) { spec -> spec.into(this@apply.defaultSourceSet.name) } }
+                allMetadataJar.configure { jar ->
+                    if (this !is KotlinSharedNativeCompilation) return@configure
+                    val commonizeCInteropTask = project.commonizeCInteropTask?.get() ?: return@configure
+                    val cinteropCommonizerDependent = CInteropCommonizerDependent.from(this) ?: return@configure
+                    val libraries = commonizeCInteropTask.commonizedOutputLibraries(cinteropCommonizerDependent)
+                    jar.dependsOn(commonizeCInteropTask)
+                    jar.from(libraries) { spec -> spec.into("${this@apply.defaultSourceSet.name}-commonized-cinterops") }
+                }
             } else {
                 if (platformCompilations.filterIsInstance<KotlinNativeCompilation>().none { it.konanTarget.enabledOnCurrentHost }) {
                     // Then we don't have any platform module to put this compiled source set to, so disable the compilation task:
