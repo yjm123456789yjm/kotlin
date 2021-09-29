@@ -17,6 +17,7 @@ import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
+import org.jetbrains.kotlin.commonizer.SharedCommonizerTarget
 import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
@@ -312,9 +313,11 @@ class KotlinMetadataTargetConfigurator :
                     if (this !is KotlinSharedNativeCompilation) return@configure
                     val commonizeCInteropTask = project.commonizeCInteropTask?.get() ?: return@configure
                     val cinteropCommonizerDependent = CInteropCommonizerDependent.from(this) ?: return@configure
-                    val libraries = commonizeCInteropTask.commonizedOutputLibraries(cinteropCommonizerDependent)
+                    val cinterops = commonizeCInteropTask.commonizedOutputDirectory(cinteropCommonizerDependent) ?: return@configure
                     jar.dependsOn(commonizeCInteropTask)
-                    jar.from(libraries) { spec -> spec.into("${this@apply.defaultSourceSet.name}-commonized-cinterops") }
+                    jar.from(cinterops) { spec ->
+                        spec.into("cinterop/${cinteropCommonizerDependent.target}")
+                    }
                 }
             } else {
                 if (platformCompilations.filterIsInstance<KotlinNativeCompilation>().none { it.konanTarget.enabledOnCurrentHost }) {
@@ -337,10 +340,17 @@ class KotlinMetadataTargetConfigurator :
             listOf(sourceSet)
         ) { }
 
+        val allCompileMetadataConfiguration = project.configurations.getByName(ALL_COMPILE_METADATA_CONFIGURATION_NAME)
+
         compilation.compileDependencyFiles += createTransformedMetadataClasspath(
-            project.configurations.getByName(ALL_COMPILE_METADATA_CONFIGURATION_NAME),
-            compilation
+            allCompileMetadataConfiguration, compilation
         )
+
+        val commonizerTarget = project.getCommonizerTarget(compilation) as? SharedCommonizerTarget ?: return
+        compilation.compileDependencyFiles += project.tasks.create(
+            "discoverCInteropMetadata${compilation.name.capitalize()}", CInteropMetadataDiscoveryTask::class.java,
+            commonizerTarget, allCompileMetadataConfiguration
+        ).outputFiles
     }
 
     private fun setupDependencyTransformationForSourceSet(
