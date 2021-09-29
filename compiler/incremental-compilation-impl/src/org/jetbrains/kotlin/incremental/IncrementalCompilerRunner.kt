@@ -175,7 +175,7 @@ abstract class IncrementalCompilerRunner<
             // but now JsKlib compiler reports invalid exit code.
             cachesMayBeCorrupted = false
 
-            reporter.measure(BuildTime.CALCULATE_OUTPUT_SIZE) {
+            reporter.addMetric(BuildTime.CALCULATE_OUTPUT_SIZE) {
                 reporter.addMetric(
                     BuildPerformanceMetric.SNAPSHOT_SIZE,
                     buildHistoryFile.length() + lastBuildInfoFile.length() + abiSnapshotFile.length()

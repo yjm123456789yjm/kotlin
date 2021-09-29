@@ -11,6 +11,7 @@ interface BuildMetricsReporter {
     fun addTimeMetric(time: BuildTime, durationMs: Long)
 
     fun addMetric(metric: BuildPerformanceMetric, value: Long)
+    fun addMetric(metric: BuildTime, fn: () -> Unit)
 
     fun addAttribute(attribute: BuildAttribute)
 
