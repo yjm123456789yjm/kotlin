@@ -37,9 +37,9 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
             override fun visitConstructorCall(expression: IrConstructorCall): IrExpression {
                 expression.transformChildrenVoid()
                 if (expression.origin != JsStatementOrigins.CALLABLE_REFERENCE_CREATE) return expression
-                return ctorToFactoryMap[expression.symbol]?.let {
+                return ctorToFactoryMap[expression.symbol]?.let { factory ->
                     val newCall = expression.run {
-                        IrCallImpl(startOffset, endOffset, type, it, typeArgumentsCount, valueArgumentsCount, origin)
+                        IrCallImpl(startOffset, endOffset, type, factory, typeArgumentsCount, valueArgumentsCount, origin)
                     }
 
                     newCall.dispatchReceiver = expression.dispatchReceiver
