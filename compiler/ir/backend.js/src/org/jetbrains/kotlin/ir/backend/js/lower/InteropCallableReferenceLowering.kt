@@ -98,11 +98,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         }
 
         private fun replaceWithFactory(lambdaClass: IrClass): List<IrDeclaration> {
-            val newDeclarations = mutableListOf<IrDeclaration>()
-
-            buildFactoryFunction(lambdaClass, newDeclarations, classToFactoryMap)
-
-            return newDeclarations.onEach { it.parent = lambdaClass.parent }
+            return buildFactoryFunction(lambdaClass, classToFactoryMap).onEach { it.parent = lambdaClass.parent }
         }
     }
 
@@ -316,9 +312,9 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
 
     private fun buildFactoryFunction(
         lambdaClass: IrClass,
-        newDeclarations: MutableList<IrDeclaration>,
         old2newMap: MutableMap<IrConstructorSymbol, IrSimpleFunctionSymbol>
-    ): IrSimpleFunction {
+    ): List<IrDeclaration> {
+        val newDeclarations = mutableListOf<IrDeclaration>()
         val constructor = lambdaClass.declarations.single { it is IrConstructor } as IrConstructor
 
         val factoryDeclaration = context.irFactory.buildFun {
@@ -343,7 +339,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         newDeclarations.add(factoryDeclaration)
         old2newMap[constructor.symbol] = factoryDeclaration.symbol
 
-        return factoryDeclaration
+        return newDeclarations
     }
 
 
