@@ -151,7 +151,7 @@ class CallableReferenceLowering(private val context: CommonBackendContext) : Bod
             }
         }
 
-        private fun makeProperName(): Name {
+        private fun makeContextDependentName(): Name {
             val sb = StringBuilder()
             sb.collectNamesForLambda(function)
             if (!isLambda) sb.append("\$ref")
@@ -165,7 +165,7 @@ class CallableReferenceLowering(private val context: CommonBackendContext) : Bod
                 // A callable reference results in a synthetic class, while a lambda is not synthetic.
                 // We don't produce GENERATED_SAM_IMPLEMENTATION, which is always synthetic.
                 origin = if (isKReference || !isLambda) FUNCTION_REFERENCE_IMPL else LAMBDA_IMPL
-                name = makeProperName()
+                name = makeContextDependentName()
             }.apply {
                 superTypes = listOf(superClass, reference.type)
 //                if (samSuperType == null)
