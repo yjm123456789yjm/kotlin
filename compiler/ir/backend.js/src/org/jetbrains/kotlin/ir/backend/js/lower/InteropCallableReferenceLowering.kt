@@ -223,7 +223,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
 
         val statements = ArrayList<IrStatement>(4)
         val isSuspendLambda = invokeFun.overriddenSymbols.any { it.owner.isSuspend }
-        val constructor = lambdaClass.declarations.find { it is IrConstructor } as IrConstructor
+        val constructor = lambdaClass.declarations.firstNotNullOf { it as? IrConstructor }
 
         if (isSuspendLambda) {
             // Due to suspend lambda is a class itself it's not easy to inline it correctly and moreover I see no reason to do so
