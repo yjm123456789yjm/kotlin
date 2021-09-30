@@ -63,7 +63,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         error("Unreachable")
     }
 
-    private inner class CallableReferenceClassTransformer(private val classToFactoryMap: MutableMap<IrConstructorSymbol, IrSimpleFunctionSymbol>) : IrElementTransformerVoid() {
+    private inner class CallableReferenceClassTransformer(private val ctorToFactoryMap: MutableMap<IrConstructorSymbol, IrSimpleFunctionSymbol>) : IrElementTransformerVoid() {
         override fun visitFile(declaration: IrFile): IrFile {
             declaration.transformChildrenVoid()
             declaration.transformDeclarationsFlat { it.transformCallableReference() }
@@ -98,7 +98,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         }
 
         private fun replaceWithFactory(lambdaClass: IrClass): List<IrDeclaration> {
-            return buildFactoryFunction(lambdaClass, classToFactoryMap).onEach { it.parent = lambdaClass.parent }
+            return buildFactoryFunction(lambdaClass, ctorToFactoryMap).onEach { it.parent = lambdaClass.parent }
         }
     }
 
@@ -312,7 +312,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
 
     private fun buildFactoryFunction(
         lambdaClass: IrClass,
-        old2newMap: MutableMap<IrConstructorSymbol, IrSimpleFunctionSymbol>
+        ctorToFactoryMap: MutableMap<IrConstructorSymbol, IrSimpleFunctionSymbol>
     ): List<IrDeclaration> {
         val newDeclarations = mutableListOf<IrDeclaration>()
         val constructor = lambdaClass.declarations.single { it is IrConstructor } as IrConstructor
@@ -337,7 +337,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         factoryDeclaration.body = buildFactoryBody(factoryDeclaration, lambdaClass, newDeclarations)
 
         newDeclarations.add(factoryDeclaration)
-        old2newMap[constructor.symbol] = factoryDeclaration.symbol
+        ctorToFactoryMap[constructor.symbol] = factoryDeclaration.symbol
 
         return newDeclarations
     }
