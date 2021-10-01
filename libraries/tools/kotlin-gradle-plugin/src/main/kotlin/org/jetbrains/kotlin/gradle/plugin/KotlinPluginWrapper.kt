@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.gradle.targets.js.KotlinJsCompilerAttribute
 import org.jetbrains.kotlin.gradle.targets.js.KotlinJsPlugin
 import org.jetbrains.kotlin.gradle.targets.js.npm.addNpmDependencyExtension
 import org.jetbrains.kotlin.gradle.targets.native.internal.CInteropKlibLibraryElements
+import org.jetbrains.kotlin.gradle.targets.native.internal.setupCommonizerTargetAttribute
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestsRegistry
 import org.jetbrains.kotlin.gradle.tooling.buildKotlinToolingMetadataTask
@@ -146,6 +147,7 @@ abstract class KotlinBasePluginWrapper: Plugin<Project> {
         KotlinJsCompilerAttribute.setupAttributesMatchingStrategy(project.dependencies.attributesSchema)
         ProjectLocalConfigurations.setupAttributesMatchingStrategy(this)
         CInteropKlibLibraryElements.setupAttributesMatchingStrategy(this)
+        project.setupCommonizerTargetAttribute()
     }
 
     internal abstract fun getPlugin(

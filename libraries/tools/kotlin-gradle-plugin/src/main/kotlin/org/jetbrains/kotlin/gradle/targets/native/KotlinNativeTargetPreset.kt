@@ -94,6 +94,10 @@ abstract class AbstractKotlinNativeTargetPreset<T : KotlinNativeTarget>(
             project.setupCInteropPropagatedDependencies()
         }
 
+        SingleActionPerProject.run(project, "setupCInteropCommonizerPublication") {
+            project.setupCInteropCommonizerPublication()
+        }
+
         if (!konanTarget.enabledOnCurrentHost) {
             with(HostManager()) {
                 val supportedHosts = enabledByHost.filterValues { konanTarget in it }.keys

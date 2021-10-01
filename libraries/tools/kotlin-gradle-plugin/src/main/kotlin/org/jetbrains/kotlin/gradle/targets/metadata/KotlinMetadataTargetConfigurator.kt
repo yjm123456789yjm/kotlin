@@ -333,6 +333,15 @@ class KotlinMetadataTargetConfigurator :
             project.configurations.getByName(ALL_COMPILE_METADATA_CONFIGURATION_NAME),
             compilation
         )
+
+        if (compilation is KotlinSharedNativeCompilation) {
+            val cinteropCommonizerDependencies = project.locateOrRegisterCInteropCommonizerDependenciesConfiguration(compilation) ?: return
+            cinteropCommonizerDependencies.extendsFrom(project.configurations.getByName(ALL_COMPILE_METADATA_CONFIGURATION_NAME))
+            compilation.compileKotlinTask.dependsOn(cinteropCommonizerDependencies)
+            compilation.compileDependencyFiles += cinteropCommonizerDependencies.incoming.artifactView { view ->
+                view.isLenient = true
+            }.files
+        }
     }
 
     private fun setupDependencyTransformationForSourceSet(
