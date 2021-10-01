@@ -154,7 +154,7 @@ final List<File> stdLibSrc = [
         project(':kotlin-native:Interop:Runtime').file('src/native/kotlin'),
         project(':kotlin-native:Interop:JsRuntime').file('src/main/kotlin'),
         project(':kotlin-native:runtime').file('src/main/kotlin'),
-        project(":kotlin-stdlib-common").file('../commonNative/src/')
+        project(":kotlin-stdlib-common").file('../native-wasm/src/')
 ]
 
 // These files are built before the 'dist' is complete,

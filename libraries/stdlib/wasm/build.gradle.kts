@@ -60,7 +60,7 @@ kotlin {
     sourceSets {
         val jsMain by getting {
             kotlin.srcDirs("builtins", "internal", "runtime", "src", "stubs")
-            kotlin.srcDirs("../commonNative/")
+            kotlin.srcDirs("../native-wasm/")
             kotlin.srcDirs(files(builtInsSources.map { it.destinationDir }))
         }
 
