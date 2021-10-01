@@ -72,11 +72,6 @@ internal class CommonizerTargetAttributeDisambiguationRule : AttributeDisambigua
 }
 
 internal fun Project.setupCommonizerTargetAttribute() {
-
-    dependencies.artifactTypes.create("klib").also {
-        it.attributes.attribute(cinteropMetadataArtifactTypeAttribute, CInteropMetadataArtifactType.Bundle)
-    }
-
     dependencies.attributesSchema.attribute(commonizerTargetAttribute) { strategy ->
         strategy.compatibilityRules.add(CommonizerTargetAttributeCompatibilityRule::class.java)
         strategy.disambiguationRules.add(CommonizerTargetAttributeDisambiguationRule::class.java)
@@ -86,10 +81,7 @@ internal fun Project.setupCommonizerTargetAttribute() {
 
     dependencies.registerTransform(MetadataDiscoveryTransformer::class.java) { spec ->
         spec.from.attribute(cinteropMetadataArtifactTypeAttribute, CInteropMetadataArtifactType.Bundle)
-            .attribute(artifactTypeAttribute, "klib")
-
         spec.to.attribute(cinteropMetadataArtifactTypeAttribute, CInteropMetadataArtifactType.Directory)
-            .attribute(artifactTypeAttribute, "klib")
     }
 }
 
