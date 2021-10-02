@@ -1,9 +1,6 @@
-// IGNORE_BACKEND: WASM
-// WASM_MUTE_REASON: JAVA
+// TARGET_BACKEND: JVM
 // WITH_RUNTIME
 // FULL_JDK
-// IGNORE_BACKEND: JS_IR
-// IGNORE_BACKEND: JS
 
 fun Any.copyValueIfNeeded(): Any {
     return when (this) {
