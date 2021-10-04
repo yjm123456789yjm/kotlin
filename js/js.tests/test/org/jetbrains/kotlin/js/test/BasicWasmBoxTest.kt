@@ -46,11 +46,6 @@ abstract class BasicWasmBoxTest(
 
     private val spiderMonkey by lazy { SpiderMonkeyEngine() }
 
-    @Suppress("UNUSED_PARAMETER")
-    fun doTestWithCoroutinesPackageReplacement(filePath: String, coroutinesPackage: String) {
-        TODO("TestWithCoroutinesPackageReplacement are not supported")
-    }
-
     fun doTest(filePath: String) {
         val file = File(filePath)
 
