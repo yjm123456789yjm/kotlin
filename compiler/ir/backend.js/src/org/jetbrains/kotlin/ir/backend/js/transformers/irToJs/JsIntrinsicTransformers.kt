@@ -131,7 +131,7 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
             }
 
             add(intrinsics.jsCoroutineContext) { _, context: JsGenerationContext ->
-                val contextGetter = backendContext.coroutineGetContext
+                val contextGetter = backendContext.coroutineSymbols.coroutineGetContext
                 val getterName = context.getNameForStaticFunction(contextGetter.owner)
                 val continuation = context.continuation
                 JsInvocation(JsNameRef(getterName, continuation))
