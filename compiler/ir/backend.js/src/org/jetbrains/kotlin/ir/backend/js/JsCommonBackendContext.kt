@@ -36,6 +36,9 @@ interface JsCommonBackendContext : CommonBackendContext {
 
     val coroutineSymbols: JsCommonCoroutineSymbols
 
+    val catchAllThrowableType: IrType
+        get() = irBuiltIns.throwableType
+
     val es6mode: Boolean
         get() = false
 }

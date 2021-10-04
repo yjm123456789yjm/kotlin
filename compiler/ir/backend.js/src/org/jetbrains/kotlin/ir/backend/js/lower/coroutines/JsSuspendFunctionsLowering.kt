@@ -31,14 +31,9 @@ import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 
 
-fun JsSuspendFunctionsLowering(ctx: JsIrBackendContext) =
-    JsCommonSuspendFunctionsLowering(ctx, ctx.dynamicType)
-
-class JsCommonSuspendFunctionsLowering(
+class JsSuspendFunctionsLowering(
     ctx: JsCommonBackendContext,
-    val throwableType: IrType,
 ) : AbstractSuspendFunctionsLowering<JsCommonBackendContext>(ctx) {
-
     val coroutineSymbols = ctx.coroutineSymbols
 
     private val coroutineImplExceptionPropertyGetter = coroutineSymbols.coroutineImplExceptionPropertyGetter
@@ -63,7 +58,7 @@ class JsCommonSuspendFunctionsLowering(
         argumentToPropertiesMap: Map<IrValueParameter, IrField>
     ) {
         val returnableBlockTransformer = ReturnableBlockTransformer(context)
-        val finallyBlockTransformer = FinallyBlocksLowering(context, throwableType)
+        val finallyBlockTransformer = FinallyBlocksLowering(context, context.catchAllThrowableType)
         val simplifiedFunction =
             transformingFunction.transform(finallyBlockTransformer, null).transform(returnableBlockTransformer, null) as IrFunction
 
