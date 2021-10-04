@@ -43,7 +43,7 @@ class CoreJrtFileSystem : DeprecatedVirtualFileSystem() {
                     /*
                     This ClassLoader actually lives as long as current thread due to ThreadLocal leak in jrtfs,
                     See https://bugs.openjdk.java.net/browse/JDK-8260621
-                    So that cache allows us to avoid creating too much classloaders for same JDK and reduce severity of that leak
+                    So that cache allows us to avoid creating too many classloaders for same JDK and reduce severity of that leak
                     */
                     val classLoader = jrtFsClassLoaderCache.computeIfAbsent(jrtFsJar) {
                         URLClassLoader(arrayOf(jrtFsJar.toURI().toURL()), null)
