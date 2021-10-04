@@ -71,8 +71,8 @@ class WasmSymbols(
         get() = TODO()
     override val coroutineGetContext
         get() = TODO()
-    override val returnIfSuspended
-        get() = TODO()
+    override val returnIfSuspended =
+        getInternalFunction("returnIfSuspended")
 
     override val functionAdapter: IrClassSymbol
         get() = TODO()
