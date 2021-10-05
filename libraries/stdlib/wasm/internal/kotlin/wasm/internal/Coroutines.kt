@@ -10,12 +10,14 @@ package kotlin.wasm.internal
 import kotlin.coroutines.*
 
 @PublishedApi
+@ExcludedFromCodegen
 internal fun <T> getContinuation(): Continuation<T> =
     implementedAsIntrinsic
 
 @PublishedApi
+@Suppress("UNCHECKED_CAST")
 internal suspend fun <T> returnIfSuspended(@Suppress("UNUSED_PARAMETER") argument: Any?): T =
-    implementedAsIntrinsic
+    argument as T
 
 @PublishedApi
 internal fun <T> interceptContinuationIfNeeded(
@@ -30,5 +32,3 @@ internal suspend fun getCoroutineContext(): CoroutineContext = getContinuation<A
 @PublishedApi
 internal suspend fun <T> suspendCoroutineUninterceptedOrReturn(block: (Continuation<T>) -> Any?): T =
     returnIfSuspended<T>(block(getContinuation<T>()))
-
-
