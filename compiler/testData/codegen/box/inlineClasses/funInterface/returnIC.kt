@@ -1,6 +1,5 @@
 // WITH_RUNTIME
 // KJS_WITH_FULL_RUNTIME
-// IGNORE_BACKEND: WASM
 // IGNORE_BACKEND: JVM
 
 inline class Result<T>(val isSuccess: Boolean)
