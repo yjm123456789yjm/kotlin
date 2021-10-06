@@ -391,7 +391,10 @@ class CallableReferenceLowering(private val context: CommonBackendContext) : Bod
         private fun createNameProperty(clazz: IrClass) {
             if (!isKReference) return
 
-            val superProperty = superFunctionInterface.declarations.filterIsInstance<IrProperty>().single()
+            val superProperty = superFunctionInterface.declarations
+                .filterIsInstance<IrProperty>()
+                .single { it.name == Name.identifier("name") }  // In K/Wasm interfaces can have fake overridden properties from Any
+
             val supperGetter = superProperty.getter ?: error("Expected getter for KFunction.name property")
 
             val nameProperty = clazz.addProperty() {
