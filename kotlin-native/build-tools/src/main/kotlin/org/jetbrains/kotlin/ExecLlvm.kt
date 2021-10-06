@@ -13,7 +13,7 @@ import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.konan.util.DependencyProcessor
 
 fun execLlvmUtility(project: Project, utility: String, action: Action<in ExecSpec>): ExecResult {
-    val llvmBinDirectory = "${project.platformManager.hostPlatform.absoluteLlvmHome}/bin"
+        val llvmBinDirectory = "${project.platformManager.hostPlatform.absoluteLlvmHome}/bin"
     return project.exec(Action<ExecSpec> {
         action.execute(this)
         executable = "$llvmBinDirectory/$utility"

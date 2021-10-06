@@ -5863,7 +5863,8 @@ project.tasks.register("debugger_test", Test.class) {
     'kotlin.native.host': HostManager.@Companion.getHost(),
     'kotlin.native.test.target': target,
     'kotlin.native.test.debugger.simulator.enabled': findProperty("kotlin.native.test.debugger.simulator.enabled"),
-    'kotlin.native.test.debugger.simulator.delay': findProperty("kotlin.native.test.debugger.simulator.delay")]
+    'kotlin.native.test.debugger.simulator.delay': findProperty("kotlin.native.test.debugger.simulator.delay"),
+    'kotlin.native.test.lldbDir': platformManager.hostPlatform.absoluteLldbDir]
     outputs.upToDateWhen { false }
 }
 
