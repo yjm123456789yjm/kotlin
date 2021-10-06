@@ -422,12 +422,7 @@ class GccBasedLinker(targetProperties: GccConfigurables)
 class MingwLinker(targetProperties: MingwConfigurables)
     : LinkerFlags(targetProperties), MingwConfigurables by targetProperties {
 
-    // TODO: Maybe always use llvm-ar?
-    private val ar = if (HostManager.hostIsMingw) {
-        "$absoluteTargetToolchain/bin/ar"
-    } else {
-        "$absoluteLlvmHome/bin/llvm-ar"
-    }
+    private val ar = "$absoluteLlvmHome/bin/llvm-ar"
     private val clang = "$absoluteLlvmHome/bin/clang++"
 
     override val useCompilerDriverAsLinker: Boolean get() = true

@@ -4,6 +4,7 @@ import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.tasks.Exec
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
+import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.util.visibleName
 
 class CacheTesting(val buildCacheTask: Task, val compilerArgs: List<String>, val isDynamic: Boolean)
@@ -36,9 +37,13 @@ fun configureCacheTesting(project: Project): CacheTesting? {
         }
 
         dependsOnDist()
-
+        val konanc = if (HostManager.hostIsMingw) {
+            "$dist/bin/konanc.bat"
+        } else {
+            "$dist/bin/konanc"
+        }
         commandLine(
-                "$dist/bin/konanc",
+                konanc,
                 "-p", cacheKind.visibleName,
                 "-o", "$cacheDir/stdlib-cache",
                 "-Xmake-cache=$stdlib",

@@ -178,7 +178,7 @@ internal class Linker(val context: Context) {
     }
 
     private fun shouldPerformPreLink(caches: CachesToLink, linkerOutputKind: LinkerOutputKind): Boolean {
-        // Pre-link is only useful when producing static library. Otherwise its just a waste of time.
+        // Pre-link is only useful when producing static library. Otherwise, it's just a waste of time.
         val isStaticLibrary = linkerOutputKind == LinkerOutputKind.STATIC_LIBRARY &&
                 context.config.produce.isFinalBinary
         val enabled = context.config.cacheSupport.preLinkCaches

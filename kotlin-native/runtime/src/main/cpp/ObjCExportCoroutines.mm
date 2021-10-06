@@ -72,6 +72,7 @@ extern "C" void Kotlin_ObjCExport_resumeContinuation(KRef continuation, id resul
 #else
 
 #import "Memory.h"
+#import "Types.h"
 
 extern "C" void Kotlin_ObjCExport_runCompletionSuccess(KRef completionHolder, KRef result) {}
 
@@ -80,5 +81,9 @@ extern "C" void Kotlin_ObjCExport_runCompletionFailure(
   KRef exception,
   const TypeInfo** exceptionTypes
 ) {}
+
+extern "C" const TypeInfo* Kotlin_ObjCInterop_getTypeInfoForClass(void* clazz) { return nullptr; }
+
+extern "C" const TypeInfo* Kotlin_ObjCInterop_getTypeInfoForProtocol(void* protocol) { return nullptr; }
 
 #endif
