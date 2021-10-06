@@ -52,6 +52,11 @@ fun compileWasm(
         ExternalDependenciesGenerator(symbolTable, listOf(deserializer)).generateUnboundSymbolsAsDependencies()
     }
 
+    repeat(22) {
+        irBuiltIns.functionN(it)
+        irBuiltIns.kFunctionN(it)
+    }
+
     val irFiles = allModules.flatMap { it.files }
     moduleFragment.files.clear()
     moduleFragment.files += irFiles
