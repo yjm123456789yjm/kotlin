@@ -5856,7 +5856,7 @@ project.tasks.named("test").configure {
 }
 
 project.tasks.register("debugger_test", Test.class) {
-    enabled = (target.family.appleFamily)  // KT-30366
+    enabled = (target.family.appleFamily || target.name == "mingw_x64")  // KT-30366
     testLogging { exceptionFormat = 'full' }
     UtilsKt.dependsOnDist(it)
     systemProperties = ['kotlin.native.home': kotlinNativeDist,

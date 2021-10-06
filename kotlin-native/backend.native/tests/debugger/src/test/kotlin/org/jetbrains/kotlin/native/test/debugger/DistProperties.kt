@@ -16,7 +16,7 @@ object DistProperties {
     private val cinteropDriver = if (HostManager.host.family == Family.MINGW) "cinterop.bat" else "cinterop"
     val konanc: Path = dist.resolve("bin/$konancDriver")
     val cinterop: Path = dist.resolve("bin/$cinteropDriver")
-    val lldb: Path = Paths.get(requireProp("kotlin.native.test.lldbDir")).run {
+    val lldb: Path = Paths.get(requireProp("kotlin.native.test.lldbDir")).resolve("bin").run {
         if (HostManager.hostIsMingw) resolve("lldb.exe") else resolve("lldb")
     }
     val xcrun: Path = Paths.get("xcrun")

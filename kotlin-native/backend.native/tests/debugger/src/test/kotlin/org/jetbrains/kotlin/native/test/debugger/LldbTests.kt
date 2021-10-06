@@ -3,6 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
+import org.jetbrains.kotlin.native.test.debugger.exe
 import org.jetbrains.kotlin.native.test.debugger.lldbCommandRunOrContinue
 import org.jetbrains.kotlin.native.test.debugger.lldbComplexTest
 import org.jetbrains.kotlin.native.test.debugger.lldbTest
@@ -226,12 +227,12 @@ class LldbTests {
             > ${lldbCommandRunOrContinue()}
             > bt
             * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-            * frame #0: [..] kt42208.kexe`ThrowException
-              frame #1: [..] kt42208.kexe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:3:18
-              frame #2: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
-              frame #3: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-UNN>invoke(_this=[..]){}kotlin.Nothing#internal at kt42208-1.kt:2:5
-              frame #4: [..] kt42208.kexe`kfun:#main(){} at kt42208-1.kt:2:5
-              frame #5: [..] kt42208.kexe`Konan_start(args=[..]) at kt42208-1.kt:1:1
+            * frame #0: [..] kt42208.$exe`ThrowException
+              frame #1: [..] kt42208.$exe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:3:18
+              frame #2: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
+              frame #3: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-UNN>invoke(_this=[..]){}kotlin.Nothing#internal at kt42208-1.kt:2:5
+              frame #4: [..] kt42208.$exe`kfun:#main(){} at kt42208-1.kt:2:5
+              frame #5: [..] kt42208.$exe`Konan_start(args=[..]) at kt42208-1.kt:1:1
               frame #6: [..]
               frame #7: [..]
             > q
@@ -262,28 +263,28 @@ class LldbTests {
             > ${lldbCommandRunOrContinue()}
             > bt
             * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-            * frame #0: [..] kt42208.kexe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
-              frame #1: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
-              frame #2: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
-              frame #3: [..] kt42208.kexe`kfun:#main(){} at kt42208-1.kt:3:5
-              frame #4: [..] kt42208.kexe`Konan_start(args=[..]) at kt42208-1.kt:1:1
+            * frame #0: [..] kt42208.$exe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
+              frame #1: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
+              frame #2: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
+              frame #3: [..] kt42208.$exe`kfun:#main(){} at kt42208-1.kt:3:5
+              frame #4: [..] kt42208.$exe`Konan_start(args=[..]) at kt42208-1.kt:1:1
               frame #5: [..]
             > c
             > bt
             * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-            * frame #0: [..] kt42208.kexe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
-              frame #1: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
-              frame #2: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
-              frame #3: [..] kt42208.kexe`kfun:#main(){} at kt42208-1.kt:4:5
-              frame #4: [..] kt42208.kexe`Konan_start(args=[..]) at kt42208-1.kt:1:1
+            * frame #0: [..] kt42208.$exe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
+              frame #1: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
+              frame #2: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
+              frame #3: [..] kt42208.$exe`kfun:#main(){} at kt42208-1.kt:4:5
+              frame #4: [..] kt42208.$exe`Konan_start(args=[..]) at kt42208-1.kt:1:1
             > c
             > bt
             * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-            * frame #0: [..] kt42208.kexe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
-              frame #1: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
-              frame #2: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
-              frame #3: [..] kt42208.kexe`kfun:#main(){} at kt42208-1.kt:5:5
-              frame #4: [..] kt42208.kexe`Konan_start(args=[..]) at kt42208-1.kt:1:1
+            * frame #0: [..] kt42208.$exe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
+              frame #1: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
+              frame #2: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
+              frame #3: [..] kt42208.$exe`kfun:#main(){} at kt42208-1.kt:5:5
+              frame #4: [..] kt42208.$exe`Konan_start(args=[..]) at kt42208-1.kt:1:1
             > q
         """.trimIndent().lldb(binary)
     }
@@ -317,12 +318,12 @@ class LldbTests {
             > ${lldbCommandRunOrContinue()}
             > bt
             * thread #1, queue = 'com.apple.main-thread', stop reason = breakpoint 1.1
-            * frame #0: [..] kt42208.kexe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
-              frame #1: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
-              frame #2: [..] kt42208.kexe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
-              frame #3: [..] kt42208.kexe`kfun:#bar(v=[]){} at kt42208-3.kt:2:4
-              frame #4: [..] kt42208.kexe`kfun:#main(){} at kt42208-1.kt:3:5
-              frame #5: [..] kt42208.kexe`Konan_start(args=[]) at kt42208-1.kt:1:1
+            * frame #0: [..] kt42208.$exe`kfun:main${'$'}<anonymous>_1#internal at kt42208-2.kt:5:5
+              frame #1: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.invoke#internal(_this=[..]) at kt42208-1.kt:2:5
+              frame #2: [..] kt42208.$exe`kfun:${'$'}main${'$'}<anonymous>_1${'$'}FUNCTION_REFERENCE${'$'}0.${'$'}<bridge-BNN>invoke(_this=[..]){}kotlin.Boolean#internal at kt42208-1.kt:2:5
+              frame #3: [..] kt42208.$exe`kfun:#bar(v=[]){} at kt42208-3.kt:2:4
+              frame #4: [..] kt42208.$exe`kfun:#main(){} at kt42208-1.kt:3:5
+              frame #5: [..] kt42208.$exe`Konan_start(args=[]) at kt42208-1.kt:1:1
             > c
             > q
         """.trimIndent().lldb(binary)
@@ -341,7 +342,7 @@ class LldbTests {
         val binary = arrayOf(kt47198).binary("kt47198", "-g")
         """
             > b 1
-            Breakpoint 1: where = kt47198.kexe`kfun:#foo(kotlin.Int){} [..] at kt47198.kt:1:1, [..]
+            Breakpoint 1: where = kt47198.$exe`kfun:#foo(kotlin.Int){} [..] at kt47198.kt:1:1, [..]
             > ${lldbCommandRunOrContinue()}
             > fr v
             (int) a = 33
@@ -364,7 +365,7 @@ class LldbTests {
         val binary = arrayOf(kt47198).binary("kt47198", "-g")
         """
             > b 1
-            Breakpoint 1: where = kt47198.kexe`kfun:#foo(kotlin.Int){} [..] at kt47198.kt:1:[..]
+            Breakpoint 1: where = kt47198.$exe`kfun:#foo(kotlin.Int){} [..] at kt47198.kt:1:[..]
             > ${lldbCommandRunOrContinue()}
             > fr v
             (int) a = 33

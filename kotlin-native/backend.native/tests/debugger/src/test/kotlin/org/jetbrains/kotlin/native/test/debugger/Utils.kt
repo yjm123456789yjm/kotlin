@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.native.test.debugger
 
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.IOException
 
 internal fun targetIsHost() = System.getProperty("kotlin.native.host") == System.getProperty("kotlin.native.test.target")
@@ -14,6 +15,9 @@ internal fun simulatorTestEnabled() = System.getProperty("kotlin.native.test.deb
 internal fun simulatorDelay() = System.getProperty("kotlin.native.test.debugger.simulator.delay")?.toLongOrNull() ?: 300
 
 internal fun target() = System.getProperty("kotlin.native.test.target")
+
+internal val exe: String
+    get() = KonanTarget.predefinedTargets.getValue(target()).family.exeSuffix
 
 internal val haveDwarfDump: Boolean by lazy {
     val version = try {

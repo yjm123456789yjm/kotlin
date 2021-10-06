@@ -6,7 +6,8 @@
 package org.jetbrains.kotlin.native.test.debugger
 
 import org.intellij.lang.annotations.Language
-import org.jetbrains.kotlin.konan.target.hostTargetSuffix
+import org.jetbrains.kotlin.konan.target.HostManager
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.junit.Assert.fail
 import java.io.IOException
 import java.nio.file.Files
@@ -69,7 +70,7 @@ fun lldbTest(@Language("kotlin") programText: String, lldbSession: String) {
         return
     }
 
-    if (!isOsxDevToolsEnabled) {
+    if (HostManager.hostIsMac && !isOsxDevToolsEnabled) {
         println("""Development tools aren't available.
                    |Please consider to execute:
                    |  ${DistProperties.devToolsSecurity} -enable
@@ -83,7 +84,7 @@ fun lldbTest(@Language("kotlin") programText: String, lldbSession: String) {
     val tmpdir = Files.createTempDirectory("debugger_test")
     tmpdir.toFile().deleteOnExit()
     val source = tmpdir.resolve("main.kt")
-    val output = tmpdir.resolve("program.kexe")
+    val output = tmpdir.resolve("program.$exe")
 
     val driver = ToolDriver()
     Files.write(source, programText.trimIndent().toByteArray())
@@ -111,7 +112,7 @@ fun dwarfDumpTest(@Language("kotlin") programText: String, flags: List<String>, 
     with(Files.createTempDirectory("dwarfdump_test")) {
         toFile().deleteOnExit()
         val source = resolve("main.kt")
-        val output = resolve("program.kexe")
+        val output = resolve("program.$exe")
 
         val driver = ToolDriver()
         Files.write(source, programText.trimIndent().toByteArray())
@@ -131,7 +132,7 @@ class ToolDriverHelper(private val driver: ToolDriver, val root:Path) {
 
     fun String.library(output: String, vararg flags:String) = feedOutput("$output.kt").compile(root.resolve("$output.klib"), "-p", "library", *flags)
 
-    fun String.binary(output: String, vararg flags:String)= feedOutput("$output.kt").compile(root.resolve("$output.kexe"), *flags)
+    fun String.binary(output: String, vararg flags:String)= feedOutput("$output.kt").compile(root.resolve("$output.$exe"), *flags)
 
     private fun Path.compile(output: Path, vararg flags:String) = output.also{ driver.compile(source = this, it, *flags) }
 
@@ -148,7 +149,7 @@ class ToolDriverHelper(private val driver: ToolDriver, val root:Path) {
         driver.compile(it, this, "-produce", "framework", *args)
     }
 
-    fun Array<Path>.binary(name:String, vararg args:String = emptyArray()):Path = root.resolve("$name.kexe").also {
+    fun Array<Path>.binary(name:String, vararg args:String = emptyArray()):Path = root.resolve("$name.$exe").also {
         driver.compile(it, this, *args)
     }
 
