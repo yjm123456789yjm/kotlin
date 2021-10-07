@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
+import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.visitors.*
 
 class SuspendState(type: IrType) {
@@ -318,8 +320,7 @@ class StateMachineBuilder(
             unboxState?.let { buildUnboxingState(it, continueState, expectedType) }
 
             updateState(continueState)
-            val functionReturnType = expression.symbol.owner.returnType
-            addStatement(reinterpretCast(JsIrBuilder.buildGetValue(suspendResult), functionReturnType))
+            addStatement(reinterpretCast(JsIrBuilder.buildGetValue(suspendResult), expression.type))
         }
     }
 
