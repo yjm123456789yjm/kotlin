@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.backend.common.lower.at
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irNot
 import org.jetbrains.kotlin.backend.wasm.WasmBackendContext
-import org.jetbrains.kotlin.backend.wasm.ir2wasm.getRuntimeClass
+import org.jetbrains.kotlin.backend.wasm.ir2wasm.erasedUpperBound
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -99,7 +99,7 @@ class WasmBaseTypeOperatorTransformer(val context: WasmBackendContext) : IrEleme
         context.inlineClassesUtils.isTypeInlined(this)
 
     private val IrType.erasedType: IrType
-        get() = this.getRuntimeClass?.defaultType ?: builtIns.anyType
+        get() = this.erasedUpperBound?.defaultType ?: builtIns.anyType
 
     private fun generateTypeCheck(
         valueProvider: () -> IrExpression,

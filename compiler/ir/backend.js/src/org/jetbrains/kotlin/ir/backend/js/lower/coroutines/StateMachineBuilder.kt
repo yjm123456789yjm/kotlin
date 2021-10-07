@@ -270,7 +270,7 @@ class StateMachineBuilder(
     }
 
     private fun implicitCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildImplicitCast(value, toType)
-    private fun reinterpretCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildReinterpretCast(value, toType)
+    private fun reinterpretCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildImplicitCast(value, toType)
 
     override fun visitCall(expression: IrCall) {
         super.visitCall(expression)

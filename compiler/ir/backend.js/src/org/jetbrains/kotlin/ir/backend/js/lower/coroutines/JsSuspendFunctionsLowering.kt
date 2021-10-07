@@ -247,7 +247,7 @@ class JsSuspendFunctionsLowering(
             val tmp = createTmpVariable(delegatingCall, irType = fromType)
             val coroutineSuspended = irCall(coroutineSymbols.coroutineSuspendedGetter)
             val condition = irEqeqeq(irGet(tmp), coroutineSuspended)
-            +irIfThen(fromType, condition, irReturn(irReinterpretCast(irGet(tmp), expectedType)))
+            +irIfThen(fromType, condition, irReturn(irImplicitCast(irGet(tmp), expectedType)))
             +irGet(tmp)
         }
     }

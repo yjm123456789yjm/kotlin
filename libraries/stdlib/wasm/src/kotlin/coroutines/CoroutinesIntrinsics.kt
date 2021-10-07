@@ -6,6 +6,7 @@
 package kotlin.coroutines.intrinsics
 
 import kotlin.coroutines.*
+import kotlin.wasm.internal.*
 
 /**
  * Starts an unintercepted coroutine without a receiver and with result type [T] and executes it until its first suspension.
@@ -23,7 +24,7 @@ import kotlin.coroutines.*
 @kotlin.internal.InlineOnly
 public actual inline fun <T> (suspend () -> T).startCoroutineUninterceptedOrReturn(
     completion: Continuation<T>
-): Any? = (this as Function1<Continuation<T>, Any?>).invoke(completion)
+): Any? = startCoroutineUninterceptedOrReturnIntrinsic0(this, completion)
 
 /**
  * Starts an unintercepted coroutine with receiver type [R] and result type [T] and executes it until its first suspension.
@@ -42,7 +43,7 @@ public actual inline fun <T> (suspend () -> T).startCoroutineUninterceptedOrRetu
 public actual inline fun <R, T> (suspend R.() -> T).startCoroutineUninterceptedOrReturn(
     receiver: R,
     completion: Continuation<T>
-): Any? = (this as Function2<R, Continuation<T>, Any?>).invoke(receiver, completion)
+): Any? = startCoroutineUninterceptedOrReturnIntrinsic1(this, receiver, completion)
 
 @Suppress("UNCHECKED_CAST")
 @kotlin.internal.InlineOnly
@@ -50,10 +51,7 @@ internal actual inline fun <R, P, T> (suspend R.(P) -> T).startCoroutineUninterc
     receiver: R,
     param: P,
     completion: Continuation<T>
-): Any? = (this as Function3<R, P, Continuation<T>, Any?>).invoke(receiver, param, completion)
-
-private object CoroutineSuspendedMarker
-
+): Any? = startCoroutineUninterceptedOrReturnIntrinsic2(this, receiver, param, completion)
 
 /**
  * Creates unintercepted coroutine without receiver and with result type [T].
@@ -81,7 +79,7 @@ public actual fun <T> (suspend () -> T).createCoroutineUnintercepted(
     completion: Continuation<T>
 ): Continuation<Unit> {
     return createCoroutineFromSuspendFunction(completion) {
-        (this as Function1<Continuation<T>, Any?>).invoke(completion)
+        this.startCoroutineUninterceptedOrReturn(completion)
     }
 }
 
@@ -112,7 +110,7 @@ public actual fun <R, T> (suspend R.() -> T).createCoroutineUnintercepted(
     completion: Continuation<T>
 ): Continuation<Unit> {
     return createCoroutineFromSuspendFunction(completion) {
-        (this as Function2<R, Continuation<T>, Any?>).invoke(receiver, completion)
+        this.startCoroutineUninterceptedOrReturn(receiver, completion)
     }
 }
 

@@ -32,3 +32,33 @@ internal suspend fun getCoroutineContext(): CoroutineContext = getContinuation<A
 @PublishedApi
 internal suspend fun <T> suspendCoroutineUninterceptedOrReturn(block: (Continuation<T>) -> Any?): T =
     returnIfSuspended<T>(block(getContinuation<T>()))
+
+@ExcludedFromCodegen
+@PublishedApi
+internal fun <T> startCoroutineUninterceptedOrReturnIntrinsic0(
+    f: (suspend () -> T),
+    completion: Continuation<T>
+): Any? {
+    implementedAsIntrinsic
+}
+
+@ExcludedFromCodegen
+@PublishedApi
+internal fun <R, T> startCoroutineUninterceptedOrReturnIntrinsic1(
+    f: (suspend R.() -> T),
+    receiver: R,
+    completion: Continuation<T>
+): Any? {
+    implementedAsIntrinsic
+}
+
+@ExcludedFromCodegen
+@PublishedApi
+internal fun <R, P, T> startCoroutineUninterceptedOrReturnIntrinsic2(
+    f: (suspend R.(P) -> T),
+    receiver: R,
+    param: P,
+    completion: Continuation<T>
+): Any? {
+    implementedAsIntrinsic
+}

@@ -149,6 +149,9 @@ class WasmSymbols(
     val exportString = getInternalFunction("exportString")
     val unsafeGetScratchRawMemory = getInternalFunction("unsafeGetScratchRawMemory")
 
+    val startCoroutineUninterceptedOrReturnIntrinsics =
+        (0..2).map { getInternalFunction("startCoroutineUninterceptedOrReturnIntrinsic$it") }
+
     // KProperty implementations
     val kLocalDelegatedPropertyImpl: IrClassSymbol = this.getInternalClass("KLocalDelegatedPropertyImpl")
     val kLocalDelegatedMutablePropertyImpl: IrClassSymbol = this.getInternalClass("KLocalDelegatedMutablePropertyImpl")
