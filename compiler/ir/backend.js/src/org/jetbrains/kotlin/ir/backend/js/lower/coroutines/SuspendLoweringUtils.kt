@@ -99,7 +99,7 @@ class LiveLocalsTransformer(
         return if (initializer != null) {
             declaration.run { IrSetFieldImpl(startOffset, endOffset, field, receiver(), initializer, unitType) }
         } else {
-            JsIrBuilder.buildComposite(declaration.type)
+            JsIrBuilder.buildComposite(unitType)
         }
     }
 }
