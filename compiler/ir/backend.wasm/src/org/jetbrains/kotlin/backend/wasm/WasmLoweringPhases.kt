@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorInlineLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.wasm.lower.*
+import org.jetbrains.kotlin.backend.wasm.utils.WasmInlineFunctionResolver
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.JsSuspendFunctionsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.RemoveInlineDeclarationsWithReifiedTypeParametersLowering
@@ -90,7 +91,8 @@ private val provisionalFunctionExpressionPhase = makeWasmModulePhase(
 
 private val functionInliningPhase = makeCustomWasmModulePhase(
     { context, module ->
-        FunctionInlining(context).inline(module)
+//        FunctionInlining(context).inline(module)
+        FunctionInlining(context, WasmInlineFunctionResolver(context)).inline(module)
         module.patchDeclarationParents()
     },
     name = "FunctionInliningPhase",

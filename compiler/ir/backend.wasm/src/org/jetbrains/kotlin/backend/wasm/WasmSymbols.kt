@@ -66,7 +66,7 @@ class WasmSymbols(
     override val suspendCoroutineUninterceptedOrReturn =
         getInternalFunction("suspendCoroutineUninterceptedOrReturn")
     override val coroutineGetContext =
-        context.coroutineSymbols.coroutineGetContext
+        getInternalFunction("getCoroutineContext")
     override val returnIfSuspended =
         getInternalFunction("returnIfSuspended")
 
