@@ -88,6 +88,14 @@ class AddContinuationLowering(val context: JsCommonBackendContext) : Declaration
         // Using custom mapping because number of parameters doesn't match
         val parameterMapping = function.explicitParameters.zip(view.explicitParameters).toMap()
         view.body = function.moveBodyTo(view, parameterMapping)
+        val body = view.body
+        if (
+            function.returnType == context.irBuiltIns.unitType &&
+            body is IrBlockBody &&
+            body.statements.lastOrNull() !is IrReturn
+        ) {
+            body.statements += context.createIrBuilder(view.symbol).irReturnUnit()
+        }
         return listOf(view)
     }
 }
