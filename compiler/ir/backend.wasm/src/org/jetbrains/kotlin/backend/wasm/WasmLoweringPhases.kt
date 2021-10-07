@@ -491,8 +491,6 @@ val wasmPhases = NamedCompilerPhase(
             propertiesLoweringPhase then
             primaryConstructorLoweringPhase then
             delegateToPrimaryConstructorLoweringPhase then
-            initializersLoweringPhase then
-            initializersCleanupLoweringPhase then
             // Common prefix ends
 
             enumEntryInstancesLoweringPhase then
@@ -504,6 +502,9 @@ val wasmPhases = NamedCompilerPhase(
             enumEntryRemovalLoweringPhase then
 
             suspendFunctionsLoweringPhase then
+            initializersLoweringPhase then
+            initializersCleanupLoweringPhase then
+
             addContinuationLowering then
             suspendFunctionCallsLowering then
 
