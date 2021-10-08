@@ -183,10 +183,9 @@ class JsSuspendFunctionsLowering(
                 argumentToPropertiesMap.getValue(it).symbol
             }
         }
-
-        stateMachineFunction.transform(LiveLocalsTransformer(localToPropertyMap, { JsIrBuilder.buildGetValue(thisReceiver) }, unit), null)
         // TODO find out why some parents are incorrect
         stateMachineFunction.body!!.patchDeclarationParents(stateMachineFunction)
+        stateMachineFunction.transform(LiveLocalsTransformer(localToPropertyMap, { JsIrBuilder.buildGetValue(thisReceiver) }, unit), null)
     }
 
     private fun assignStateIds(entryState: SuspendState, subject: IrVariableSymbol, switch: IrWhen, rootLoop: IrLoop) {
