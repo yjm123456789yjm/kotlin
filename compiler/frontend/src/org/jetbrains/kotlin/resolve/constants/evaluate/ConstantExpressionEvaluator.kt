@@ -21,7 +21,10 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptorImpl
 import org.jetbrains.kotlin.diagnostics.DiagnosticFactory1
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.reportDiagnosticOnce
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaClassDescriptor
+import org.jetbrains.kotlin.load.java.structure.classId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.parsing.*
@@ -55,7 +58,8 @@ import java.util.*
 class ConstantExpressionEvaluator(
     internal val module: ModuleDescriptor,
     internal val languageVersionSettings: LanguageVersionSettings,
-    project: Project
+    project: Project,
+    internal val inlineConstTracker: InlineConstTracker = InlineConstTracker.DoNothing
 ) {
     private val moduleAnnotationsResolver = ModuleAnnotationsResolver.getInstance(project)
 
@@ -382,6 +386,7 @@ private class ConstantExpressionEvaluatorVisitor(
     private val builtIns = constantExpressionEvaluator.module.builtIns
     private val defaultValueForDontCreateIntegerLiteralType =
         languageVersionSettings.supportsFeature(ApproximateIntegerLiteralTypesInReceiverPosition)
+    private val inlineConstTracker = constantExpressionEvaluator.inlineConstTracker
 
     fun evaluate(expression: KtExpression, expectedType: KotlinType?): CompileTimeConstant<*>? {
         val recordedCompileTimeConstant = ConstantExpressionEvaluator.getPossiblyErrorConstant(expression, trace.bindingContext)
@@ -798,6 +803,8 @@ private class ConstantExpressionEvaluatorVisitor(
             return EnumValue(enumClassId, enumDescriptor.name).wrap()
         }
 
+        reportInlineConst(expression, enumDescriptor)
+
         val resolvedCall = expression.getResolvedCall(trace.bindingContext)
         if (resolvedCall != null) {
             val callableDescriptor = resolvedCall.resultingDescriptor
@@ -825,6 +832,16 @@ private class ConstantExpressionEvaluatorVisitor(
             }
         }
         return null
+    }
+
+    private fun reportInlineConst(expression: KtSimpleNameExpression, enumDescriptor: DeclarationDescriptor?) {
+        val filePath = expression.containingFile.virtualFile.path
+        val owner = (enumDescriptor?.containingDeclaration as? LazyJavaClassDescriptor)?.jClass?.classId
+            ?.asString()?.replace(".", "$")?.replace("/", ".") ?: return
+        val name = expression.getReferencedName()
+        val constType = (enumDescriptor as VariableDescriptor).type.toString()
+
+        inlineConstTracker.report(filePath, owner, name, constType)
     }
 
     // TODO: Should be replaced with descriptor.isConst

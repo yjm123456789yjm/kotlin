@@ -27,6 +27,7 @@ import org.jetbrains.kotlin.contracts.ContractDeserializerImpl
 import org.jetbrains.kotlin.extensions.StorageComponentContainerContributor
 import org.jetbrains.kotlin.idea.MainFunctionDetector
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
+import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.TargetPlatformVersion
@@ -126,9 +127,10 @@ fun StorageComponentContainer.configureStandardResolveComponents() {
     useImpl<AnnotationResolverImpl>()
 }
 
-fun StorageComponentContainer.configureIncrementalCompilation(lookupTracker: LookupTracker, expectActualTracker: ExpectActualTracker) {
+fun StorageComponentContainer.configureIncrementalCompilation(lookupTracker: LookupTracker, expectActualTracker: ExpectActualTracker, inlineConstTracker: InlineConstTracker) {
     useInstance(lookupTracker)
     useInstance(expectActualTracker)
+    useInstance(inlineConstTracker)
 }
 
 fun createContainerForBodyResolve(

@@ -6,6 +6,7 @@ plugins {
 dependencies {
     api(project(":kotlin-annotations-jvm"))
     api(project(":core:descriptors"))
+    api(project(":core:descriptors.jvm"))
     api(project(":core:deserialization"))
     api(project(":compiler:util"))
     api(project(":compiler:config"))
