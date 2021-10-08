@@ -24,11 +24,13 @@ import org.jetbrains.kotlin.ir.IrBuiltIns
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmDescriptorMangler
 import org.jetbrains.kotlin.ir.backend.jvm.serialization.JvmIrLinker
 import org.jetbrains.kotlin.ir.builders.TranslationPluginContext
+import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.impl.IrModuleFragmentImpl
 import org.jetbrains.kotlin.ir.linkage.IrProvider
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi2ir.Psi2IrConfiguration
@@ -55,7 +57,7 @@ open class JvmIrCodegenFactory(
         val irProviders: List<IrProvider>,
         val extensions: JvmGeneratorExtensionsImpl,
         val backendExtension: JvmBackendExtension,
-        val notifyCodegenStart: () -> Unit,
+        val notifyCodegenStart: () -> Unit
     ) : CodegenFactory.BackendInput
 
     override fun convertToIr(input: CodegenFactory.IrConversionInput): JvmIrBackendInput {
@@ -215,7 +217,7 @@ open class JvmIrCodegenFactory(
         val phaseConfig = customPhaseConfig ?: PhaseConfig(jvmPhases)
         val context = JvmBackendContext(
             state, irModuleFragment.irBuiltins, irModuleFragment, symbolTable, phaseConfig, extensions, backendExtension, irSerializer,
-            notifyCodegenStart
+            notifyCodegenStart,
         )
         /* JvmBackendContext creates new unbound symbols, have to resolve them. */
         ExternalDependenciesGenerator(symbolTable, irProviders).generateUnboundSymbolsAsDependencies()
@@ -241,7 +243,8 @@ open class JvmIrCodegenFactory(
         generateModule(
             state,
             JvmIrBackendInput(
-                irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension, notifyCodegenStart
+                irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension,
+                notifyCodegenStart
             )
         )
     }
