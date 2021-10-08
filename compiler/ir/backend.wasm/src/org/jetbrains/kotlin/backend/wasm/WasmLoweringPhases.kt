@@ -81,14 +81,6 @@ private val lateinitUsageLoweringPhase = makeWasmModulePhase(
     description = "Insert checks for lateinit field references"
 )
 
-
-// TODO make all lambda-related stuff work with IrFunctionExpression and drop this phase
-private val provisionalFunctionExpressionPhase = makeWasmModulePhase(
-    { ProvisionalFunctionExpressionLowering() },
-    name = "FunctionExpression",
-    description = "Transform IrFunctionExpression to a local function reference"
-)
-
 private val functionInliningPhase = makeCustomWasmModulePhase(
     { context, module ->
 //        FunctionInlining(context).inline(module)
@@ -471,7 +463,6 @@ val wasmPhases = NamedCompilerPhase(
             // arrayConstructorPhase then
 
             functionInliningPhase then
-            provisionalFunctionExpressionPhase then
             lateinitNullableFieldsPhase then
             lateinitDeclarationLoweringPhase then
             lateinitUsageLoweringPhase then
