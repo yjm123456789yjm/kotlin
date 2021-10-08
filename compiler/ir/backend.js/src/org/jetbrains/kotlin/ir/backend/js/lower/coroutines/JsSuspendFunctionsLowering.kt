@@ -246,7 +246,8 @@ class JsSuspendFunctionsLowering(
             val tmp = createTmpVariable(delegatingCall, irType = fromType)
             val coroutineSuspended = irCall(coroutineSymbols.coroutineSuspendedGetter)
             val condition = irEqeqeq(irGet(tmp), coroutineSuspended)
-            +irIfThen(fromType, condition, irReturn(irImplicitCast(irGet(tmp), expectedType)))
+            // Suspend functions return Any[?]. Returning tmp variable without cast is safe.
+            +irIfThen(fromType, condition, irReturn(irGet(tmp)))
             +irGet(tmp)
         }
     }
