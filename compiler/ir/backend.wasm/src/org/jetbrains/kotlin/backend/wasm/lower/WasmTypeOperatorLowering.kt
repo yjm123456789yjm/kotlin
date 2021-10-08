@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.backend.common.lower.irNot
 import org.jetbrains.kotlin.backend.wasm.WasmBackendContext
 import org.jetbrains.kotlin.backend.wasm.ir2wasm.erasedUpperBound
+import org.jetbrains.kotlin.backend.wasm.ir2wasm.getRuntimeClass
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -100,6 +101,9 @@ class WasmBaseTypeOperatorTransformer(val context: WasmBackendContext) : IrEleme
 
     private val IrType.erasedType: IrType
         get() = this.erasedUpperBound?.defaultType ?: builtIns.anyType
+
+    private val IrType.erasedToRuntimeClassType: IrType
+        get() = this.getRuntimeClass?.defaultType ?: builtIns.anyType
 
     private fun generateTypeCheck(
         valueProvider: () -> IrExpression,
@@ -272,8 +276,8 @@ class WasmBaseTypeOperatorTransformer(val context: WasmBackendContext) : IrEleme
 
     private fun generateIsSubClass(argument: IrExpression, toType: IrType): IrExpression {
         val fromType = argument.type
-        val fromTypeErased = fromType.erasedType
-        val toTypeErased = toType.erasedType
+        val fromTypeErased = fromType.erasedToRuntimeClassType
+        val toTypeErased = toType.erasedToRuntimeClassType
         if (fromTypeErased.isSubtypeOfClass(toTypeErased.classOrNull!!)) {
             return builder.irTrue()
         }
