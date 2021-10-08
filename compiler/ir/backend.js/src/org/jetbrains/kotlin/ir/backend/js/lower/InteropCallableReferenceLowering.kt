@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
@@ -215,7 +216,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
             startOffset = invokeFun.startOffset
             endOffset = invokeFun.endOffset
             // Since box/unbox is done on declaration side in case of suspend function use the specified type
-            returnType = if (invokeFun.isSuspend) invokeFun.returnType else anyNType
+            returnType = if (invokeFun.isSuspend && invokeFun.returnType.isUnit()) invokeFun.returnType else anyNType
             visibility = DescriptorVisibilities.LOCAL
             name = lambdaName
             isSuspend = invokeFun.isSuspend
