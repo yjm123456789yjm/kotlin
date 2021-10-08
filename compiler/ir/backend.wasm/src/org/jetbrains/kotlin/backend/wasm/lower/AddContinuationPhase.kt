@@ -62,7 +62,7 @@ class SuspendFunctionCallsLowering(val context: JsCommonBackendContext) : BodyLo
                 val newFun: IrSimpleFunction =
                     context.mapping.suspendFunctionsToFunctionWithContinuations[expression.symbol.owner] ?: error("No mapping")
 
-                return irCall(expression, newFun.symbol).also {
+                return irCall(expression, newFun.symbol, newReturnType = context.irBuiltIns.anyNType).also {
                     it.putValueArgument(
                         it.valueArgumentsCount - 1, getContinuation()
                     )
