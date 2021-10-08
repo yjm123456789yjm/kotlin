@@ -1,5 +1,3 @@
-// WITH_COROUTINES
-// WITH_RUNTIME
 // IGNORE_BACKEND: WASM
 import helpers.*
 import kotlin.coroutines.*
