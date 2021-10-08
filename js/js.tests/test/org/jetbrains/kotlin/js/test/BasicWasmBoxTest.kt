@@ -199,7 +199,7 @@ abstract class BasicWasmBoxTest(
             """
             const response = await fetch("index.wasm");
             const wasmBinary = await response.arrayBuffer();
-            wasmInstance = await WebAssembly.instantiate(wasmBinary, { runtime, js_code });
+            wasmInstance = (await WebAssembly.instantiate(wasmBinary, { runtime, js_code })).instance;
             
             const actualResult = importStringFromWasm(wasmInstance.exports.box());
             if (actualResult !== "OK")
