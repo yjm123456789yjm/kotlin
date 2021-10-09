@@ -194,7 +194,11 @@ class WasmBaseTypeOperatorTransformer(val context: WasmBackendContext) : IrEleme
             return value
         }
         if (toType.isNothing()) {
-            return value
+            // Casting to nothing is unreachable...
+            return builder.irComposite(resultType = context.irBuiltIns.nothingType) {
+                +value  // ... but we have to evaluate an argument
+                +irCall(symbols.wasmUnreachable)
+            }
         }
 
         return builder.irCall(symbols.wasmRefCast, type = toType).apply {
