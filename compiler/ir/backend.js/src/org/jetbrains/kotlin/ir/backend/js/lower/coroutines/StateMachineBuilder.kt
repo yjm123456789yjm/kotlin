@@ -29,6 +29,8 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
+import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.visitors.*
 
 class SuspendState(type: IrType) {
@@ -270,7 +272,7 @@ class StateMachineBuilder(
     }
 
     private fun implicitCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildImplicitCast(value, toType)
-    private fun reinterpretCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildReinterpretCast(value, toType)
+    private fun reinterpretCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildImplicitCast(value, toType)
 
     override fun visitCall(expression: IrCall) {
         super.visitCall(expression)
@@ -318,8 +320,7 @@ class StateMachineBuilder(
             unboxState?.let { buildUnboxingState(it, continueState, expectedType) }
 
             updateState(continueState)
-            val functionReturnType = expression.symbol.owner.returnType
-            addStatement(reinterpretCast(JsIrBuilder.buildGetValue(suspendResult), functionReturnType))
+            addStatement(reinterpretCast(JsIrBuilder.buildGetValue(suspendResult), expression.type))
         }
     }
 
