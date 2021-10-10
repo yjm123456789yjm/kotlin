@@ -29,8 +29,6 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.deepCopyWithSymbols
-import org.jetbrains.kotlin.ir.util.dump
-import org.jetbrains.kotlin.ir.util.dumpKotlinLike
 import org.jetbrains.kotlin.ir.visitors.*
 
 class SuspendState(type: IrType) {
@@ -79,7 +77,8 @@ class StateMachineBuilder(
     private val exStateSymbolSetter: IrSimpleFunction,
     private val stateSymbolSetter: IrSimpleFunction,
     private val thisSymbol: IrValueParameterSymbol,
-    private val suspendResult: IrVariableSymbol
+    private val getSuspendResultAsType: (IrType) -> IrExpression,
+    private val setSuspendResultValue: (IrExpression) -> IrStatement
 ) : IrElementVisitorVoid {
 
     private val loopMap = mutableMapOf<IrLoop, LoopBounds>()
@@ -272,7 +271,6 @@ class StateMachineBuilder(
     }
 
     private fun implicitCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildImplicitCast(value, toType)
-    private fun reinterpretCast(value: IrExpression, toType: IrType) = JsIrBuilder.buildImplicitCast(value, toType)
 
     override fun visitCall(expression: IrCall) {
         super.visitCall(expression)
@@ -297,11 +295,11 @@ class StateMachineBuilder(
                 }
             }
 
-            addStatement(JsIrBuilder.buildSetVariable(suspendResult, reinterpretCast(result, anyN), unit))
+            addStatement(setSuspendResultValue(result))
 
-            val irReturn = JsIrBuilder.buildReturn(function, JsIrBuilder.buildGetValue(suspendResult), nothing)
+            val irReturn = JsIrBuilder.buildReturn(function, getSuspendResultAsType(anyN), nothing)
             val check = JsIrBuilder.buildCall(eqeqeqSymbol).apply {
-                putValueArgument(0, JsIrBuilder.buildGetValue(suspendResult))
+                putValueArgument(0, getSuspendResultAsType(anyN))
                 putValueArgument(1, JsIrBuilder.buildCall(context.ir.symbols.coroutineSuspendedGetter))
             }
 
@@ -320,17 +318,18 @@ class StateMachineBuilder(
             unboxState?.let { buildUnboxingState(it, continueState, expectedType) }
 
             updateState(continueState)
-            addStatement(reinterpretCast(JsIrBuilder.buildGetValue(suspendResult), expression.type))
+            val functionReturnType = expression.symbol.owner.returnType
+            addStatement(JsIrBuilder.buildImplicitCast(getSuspendResultAsType(functionReturnType), expression.type))
         }
     }
 
     private fun buildUnboxingState(unboxState: SuspendState, continueState: SuspendState, expectedType: IrType) {
         unboxState.successors += continueState
         updateState(unboxState)
-        val result = JsIrBuilder.buildGetValue(suspendResult)
+        val result = getSuspendResultAsType(anyN)
         val tmp = JsIrBuilder.buildVar(expectedType, function.owner, name = "unboxed", initializer = result)
         addStatement(tmp)
-        addStatement(JsIrBuilder.buildSetVariable(suspendResult, reinterpretCast(JsIrBuilder.buildGetValue(tmp.symbol), anyN), anyN))
+        addStatement(setSuspendResultValue(JsIrBuilder.buildGetValue(tmp.symbol)))
 
         doDispatch(continueState)
     }

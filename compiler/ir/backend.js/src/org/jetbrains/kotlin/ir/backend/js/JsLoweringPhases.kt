@@ -15,6 +15,9 @@ import org.jetbrains.kotlin.backend.common.lower.loops.ForLoopsLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.FoldConstantLowering
 import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorInlineLowering
 import org.jetbrains.kotlin.backend.common.phaser.*
+import org.jetbrains.kotlin.backend.js.lower.AddContinuationLowering
+import org.jetbrains.kotlin.backend.js.lower.LocalFunctionContinuationLowering
+import org.jetbrains.kotlin.backend.js.lower.SuspendFunctionCallsLowering
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.calls.CallsLowering
@@ -464,6 +467,25 @@ private val suspendFunctionsLoweringPhase = makeBodyLoweringPhase(
     description = "Transform suspend functions into CoroutineImpl instance and build state machine"
 )
 
+private val addContinuationLoweringPhase = makeDeclarationTransformerPhase(
+    ::AddContinuationLowering,
+    name = "AddContinuationLowering",
+    description = "Add explicit continuation as last parameter of non-local suspend functions"
+)
+
+private val localAddContinuationLoweringPhase = makeBodyLoweringPhase(
+    ::LocalFunctionContinuationLowering,
+    name = "LocalFunctionContinuationLowering",
+    description = "Add explicit continuation as last parameter of local suspend functions"
+)
+
+
+private val suspendFunctionCallsLoweringPhase = makeBodyLoweringPhase(
+    ::SuspendFunctionCallsLowering,
+    name = "SuspendFunctionCallsLowering",
+    description = "Replace suspend function calls with calls with continuation"
+)
+
 private val privateMembersLoweringPhase = makeDeclarationTransformerPhase(
     ::PrivateMembersLowering,
     name = "PrivateMembersLowering",
@@ -801,6 +823,10 @@ private val loweringList = listOf<Lowering>(
     suspendFunctionsLoweringPhase,
     propertyReferenceLoweringPhase,
     interopCallableReferenceLoweringPhase,
+    jsSuspendArityStorePhase,
+    addContinuationLoweringPhase,
+    localAddContinuationLoweringPhase,
+    suspendFunctionCallsLoweringPhase,
     returnableBlockLoweringPhase,
     rangeContainsLoweringPhase,
     forLoopsLoweringPhase,
@@ -843,7 +869,6 @@ private val loweringList = listOf<Lowering>(
     callsLoweringPhase,
     cleanupLoweringPhase,
     validateIrAfterLowering,
-    jsSuspendArityStorePhase
 )
 
 // TODO comment? Eliminate ModuleLowering's? Don't filter them here?

@@ -3,11 +3,12 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
-package org.jetbrains.kotlin.backend.wasm.lower
+package org.jetbrains.kotlin.backend.js.lower
 
 import org.jetbrains.kotlin.backend.common.*
 import org.jetbrains.kotlin.backend.common.ir.*
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
+import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.backend.js.JsCommonBackendContext
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.*
@@ -22,6 +23,10 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
 
 class SuspendFunctionCallsLowering(val context: JsCommonBackendContext) : BodyLoweringPass {
+    override fun lower(irFile: IrFile) {
+        runOnFilePostfix(irFile, withLocalDeclarations = true)
+    }
+
     override fun lower(irBody: IrBody, container: IrDeclaration) {
 
         val continuation by lazy(fun(): IrValueParameter? {
@@ -36,11 +41,8 @@ class SuspendFunctionCallsLowering(val context: JsCommonBackendContext) : BodyLo
 
             val continuationParameter = function.valueParameters.lastOrNull()
                 ?: return null
-            if (continuationParameter.origin == IrDeclarationOrigin.CONTINUATION)
-                return continuationParameter
 
-
-            return null
+            return continuationParameter
         })
 
         val builder by lazy { context.createIrBuilder(container.symbol) }
@@ -51,6 +53,11 @@ class SuspendFunctionCallsLowering(val context: JsCommonBackendContext) : BodyLo
         )
 
         irBody.transformChildrenVoid(object : IrElementTransformerVoid() {
+            override fun visitBody(body: IrBody): IrBody {
+                // We can have nested functions (in JS IR)
+                return body
+            }
+
             override fun visitCall(expression: IrCall): IrExpression {
                 expression.transformChildrenVoid()
                 if (!expression.isSuspend) {
@@ -58,10 +65,21 @@ class SuspendFunctionCallsLowering(val context: JsCommonBackendContext) : BodyLo
                         return getContinuation()
                     return expression
                 }
+                val oldFun = expression.symbol.owner
                 val newFun: IrSimpleFunction =
-                    context.mapping.suspendFunctionsToFunctionWithContinuations[expression.symbol.owner] ?: error("No mapping")
+                    context.mapping.suspendFunctionsToFunctionWithContinuations[oldFun]
+                        ?: if (oldFun.getPackageFragment() is IrExternalPackageFragment) {
+                            // SuspendFunctionN are not lowered in JS IR BE yet.
+                            return expression
+                        } else
+                            error("No mapping for ${oldFun.fqNameWhenAvailable}")
 
-                return irCall(expression, newFun.symbol, newReturnType = context.irBuiltIns.anyNType).also {
+                return irCall(
+                    expression,
+                    newFun.symbol,
+                    newReturnType = context.irBuiltIns.anyNType,
+                    newSuperQualifierSymbol = expression.superQualifierSymbol
+                ).also {
                     it.putValueArgument(
                         it.valueArgumentsCount - 1, getContinuation()
                     )
@@ -71,33 +89,46 @@ class SuspendFunctionCallsLowering(val context: JsCommonBackendContext) : BodyLo
     }
 }
 
-class AddContinuationLowering(val context: JsCommonBackendContext) : DeclarationContainerLoweringPass {
-    override fun lower(irDeclarationContainer: IrDeclarationContainer) {
-        irDeclarationContainer.transformDeclarationsFlat {
-            if (it is IrSimpleFunction && it.isSuspend) {
-                transformToView(it)
-            } else {
-                null
+class LocalFunctionContinuationLowering(val context: JsCommonBackendContext) : BodyLoweringPass {
+    override fun lower(irBody: IrBody, container: IrDeclaration) {
+        irBody.transformChildrenVoid(object : IrElementTransformerVoid() {
+            override fun visitSimpleFunction(declaration: IrSimpleFunction): IrStatement {
+                declaration.transformChildrenVoid()
+                return if (declaration.isSuspend) {
+                    transformToView(context, declaration)
+                } else {
+                    declaration
+                }
             }
-        }
-    }
-
-    private fun transformToView(function: IrSimpleFunction): List<IrSimpleFunction> {
-        val view = function.suspendFunctionViewOrStub(context)
-        // Using custom mapping because number of parameters doesn't match
-        val parameterMapping = function.explicitParameters.zip(view.explicitParameters).toMap()
-        view.body = function.moveBodyTo(view, parameterMapping)
-        val body = view.body
-        if (
-            function.returnType == context.irBuiltIns.unitType &&
-            body is IrBlockBody &&
-            body.statements.lastOrNull() !is IrReturn
-        ) {
-            body.statements += context.createIrBuilder(view.symbol).irReturnUnit()
-        }
-        return listOf(view)
+        })
     }
 }
+
+class AddContinuationLowering(val context: JsCommonBackendContext) : DeclarationTransformer {
+    override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? =
+        if (declaration is IrSimpleFunction && declaration.isSuspend) {
+            listOf(transformToView(context, declaration))
+        } else {
+            null
+        }
+}
+
+private fun transformToView(context: JsCommonBackendContext, function: IrSimpleFunction): IrSimpleFunction {
+    val view = function.suspendFunctionViewOrStub(context)
+    // Using custom mapping because number of parameters doesn't match
+    val parameterMapping = function.explicitParameters.zip(view.explicitParameters).toMap()
+    view.body = function.moveBodyTo(view, parameterMapping)
+    val body = view.body
+    if (
+        function.returnType == context.irBuiltIns.unitType &&
+        body is IrBlockBody &&
+        body.statements.lastOrNull() !is IrReturn
+    ) {
+        body.statements += context.createIrBuilder(view.symbol).irReturnUnit()
+    }
+    return view
+}
+
 
 private fun IrSimpleFunction.suspendFunctionViewOrStub(context: JsCommonBackendContext): IrSimpleFunction {
     return context.mapping.suspendFunctionsToFunctionWithContinuations.getOrPut(this) {
@@ -109,6 +140,7 @@ private fun IrSimpleFunction.createSuspendFunctionStub(context: JsCommonBackendC
     require(this.isSuspend)
     return factory.buildFun {
         updateFrom(this@createSuspendFunctionStub)
+        isSuspend = false
         name = this@createSuspendFunctionStub.name
         origin = this@createSuspendFunctionStub.origin
         returnType = context.irBuiltIns.anyNType

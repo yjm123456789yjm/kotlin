@@ -34,6 +34,14 @@ import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 class JsSuspendFunctionsLowering(
     ctx: JsCommonBackendContext,
 ) : AbstractSuspendFunctionsLowering<JsCommonBackendContext>(ctx) {
+
+    val suspendFunctionReturnType =
+        context.irBuiltIns.anyNType
+
+    val HACKreinterpretCast: (IrExpression, IrType) -> IrExpression =
+//        if (ctx is JsIrBackendContext) JsIrBuilder::buildReinterpretCast else JsIrBuilder::buildImplicitCast
+        JsIrBuilder::buildImplicitCast
+
     val coroutineSymbols = ctx.coroutineSymbols
 
     private val coroutineImplExceptionPropertyGetter = coroutineSymbols.coroutineImplExceptionPropertyGetter
@@ -122,7 +130,19 @@ class JsSuspendFunctionsLowering(
             coroutineImplExceptionStatePropertySetter,
             coroutineImplLabelPropertySetter,
             thisReceiver,
-            suspendResult.symbol
+            getSuspendResultAsType = { type ->
+                HACKreinterpretCast(JsIrBuilder.buildGetValue(suspendResult.symbol), type)
+            },
+            setSuspendResultValue = { value ->
+                JsIrBuilder.buildSetVariable(
+                    suspendResult.symbol,
+                    HACKreinterpretCast(
+                        value,
+                        context.irBuiltIns.anyNType
+                    ),
+                    unit
+                )
+            }
         )
 
         body.acceptVoid(stateMachineBuilder)
@@ -239,16 +259,15 @@ class JsSuspendFunctionsLowering(
     }
 
     override fun IrBuilderWithScope.generateDelegatedCall(expectedType: IrType, delegatingCall: IrExpression): IrExpression {
-        val fromType = (delegatingCall as? IrCall)?.symbol?.owner?.returnType ?: delegatingCall.type
-        if (!needUnboxingOrUnit(fromType, expectedType)) return delegatingCall
+        if (!needUnboxingOrUnit(suspendFunctionReturnType, expectedType)) return delegatingCall
 
-        return irComposite(resultType = fromType) {
-            val tmp = createTmpVariable(delegatingCall, irType = fromType)
+        return irComposite(resultType = expectedType) {
+            val tmp = createTmpVariable(delegatingCall, irType = suspendFunctionReturnType)
             val coroutineSuspended = irCall(coroutineSymbols.coroutineSuspendedGetter)
             val condition = irEqeqeq(irGet(tmp), coroutineSuspended)
             // Suspend functions return Any[?]. Returning tmp variable without cast is safe.
-            +irIfThen(fromType, condition, irReturn(irGet(tmp)))
-            +irGet(tmp)
+            +irIfThen(context.irBuiltIns.unitType, condition, irReturn(irGet(tmp)))
+            +irImplicitCast(irGet(tmp), expectedType)
         }
     }
 
