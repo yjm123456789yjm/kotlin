@@ -448,11 +448,7 @@ class ExpressionCodegen(
         }
 
     override fun visitCall(expression: IrCall, data: BlockInfo): PromisedValue {
-        val intrinsic = classCodegen.context.irIntrinsics.getIntrinsic(expression.symbol)
-        if (intrinsic != null) {
-            intrinsic.invoke(expression, this, data)
-                ?.let { return it }
-        }
+        getIntrinsic(expression, data)?.let { return it }
 
         val callee = expression.symbol.owner
         require(callee.parent is IrClass) { "Unhandled intrinsic in ExpressionCodegen: ${callee.render()}" }
@@ -587,8 +583,7 @@ class ExpressionCodegen(
     }
 
     override fun visitConstructorCall(expression: IrConstructorCall, data: BlockInfo): PromisedValue {
-        classCodegen.context.irIntrinsics.getIntrinsic(expression.symbol)
-            ?.invoke(expression, this, data)?.let { return it }
+        getIntrinsic(expression, data)?.let { return it }
 
         val callee = expression.symbol.owner
         val owner = typeMapper.mapClass(callee.constructedClass)
@@ -607,6 +602,15 @@ class ExpressionCodegen(
         mv.visitMethodInsn(Opcodes.INVOKESPECIAL, owner.internalName, signature.asmMethod.name, signature.asmMethod.descriptor, false)
 
         return MaterialValue(this, owner, expression.type)
+    }
+
+    private fun getIntrinsic(expression: IrFunctionAccessExpression, data: BlockInfo): PromisedValue? {
+        val type = expression.dispatchReceiver?.type as? IrSimpleType
+        val intrinsic = classCodegen.context.irIntrinsics.getIntrinsic(
+            expression.symbol,
+            if (type?.hasQuestionMark == true) null else type?.classFqName
+        )
+        return intrinsic?.invoke(expression, this, data)
     }
 
     private fun generateConstructorArguments(expression: IrFunctionAccessExpression, signature: JvmMethodSignature, data: BlockInfo) {

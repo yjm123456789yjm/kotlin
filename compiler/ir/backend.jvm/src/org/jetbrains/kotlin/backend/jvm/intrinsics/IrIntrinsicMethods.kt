@@ -28,9 +28,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
-import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.isFileClass
 import org.jetbrains.kotlin.lexer.KtSingleValueToken
@@ -144,7 +142,12 @@ class IrIntrinsicMethods(val irBuiltIns: IrBuiltIns, val symbols: JvmSymbols) {
     private val PrimitiveType.symbol
         get() = irBuiltIns.primitiveTypeToIrType[this]!!.classOrNull!!
 
-    fun getIntrinsic(symbol: IrFunctionSymbol): IntrinsicMethod? = intrinsicsMap[symbol.toKey()]
+    fun getIntrinsic(symbol: IrFunctionSymbol, ownerFqName: FqName?): IntrinsicMethod? {
+        val result = intrinsicsMap[symbol.toKey(null)]
+        if (result != null) return result
+        if (ownerFqName != null) return intrinsicsMap[symbol.toKey(ownerFqName)]
+        return null
+    }
 
     private fun unaryFunForPrimitives(name: String, intrinsic: IntrinsicMethod): List<Pair<Key, IntrinsicMethod>> =
         PrimitiveType.values().map { type ->
@@ -206,9 +209,10 @@ class IrIntrinsicMethods(val irBuiltIns: IrBuiltIns, val symbols: JvmSymbols) {
         private val DEC = Increment(-1)
         private val EXPLICIT_EQUALS = ExplicitEquals()
 
-        private fun IrFunctionSymbol.toKey(): Key? {
+        private fun IrFunctionSymbol.toKey(ownerFqName: FqName? = null): Key? {
             val parent = owner.parent
-            val ownerFqName = when {
+            val resultOwnerFqName = when {
+                ownerFqName != null -> ownerFqName
                 parent is IrClass && parent.isFileClass ->
                     (parent.parent as IrPackageFragment).fqName
                 parent is IrClass -> parent.fqNameWhenAvailable ?: return null
@@ -216,7 +220,7 @@ class IrIntrinsicMethods(val irBuiltIns: IrBuiltIns, val symbols: JvmSymbols) {
                 else -> return null
             }
             return Key(
-                ownerFqName,
+                resultOwnerFqName,
                 getParameterFqName(owner.extensionReceiverParameter),
                 owner.name.asString(),
                 owner.valueParameters.map(::getParameterFqName)
