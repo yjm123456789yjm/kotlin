@@ -43,6 +43,9 @@ interface JsCommonBackendContext : CommonBackendContext {
         get() = false
 }
 
+// TODO: investigate if it could be removed
+internal fun <T> BackendContext.lazy2(fn: () -> T) = lazy { irFactory.stageController.withInitialIr(fn) }
+
 class JsCommonCoroutineSymbols(
     symbolTable: SymbolTable,
     module: ModuleDescriptor,
