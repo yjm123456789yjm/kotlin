@@ -334,4 +334,9 @@ object SourceElementPositioningStrategies {
         LightTreePositioningStrategies.PROPERTY_DELEGATE,
         PositioningStrategies.PROPERTY_DELEGATE
     )
+
+    val DECLARATION_START_TO_NAME = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.DECLARATION_START_TO_NAME,
+        PositioningStrategies.DECLARATION_START_TO_NAME
+    )
 }

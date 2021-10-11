@@ -109,6 +109,7 @@ enum class PositioningStrategy(private val strategy: String? = null) {
     FIELD_KEYWORD,
     TAILREC_MODIFIER,
     PROPERTY_DELEGATE,
+    DECLARATION_START_TO_NAME,
 
     ;
 
