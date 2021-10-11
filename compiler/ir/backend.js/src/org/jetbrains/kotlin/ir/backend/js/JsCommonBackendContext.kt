@@ -43,9 +43,6 @@ interface JsCommonBackendContext : CommonBackendContext {
         get() = false
 }
 
-// TODO: investigate if it could be removed
-internal fun <T> BackendContext.lazy2(fn: () -> T) = lazy { irFactory.stageController.withInitialIr(fn) }
-
 class JsCommonCoroutineSymbols(
     symbolTable: SymbolTable,
     module: ModuleDescriptor,
@@ -57,14 +54,14 @@ class JsCommonCoroutineSymbols(
     val coroutineImpl =
         symbolTable.referenceClass(findClass(coroutinePackage.memberScope, COROUTINE_IMPL_NAME))
 
-    val coroutineImplLabelPropertyGetter by context.lazy2 { coroutineImpl.getPropertyGetter("state")!!.owner }
-    val coroutineImplLabelPropertySetter by context.lazy2 { coroutineImpl.getPropertySetter("state")!!.owner }
-    val coroutineImplResultSymbolGetter by context.lazy2 { coroutineImpl.getPropertyGetter("result")!!.owner }
-    val coroutineImplResultSymbolSetter by context.lazy2 { coroutineImpl.getPropertySetter("result")!!.owner }
-    val coroutineImplExceptionPropertyGetter by context.lazy2 { coroutineImpl.getPropertyGetter("exception")!!.owner }
-    val coroutineImplExceptionPropertySetter by context.lazy2 { coroutineImpl.getPropertySetter("exception")!!.owner }
-    val coroutineImplExceptionStatePropertyGetter by context.lazy2 { coroutineImpl.getPropertyGetter("exceptionState")!!.owner }
-    val coroutineImplExceptionStatePropertySetter by context.lazy2 { coroutineImpl.getPropertySetter("exceptionState")!!.owner }
+    val coroutineImplLabelPropertyGetter by lazy { coroutineImpl.getPropertyGetter("state")!!.owner }
+    val coroutineImplLabelPropertySetter by lazy { coroutineImpl.getPropertySetter("state")!!.owner }
+    val coroutineImplResultSymbolGetter by lazy { coroutineImpl.getPropertyGetter("result")!!.owner }
+    val coroutineImplResultSymbolSetter by lazy { coroutineImpl.getPropertySetter("result")!!.owner }
+    val coroutineImplExceptionPropertyGetter by lazy { coroutineImpl.getPropertyGetter("exception")!!.owner }
+    val coroutineImplExceptionPropertySetter by lazy { coroutineImpl.getPropertySetter("exception")!!.owner }
+    val coroutineImplExceptionStatePropertyGetter by lazy { coroutineImpl.getPropertyGetter("exceptionState")!!.owner }
+    val coroutineImplExceptionStatePropertySetter by lazy { coroutineImpl.getPropertySetter("exceptionState")!!.owner }
 
     val continuationClass = symbolTable.referenceClass(
         coroutinePackage.memberScope.getContributedClassifier(
