@@ -835,11 +835,11 @@ private class ConstantExpressionEvaluatorVisitor(
     }
 
     private fun reportInlineConst(expression: KtSimpleNameExpression, enumDescriptor: DeclarationDescriptor?) {
-        val filePath = expression.containingFile.virtualFile.path
+        val filePath = expression.containingFile.virtualFile?.path ?: return
         val owner = (enumDescriptor?.containingDeclaration as? LazyJavaClassDescriptor)?.jClass?.classId
             ?.asString()?.replace(".", "$")?.replace("/", ".") ?: return
         val name = expression.getReferencedName()
-        val constType = (enumDescriptor as VariableDescriptor).type.toString()
+        val constType = (enumDescriptor as? VariableDescriptor)?.type?.toString() ?: return
 
         inlineConstTracker.report(filePath, owner, name, constType)
     }
