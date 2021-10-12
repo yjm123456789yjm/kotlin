@@ -37,6 +37,7 @@ fun createTopDownAnalyzerProviderForKonan(
 
         useImpl<ResolveSession>()
         useImpl<LazyTopDownAnalyzer>()
+        useInstance(InlineConstTracker.DoNothing)
 
         initContainer()
     }.apply {
