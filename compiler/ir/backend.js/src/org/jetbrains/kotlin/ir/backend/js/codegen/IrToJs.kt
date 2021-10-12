@@ -302,16 +302,19 @@ class IrToJs(
 
     fun generateModuleLevelCode(module: IrModuleFragment, statements: MutableList<JsStatement>) {
         if (mainArguments != null) {
-            val mainFunction = JsMainFunctionDetector.getMainFunctionOrNull(module)
+            val mainFunction = JsMainFunctionDetector(backendContext).getMainFunctionOrNull(module)
             if (mainFunction != null) {
+                val generateArgv = mainFunction.valueParameters.firstOrNull()?.isStringArrayParameter() ?: false
+                val generateContinuation = mainFunction.isLoweredSuspendFunction(backendContext)
+
                 val mainArgumentsArray =
-                    if (mainFunction.valueParameters.isNotEmpty())
+                    if (generateArgv)
                         JsArrayLiteral(mainArguments.map { JsStringLiteral(it) })
                     else
                         null
 
                 val continuation =
-                    if (mainFunction.isSuspend) {
+                    if (generateContinuation) {
                         val (import, invoke) = invokeFunctionFromEntryJsFile(backendContext.coroutineEmptyContinuation.owner.getter!!)
                         statements += import
                         invoke
