@@ -20,9 +20,7 @@ import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 import org.jetbrains.kotlin.fir.declarations.utils.isJava
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
-import org.jetbrains.kotlin.fir.expressions.FirAnnotation
-import org.jetbrains.kotlin.fir.expressions.FirConstExpression
-import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
+import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.extensions.declarationGenerators
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.references.FirErrorNamedReference
@@ -45,10 +43,7 @@ import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.declarations.UNDEFINED_PARAMETER_INDEX
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.IrConst
-import org.jetbrains.kotlin.ir.expressions.IrConstKind
-import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrValueParameterSymbolImpl
@@ -57,6 +52,7 @@ import org.jetbrains.kotlin.ir.types.impl.IrErrorTypeImpl
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtQualifiedExpression
 import org.jetbrains.kotlin.psi.psiUtil.endOffset
 import org.jetbrains.kotlin.psi.psiUtil.startOffsetSkippingComments
@@ -606,4 +602,40 @@ fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = nul
     return predefinedOrigin
         ?: (this?.origin as? FirDeclarationOrigin.Plugin)?.let { IrPluginDeclarationOrigin(it.key) }
         ?: IrDeclarationOrigin.DEFINED
+}
+
+fun FirVariableAssignment.getIrAssignmentOrigin(isPrefix: Boolean): IrStatementOrigin {
+    fun convertIncrement(): IrStatementOrigin {
+        return if (isPrefix) IrStatementOrigin.PREFIX_INCR else IrStatementOrigin.POSTFIX_INCR
+    }
+
+    fun convertDecrement(): IrStatementOrigin {
+        return if (isPrefix) IrStatementOrigin.PREFIX_DECR else IrStatementOrigin.POSTFIX_DECR
+    }
+
+    val calleeReferenceSymbol = calleeReference.toResolvedCallableSymbol() ?: return IrStatementOrigin.EQ
+    val rValue = rValue
+    if (rValue is FirFunctionCall && calleeReferenceSymbol.callableId.isLocal) {
+        val callableId = rValue.calleeReference.toResolvedCallableSymbol()?.callableId
+        if (callableId?.classId == StandardClassIds.Int) {
+            val callableName = callableId.callableName.asString()
+            if (callableName == "inc") {
+                return convertIncrement()
+            } else if (callableName == "dec") {
+                return convertDecrement()
+            }
+
+            if (calleeReferenceSymbol == rValue.explicitReceiver?.toResolvedCallableSymbol()) {
+                val argument = ((rValue.arguments.singleOrNull() as? FirConstExpression<*>)?.value as? Long)
+                if (argument != null) {
+                    if (callableName == "plus" && argument >= -128 && argument <= 127) {
+                        return convertIncrement()
+                    } else if (callableName == "minus" && argument >= -127 && argument <= 128) {
+                        return convertDecrement()
+                    }
+                }
+            }
+        }
+    }
+    return IrStatementOrigin.EQ
 }
