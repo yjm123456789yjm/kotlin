@@ -61,10 +61,6 @@ class IrModuleToJsTransformer(
             module.files.forEach { StaticMembersLowering(backendContext).lower(it) }
         }
 
-        if (multiModule) {
-            breakCrossModuleFieldAccess(backendContext, modules)
-        }
-
         modules.forEach { module ->
             namer.merge(module.files, additionalPackages)
         }
