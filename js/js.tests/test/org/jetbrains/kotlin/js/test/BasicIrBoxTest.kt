@@ -328,7 +328,6 @@ abstract class BasicIrBoxTest(
                     safeExternalBoolean = safeExternalBoolean,
                     safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
                     granularity = granularity,
-                    verifySignatures = !skipMangleVerification,
                     filesToLower = dirtyFilesToRecompile
                 )
 
@@ -395,7 +394,7 @@ abstract class BasicIrBoxTest(
                 if (generateDts) {
                     val dtsFile = outputFile.withReplacedExtensionOrNull("_v5.js", ".d.ts")!!
                     logger.logFile("Output d.ts", dtsFile)
-                    dtsFile.write(generatedModule.tsDefinitions ?: error("No ts definitions"))
+                    dtsFile.write(compiledModule.tsDefinitions ?: error("No ts definitions"))
                 }
 
                 compiledOutput.jsProgram?.let { processJsProgram(it, units) }
@@ -417,8 +416,6 @@ abstract class BasicIrBoxTest(
                     else outputFile
                     generateOldModuleSystems(ir, jsOutputFile, dceOutputFile, granularity, runIrDce)
                 }
-
-                compiledOutput.jsProgram?.let { processJsProgram(it, units) }
             }
 
             if (runIrPir && !skipDceDriven) {
@@ -505,15 +502,19 @@ abstract class BasicIrBoxTest(
             needsFullIrRuntime,
             isMainModule,
             skipDceDriven = true,
-            splitPerModule = false, // TODO??
+            granularity = WHOLE_PROGRAM, // TODO??
             propertyLazyInitialization = true,
             safeExternalBoolean = false,
             safeExternalBooleanDiagnostic = null,
             skipMangleVerification = false,
-            KotlinAbiVersion.CURRENT,
+            abiVersion = KotlinAbiVersion.CURRENT,
             incrementalCompilation = true,
             recompile = true,
-            icCaches
+            icCache = icCaches,
+
+            // TODO??
+            customTestModule = null,
+            esModules = false,
         )
 
         val cacheProvider = icCache.cacheProvider()

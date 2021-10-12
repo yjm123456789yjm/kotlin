@@ -327,7 +327,7 @@ abstract class BasicBoxTest(
                     inputFiles.filter { it.fileName.endsWith(".mjs") }.map { it.fileName } + listOfNotNull(maybeAdditionalMjsFile)
 
                 val allNonEsModuleFiles: List<String> =
-                    additionalFiles + inputJsFiles + globalCommonFiles + localCommonFiles + additionalCommonFiles
+                    additionalFiles + inputJsFilesBefore + globalCommonFiles + localCommonFiles + additionalCommonFiles
 
                 fun runIrEsmTests(testOutputDir: File) {
                     val esmOutputDir = testOutputDir.esModulesSubDir
@@ -346,7 +346,7 @@ abstract class BasicBoxTest(
                     }
 
                     val perFileEsModuleFile = "$esmOutputDir/test.mjs"
-                    v8tool.run(*allNonEsModuleFiles.toTypedArray(), perFileEsModuleFile)
+                    v8tool.run(*allNonEsModuleFiles.toTypedArray(), perFileEsModuleFile, *inputJsFilesAfter.toTypedArray())
                 }
 
                 fun File.getTestDir(): File =
@@ -586,6 +586,7 @@ abstract class BasicBoxTest(
         safeExternalBooleanDiagnostic: RuntimeDiagnostic?,
         skipMangleVerification: Boolean,
         abiVersion: KotlinAbiVersion,
+        checkIC: Boolean,
         icCache: MutableMap<String, TestModuleCache>,
         customTestModule: String?,
     ) {
