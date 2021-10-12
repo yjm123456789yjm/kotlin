@@ -1780,6 +1780,11 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/export"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS, true);
         }
 
+        @TestMetadata("exportAllFile.kt")
+        public void testExportAllFile() throws Exception {
+            runTest("js/js.translator/testData/box/export/exportAllFile.kt");
+        }
+
         @TestMetadata("exportNestedClass.kt")
         public void testExportNestedClass() throws Exception {
             runTest("js/js.translator/testData/box/export/exportNestedClass.kt");
@@ -1800,9 +1805,29 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
             runTest("js/js.translator/testData/box/export/nonIndetifierModuleName.kt");
         }
 
+        @TestMetadata("overriddenChainNonExportIntermediate.kt")
+        public void testOverriddenChainNonExportIntermediate() throws Exception {
+            runTest("js/js.translator/testData/box/export/overriddenChainNonExportIntermediate.kt");
+        }
+
+        @TestMetadata("overriddenExternalMethodWithSameNameMethod.kt")
+        public void testOverriddenExternalMethodWithSameNameMethod() throws Exception {
+            runTest("js/js.translator/testData/box/export/overriddenExternalMethodWithSameNameMethod.kt");
+        }
+
+        @TestMetadata("overriddenExternalMethodWithSameStableNameMethod.kt")
+        public void testOverriddenExternalMethodWithSameStableNameMethod() throws Exception {
+            runTest("js/js.translator/testData/box/export/overriddenExternalMethodWithSameStableNameMethod.kt");
+        }
+
         @TestMetadata("overridenMethod.kt")
         public void testOverridenMethod() throws Exception {
             runTest("js/js.translator/testData/box/export/overridenMethod.kt");
+        }
+
+        @TestMetadata("reservedModuleName.kt")
+        public void testReservedModuleName() throws Exception {
+            runTest("js/js.translator/testData/box/export/reservedModuleName.kt");
         }
     }
 
