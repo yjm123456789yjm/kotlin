@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.scopes.FirContainingNamesAwareScope
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.getContainingClassifierNamesIfPresent
 import org.jetbrains.kotlin.fir.symbols.impl.*
+import org.jetbrains.kotlin.fir.utils.MapBuilder
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 
@@ -31,7 +32,7 @@ class FirClassDeclaredMemberScope(
     }
 
     private val callablesIndex: Map<Name, List<FirCallableSymbol<*>>> = run {
-        val result = mutableMapOf<Name, MutableList<FirCallableSymbol<*>>>()
+        val result = MapBuilder<Name, MutableList<FirCallableSymbol<*>>>()
         loop@ for (declaration in klass.declarations) {
             if (declaration is FirCallableDeclaration) {
                 val name = when (declaration) {
@@ -43,7 +44,7 @@ class FirClassDeclaredMemberScope(
                 result.getOrPut(name) { mutableListOf() } += declaration.symbol
             }
         }
-        result
+        result.build()
     }
 
     override fun processFunctionsByName(name: Name, processor: (FirNamedFunctionSymbol) -> Unit) {

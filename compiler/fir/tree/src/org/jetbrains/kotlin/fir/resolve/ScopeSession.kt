@@ -6,9 +6,10 @@
 package org.jetbrains.kotlin.fir.resolve
 
 import org.jetbrains.kotlin.fir.PrivateForInline
+import org.jetbrains.kotlin.fir.utils.MapBuilder
 
 class ScopeSession {
-    private val scopes = hashMapOf<Any, HashMap<ScopeSessionKey<*, *>, Any>>()
+    private val scopes = MapBuilder<Any, MapBuilder<ScopeSessionKey<*, *>, Any>>()
 
     @PrivateForInline
     fun scopes() = scopes
@@ -16,7 +17,7 @@ class ScopeSession {
     @OptIn(PrivateForInline::class)
     inline fun <reified ID : Any, reified FS : Any> getOrBuild(id: ID, key: ScopeSessionKey<ID, FS>, build: () -> FS): FS {
         return scopes().getOrPut(id) {
-            hashMapOf()
+            MapBuilder()
         }.getOrPut(key) {
             build()
         } as FS
