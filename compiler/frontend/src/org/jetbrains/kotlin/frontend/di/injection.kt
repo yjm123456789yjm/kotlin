@@ -236,6 +236,7 @@ fun createContainerForLazyResolve(
     configureStandardResolveComponents()
 
     useInstance(declarationProviderFactory)
+    useInstance(InlineConstTracker.DoNothing)
 
 
     targetEnvironment.configure(this)
