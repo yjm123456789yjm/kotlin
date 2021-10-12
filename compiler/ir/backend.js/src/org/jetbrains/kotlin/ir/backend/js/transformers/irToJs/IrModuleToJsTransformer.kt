@@ -337,9 +337,6 @@ class IrModuleToJsTransformer(
         statements.addWithComment("block: post-declaration", postDeclarationBlock.statements)
         statements.addWithComment("block: init", context.staticContext.initializerBlock.statements)
 
-
-        statements += generateCallToMain(modules, context)
-
         modules.forEach {
             backendContext.testRoots[it]?.let { testContainer ->
                 statements.startRegion("block: tests")
