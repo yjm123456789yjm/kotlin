@@ -154,6 +154,7 @@ fun createContainerForBodyResolve(
     useImpl<BodyResolver>()
     useInstance(moduleStructureOracle)
     useInstance(controlFlowInformationProviderFactory)
+    useInstance(InlineConstTracker.DoNothing)
 }
 
 fun createContainerForLazyBodyResolve(
@@ -179,6 +180,7 @@ fun createContainerForLazyBodyResolve(
     useImpl<BasicAbsentDescriptorHandler>()
     useInstance(moduleStructureOracle)
     useInstance(controlFlowInformationProviderFactory)
+    useInstance(InlineConstTracker.DoNothing)
 
     // All containers except common inject ExpectedActualDeclarationChecker, so for common we do that
     // explicitly.
