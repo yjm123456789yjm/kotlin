@@ -9,8 +9,7 @@ fun main() {
 }
 
 fun main(args: Array<String>) {
-    assertEquals(1, args.size)
-    assertEquals("testArg", args[0])
+    assert(args.size == 0)
 
     o = "O"
 }
