@@ -841,8 +841,11 @@ private class ConstantExpressionEvaluatorVisitor(
         // Transformation of fqName to the form "package.Outer$Inner"
         val containingPackage = enumDescriptor.containingPackage()?.toString() ?: return
         val fqName = enumDescriptor.containingDeclaration.fqNameSafe.asString()
-        val owner = containingPackage + "." + fqName.substring(containingPackage.length + 1).replace(".", "$")
-
+        val owner = if (fqName.startsWith(containingPackage)) {
+            containingPackage + "." + fqName.substring(containingPackage.length + 1).replace(".", "$")
+        } else {
+            fqName.replace(".", "$")
+        }
         inlineConstTracker.report(filePath, owner, name, constType)
     }
 
