@@ -23,8 +23,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.reportDiagnosticOnce
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.lexer.KtTokens
-import org.jetbrains.kotlin.load.java.lazy.descriptors.LazyJavaClassDescriptor
-import org.jetbrains.kotlin.load.java.structure.classId
+import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.parsing.*
@@ -836,10 +835,13 @@ private class ConstantExpressionEvaluatorVisitor(
 
     private fun reportInlineConst(expression: KtSimpleNameExpression, enumDescriptor: DeclarationDescriptor?) {
         val filePath = expression.containingFile.virtualFile?.path ?: return
-        val owner = (enumDescriptor?.containingDeclaration as? LazyJavaClassDescriptor)?.jClass?.classId
-            ?.asString()?.replace(".", "$")?.replace("/", ".") ?: return
         val name = expression.getReferencedName()
         val constType = (enumDescriptor as? VariableDescriptor)?.type?.toString() ?: return
+
+        // Transformation of fqName to the form "package.Outer$Inner"
+        val containingPackage = enumDescriptor.containingPackage()?.toString() ?: return
+        val fqName = enumDescriptor.containingDeclaration.fqNameSafe.asString()
+        val owner = containingPackage + "." + fqName.substring(containingPackage.length + 1).replace(".", "$")
 
         inlineConstTracker.report(filePath, owner, name, constType)
     }
