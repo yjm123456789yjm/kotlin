@@ -802,7 +802,8 @@ private class ConstantExpressionEvaluatorVisitor(
             return EnumValue(enumClassId, enumDescriptor.name).wrap()
         }
 
-        reportInlineConst(expression, enumDescriptor)
+        val variableDescriptor = enumDescriptor as? VariableDescriptor
+        if (variableDescriptor != null && isPropertyCompileTimeConstant(variableDescriptor)) reportInlineConst(expression, variableDescriptor)
 
         val resolvedCall = expression.getResolvedCall(trace.bindingContext)
         if (resolvedCall != null) {
@@ -833,15 +834,15 @@ private class ConstantExpressionEvaluatorVisitor(
         return null
     }
 
-    private fun reportInlineConst(expression: KtSimpleNameExpression, enumDescriptor: DeclarationDescriptor?) {
+    private fun reportInlineConst(expression: KtSimpleNameExpression, variableDescriptor: VariableDescriptor) {
         val filePath = expression.containingFile.virtualFile?.path ?: return
         val name = expression.getReferencedName()
-        val constType = (enumDescriptor as? VariableDescriptor)?.type?.toString() ?: return
+        val constType = variableDescriptor.type.toString()
 
         // Transformation of fqName to the form "package.Outer$Inner"
-        val containingPackage = enumDescriptor.containingPackage()?.toString() ?: return
-        val fqName = enumDescriptor.containingDeclaration.fqNameSafe.asString()
-        val owner = if (fqName.startsWith(containingPackage)) {
+        val containingPackage = variableDescriptor.containingPackage()?.toString() ?: return
+        val fqName = variableDescriptor.containingDeclaration.fqNameSafe.asString()
+        val owner = if (fqName.startsWith("$containingPackage.")) {
             containingPackage + "." + fqName.substring(containingPackage.length + 1).replace(".", "$")
         } else {
             fqName.replace(".", "$")
