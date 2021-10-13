@@ -803,7 +803,9 @@ private class ConstantExpressionEvaluatorVisitor(
         }
 
         val variableDescriptor = enumDescriptor as? VariableDescriptor
-        if (variableDescriptor != null && isPropertyCompileTimeConstant(variableDescriptor)) reportInlineConst(expression, variableDescriptor)
+        if (variableDescriptor != null && isPropertyCompileTimeConstant(variableDescriptor)) {
+            reportInlineConst(expression, variableDescriptor)
+        }
 
         val resolvedCall = expression.getResolvedCall(trace.bindingContext)
         if (resolvedCall != null) {
