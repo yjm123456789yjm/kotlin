@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.fir.analysis.checkers
 
 import org.jetbrains.kotlin.fir.analysis.checkers.expression.*
 import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirCommaInWhenConditionChecker
-import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirConfusingWhenBranchSyntaxChecker
+import org.jetbrains.kotlin.fir.analysis.checkers.syntax.FirRedundantLabelChecker2
 
 object CommonExpressionCheckers : ExpressionCheckers() {
     override val annotationCallCheckers: Set<FirAnnotationCallChecker>
@@ -20,7 +20,8 @@ object CommonExpressionCheckers : ExpressionCheckers() {
         get() = setOf(
             FirUnderscoreChecker,
             FirExpressionAnnotationChecker,
-            FirDeprecationChecker
+            FirDeprecationChecker,
+            FirRedundantLabelChecker2.ExpressionChecker,
         )
 
     override val qualifiedAccessCheckers: Set<FirQualifiedAccessChecker>
