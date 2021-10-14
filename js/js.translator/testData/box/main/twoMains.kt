@@ -9,7 +9,7 @@ fun main() {
 }
 
 fun main(args: Array<String>) {
-    assert(args.size == 0)
+    if (args.size != 0) error("Fail")
 
     o = "O"
 }

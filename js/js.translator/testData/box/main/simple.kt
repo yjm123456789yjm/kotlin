@@ -4,7 +4,7 @@
 var ok: String = "fail"
 
 fun main(args: Array<String>) {
-    assert(0 == args.size)
+    if (0 != args.size) error("fail")
 
     ok = "OK"
 }

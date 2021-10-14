@@ -8,7 +8,7 @@ var ok: String = "fail"
 var callback: () -> Unit = {}
 
 suspend fun main(args: Array<String>) {
-    assert(0 == args.size)
+    if (0 != args.size) error("Fail")
 
     suspendCoroutine<Unit> { cont ->
         callback = {
@@ -20,7 +20,7 @@ suspend fun main(args: Array<String>) {
 }
 
 fun box(): String {
-    assert("fail" == ok)
+    if ("fail" != ok) return "Fail"
     callback()
     return ok
 }
