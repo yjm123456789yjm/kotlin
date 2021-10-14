@@ -512,8 +512,8 @@ abstract class BaseGradleIT {
     }
 
     fun CompiledProject.checkKotlinGradleBuildServices() {
-        assertSubstringCount("Initialized KotlinGradleBuildServices", expectedCount = 1)
-        assertSubstringCount("Disposed KotlinGradleBuildServices", expectedCount = 1)
+        assertSubstringCount("Initialized NewKotlinGradleBuildServices", expectedCount = 1)
+        assertSubstringCount("Disposed NewKotlinGradleBuildServices", expectedCount = 1)
     }
 
     fun CompiledProject.assertNotContains(vararg expected: String): CompiledProject {
