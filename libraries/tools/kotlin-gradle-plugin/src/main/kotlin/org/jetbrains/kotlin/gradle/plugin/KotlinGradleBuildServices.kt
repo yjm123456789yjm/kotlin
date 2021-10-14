@@ -67,7 +67,9 @@ internal class KotlinGradleBuildServices private constructor(
 
         @JvmStatic
         @Synchronized
-        fun getInstance(project: Project, listenerRegistryHolder: BuildEventsListenerRegistryHolder): KotlinGradleBuildServices {
+        fun getInstance(project: Project): KotlinGradleBuildServices {
+            val listenerRegistryHolder = BuildEventsListenerRegistryHolder.getInstance(project)
+
             val log = Logging.getLogger(KotlinGradleBuildServices::class.java)
             val kotlinGradleListenerProvider: Provider<KotlinGradleBuildListener> = project.provider {
                 KotlinGradleBuildListener(KotlinGradleFinishBuildHandler())
@@ -83,22 +85,10 @@ internal class KotlinGradleBuildServices private constructor(
                 KotlinBuildEsStatListener(project.rootProject.name, listeners.get())
             }
 
-
-            if (instance != null) {
-                log.kotlinDebug(ALREADY_INITIALIZED_MESSAGE)
-                return instance!!
-            }
-
             val gradle = project.gradle
             val services = KotlinGradleBuildServices(gradle, kotlinGradleListenerProvider, kotlinGradleEsListenerProvider)
-            if (isConfigurationCacheAvailable(gradle)) {
-                listenerRegistryHolder.listenerRegistry!!.onTaskCompletion(kotlinGradleListenerProvider)
-                listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
-            } else {
-                gradle.addBuildListener(services)
-                gradle.taskGraph.addTaskExecutionListener(kotlinGradleEsListenerProvider.get())
-                log.kotlinDebug(INIT_MESSAGE)
-            }
+            listenerRegistryHolder.listenerRegistry!!.onTaskCompletion(kotlinGradleListenerProvider)
+            listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
             instance = services
 
             services.buildStarted()

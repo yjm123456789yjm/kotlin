@@ -88,7 +88,7 @@ abstract class KotlinBasePluginWrapper: Plugin<Project> {
         }
         project.registerCommonizerClasspathConfigurationIfNecessary()
 
-        val kotlinGradleBuildServices = KotlinGradleBuildServices.getInstance(project, BuildEventsListenerRegistryHolder.getInstance(project))
+        val kotlinGradleBuildServices = KotlinGradleBuildServices.getInstance(project)
 
         kotlinGradleBuildServices.detectKotlinPluginLoadedInMultipleProjects(project, kotlinPluginVersion)
 
