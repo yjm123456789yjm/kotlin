@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.diagnostics.reportDiagnosticOnce
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
 import org.jetbrains.kotlin.lexer.KtTokens
+import org.jetbrains.kotlin.resolve.descriptorUtil.isCompanionObject
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
@@ -803,7 +804,7 @@ private class ConstantExpressionEvaluatorVisitor(
         }
 
         val variableDescriptor = enumDescriptor as? VariableDescriptor
-        if (variableDescriptor != null && isPropertyCompileTimeConstant(variableDescriptor)) {
+        if (variableDescriptor != null && isPropertyCompileTimeConstant(variableDescriptor) && !variableDescriptor.containingDeclaration.isCompanionObject()) {
             reportInlineConst(expression, variableDescriptor)
         }
 
