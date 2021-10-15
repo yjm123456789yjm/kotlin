@@ -386,7 +386,11 @@ private class ConstantExpressionEvaluatorVisitor(
     private val builtIns = constantExpressionEvaluator.module.builtIns
     private val defaultValueForDontCreateIntegerLiteralType =
         languageVersionSettings.supportsFeature(ApproximateIntegerLiteralTypesInReceiverPosition)
-    private val inlineConstTracker = constantExpressionEvaluator.inlineConstTracker
+    private val inlineConstTracker =
+        if (constantExpressionEvaluator.inlineConstTracker is InlineConstTracker.DoNothing)
+            null
+        else
+            constantExpressionEvaluator.inlineConstTracker
 
     fun evaluate(expression: KtExpression, expectedType: KotlinType?): CompileTimeConstant<*>? {
         val recordedCompileTimeConstant = ConstantExpressionEvaluator.getPossiblyErrorConstant(expression, trace.bindingContext)
@@ -804,7 +808,10 @@ private class ConstantExpressionEvaluatorVisitor(
         }
 
         val variableDescriptor = enumDescriptor as? VariableDescriptor
-        if (variableDescriptor != null && isPropertyCompileTimeConstant(variableDescriptor) && !variableDescriptor.containingDeclaration.isCompanionObject()) {
+        if (variableDescriptor != null
+            && isPropertyCompileTimeConstant(variableDescriptor)
+            && !variableDescriptor.containingDeclaration.isCompanionObject()
+        ) {
             reportInlineConst(expression, variableDescriptor)
         }
 
@@ -838,6 +845,7 @@ private class ConstantExpressionEvaluatorVisitor(
     }
 
     private fun reportInlineConst(expression: KtSimpleNameExpression, variableDescriptor: VariableDescriptor) {
+        if (inlineConstTracker == null) return
         val filePath = expression.containingFile.virtualFile?.path ?: return
         val name = expression.getReferencedName()
         val constType = variableDescriptor.type.toString()
