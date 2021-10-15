@@ -817,9 +817,8 @@ class CallAndReferenceGenerator(
     private fun IrExpression.applyReceivers(qualifiedAccess: FirQualifiedAccess, explicitReceiverExpression: IrExpression?): IrExpression {
         when (this) {
             is IrMemberAccessExpression<*> -> {
-                val ownerFunction =
-                    symbol.owner as? IrFunction
-                        ?: (symbol.owner as? IrProperty)?.getter
+                val symbolOwner = symbol.owner
+                val ownerFunction = symbolOwner as? IrFunction ?: (symbolOwner as? IrProperty)?.getter
                 if (ownerFunction?.dispatchReceiverParameter != null) {
                     val baseDispatchReceiver = qualifiedAccess.findIrDispatchReceiver(explicitReceiverExpression)
                     dispatchReceiver =
