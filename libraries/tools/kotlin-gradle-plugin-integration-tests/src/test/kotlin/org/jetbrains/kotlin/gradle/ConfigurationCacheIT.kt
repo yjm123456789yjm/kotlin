@@ -166,6 +166,25 @@ class ConfigurationCacheIT : AbstractConfigurationCacheIT() {
     fun testConfigurationCacheJsWithTestDependencies() = with(transformProjectWithPluginsDsl("kotlin-js-project-with-test-dependencies")) {
         testConfigurationCacheOf("assemble", executedTaskNames = listOf(":kotlinNpmInstall"))
     }
+
+    @Test
+    fun testBuildReportSmokeTestForConfigurationCache() = with(Project("simpleProject")) {
+        val buildOptions = defaultBuildOptions().copy(configurationCache = true)
+        build("assemble", "-Pkotlin.build.report.enable=true", "-Dorg.gradle.debug=true", options = buildOptions) {
+            assertSuccessful()
+            assertContains("Kotlin build report is written to")
+        }
+
+        build("clean", options = buildOptions) {
+            assertSuccessful()
+        }
+
+        // Then run a build where tasks states are deserialized to check that they work correctly in this mode
+        build("assemble", "-Pkotlin.build.report.enable=true", options = buildOptions) {
+            assertSuccessful()
+            assertContains("Kotlin build report is written to")
+        }
+    }
 }
 
 abstract class AbstractConfigurationCacheIT : BaseGradleIT() {

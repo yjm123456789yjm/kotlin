@@ -913,6 +913,20 @@ class KotlinGradleIT : BaseGradleIT() {
             assertSuccessful()
             assertContains("Kotlin build report is written to")
         }
+
+        build("clean", "assemble", "-Pkotlin.build.report.enable=true") {
+            assertSuccessful()
+            assertContains("Kotlin build report is written to")
+        }
+    }
+
+    @Test
+    fun testBuildReportWithFileAsTargetDir() = with(Project("simpleProject")) {
+        workingDir.resolve("build/reports/kotlin-build").createNewFile()
+        build("assemble", "-Pkotlin.build.report.enable=true") {
+            assertSuccessful()
+            assertContains("Kotlin build report is written to")
+        }
     }
 
     @Test

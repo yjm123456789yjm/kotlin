@@ -12,8 +12,9 @@ import org.jetbrains.kotlin.compilerRunner.GradleCompilerRunner
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskExecutionResults
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskLoggers
-import org.jetbrains.kotlin.gradle.utils.relativeToRoot
+import org.jetbrains.kotlin.gradle.utils.relativeOrCanonical
 import org.jetbrains.kotlin.utils.addToStdlib.sumByLong
+import java.io.File
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
@@ -28,25 +29,24 @@ class KotlinGradleFinishBuildHandler {
         startMemory = getUsedMemoryKb()
     }
 
-    fun buildFinished(gradle: Gradle) {
+    fun buildFinished(rootProjectBuildDir: File, rootProjectRootDir: File) {
         TaskLoggers.clear()
         TaskExecutionResults.clear()
 
         GradleCompilerRunner.clearBuildModulesInfo()
 
-        val rootProject = gradle.rootProject
-        val sessionsDir = GradleCompilerRunner.sessionsDir(rootProject.buildDir)
+        val sessionsDir = GradleCompilerRunner.sessionsDir(rootProjectBuildDir)
         if (sessionsDir.exists()) {
             val sessionFiles = sessionsDir.listFiles()
 
             // it is expected that only one session file per build exists
             // afaik is is not possible to run multiple gradle builds in one project since gradle locks some dirs
             if (sessionFiles.size > 1) {
-                log.warn("w: Detected multiple Kotlin daemon sessions at ${sessionsDir.relativeToRoot(rootProject)}")
+                log.warn("w: Detected multiple Kotlin daemon sessions at ${sessionsDir.relativeOrCanonical(rootProjectRootDir)}")
             }
             for (file in sessionFiles) {
                 file.delete()
-                log.kotlinDebug { DELETED_SESSION_FILE_PREFIX + file.relativeToRoot(rootProject) }
+                log.kotlinDebug { DELETED_SESSION_FILE_PREFIX + file.relativeOrCanonical(rootProjectRootDir) }
             }
         }
 
@@ -58,7 +58,10 @@ class KotlinGradleFinishBuildHandler {
             // but on subsequent runs in the daemon it should be rather small, then the classes are actually reused by the daemon (see above)
             log.lifecycle("[KOTLIN][PERF] Used memory after build: $endMem kb (difference since build start: ${"%+d".format(endMem - startMem)} kb)")
         }
+    }
 
+    fun buildFinished(gradle: Gradle) {
+        buildFinished(gradle.rootProject.buildDir, gradle.rootProject.rootDir)
         gradle.removeListener(this)
     }
 
