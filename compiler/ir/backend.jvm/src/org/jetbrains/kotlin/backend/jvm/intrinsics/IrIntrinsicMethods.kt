@@ -88,6 +88,7 @@ class IrIntrinsicMethods(val irBuiltIns: IrBuiltIns, val symbols: JvmSymbols) {
                 symbols.throwUnsupportedOperationException.toKey()!! to ThrowException(Type.getObjectType("java/lang/UnsupportedOperationException")),
                 symbols.throwKotlinNothingValueException.toKey()!! to ThrowKotlinNothingValueException,
                 symbols.jvmIndyIntrinsic.toKey()!! to JvmInvokeDynamic,
+                symbols.serializedLambdaEquals.toKey()!! to JvmSerializedLambdaEquals,
                 symbols.intPostfixIncr.toKey()!! to PostfixIinc(1),
                 symbols.intPostfixDecr.toKey()!! to PostfixIinc(-1)
             ) +

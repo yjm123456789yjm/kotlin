@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.backend.jvm.ir.findSuperDeclaration
 import org.jetbrains.kotlin.ir.builders.declarations.buildClass
 import org.jetbrains.kotlin.ir.declarations.IrClass
 import org.jetbrains.kotlin.ir.declarations.IrConstructor
+import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.overrides.buildFakeOverrideMember
@@ -76,14 +77,8 @@ object JvmInvokeDynamic : IntrinsicMethod() {
             is IrRawFunctionReference ->
                 generateMethodHandle(element, codegen)
             is IrCall ->
-                when (element.symbol) {
-                    codegen.context.ir.symbols.jvmOriginalMethodTypeIntrinsic ->
-                        generateOriginalMethodType(element, codegen)
-                    codegen.context.ir.symbols.jvmSubstitutedMethodTypeIntrinsic ->
-                        generateSubstitutedMethodType(element, codegen)
-                    else ->
-                        throw AssertionError("Unexpected callee in bootstrap method argument:\n${element.dump()}")
-                }
+                generateMethodTypeFromIntrinsicCall(element, codegen)
+                    ?: throw AssertionError("Unexpected callee in bootstrap method argument:\n${element.dump()}")
             is IrConst<*> ->
                 when (element.kind) {
                     IrConstKind.Byte -> (element.value as Byte).toInt()
@@ -100,7 +95,7 @@ object JvmInvokeDynamic : IntrinsicMethod() {
                 throw AssertionError("Unexpected bootstrap method argument:\n${element.dump()}")
         }
 
-    private fun generateMethodHandle(irRawFunctionReference: IrRawFunctionReference, codegen: ExpressionCodegen): Handle {
+    fun generateMethodHandle(irRawFunctionReference: IrRawFunctionReference, codegen: ExpressionCodegen): Handle {
         val irFun = when (val irFun0 = irRawFunctionReference.symbol.owner) {
             is IrConstructor ->
                 irFun0
@@ -119,19 +114,32 @@ object JvmInvokeDynamic : IntrinsicMethod() {
 
         val asmMethod = codegen.methodSignatureMapper.mapAsmMethod(irFun)
 
-        val handleTag = when {
+        val handleTag = getMethodKindTag(irFun)
+
+        return Handle(handleTag, owner.internalName, asmMethod.name, asmMethod.descriptor, irParentClass.isJvmInterface)
+    }
+
+    fun getMethodKindTag(irFun: IrFunction) =
+        when {
             irFun is IrConstructor ->
                 Opcodes.H_NEWINVOKESPECIAL
             irFun.dispatchReceiverParameter == null ->
                 Opcodes.H_INVOKESTATIC
-            irParentClass.isJvmInterface ->
+            irFun.parentAsClass.isJvmInterface ->
                 Opcodes.H_INVOKEINTERFACE
             else ->
                 Opcodes.H_INVOKEVIRTUAL
         }
 
-        return Handle(handleTag, owner.internalName, asmMethod.name, asmMethod.descriptor, irParentClass.isJvmInterface)
-    }
+    fun generateMethodTypeFromIntrinsicCall(irCall: IrCall, codegen: ExpressionCodegen): Type? =
+        when (irCall.symbol) {
+            codegen.context.ir.symbols.jvmOriginalMethodTypeIntrinsic ->
+                generateOriginalMethodType(irCall, codegen)
+            codegen.context.ir.symbols.jvmSubstitutedMethodTypeIntrinsic ->
+                generateSubstitutedMethodType(irCall, codegen)
+            else ->
+                null
+        }
 
     private fun generateOriginalMethodType(irCall: IrCall, codegen: ExpressionCodegen): Type {
         val irRawFunRef = irCall.getValueArgument(0) as? IrRawFunctionReference
