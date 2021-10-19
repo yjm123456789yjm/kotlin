@@ -204,11 +204,23 @@ class CallAndReferenceGenerator(
         return null
     }
 
-    private fun FirExpression.superQualifierSymbol(): IrClassSymbol? {
-        if (this !is FirQualifiedAccess) {
+    private fun FirQualifiedAccess.superQualifierSymbol(isField: Boolean = false): IrClassSymbol? {
+        val result = superQualifierSymbolFromDispatchReceiver()
+        if (result == null && isField) {
+            val firClassSymbol = ((explicitReceiver as? FirResolvedQualifier)?.symbol as? FirClassSymbol<*>)
+            if (firClassSymbol != null) {
+                return classifierStorage.getIrClassSymbol(firClassSymbol)
+            }
+        }
+        return result
+    }
+
+    private fun FirQualifiedAccess.superQualifierSymbolFromDispatchReceiver(): IrClassSymbol? {
+        val dispatchReceiver = dispatchReceiver
+        if (dispatchReceiver !is FirQualifiedAccess) {
             return null
         }
-        val dispatchReceiverReference = calleeReference
+        val dispatchReceiverReference = dispatchReceiver.calleeReference
         if (dispatchReceiverReference !is FirSuperReference) {
             return null
         }
@@ -254,7 +266,7 @@ class CallAndReferenceGenerator(
                             typeArgumentsCount = symbol.owner.typeParameters.size,
                             valueArgumentsCount = symbol.owner.valueParameters.size,
                             origin = qualifiedAccess.calleeReference.statementOrigin(),
-                            superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                            superQualifierSymbol = qualifiedAccess.superQualifierSymbol()
                         )
                     }
                     is IrLocalDelegatedPropertySymbol -> {
@@ -263,7 +275,7 @@ class CallAndReferenceGenerator(
                             typeArgumentsCount = symbol.owner.getter.typeParameters.size,
                             valueArgumentsCount = 0,
                             origin = IrStatementOrigin.GET_LOCAL_PROPERTY,
-                            superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                            superQualifierSymbol = qualifiedAccess.superQualifierSymbol()
                         )
                     }
                     is IrPropertySymbol -> {
@@ -275,11 +287,11 @@ class CallAndReferenceGenerator(
                                 typeArgumentsCount = getter.typeParameters.size,
                                 valueArgumentsCount = 0,
                                 origin = IrStatementOrigin.GET_PROPERTY,
-                                superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                                superQualifierSymbol = qualifiedAccess.superQualifierSymbol()
                             )
                             backingField != null -> IrGetFieldImpl(
                                 startOffset, endOffset, backingField.symbol, type,
-                                superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                                superQualifierSymbol = qualifiedAccess.superQualifierSymbol()
                             )
                             else -> IrErrorCallExpressionImpl(
                                 startOffset, endOffset, type,
@@ -290,7 +302,7 @@ class CallAndReferenceGenerator(
                     is IrFieldSymbol -> IrGetFieldImpl(
                         startOffset, endOffset, symbol, type,
                         origin = IrStatementOrigin.GET_PROPERTY.takeIf { qualifiedAccess.calleeReference !is FirDelegateFieldReference },
-                        superQualifierSymbol = dispatchReceiver.superQualifierSymbol()
+                        superQualifierSymbol = qualifiedAccess.superQualifierSymbol(isField = true)
                     )
                     is IrValueSymbol -> IrGetValueImpl(
                         startOffset, endOffset, type, symbol,
@@ -321,9 +333,10 @@ class CallAndReferenceGenerator(
             return variableAssignment.convertWithOffsets { startOffset, endOffset ->
                 val assignedValue = visitor.convertToIrExpression(variableAssignment.rValue)
                 when (symbol) {
-                    is IrFieldSymbol -> IrSetFieldImpl(startOffset, endOffset, symbol, type, origin).apply {
-                        value = assignedValue
-                    }
+                    is IrFieldSymbol -> IrSetFieldImpl(
+                        startOffset, endOffset, symbol, type, origin,
+                        variableAssignment.superQualifierSymbol(isField = true)
+                    ).apply { value = assignedValue }
                     is IrLocalDelegatedPropertySymbol -> {
                         val setter = symbol.owner.setter
                         when {
@@ -332,7 +345,7 @@ class CallAndReferenceGenerator(
                                 typeArgumentsCount = setter.typeParameters.size,
                                 valueArgumentsCount = 1,
                                 origin = origin,
-                                superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+                                superQualifierSymbol = variableAssignment.superQualifierSymbol()
                             ).apply {
                                 putValueArgument(0, assignedValue)
                             }
@@ -349,14 +362,14 @@ class CallAndReferenceGenerator(
                                 typeArgumentsCount = setter.typeParameters.size,
                                 valueArgumentsCount = 1,
                                 origin = origin,
-                                superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+                                superQualifierSymbol = variableAssignment.superQualifierSymbol()
                             ).apply {
                                 putValueArgument(0, assignedValue)
                             }
                             backingField != null -> IrSetFieldImpl(
                                 startOffset, endOffset, backingField.symbol, type,
                                 origin = null, // NB: to be consistent with PSI2IR, origin should be null here
-                                superQualifierSymbol = variableAssignment.dispatchReceiver.superQualifierSymbol()
+                                superQualifierSymbol = variableAssignment.superQualifierSymbol()
                             ).apply {
                                 value = assignedValue
                             }
