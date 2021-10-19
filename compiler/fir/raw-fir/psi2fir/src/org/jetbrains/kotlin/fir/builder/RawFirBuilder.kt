@@ -628,6 +628,7 @@ open class RawFirBuilder(
                 if (firParameter.isVararg) {
                     isFromVararg = true
                 }
+                firParameter.correspondingProperty = this
                 fromPrimaryConstructor = true
             }
         }
