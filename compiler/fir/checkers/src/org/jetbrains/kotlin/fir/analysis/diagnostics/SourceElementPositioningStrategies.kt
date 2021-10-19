@@ -334,4 +334,9 @@ object SourceElementPositioningStrategies {
         LightTreePositioningStrategies.PROPERTY_DELEGATE,
         PositioningStrategies.PROPERTY_DELEGATE
     )
+
+    val IMPORT_ALIAS = SourceElementPositioningStrategy(
+        LightTreePositioningStrategies.IMPORT_ALIAS,
+        PositioningStrategies.IMPORT_ALIAS
+    )
 }
