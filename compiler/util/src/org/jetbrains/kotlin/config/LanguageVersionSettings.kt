@@ -203,7 +203,7 @@ enum class LanguageFeature(
 
     SuspendFunctionAsSupertype(KOTLIN_1_6),
     UnrestrictedBuilderInference(KOTLIN_1_6),
-    ProperTypeInferenceConstraintsProcessing(KOTLIN_1_6, kind = BUG_FIX),
+    ProperTypeInferenceConstraintsProcessing(KOTLIN_1_7, kind = BUG_FIX),
     ClassTypeParameterAnnotations(KOTLIN_1_6),
     TypeInferenceOnCallsWithSelfTypes(KOTLIN_1_6),
     WarnAboutNonExhaustiveWhenOnAlgebraicTypes(KOTLIN_1_6, kind = BUG_FIX),
