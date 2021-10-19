@@ -61,11 +61,13 @@ dependencies {
     testCompile(projectTests(":plugins:lombok:lombok-compiler-plugin"))
     testCompile(projectTests(":kotlin-sam-with-receiver-compiler-plugin"))
     testCompile(projectTests(":kotlinx-serialization-compiler-plugin"))
+    testCompile(projectTests(":kotlinx-atomicfu-compiler-plugin"))
     testCompile(projectTests(":plugins:fir:fir-plugin-prototype"))
     testCompile(projectTests(":generators:test-generator"))
     testCompileOnly(project(":kotlin-reflect-api"))
     testRuntime(intellijDep()) { includeJars("idea_rt") }
     testRuntime(project(":kotlin-reflect"))
+    testRuntime(projectTests(":js:js.tests"))
 
     if (Ide.IJ()) {
         testCompileOnly(jpsBuildTest())
