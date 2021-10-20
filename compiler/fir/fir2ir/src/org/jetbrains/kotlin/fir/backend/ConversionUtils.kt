@@ -603,35 +603,30 @@ fun FirDeclaration?.computeIrOrigin(predefinedOrigin: IrDeclarationOrigin? = nul
         ?: IrDeclarationOrigin.DEFINED
 }
 
-fun FirVariableAssignment.getIrAssignmentOrigin(isPrefix: Boolean): IrStatementOrigin {
-    fun convertIncrement(): IrStatementOrigin {
-        return if (isPrefix) IrStatementOrigin.PREFIX_INCR else IrStatementOrigin.POSTFIX_INCR
-    }
-
-    fun convertDecrement(): IrStatementOrigin {
-        return if (isPrefix) IrStatementOrigin.PREFIX_DECR else IrStatementOrigin.POSTFIX_DECR
-    }
-
+fun FirVariableAssignment.getIrAssignmentOrigin(): IrStatementOrigin {
     val calleeReferenceSymbol = calleeReference.toResolvedCallableSymbol() ?: return IrStatementOrigin.EQ
     val rValue = rValue
     if (rValue is FirFunctionCall && calleeReferenceSymbol.callableId.isLocal) {
         val callableId = rValue.calleeReference.toResolvedCallableSymbol()?.callableId
         if (callableId?.classId == StandardClassIds.Int) {
-            val callableName = callableId.callableName.asString()
-            if (callableName == "inc") {
-                return convertIncrement()
-            } else if (callableName == "dec") {
-                return convertDecrement()
+            val callableName = callableId.callableName
+            if (callableName == OperatorNameConventions.INC) {
+                return if (source?.elementType == KtNodeTypes.PREFIX_EXPRESSION)
+                    IrStatementOrigin.PREFIX_INCR
+                else
+                    IrStatementOrigin.POSTFIX_INCR
+            } else if (callableName == OperatorNameConventions.DEC) {
+                return if (source?.elementType == KtNodeTypes.PREFIX_EXPRESSION)
+                    IrStatementOrigin.PREFIX_DECR
+                else
+                    IrStatementOrigin.POSTFIX_DECR
             }
 
             if (calleeReferenceSymbol == rValue.explicitReceiver?.toResolvedCallableSymbol()) {
-                val argument = ((rValue.arguments.singleOrNull() as? FirConstExpression<*>)?.value as? Long)
-                if (argument != null) {
-                    if (callableName == "plus" && argument >= -128 && argument <= 127) {
-                        return convertIncrement()
-                    } else if (callableName == "minus" && argument >= -127 && argument <= 128) {
-                        return convertDecrement()
-                    }
+                if (callableName == OperatorNameConventions.PLUS) {
+                    return IrStatementOrigin.PLUSEQ
+                } else if (callableName == OperatorNameConventions.MINUS) {
+                    return IrStatementOrigin.MINUSEQ
                 }
             }
         }

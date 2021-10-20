@@ -316,7 +316,7 @@ class CallAndReferenceGenerator(
             val calleeReference = variableAssignment.calleeReference
             val symbol =
                 calleeReference.toSymbolForCall(session, classifierStorage, declarationStorage, conversionScope, preferGetter = false)
-            val origin = variableAssignment.getIrAssignmentOrigin(isPrefix = true)
+            val origin = variableAssignment.getIrAssignmentOrigin()
 
             return variableAssignment.convertWithOffsets { startOffset, endOffset ->
                 val assignedValue = visitor.convertToIrExpression(variableAssignment.rValue)

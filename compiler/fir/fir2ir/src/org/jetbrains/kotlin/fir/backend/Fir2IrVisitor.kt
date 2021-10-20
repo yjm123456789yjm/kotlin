@@ -623,7 +623,7 @@ class Fir2IrVisitor(
         val variable = statement0.initializer?.toResolvedCallableSymbol() ?: return null
         if (incrementStatement.lValue.toResolvedCallableSymbol() != variable) return null
 
-        val origin = incrementStatement.getIrAssignmentOrigin(false)
+        val origin = incrementStatement.getIrAssignmentOrigin()
         return if (origin == IrStatementOrigin.EQ) null else origin
     }
 
