@@ -26,7 +26,7 @@ fun test6d(x: Any, y: Any): Boolean {
     when {
       x is Double -> y is Double
       else -> false
-    } -> x.equals(other = y /*as Double */)
+    } -> x /*as Double */.equals(other = y /*as Double */)
     else -> false
   }
 }
@@ -59,7 +59,7 @@ fun test6f(x: Any, y: Any): Boolean {
     when {
       x is Float -> y is Float
       else -> false
-    } -> x.equals(other = y /*as Float */)
+    } -> x /*as Float */.equals(other = y /*as Float */)
     else -> false
   }
 }
@@ -69,7 +69,7 @@ fun testFD(x: Any, y: Any): Boolean {
     when {
       x is Float -> y is Double
       else -> false
-    } -> x.equals(other = y /*as Double */)
+    } -> x /*as Float */.equals(other = y /*as Double */)
     else -> false
   }
 }
@@ -79,7 +79,7 @@ fun testDF(x: Any, y: Any): Boolean {
     when {
       x is Double -> y is Float
       else -> false
-    } -> x.equals(other = y /*as Float */)
+    } -> x /*as Double */.equals(other = y /*as Float */)
     else -> false
   }
 }
