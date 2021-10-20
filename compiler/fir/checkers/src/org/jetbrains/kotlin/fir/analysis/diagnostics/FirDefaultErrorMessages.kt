@@ -832,7 +832,7 @@ class FirDefaultErrorMessages {
             map.put(NAMED_PARAMETER_NOT_FOUND, "Cannot find a parameter with this name: {0}", TO_STRING)
             map.put(MANY_LAMBDA_EXPRESSION_ARGUMENTS, "Only one lambda expression is allowed outside a parenthesized argument list")
             map.put(SPREAD_OF_NULLABLE, "The spread operator (*foo) may not be applied to an argument of nullable type")
-            map.put(ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION, "Assigning single elements to varargs in named form is forbidden")
+            map.put(ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION, "Assigning single elements to varargs in named form is forbidden", NOT_RENDERED)
             map.put(ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION, "Assigning single elements to varargs in named form is forbidden")
             map.put(REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION, "Redundant spread (*) operator");
             map.put(REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION, "Redundant spread (*) operator");
