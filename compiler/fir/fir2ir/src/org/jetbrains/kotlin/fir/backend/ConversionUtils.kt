@@ -632,7 +632,9 @@ fun FirVariableAssignment.getIrAssignmentOrigin(): IrStatementOrigin {
                     IrStatementOrigin.POSTFIX_DECR
             }
 
-            if (calleeReferenceSymbol == rValue.explicitReceiver?.toResolvedCallableSymbol()) {
+            if (calleeReference.source?.kind is FirFakeSourceElementKind &&
+                calleeReferenceSymbol == rValue.explicitReceiver?.toResolvedCallableSymbol()
+            ) {
                 if (callableName == OperatorNameConventions.PLUS) {
                     return IrStatementOrigin.PLUSEQ
                 } else if (callableName == OperatorNameConventions.MINUS) {
