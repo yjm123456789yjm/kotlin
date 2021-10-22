@@ -142,7 +142,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         }
         function.annotations = function.annotations.filter { it.symbol != context.wasmSymbols.jsExportConstructor }
 
-        context.mapping.wasmJsInteropFunctionToWrapper[function] = newFun
         return listOf(function, newFun)
     }
 
