@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.symbols.IrScriptSymbol
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
 import org.jetbrains.kotlin.ir.util.getInlineClassUnderlyingType
 import org.jetbrains.kotlin.ir.util.isEffectivelyExternal
@@ -39,10 +40,21 @@ private fun IrTypeArgument.asString(): String = when (this) {
     else -> error("Unexpected kind of IrTypeArgument: " + javaClass.simpleName)
 }
 
-private fun IrClassifierSymbol.asString() = when (this) {
-    is IrTypeParameterSymbol -> this.owner.name.asString()
-    is IrClassSymbol -> this.owner.fqNameWhenAvailable!!.asString()
-    else -> error("Unexpected kind of IrClassifierSymbol: " + javaClass.typeName)
+private fun IrClassifierSymbol.asString(): String {
+    if (signature is IdSignature.CommonSignature) {
+        return with(signature as IdSignature.CommonSignature) {
+            "$packageFqName${packageFqName.ifNotEmpty { "." }}$declarationFqName"
+        }
+    }
+    return when (this) {
+        is IrTypeParameterSymbol -> owner.name.asString()
+        is IrClassSymbol -> owner.fqNameWhenAvailable!!.asString()
+        else -> error("Unexpected kind of IrClassifierSymbol: " + javaClass.typeName)
+    }
+}
+
+private inline fun String.ifNotEmpty(default: () -> String): String {
+    return if (isEmpty()) this else default()
 }
 
 /**

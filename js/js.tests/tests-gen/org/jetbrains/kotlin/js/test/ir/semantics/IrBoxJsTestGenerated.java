@@ -7204,6 +7204,16 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             runTest("js/js.translator/testData/box/operatorOverloading/operatorOverloadOnPropertyCallGetterAndSetterOnlyOnce.kt");
         }
 
+        @TestMetadata("overloadGetOperatorTwice.kt")
+        public void testOverloadGetOperatorTwice() throws Exception {
+            runTest("js/js.translator/testData/box/operatorOverloading/overloadGetOperatorTwice.kt");
+        }
+
+        @TestMetadata("overloadGetOperatorTwiceWithDifferentPackageTypes.kt")
+        public void testOverloadGetOperatorTwiceWithDifferentPackageTypes() throws Exception {
+            runTest("js/js.translator/testData/box/operatorOverloading/overloadGetOperatorTwiceWithDifferentPackageTypes.kt");
+        }
+
         @TestMetadata("overloadPlusAssignArrayList.kt")
         public void testOverloadPlusAssignArrayList() throws Exception {
             runTest("js/js.translator/testData/box/operatorOverloading/overloadPlusAssignArrayList.kt");

@@ -7765,6 +7765,18 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         }
 
         @Test
+        @TestMetadata("overloadGetOperatorTwice.kt")
+        public void testOverloadGetOperatorTwice() throws Exception {
+            runTest("js/js.translator/testData/box/operatorOverloading/overloadGetOperatorTwice.kt");
+        }
+
+        @Test
+        @TestMetadata("overloadGetOperatorTwiceWithDifferentPackageTypes.kt")
+        public void testOverloadGetOperatorTwiceWithDifferentPackageTypes() throws Exception {
+            runTest("js/js.translator/testData/box/operatorOverloading/overloadGetOperatorTwiceWithDifferentPackageTypes.kt");
+        }
+
+        @Test
         @TestMetadata("overloadPlusAssignArrayList.kt")
         public void testOverloadPlusAssignArrayList() throws Exception {
             runTest("js/js.translator/testData/box/operatorOverloading/overloadPlusAssignArrayList.kt");
