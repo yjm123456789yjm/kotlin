@@ -935,7 +935,7 @@ class KotlinGradleIT : BaseGradleIT() {
         val originalRootBuildScript = gradleBuildScript().readText()
         gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
 
-        build("publish", "-PmppProjectDependency=true", "-Dorg.gradle.debug=true") {
+        build("publish", "-PmppProjectDependency=true") {
             assertSuccessful()
             assertNotContains(MULTIPLE_KOTLIN_PLUGINS_LOADED_WARNING)
             assertNotContains(MULTIPLE_KOTLIN_PLUGINS_SPECIFIC_PROJECTS_WARNING)
