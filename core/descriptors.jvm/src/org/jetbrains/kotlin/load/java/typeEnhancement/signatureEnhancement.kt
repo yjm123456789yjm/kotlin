@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.load.java.typeEnhancement
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper
 import org.jetbrains.kotlin.descriptors.*
@@ -311,6 +312,8 @@ class SignatureEnhancement(
             }
         }
 
+        fun KotlinType.isArrayOrPrimitiveArray(): Boolean = KotlinBuiltIns.isArrayOrPrimitiveArray(this as KotlinType)
+
         private fun KotlinType.extractQualifiers(): JavaTypeQualifiers {
             val (lower, upper) =
                 if (this.isFlexible())
@@ -348,7 +351,7 @@ class SignatureEnhancement(
             val areImprovementsInStrictMode = containerContext.components.settings.typeEnhancementImprovementsInStrictMode
 
             val composedAnnotation =
-                if (isHeadTypeConstructor && typeContainer != null && typeContainer !is TypeParameterDescriptor && areImprovementsInStrictMode) {
+                if (isHeadTypeConstructor && typeContainer != null && typeContainer !is TypeParameterDescriptor && areImprovementsInStrictMode && isArrayOrPrimitiveArray()) {
                     val filteredContainerAnnotations = typeContainer.annotations.filter {
                         val (_, targets) = annotationTypeQualifierResolver.resolveAnnotation(it)
                             ?: return@filter true // don't exclude annotations without specified target or unresolved
