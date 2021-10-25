@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.util
 import org.jetbrains.kotlin.ir.declarations.IrTypeParametersContainer
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.types.impl.IrDefinitelyNotNullTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrTypeAbbreviationImpl
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
@@ -26,8 +27,11 @@ class DeepCopyTypeRemapper(
         // TODO
     }
 
-    override fun remapType(type: IrType): IrType =
-        if (type !is IrSimpleType)
+    override fun remapType(type: IrType): IrType {
+        if (type is IrDefinitelyNotNullType) {
+            return IrDefinitelyNotNullTypeImpl(null, remapType(type.original))
+        }
+        return if (type !is IrSimpleType)
             type
         else
             IrSimpleTypeImpl(
@@ -38,6 +42,7 @@ class DeepCopyTypeRemapper(
                 type.annotations.map { it.transform(deepCopy, null) as IrConstructorCall },
                 type.abbreviation?.remapTypeAbbreviation()
             )
+    }
 
     private fun remapTypeArgument(typeArgument: IrTypeArgument): IrTypeArgument =
         if (typeArgument is IrTypeProjection)
