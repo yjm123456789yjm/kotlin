@@ -5,8 +5,9 @@
 
 package org.jetbrains.kotlin.gradle.plugin
 
-import org.gradle.api.invocation.Gradle
 import org.gradle.api.logging.Logging
+import org.gradle.tooling.events.FinishEvent
+import org.gradle.tooling.events.OperationCompletionListener
 import org.jetbrains.kotlin.compilerRunner.DELETED_SESSION_FILE_PREFIX
 import org.jetbrains.kotlin.compilerRunner.GradleCompilerRunner
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
@@ -18,18 +19,21 @@ import java.io.File
 import java.lang.management.ManagementFactory
 import kotlin.math.max
 
-// move to KotlinGradleBuildListener when min supported version is 6.1
-class KotlinGradleFinishBuildHandler {
+class KotlinGradleBuildOperationListener(
+    private val rootProjectBuildDir: File,
+    private val rootProjectRootDir: File,
+    private val shouldReportMemoryUsage: Boolean
+) : OperationCompletionListener {
 
     private val log = Logging.getLogger(this.javaClass)
-    private var startMemory: Long? = null
-    private val shouldReportMemoryUsage = System.getProperty(KotlinGradleBuildServices.SHOULD_REPORT_MEMORY_USAGE_PROPERTY) != null
+    private var startMemory: Long? = getUsedMemoryKb()
 
-    fun buildStart() {
-        startMemory = getUsedMemoryKb()
+    companion object {
+        const val FORCE_SYSTEM_GC_MESSAGE = "Forcing System.gc()"
+        const val SHOULD_REPORT_MEMORY_USAGE_PROPERTY = "kotlin.gradle.test.report.memory.usage"
     }
 
-    fun buildFinished(rootProjectBuildDir: File, rootProjectRootDir: File) {
+    override fun onFinish(event: FinishEvent?) {
         TaskLoggers.clear()
         TaskExecutionResults.clear()
 
@@ -60,15 +64,10 @@ class KotlinGradleFinishBuildHandler {
         }
     }
 
-    fun buildFinished(gradle: Gradle) {
-        buildFinished(gradle.rootProject.buildDir, gradle.rootProject.rootDir)
-        gradle.removeListener(this)
-    }
-
     internal fun getUsedMemoryKb(): Long? {
         if (!shouldReportMemoryUsage) return null
 
-        log.lifecycle(KotlinGradleBuildServices.FORCE_SYSTEM_GC_MESSAGE)
+        log.lifecycle(FORCE_SYSTEM_GC_MESSAGE)
         val gcCountBefore = getGcCount()
         System.gc()
         while (getGcCount() == gcCountBefore) {

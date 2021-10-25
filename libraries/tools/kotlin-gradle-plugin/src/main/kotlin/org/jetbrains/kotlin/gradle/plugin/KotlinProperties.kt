@@ -366,6 +366,9 @@ internal class PropertiesProvider private constructor(private val project: Proje
             return KotlinCompilerExecutionStrategy.fromProperty(value)
         }
 
+    val kotlinGradleMemoryUsage: Boolean
+        get() = booleanProperty("kotlin.gradle.test.report.memory.usage") ?: false
+
     private fun propertyWithDeprecatedVariant(propName: String, deprecatedPropName: String): String? {
         val deprecatedProperty = property(deprecatedPropName)
         if (deprecatedProperty != null) {

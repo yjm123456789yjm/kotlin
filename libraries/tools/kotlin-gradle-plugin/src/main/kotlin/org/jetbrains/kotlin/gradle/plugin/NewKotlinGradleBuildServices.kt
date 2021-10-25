@@ -11,8 +11,6 @@ import org.gradle.api.logging.Logging
 import org.gradle.api.provider.Provider
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
-import org.gradle.tooling.events.FinishEvent
-import org.gradle.tooling.events.OperationCompletionListener
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskExecutionResults
 import org.jetbrains.kotlin.gradle.plugin.internal.state.TaskLoggers
@@ -21,38 +19,25 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildEsStatListener
 import org.jetbrains.kotlin.gradle.plugin.statistics.ReportStatisticsToBuildScan
 import org.jetbrains.kotlin.gradle.plugin.statistics.ReportStatisticsToElasticSearch
 import org.jetbrains.kotlin.gradle.report.configureReporting
-import java.io.File
 
-abstract class NewKotlinGradleBuildServices : BuildService<NewKotlinGradleBuildServices.Parameters>, AutoCloseable,
-    OperationCompletionListener {
-
-    interface Parameters : BuildServiceParameters {
-        var buildDir: File
-        var rootDir: File
-    }
+abstract class NewKotlinGradleBuildServices : BuildService<BuildServiceParameters.None>, AutoCloseable {
 
     private val log = Logging.getLogger(this.javaClass)
-    private var buildHandler: KotlinGradleFinishBuildHandler = KotlinGradleFinishBuildHandler()
     private val CLASS_NAME = NewKotlinGradleBuildServices::class.java.simpleName
     val INIT_MESSAGE = "Initialized $CLASS_NAME"
     val DISPOSE_MESSAGE = "Disposed $CLASS_NAME"
-    val CLOSE_MESSAGE = "Closed $CLASS_NAME"
 
     init {
         log.kotlinDebug(INIT_MESSAGE)
-    }
-
-    override fun onFinish(event: FinishEvent?) {
-        buildHandler.buildFinished(parameters.buildDir, parameters.rootDir)
-        log.kotlinDebug(DISPOSE_MESSAGE)
 
         TaskLoggers.clear()
         TaskExecutionResults.clear()
     }
 
     override fun close() {
-        onFinish(null)
-        log.kotlinDebug(CLOSE_MESSAGE)
+        log.kotlinDebug(DISPOSE_MESSAGE)
+        TaskLoggers.clear()
+        TaskExecutionResults.clear()
     }
 
     companion object {
@@ -60,10 +45,8 @@ abstract class NewKotlinGradleBuildServices : BuildService<NewKotlinGradleBuildS
         fun registerIfAbsent(project: Project): Provider<NewKotlinGradleBuildServices> = project.gradle.sharedServices.registerIfAbsent(
             "kotlin-build-service-${NewKotlinGradleBuildServices::class.java.canonicalName}_${NewKotlinGradleBuildServices::class.java.classLoader.hashCode()}",
             NewKotlinGradleBuildServices::class.java
-        ) { service ->
+        ) {
             configureReporting(project.gradle)
-            service.parameters.rootDir = project.rootProject.rootDir
-            service.parameters.buildDir = project.rootProject.buildDir
             addListeners(project)
         }
 
@@ -81,6 +64,16 @@ abstract class NewKotlinGradleBuildServices : BuildService<NewKotlinGradleBuildS
             val listenerRegistryHolder = BuildEventsListenerRegistryHolder.getInstance(project)
 
             listenerRegistryHolder.listenerRegistry.onTaskCompletion(kotlinGradleEsListenerProvider)
+
+            val buildFinishProvider = project.provider {
+                KotlinGradleBuildOperationListener(
+                    project.rootProject.buildDir,
+                    project.rootProject.rootDir,
+                    PropertiesProvider(project).kotlinGradleMemoryUsage
+                )
+            }
+
+            listenerRegistryHolder.listenerRegistry.onTaskCompletion(buildFinishProvider)
         }
 
     }

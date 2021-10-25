@@ -7,13 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.Project
 
-//Support Gradle 6 and less. Move to
 internal class KotlinGradleBuildServices {
-
-    companion object {
-        const val FORCE_SYSTEM_GC_MESSAGE = "Forcing System.gc()"
-        const val SHOULD_REPORT_MEMORY_USAGE_PROPERTY = "kotlin.gradle.test.report.memory.usage"
-    }
 
     private val multipleProjectsHolder = KotlinPluginInMultipleProjectsHolder(
         trackPluginVersionsSeparately = true

@@ -921,15 +921,6 @@ class KotlinGradleIT : BaseGradleIT() {
     }
 
     @Test
-    fun testBuildReportWithFileAsTargetDir() = with(Project("simpleProject")) {
-        workingDir.resolve("build/reports/kotlin-build").createNewFile()
-        build("assemble", "-Pkotlin.build.report.enable=true") {
-            assertSuccessful()
-            assertContains("Kotlin build report is written to")
-        }
-    }
-
-    @Test
     fun testKt29971() = with(Project("kt-29971", GradleVersionRequired.FOR_MPP_SUPPORT)) {
         build("jvm-app:build") {
             assertSuccessful()
@@ -944,7 +935,7 @@ class KotlinGradleIT : BaseGradleIT() {
         val originalRootBuildScript = gradleBuildScript().readText()
         gradleBuildScript().modify(::transformBuildScriptWithPluginsDsl)
 
-        build("publish", "-PmppProjectDependency=true") {
+        build("publish", "-PmppProjectDependency=true", "-Dorg.gradle.debug=true") {
             assertSuccessful()
             assertNotContains(MULTIPLE_KOTLIN_PLUGINS_LOADED_WARNING)
             assertNotContains(MULTIPLE_KOTLIN_PLUGINS_SPECIFIC_PROJECTS_WARNING)
