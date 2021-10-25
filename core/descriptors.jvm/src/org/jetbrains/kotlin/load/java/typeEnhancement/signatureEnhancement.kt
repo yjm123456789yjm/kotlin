@@ -312,7 +312,7 @@ class SignatureEnhancement(
             }
         }
 
-        fun KotlinType.isArrayOrPrimitiveArray(): Boolean = KotlinBuiltIns.isArrayOrPrimitiveArray(this as KotlinType)
+        fun KotlinType.isArrayOrPrimitiveArray(): Boolean = KotlinBuiltIns.isArrayOrPrimitiveArray(this)
 
         private fun KotlinType.extractQualifiers(): JavaTypeQualifiers {
             val (lower, upper) =
