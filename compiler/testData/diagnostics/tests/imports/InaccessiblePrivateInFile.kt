@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // MODULE: m1
 // FILE: f11.kt
 package api
@@ -23,7 +24,7 @@ package impl
 import api.*
 
 class NullArgumentMapping : ArgumentMapping {
-    // Return type should be api.ApplicabilityResult, in fact it's impl.ApplicabilityResult
+    // This is api.ApplicabilityResult
     override fun highlightingApplicabilities(): ApplicabilityResult = object : ApplicabilityResult {
     }
 }
