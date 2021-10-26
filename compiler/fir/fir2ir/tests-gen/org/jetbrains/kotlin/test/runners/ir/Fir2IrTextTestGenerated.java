@@ -2729,6 +2729,24 @@ public class Fir2IrTextTestGenerated extends AbstractFir2IrTextTest {
         }
 
         @Test
+        @TestMetadata("definitelyNotNullWithIntersection1.kt")
+        public void testDefinitelyNotNullWithIntersection1() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection1.kt");
+        }
+
+        @Test
+        @TestMetadata("definitelyNotNullWithIntersection2.kt")
+        public void testDefinitelyNotNullWithIntersection2() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection2.kt");
+        }
+
+        @Test
+        @TestMetadata("definitelyNotNullWithIntersection3.kt")
+        public void testDefinitelyNotNullWithIntersection3() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection3.kt");
+        }
+
+        @Test
         @TestMetadata("genericDelegatedDeepProperty.kt")
         public void testGenericDelegatedDeepProperty() throws Exception {
             runTest("compiler/testData/ir/irText/types/genericDelegatedDeepProperty.kt");

@@ -2011,6 +2011,21 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/types/definitelyNotNullAsReceiver.kt");
         }
 
+        @TestMetadata("definitelyNotNullWithIntersection1.kt")
+        public void testDefinitelyNotNullWithIntersection1() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection1.kt");
+        }
+
+        @TestMetadata("definitelyNotNullWithIntersection2.kt")
+        public void testDefinitelyNotNullWithIntersection2() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection2.kt");
+        }
+
+        @TestMetadata("definitelyNotNullWithIntersection3.kt")
+        public void testDefinitelyNotNullWithIntersection3() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection3.kt");
+        }
+
         @TestMetadata("genericDelegatedDeepProperty.kt")
         public void testGenericDelegatedDeepProperty() throws Exception {
             runTest("compiler/testData/ir/irText/types/genericDelegatedDeepProperty.kt");
