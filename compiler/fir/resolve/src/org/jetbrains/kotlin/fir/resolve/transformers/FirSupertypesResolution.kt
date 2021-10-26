@@ -85,6 +85,7 @@ fun <F : FirClassLikeDeclaration> F.runSupertypeResolvePhaseForLocalClass(
     localClassesNavigationInfo: LocalClassesNavigationInfo,
     firProviderInterceptor: FirProviderInterceptor?,
     useSiteFile: FirFile,
+    containingDeclarations: List<FirDeclaration>,
 ): F {
     val supertypeComputationSession = SupertypeComputationSession()
     val supertypeResolverVisitor = FirSupertypeResolverVisitor(
@@ -93,6 +94,7 @@ fun <F : FirClassLikeDeclaration> F.runSupertypeResolvePhaseForLocalClass(
         localClassesNavigationInfo,
         firProviderInterceptor,
         useSiteFile,
+        containingDeclarations,
     )
 
     this.accept(supertypeResolverVisitor, null)
@@ -207,9 +209,18 @@ open class FirSupertypeResolverVisitor(
     private val localClassesNavigationInfo: LocalClassesNavigationInfo? = null,
     private val firProviderInterceptor: FirProviderInterceptor? = null,
     private val useSiteFile: FirFile? = null,
+    containingDeclarations: List<FirDeclaration> = emptyList(),
 ) : FirDefaultVisitor<Unit, Any?>() {
     private val supertypeGenerationExtensions = session.extensionService.supertypeGenerators
     private val classDeclarationsStack = ArrayDeque<FirRegularClass>()
+
+    init {
+        containingDeclarations.forEach {
+            if (it is FirRegularClass) {
+                classDeclarationsStack.add(it)
+            }
+        }
+    }
 
     private fun getFirClassifierContainerFileIfAny(symbol: FirClassLikeSymbol<*>): FirFile? =
         if (firProviderInterceptor != null) firProviderInterceptor.getFirClassifierContainerFileIfAny(symbol)
