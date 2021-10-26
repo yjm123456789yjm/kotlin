@@ -669,7 +669,13 @@ internal abstract class FunctionGenerationContext(
              verbatim: Boolean = false,
              attributeProvider: LlvmFunctionAttributeProvider? = null
     ): LLVMValueRef {
-        val callArgs = if (verbatim || !isObjectReturn(llvmFunction.type)) {
+        val functionType = if (attributeProvider is LlvmFunctionSignature) {
+            attributeProvider.llvmFunctionType
+        } else {
+            LLVMGetElementType(llvmFunction.type)
+        }
+        val returnType = LLVMGetReturnType(functionType)!!
+        val callArgs = if (verbatim || !isObjectType(returnType)) {
             args
         } else {
             // If function returns an object - create slot for the returned value or give local arena.
@@ -679,8 +685,7 @@ internal abstract class FunctionGenerationContext(
                 SlotType.STACK -> {
                     localAllocs++
                     // Case of local call. Use memory allocated on stack.
-                    val type = LLVMGetReturnType(LLVMGetElementType(llvmFunction.type))!!
-                    val stackPointer = alloca(type)
+                    val stackPointer = alloca(returnType)
                     //val objectHeader = structGep(stackPointer, 0)
                     //setTypeInfoForLocalObject(objectHeader)
                     stackPointer
