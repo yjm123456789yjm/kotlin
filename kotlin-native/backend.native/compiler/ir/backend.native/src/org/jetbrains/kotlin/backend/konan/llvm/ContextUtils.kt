@@ -442,8 +442,6 @@ internal class Llvm(val context: Context, val llvmModule: LLVMModuleRef) : Runti
 
     private fun importRtFunction(name: String) = importFunction(name, runtime.llvmModule)
 
-    private fun importRtGlobal(name: String) = importGlobal(name, runtime.llvmModule)
-
     val allocInstanceFunction = importRtFunction("AllocInstance")
     val allocArrayFunction = importRtFunction("AllocArrayInstance")
     val initThreadLocalSingleton = importRtFunction("InitThreadLocalSingleton")
@@ -532,50 +530,61 @@ internal class Llvm(val context: Context, val llvmModule: LLVMModuleRef) : Runti
         else -> "__gxx_personality_v0"
     }
 
-    val cxxStdTerminate = externalFunction(LlvmFunctionProto(
-            "_ZSt9terminatev", // mangled C++ 'std::terminate'
-            returnType = LlvmRetType(voidType),
-            functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
-            origin = context.standardLlvmSymbolsOrigin
-    ))
+    val cxxStdTerminate by lazy {
+        externalFunction(LlvmFunctionProto(
+                "_ZSt9terminatev", // mangled C++ 'std::terminate'
+                returnType = LlvmRetType(voidType),
+                functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
+                origin = context.standardLlvmSymbolsOrigin
+        ))
+    }
 
-    val gxxPersonalityFunction = externalFunction(LlvmFunctionProto(
-            personalityFunctionName,
-            returnType = LlvmRetType(int32Type),
-            functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
-            isVararg = true,
-            origin = context.standardLlvmSymbolsOrigin
-    ))
+    val gxxPersonalityFunction by lazy {
+        externalFunction(LlvmFunctionProto(
+                personalityFunctionName,
+                returnType = LlvmRetType(int32Type),
+                functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
+                isVararg = true,
+                origin = context.standardLlvmSymbolsOrigin
+        ))
+    }
 
-    val cxaBeginCatchFunction = externalFunction(LlvmFunctionProto(
-            "__cxa_begin_catch",
-            returnType = LlvmRetType(int8TypePtr),
-            functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
-            parameterTypes = listOf(LlvmParamType(int8TypePtr)),
-            origin = context.standardLlvmSymbolsOrigin
-    ))
+    val cxaBeginCatchFunction: LlvmCallable by lazy {
+        externalFunction(LlvmFunctionProto(
+                "__cxa_begin_catch",
+                returnType = LlvmRetType(int8TypePtr),
+                functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
+                parameterTypes = listOf(LlvmParamType(int8TypePtr)),
+                origin = context.standardLlvmSymbolsOrigin
+        ))
+    }
 
-    val cxaEndCatchFunction = externalFunction(LlvmFunctionProto(
-            "__cxa_end_catch",
-            returnType = LlvmRetType(voidType),
-            functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
-            origin = context.standardLlvmSymbolsOrigin
-    ))
+    val cxaEndCatchFunction: LlvmCallable by lazy {
+        externalFunction(LlvmFunctionProto(
+                "__cxa_end_catch",
+                returnType = LlvmRetType(voidType),
+                functionAttributes = listOf(LlvmFunctionAttribute.NoUnwind),
+                origin = context.standardLlvmSymbolsOrigin
+        ))
+    }
 
-    val memsetFunction = importMemset()
-    //val memcpyFunction = importMemcpy()
+    val memsetFunction: LlvmCallable by lazy { importMemset() }
 
-    val llvmTrap = llvmIntrinsic(
-            "llvm.trap",
-            functionType(voidType, false),
-            "cold", "noreturn", "nounwind"
-    )
+    val llvmTrap: LlvmCallable by lazy {
+        llvmIntrinsic(
+                "llvm.trap",
+                functionType(voidType, false),
+                "cold", "noreturn", "nounwind"
+        )
+    }
 
-    val llvmEhTypeidFor = llvmIntrinsic(
-            "llvm.eh.typeid.for",
-            functionType(int32Type, false, int8TypePtr),
-            "nounwind", "readnone"
-    )
+    val llvmEhTypeidFor: LlvmCallable by lazy {
+        llvmIntrinsic(
+                "llvm.eh.typeid.for",
+                functionType(int32Type, false, int8TypePtr),
+                "nounwind", "readnone"
+        )
+    }
 
     val usedFunctions = mutableListOf<LLVMValueRef>()
     val usedGlobals = mutableListOf<LLVMValueRef>()
