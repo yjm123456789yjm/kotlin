@@ -94,8 +94,8 @@ internal class DebugInfo internal constructor(override val context: Context):Con
 /**
  * File entry starts offsets from zero while dwarf number lines/column starting from 1.
  */
-private val NO_SOURCE_FILE = "no source file"
-private fun IrFileEntry.location(offset: Int, offsetToNumber: (Int) -> Int): Int {
+private const val NO_SOURCE_FILE = "no source file"
+private inline fun IrFileEntry.location(offset: Int, offsetToNumber: (Int) -> Int): Int {
     assert(offset != UNDEFINED_OFFSET)
     // Part "name.isEmpty() || name == NO_SOURCE_FILE" is an awful hack, @minamoto, please fix properly.
     if (offset == SYNTHETIC_OFFSET || name.isEmpty() || name == NO_SOURCE_FILE) return 1

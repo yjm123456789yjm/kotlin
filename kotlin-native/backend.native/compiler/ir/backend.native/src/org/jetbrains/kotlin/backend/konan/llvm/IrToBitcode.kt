@@ -711,6 +711,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             val declaration: IrFunction?,
             val llvmFunction: LLVMValueRef) : InnerScopeImpl() {
 
+        private val locationInfoCache = mutableMapOf<Int, LocationInfo>()
+
         constructor(declaration: IrFunction, functionGenerationContext: FunctionGenerationContext) :
                 this(functionGenerationContext, declaration, codegen.llvmFunction(declaration).llvmValue)
 
@@ -747,7 +749,13 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
 
         private val fileScope = (fileScope() as? FileScope)
-        override fun location(offset: Int) = scope?.let { scope -> fileScope?.let{LocationInfo(scope, it.file.fileEntry.line(offset), it.file.fileEntry.column(offset)) } }
+        override fun location(offset: Int) = scope?.let { scope ->
+            fileScope?.let {
+                locationInfoCache.getOrPut(offset) {
+                    LocationInfo(scope, it.file.fileEntry.line(offset), it.file.fileEntry.column(offset))
+                }
+            }
+        }
 
         override fun scope() = scope
     }
@@ -1919,6 +1927,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                     ?: (currentCodeContext.fileScope() as? FileScope)?.file
                     ?: error("returnable block should belong to current file at least")) {
 
+        private val locationInfoCache = mutableMapOf<Int, LocationInfo>()
+
         var bbExit : LLVMBasicBlockRef? = null
         var resultPhi : LLVMValueRef? = null
         private val functionScope by lazy {
@@ -1962,7 +1972,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         override fun returnableBlockScope(): CodeContext? = this
 
-        override fun location(offset: Int): LocationInfo? {
+        override fun location(offset: Int): LocationInfo? = locationInfoCache.getOrPut(offset) {
             return if (returnableBlock.inlineFunctionSymbol != null) {
                 val diScope = functionScope ?: return null
                 val inlinedAt = outerContext.location(returnableBlock.startOffset) ?: return null
