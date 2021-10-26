@@ -2705,6 +2705,30 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         }
 
         @Test
+        @TestMetadata("definitelyNonNull.kt")
+        public void testDefinitelyNonNull() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNonNull.kt");
+        }
+
+        @Test
+        @TestMetadata("definitelyNonNullWithJava.kt")
+        public void testDefinitelyNonNullWithJava() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNonNullWithJava.kt");
+        }
+
+        @Test
+        @TestMetadata("definitelyNotNullAsArgument.kt")
+        public void testDefinitelyNotNullAsArgument() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullAsArgument.kt");
+        }
+
+        @Test
+        @TestMetadata("definitelyNotNullAsReceiver.kt")
+        public void testDefinitelyNotNullAsReceiver() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNotNullAsReceiver.kt");
+        }
+
+        @Test
         @TestMetadata("genericDelegatedDeepProperty.kt")
         public void testGenericDelegatedDeepProperty() throws Exception {
             runTest("compiler/testData/ir/irText/types/genericDelegatedDeepProperty.kt");
@@ -2828,6 +2852,12 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         @TestMetadata("typeAliasWithUnsafeVariance.kt")
         public void testTypeAliasWithUnsafeVariance() throws Exception {
             runTest("compiler/testData/ir/irText/types/typeAliasWithUnsafeVariance.kt");
+        }
+
+        @Test
+        @TestMetadata("typeCheckOnDefinitelyNotNull.kt")
+        public void testTypeCheckOnDefinitelyNotNull() throws Exception {
+            runTest("compiler/testData/ir/irText/types/typeCheckOnDefinitelyNotNull.kt");
         }
 
         @Nested

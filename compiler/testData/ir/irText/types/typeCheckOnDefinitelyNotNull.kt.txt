@@ -1,0 +1,8 @@
+fun <T : Any?> asFoo(t: T): (T & Any) {
+  return t as (T & Any)
+}
+
+fun <T : Any?> safeAsFoo(t: T): T? {
+  return t as? (T & Any)
+}
+
