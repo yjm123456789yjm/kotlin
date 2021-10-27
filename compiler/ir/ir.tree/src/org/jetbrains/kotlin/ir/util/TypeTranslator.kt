@@ -44,6 +44,8 @@ abstract class TypeTranslator(
 
     private val erasureStack = Stack<PropertyDescriptor>()
 
+    private val supportDefinitelyNotTypes: Boolean = languageVersionSettings.supportsFeature(LanguageFeature.DefinitelyNonNullableTypes)
+
     protected abstract fun isTypeAliasAccessibleHere(typeAliasDescriptor: TypeAliasDescriptor): Boolean
 
     fun enterScope(irElement: IrTypeParametersContainer) {
@@ -97,7 +99,7 @@ abstract class TypeTranslator(
                 return IrErrorTypeImpl(approximatedType, translateTypeAnnotations(approximatedType), variance)
             approximatedType.isDynamic() ->
                 return IrDynamicTypeImpl(approximatedType, translateTypeAnnotations(approximatedType), variance)
-            approximatedType is DefinitelyNotNullType ->
+            supportDefinitelyNotTypes && approximatedType is DefinitelyNotNullType ->
                 return makeTypeProjection(IrDefinitelyNotNullTypeImpl(approximatedType, translateType(approximatedType.original)), variance)
         }
 
