@@ -208,9 +208,34 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
 
         if (this is IrSimpleType && this.isFunction()) {
             val functionTypeInfo = FunctionTypeInfo(this, toJs = true)
+
+            // Kotlin's closures are objects that implement FunctionN interface.
+            // JavaScript can receive opaque reference to them but cannot call them directly.
+            // Thus, we export helper "caller" method that JavaScript will use to call kotlin closures:
+            //
+            //     @JsExport
+            //     fun __callFunction_<signatureHash>(f: dataref, p1: JsType1, p2: JsType2, ...): JsTypeRes {
+            //          return adapt(
+            //              cast<FunctionN>(f).invoke(
+            //                  adapt(p1),
+            //                  adapt(p2),
+            //                  ...
+            //               )
+            //          )
+            //     }
+            //
             signatureToClosureCallExport.getOrPut(this) {
                 createKotlinClosureCaller(functionTypeInfo)
             }
+
+            // Converter functions creates new JavaScript closures that delegate to Kotlin closures
+            // using above-mentioned "caller" export:
+            //
+            //     @JsFun("""(f) => {
+            //        (p1, p2, ...) => <wasm-exports>.__callFunction_<signatureHash>(f, p1, p2, ...)
+            //     }""")
+            //     external fun __convertKotlinClosureToJsClosure_<signatureHash>(f: dataref): ExternalRef
+            //
             val kotlinToJsClosureConvertor = signatureToKotlinClosureToJsConverter.getOrPut(this) {
                 createKotlinToJsClosureConvertor(functionTypeInfo)
             }
@@ -248,9 +273,25 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
 
         if (this is IrSimpleType && this.isFunction()) {
             val functionTypeInfo = FunctionTypeInfo(this, toJs = false)
+
+            // JavaScript's closures are external references that cannot be called directly in WebAssembly.
+            // Thus, we import helper "caller" method that WebAssembly will use to call JS closures:
+            //
+            //     @JsFun("(x, p0, p1, ...) => f(p0, p1, ...)")
+            //     external fun __callJsClosure_<signatureHash>(f: ExternalRef, p0: JsType1, p1: JsType2, ...): JsResType
+            //
             val jsClosureCaller = signatureToJsClosureCaller.getOrPut(this) {
                 createJsClosureCaller(functionTypeInfo)
             }
+
+            // Converter functions creates new Kotlin closure that delegate to JS closure
+            // using above-mentioned "caller" import:
+            //
+            //     fun __convertJsClosureToKotlinClosure_<signatureHash>(f: ExternalRef) : FunctionN<KotlinType1, ..., KotlinResType> =
+            //       { p0: KotlinType1, p1: KotlinType2, ... ->
+            //          adapt(__callJsClosure_<signatureHash>(f, adapt(p0), adapt(p1), ..))
+            //       }
+            //
             val jsToKotlinClosure = signatureToJsToKotlinClosure.getOrPut(this) {
                 createJsToKotlinClosureConverter(functionTypeInfo, jsClosureCaller)
             }
@@ -260,11 +301,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         return ReceivingKotlinObjectFromJsAdapter(this)
     }
 
-    // @JsExport
-    // fun __callFunction_<signatureHash>(f: dataref, param1: P1JsType, pram2: P2JsType, ...): ResultJsType {
-    //      val res = FunctionN$invoke(cast<FunctionN>(f), adapt(param1), adapt(param2), ...)
-    //      return adapt(res);
-    // }
     private fun createKotlinClosureCaller(info: FunctionTypeInfo): IrSimpleFunction {
         val result = context.irFactory.buildFun {
             name = Name.identifier("__callFunction_${info.hashString}")
@@ -302,10 +338,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         return result
     }
 
-    // @JsFun("(f) => {
-    //    (p1, p2, ...) => exports.__callFunction_<signatureHash>(f, p1, p2, ...)
-    // }")
-    // external fun __convertKotlinClosureToJsClosure_<signatureHash>(f: dataref): anyref
     private fun createKotlinToJsClosureConvertor(info: FunctionTypeInfo): IrSimpleFunction {
         val result = context.irFactory.buildFun {
             name = Name.identifier("__convertKotlinClosureToJsClosure_${info.hashString}")
@@ -337,8 +369,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         return result
     }
 
-    // fun __convertJsClosureToKotlinClosure_<signatureHash>(f: ExternalRef) : FunctionN =
-    //   { p0, p1, ... -> adapt(callJsRef(f, adapt(p0), adapt(p1), ..)) }
     private fun createJsToKotlinClosureConverter(
         info: FunctionTypeInfo,
         jsClosureCaller: IrSimpleFunction,
@@ -397,8 +427,6 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
         return result
     }
 
-    // @JsFun("(x, p0, p1, ...) => f(p0, p1, ...)")
-    // external fun __callJsClosure_<signatureHash>(f: ExternalInterfaceType, p0: P0Type, p1: P1Type, p2: P2Type): ResT
     private fun createJsClosureCaller(info: FunctionTypeInfo): IrSimpleFunction {
         val result = context.irFactory.buildFun {
             name = Name.identifier("__callJsClosure_${info.hashString}")
