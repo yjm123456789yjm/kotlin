@@ -103,7 +103,7 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
     override fun visitGetValue(expression: IrGetValue, context: JsGenerationContext): JsExpression {
         if (expression.symbol.owner.isThisReceiver()) return JsThisRef().withSource(expression, context)
         val possibleGlobalVarRef = context.getNameForValueDeclaration(expression.symbol.owner).makeRef().withSource(expression, context)
-        return jsGlobalVarRef(possibleGlobalVarRef)
+        return jsGlobalVarRef(possibleGlobalVarRef, context)
     }
 
     override fun visitGetObjectValue(expression: IrGetObjectValue, context: JsGenerationContext): JsExpression {
@@ -112,7 +112,7 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
         assert(obj.isEffectivelyExternal()) { "Non external IrGetObjectValue must be lowered" }
 
         val possibleGlobalVarRef = context.getRefForExternalClass(obj).withSource(expression, context)
-        return jsGlobalVarRef(possibleGlobalVarRef)
+        return jsGlobalVarRef(possibleGlobalVarRef, context)
     }
 
     override fun visitSetField(expression: IrSetField, context: JsGenerationContext): JsExpression {
@@ -124,7 +124,7 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
 
     override fun visitSetValue(expression: IrSetValue, context: JsGenerationContext): JsExpression {
         val possibleGlobalRef = JsNameRef(context.getNameForValueDeclaration(expression.symbol.owner))
-        val ref = jsGlobalVarRef(possibleGlobalRef)
+        val ref = jsGlobalVarRef(possibleGlobalRef, context)
         val value = expression.value.accept(this, context)
         return JsBinaryOperation(JsBinaryOperator.ASG, ref, value).withSource(expression, context)
     }

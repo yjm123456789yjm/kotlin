@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.js.backend.ast.*
+import org.jetbrains.kotlin.js.common.JsLanguageFeature
 import org.jetbrains.kotlin.js.common.isValidES5Identifier
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -28,6 +29,21 @@ fun jsVar(name: JsName, initializer: IrExpression?, context: JsGenerationContext
     val jsInitializer = initializer?.accept(IrElementToJsExpressionTransformer(), context)
     return JsVars(JsVars.JsVar(name, jsInitializer))
 }
+
+fun jsElementAccess(name: String, receiver: JsExpression?): JsExpression =
+    if (receiver == null || name.isValidES5Identifier()) {
+        JsNameRef(JsName(name, false), receiver)
+    } else {
+        JsArrayAccess(receiver, JsStringLiteral(name))
+    }
+
+fun jsGlobalVarRef(ref: JsNameRef, context: JsGenerationContext): JsExpression =
+    if (ref.qualifier != null || ref.ident.isValidES5Identifier()) {
+        ref
+    } else {
+        jsElementAccess(ref.ident, JsNameRef("globalThis"))
+            .also { context.staticContext.languageFeaturesContext.requestFeature(JsLanguageFeature.GLOBAL_THIS) }
+    }
 
 fun <T : JsNode> IrWhen.toJsNode(
     tr: BaseIrElementToJsNodeTransformer<T, JsGenerationContext>,
@@ -42,39 +58,6 @@ fun <T : JsNode> IrWhen.toJsNode(
             val condition = br.condition.accept(IrElementToJsExpressionTransformer(), data)
             node(condition, body, n)
         }
-    }
-
-// https://mathiasbynens.be/notes/globalthis
-// TODO: add DCE for globalThis polyfill declaration
-fun jsGlobalThisPolyfill(): List<JsStatement> =
-    parseJsCode(
-        """
-        (function() {
-            if (typeof globalThis === 'object') return; 
-            Object.defineProperty(Object.prototype, '__magic__', {
-                get: function() {
-                    return this;
-                },
-                configurable: true
-            });
-            __magic__.globalThis = __magic__;
-            delete Object.prototype.__magic__;
-        }());
-        """.trimIndent()
-    ) ?: emptyList()
-
-fun jsElementAccess(name: String, receiver: JsExpression?): JsExpression =
-    if (receiver == null || name.isValidES5Identifier()) {
-        JsNameRef(JsName(name, false), receiver)
-    } else {
-        JsArrayAccess(receiver, JsStringLiteral(name))
-    }
-
-fun jsGlobalVarRef(ref: JsNameRef): JsExpression =
-    if (ref.qualifier != null || ref.ident.isValidES5Identifier()) {
-        ref
-    } else {
-        jsElementAccess(ref.ident, JsNameRef("globalThis"))
     }
 
 fun jsAssignment(left: JsExpression, right: JsExpression) = JsBinaryOperation(JsBinaryOperator.ASG, left, right)
@@ -150,7 +133,7 @@ fun translateCall(
         if (property != null && property.isEffectivelyExternal()) {
             val propertyName = context.getNameForProperty(property)
             val nameRef = when (jsDispatchReceiver) {
-                null -> jsGlobalVarRef(JsNameRef(propertyName))
+                null -> jsGlobalVarRef(JsNameRef(propertyName), context)
                 else -> jsElementAccess(propertyName.ident, jsDispatchReceiver)
             }
             return when (function) {
@@ -194,7 +177,7 @@ fun translateCall(
     }
 
     val ref = when (jsDispatchReceiver) {
-        null -> jsGlobalVarRef(JsNameRef(symbolName))
+        null -> jsGlobalVarRef(JsNameRef(symbolName), context)
         else -> jsElementAccess(symbolName.ident, jsDispatchReceiver)
     }
 
