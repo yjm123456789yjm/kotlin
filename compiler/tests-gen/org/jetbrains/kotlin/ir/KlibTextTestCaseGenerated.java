@@ -2001,6 +2001,16 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
             runTest("compiler/testData/ir/irText/types/definitelyNonNull.kt");
         }
 
+        @TestMetadata("definitelyNonNullOverride.kt")
+        public void testDefinitelyNonNullOverride() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNonNullOverride.kt");
+        }
+
+        @TestMetadata("definitelyNonNullSAM.kt")
+        public void testDefinitelyNonNullSAM() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNonNullSAM.kt");
+        }
+
         @TestMetadata("definitelyNotNullAsArgument.kt")
         public void testDefinitelyNotNullAsArgument() throws Exception {
             runTest("compiler/testData/ir/irText/types/definitelyNotNullAsArgument.kt");
@@ -2014,16 +2024,6 @@ public class KlibTextTestCaseGenerated extends AbstractKlibTextTestCase {
         @TestMetadata("definitelyNotNullWithIntersection1.kt")
         public void testDefinitelyNotNullWithIntersection1() throws Exception {
             runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection1.kt");
-        }
-
-        @TestMetadata("definitelyNotNullWithIntersection2.kt")
-        public void testDefinitelyNotNullWithIntersection2() throws Exception {
-            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection2.kt");
-        }
-
-        @TestMetadata("definitelyNotNullWithIntersection3.kt")
-        public void testDefinitelyNotNullWithIntersection3() throws Exception {
-            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection3.kt");
         }
 
         @TestMetadata("genericDelegatedDeepProperty.kt")

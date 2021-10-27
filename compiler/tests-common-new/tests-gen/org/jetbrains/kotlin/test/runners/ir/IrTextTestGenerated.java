@@ -2711,6 +2711,18 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         }
 
         @Test
+        @TestMetadata("definitelyNonNullOverride.kt")
+        public void testDefinitelyNonNullOverride() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNonNullOverride.kt");
+        }
+
+        @Test
+        @TestMetadata("definitelyNonNullSAM.kt")
+        public void testDefinitelyNonNullSAM() throws Exception {
+            runTest("compiler/testData/ir/irText/types/definitelyNonNullSAM.kt");
+        }
+
+        @Test
         @TestMetadata("definitelyNonNullWithJava.kt")
         public void testDefinitelyNonNullWithJava() throws Exception {
             runTest("compiler/testData/ir/irText/types/definitelyNonNullWithJava.kt");
@@ -2732,18 +2744,6 @@ public class IrTextTestGenerated extends AbstractIrTextTest {
         @TestMetadata("definitelyNotNullWithIntersection1.kt")
         public void testDefinitelyNotNullWithIntersection1() throws Exception {
             runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection1.kt");
-        }
-
-        @Test
-        @TestMetadata("definitelyNotNullWithIntersection2.kt")
-        public void testDefinitelyNotNullWithIntersection2() throws Exception {
-            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection2.kt");
-        }
-
-        @Test
-        @TestMetadata("definitelyNotNullWithIntersection3.kt")
-        public void testDefinitelyNotNullWithIntersection3() throws Exception {
-            runTest("compiler/testData/ir/irText/types/definitelyNotNullWithIntersection3.kt");
         }
 
         @Test
