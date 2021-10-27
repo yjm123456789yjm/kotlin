@@ -28,13 +28,9 @@ class DeepCopyTypeRemapper(
     }
 
     override fun remapType(type: IrType): IrType {
-        if (type is IrDefinitelyNotNullType) {
-            return IrDefinitelyNotNullTypeImpl(null, remapType(type.original))
-        }
-        return if (type !is IrSimpleType)
-            type
-        else
-            IrSimpleTypeImpl(
+        return when (type) {
+            is IrDefinitelyNotNullType -> IrDefinitelyNotNullTypeImpl(null, remapType(type.original))
+            is IrSimpleType -> IrSimpleTypeImpl(
                 null,
                 symbolRemapper.getReferencedClassifier(type.classifier),
                 type.hasQuestionMark,
@@ -42,6 +38,8 @@ class DeepCopyTypeRemapper(
                 type.annotations.map { it.transform(deepCopy, null) as IrConstructorCall },
                 type.abbreviation?.remapTypeAbbreviation()
             )
+            else -> type
+        }
     }
 
     private fun remapTypeArgument(typeArgument: IrTypeArgument): IrTypeArgument =
