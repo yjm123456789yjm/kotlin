@@ -180,6 +180,8 @@ abstract class BasicIrBoxTest(
 
     val runEs6Mode: Boolean = getBoolean("kotlin.js.ir.es6", false)
 
+    val runNewIr2Js: Boolean = getBoolean("kotlin.js.ir.newIr2Js", false)
+
     val perModule: Boolean = getBoolean("kotlin.js.ir.perModule")
 
     // TODO Design incremental compilation for IR and add test support
@@ -427,16 +429,29 @@ abstract class BasicIrBoxTest(
     ): CompilerResult {
         check(granularity != PER_FILE) { "Per file granularity is not supported for old module systems" }
 
-        val transformer = IrModuleToJsTransformerTmp(
-            context,
-            mainArguments,
-            fullJs = true,
-            dceJs = runDce,
-            multiModule = granularity == PER_MODULE,
-            relativeRequirePath = false
-        )
+        if (runNewIr2Js) {
+            val transformer = IrModuleToJsTransformerTmp(
+                context,
+                mainArguments,
+                fullJs = true,
+                dceJs = runDce,
+                multiModule = granularity == PER_MODULE,
+                relativeRequirePath = false
+            )
 
-        return transformer.generateModule(allModules)
+            return transformer.generateModule(allModules)
+        } else {
+            val transformer = IrModuleToJsTransformer(
+                context,
+                mainArguments,
+                fullJs = true,
+                dceJs = runDce,
+                multiModule = granularity == PER_MODULE,
+                relativeRequirePath = false
+            )
+
+            return transformer.generateModule(allModules)
+        }
     }
 
     private fun generateOldModuleSystems(
