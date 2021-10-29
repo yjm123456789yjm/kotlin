@@ -60,6 +60,7 @@ fun compile(
     safeExternalBooleanDiagnostic: RuntimeDiagnostic? = null,
     filesToLower: Set<String>? = null,
     granularity: JsGenerationGranularity = JsGenerationGranularity.WHOLE_PROGRAM,
+    icCompatibleIr2Js: Boolean = false,
 ): LoweredIr {
 
     if (lowerPerModule) {
@@ -101,7 +102,8 @@ fun compile(
         baseClassIntoMetadata = baseClassIntoMetadata,
         safeExternalBoolean = safeExternalBoolean,
         safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
-        granularity = granularity
+        granularity = granularity,
+        icCompatibleIr2Js = icCompatibleIr2Js,
     )
 
     // Load declarations referenced during `context` initialization

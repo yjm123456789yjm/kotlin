@@ -418,7 +418,8 @@ abstract class BasicIrBoxTest(
             safeExternalBoolean = safeExternalBoolean,
             safeExternalBooleanDiagnostic = safeExternalBooleanDiagnostic,
             granularity = granularity,
-            filesToLower = dirtyFilesToRecompile
+            filesToLower = dirtyFilesToRecompile,
+            icCompatibleIr2Js = runNewIr2Js,
         )
     }
 

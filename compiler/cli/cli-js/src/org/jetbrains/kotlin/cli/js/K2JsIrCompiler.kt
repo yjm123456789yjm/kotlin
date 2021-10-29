@@ -360,7 +360,8 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     messageCollector
                 ),
                 lowerPerModule = icCaches.isNotEmpty(),
-                granularity = granularity
+                granularity = granularity,
+                icCompatibleIr2Js = arguments.irNewIr2Js,
             )
 
             val compiledModule: CompilerResult = if (arguments.irNewIr2Js) {
