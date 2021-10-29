@@ -153,7 +153,6 @@ class IrModuleToJsTransformer(
         val moduleBody = generateModuleBody(modules, staticContext)
 
         val internalModuleName = JsName("_", false)
-        val globalThisDeclaration = jsGlobalThisPolyfill();
         val globalNames = NameTable<String>(namer.globalNames)
         val exportStatements = ExportModelToJsStatements(nameGenerator) { globalNames.declareFreshName(it, it) }
             .generateModuleExport(exportedModule, internalModuleName)
@@ -164,7 +163,6 @@ class IrModuleToJsTransformer(
         val program = JsProgram()
         if (generateScriptModule) {
             with(program.globalBlock) {
-                statements += globalThisDeclaration
                 statements.addWithComment("block: imports", importStatements + crossModuleImports)
                 statements += moduleBody
                 statements.addWithComment("block: exports", exportStatements + crossModuleExports)
@@ -174,7 +172,6 @@ class IrModuleToJsTransformer(
                 parameters += JsParameter(internalModuleName)
                 parameters += (importedJsModules + importedKotlinModules).map { JsParameter(it.internalName) }
                 with(body) {
-                    statements += globalThisDeclaration
                     statements.addWithComment("block: imports", importStatements + crossModuleImports)
                     statements += moduleBody
                     statements.addWithComment("block: exports", exportStatements + crossModuleExports)
