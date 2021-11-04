@@ -29,6 +29,6 @@ abstract class KtFe10ArrayAccessReference(expression: KtArrayAccessExpression) :
 
 class CliKtFe10ArrayAccessReference(expression: KtArrayAccessExpression) : KtFe10ArrayAccessReference(expression), CliKtFe10Reference {
     override fun handleElementRename(newElementName: String): PsiElement? {
-        throw NotImplementedError("Renaming is not supported")
+        throw NotImplementedError("Renaming is not supported in CLI implementation")
     }
 }

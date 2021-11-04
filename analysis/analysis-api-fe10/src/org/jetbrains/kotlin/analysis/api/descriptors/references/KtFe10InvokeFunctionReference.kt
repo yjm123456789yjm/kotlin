@@ -31,6 +31,6 @@ internal class CliKtFe10InvokeFunctionReference(
     expression: KtCallExpression
 ) : KtFe10InvokeFunctionReference(expression), CliKtFe10Reference {
     override fun doRenameImplicitConventionalCall(newName: String?): KtExpression {
-        throw NotImplementedError("Renaming is not supported")
+        throw NotImplementedError("Renaming is not supported in CLI implementation")
     }
 }

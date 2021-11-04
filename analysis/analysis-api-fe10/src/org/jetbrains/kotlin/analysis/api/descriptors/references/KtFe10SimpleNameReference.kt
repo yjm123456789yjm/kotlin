@@ -45,18 +45,18 @@ internal class CliKtFe10SimpleNameReference(
     }
 
     override fun handleElementRename(newElementName: String): PsiElement? {
-        throw NotImplementedError("Renaming is not supported")
+        throw NotImplementedError("Renaming is not supported in CLI implementation")
     }
 
     override fun bindToElement(element: PsiElement, shorteningMode: ShorteningMode): PsiElement {
-        throw NotImplementedError("Binding is not supported")
+        throw NotImplementedError("Binding is not supported in CLI implementation")
     }
 
     override fun bindToFqName(fqName: FqName, shorteningMode: ShorteningMode, targetElement: PsiElement?): PsiElement {
-        throw NotImplementedError("Binding is not supported")
+        throw NotImplementedError("Binding is not supported in CLI implementation")
     }
 
     override fun getImportAlias(): KtImportAlias? {
-        return null
+        throw NotImplementedError("Import alias resolution is not supported in CLI implementation")
     }
 }
