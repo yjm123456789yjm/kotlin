@@ -90,7 +90,7 @@ internal class KtFe10Renderer(
     }
 
     fun render(descriptor: DeclarationDescriptor, consumer: KtFe10RendererConsumer) {
-        consumer.renderDeclaration(descriptor)
+        consumer.renderDeclaration(descriptor, isTopLevel = true)
     }
 
     private fun KtFe10RendererConsumer.renderType(type: KotlinType, shouldApproximate: Boolean = false) {
@@ -128,18 +128,18 @@ internal class KtFe10Renderer(
         return false
     }
 
-    private fun KtFe10RendererConsumer.renderDeclaration(descriptor: DeclarationDescriptor) {
+    private fun KtFe10RendererConsumer.renderDeclaration(descriptor: DeclarationDescriptor, isTopLevel: Boolean) {
         when (descriptor) {
-            is ClassifierDescriptor -> renderClassifier(descriptor)
+            is ClassifierDescriptor -> renderClassifier(descriptor, isTopLevel)
             is CallableDescriptor -> renderCallable(descriptor)
             else -> error("Unexpected descriptor kind: $descriptor")
         }
     }
 
-    private fun KtFe10RendererConsumer.renderClassifier(descriptor: ClassifierDescriptor) {
+    private fun KtFe10RendererConsumer.renderClassifier(descriptor: ClassifierDescriptor, isTopLevel: Boolean) {
         when (descriptor) {
             is TypeAliasDescriptor -> renderTypeAlias(descriptor)
-            is TypeParameterDescriptor -> renderTypeParameter(descriptor)
+            is TypeParameterDescriptor -> renderTypeParameter(descriptor, isTopLevel)
             is ClassDescriptor -> renderClass(descriptor)
             else -> error("Unexpected descriptor kind: $descriptor")
         }
@@ -158,10 +158,16 @@ internal class KtFe10Renderer(
     }
 
     private fun KtFe10RendererConsumer.renderTypeParameters(typeParameters: List<TypeParameterDescriptor>) {
-        renderList(typeParameters, separator = ", ", prefix = "<", postfix = ">", renderWhenEmpty = false) { renderTypeParameter(it) }
+        renderList(typeParameters, separator = ", ", prefix = "<", postfix = ">", renderWhenEmpty = false) {
+            renderTypeParameter(it, isTopLevel = false)
+        }
     }
 
-    private fun KtFe10RendererConsumer.renderTypeParameter(descriptor: TypeParameterDescriptor) {
+    private fun KtFe10RendererConsumer.renderTypeParameter(descriptor: TypeParameterDescriptor, isTopLevel: Boolean) {
+        if (isTopLevel) {
+            append('<')
+        }
+
         renderModifier("reified", descriptor.isReified)
 
         val variance = descriptor.variance.label
@@ -172,6 +178,10 @@ internal class KtFe10Renderer(
 
         val upperBounds = descriptor.upperBounds.filterNot { it.isNullableAny() }
         renderList(upperBounds, separator = " & ", prefix = " : ", postfix = "", renderWhenEmpty = false) { renderType(it) }
+
+        if (isTopLevel) {
+            append('>')
+        }
     }
 
     private fun KtFe10RendererConsumer.renderClass(descriptor: ClassDescriptor) {
@@ -221,7 +231,7 @@ internal class KtFe10Renderer(
                 curlyBlock {
                     enumEntries.forEach { renderEnumEntry(it as ClassDescriptor) }
                     sortDeclarations(constructors).forEach { renderConstructor(it) }
-                    sortDeclarations(otherDeclarations).forEach { renderDeclaration(it) }
+                    sortDeclarations(otherDeclarations).forEach { renderDeclaration(it, isTopLevel = false) }
                 }
             }
         }
@@ -277,8 +287,8 @@ internal class KtFe10Renderer(
                 return@Comparator nameResult
             }
 
-            val leftString = buildString { renderDeclaration(left) }
-            val rightString = buildString { renderDeclaration(right) }
+            val leftString = buildString { renderDeclaration(left, isTopLevel = false) }
+            val rightString = buildString { renderDeclaration(right, isTopLevel = false) }
             return@Comparator leftString.compareTo(rightString)
         })
     }
@@ -504,7 +514,7 @@ internal class KtFe10Renderer(
 
         if (collectedChildren.isNotEmpty()) {
             curlyBlock {
-                collectedChildren.forEach { renderDeclaration(it) }
+                collectedChildren.forEach { renderDeclaration(it, isTopLevel = false) }
             }
         }
     }
