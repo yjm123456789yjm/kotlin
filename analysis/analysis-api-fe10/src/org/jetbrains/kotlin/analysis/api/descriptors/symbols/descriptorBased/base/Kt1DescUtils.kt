@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.analysis.api.KtTypeArgument
 import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
 import org.jetbrains.kotlin.analysis.api.components.KtDeclarationRendererOptions
 import org.jetbrains.kotlin.analysis.api.descriptors.Fe10AnalysisContext
-import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSession
+import org.jetbrains.kotlin.analysis.api.descriptors.symbols.KtFe10PackageSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.*
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.psiBased.base.KtFe10PsiSymbol
 import org.jetbrains.kotlin.analysis.api.descriptors.types.*
@@ -77,6 +77,8 @@ internal fun DeclarationDescriptor.toKtSymbol(analysisContext: Fe10AnalysisConte
     }
 
     return when (this) {
+        is PackageViewDescriptor -> KtFe10PackageSymbol(fqName, analysisContext)
+        is PackageFragmentDescriptor -> KtFe10PackageSymbol(fqName, analysisContext)
         is ClassifierDescriptor -> toKtClassifierSymbol(analysisContext)
         is CallableDescriptor -> toKtCallableSymbol(analysisContext)
         else -> null
