@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.resolve.BindingContext
+import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
 
@@ -39,6 +40,7 @@ interface Fe10AnalysisFacade {
 interface Fe10AnalysisServices {
     val resolveSession: ResolveSession
     val deprecationResolver: DeprecationResolver
+    val qualifiedExpressionResolver: QualifiedExpressionResolver
 }
 
 class Fe10AnalysisContext(

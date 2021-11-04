@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingTrace
+import org.jetbrains.kotlin.resolve.QualifiedExpressionResolver
 import org.jetbrains.kotlin.resolve.deprecation.DeprecationResolver
 import org.jetbrains.kotlin.resolve.extensions.AnalysisHandlerExtension
 import org.jetbrains.kotlin.resolve.lazy.ResolveSession
@@ -35,6 +36,7 @@ class CliFe10AnalysisFacade(project: Project) : Fe10AnalysisFacade {
         return object : Fe10AnalysisServices {
             override val resolveSession = componentProvider.get<ResolveSession>()
             override val deprecationResolver = componentProvider.get<DeprecationResolver>()
+            override val qualifiedExpressionResolver = componentProvider.get<QualifiedExpressionResolver>()
         }
     }
 
