@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.bas
 import org.jetbrains.kotlin.analysis.api.descriptors.types.base.KtFe10Type
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.KtFe10TypeRenderer
 import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
+import org.jetbrains.kotlin.analysis.api.symbols.KtReceiverParameterSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -29,6 +30,11 @@ internal class KtFe10SymbolDeclarationRendererProvider(
         when (symbol) {
             is KtPackageSymbol -> {
                 return "package ${symbol.fqName.asString()}"
+            }
+            is KtReceiverParameterSymbol -> {
+                val containingDeclaration = with(analysisSession) { symbol.getContainingSymbol() }
+                    ?: error("Callable declaration expected")
+                return "extension receiver of " + render(containingDeclaration, options)
             }
             else -> {
                 val descriptor = getSymbolDescriptor(symbol)

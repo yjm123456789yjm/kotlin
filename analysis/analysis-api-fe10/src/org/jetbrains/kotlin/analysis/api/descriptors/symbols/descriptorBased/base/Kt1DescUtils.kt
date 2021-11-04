@@ -80,6 +80,7 @@ internal fun DeclarationDescriptor.toKtSymbol(analysisContext: Fe10AnalysisConte
         is PackageViewDescriptor -> KtFe10PackageSymbol(fqName, analysisContext)
         is PackageFragmentDescriptor -> KtFe10PackageSymbol(fqName, analysisContext)
         is ClassifierDescriptor -> toKtClassifierSymbol(analysisContext)
+        is ReceiverParameterDescriptor -> KtFe10DescReceiverParameterSymbol(this, analysisContext)
         is CallableDescriptor -> toKtCallableSymbol(analysisContext)
         else -> null
     }
