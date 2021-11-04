@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.bas
 import org.jetbrains.kotlin.analysis.api.descriptors.symbols.descriptorBased.base.render
 import org.jetbrains.kotlin.analysis.api.descriptors.types.base.KtFe10Type
 import org.jetbrains.kotlin.analysis.api.descriptors.utils.KtFe10TypeRenderer
+import org.jetbrains.kotlin.analysis.api.symbols.KtPackageSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
 import org.jetbrains.kotlin.analysis.api.types.KtType
@@ -25,13 +26,20 @@ internal class KtFe10SymbolDeclarationRendererProvider(
         get() = analysisSession.token
 
     override fun render(symbol: KtSymbol, options: KtDeclarationRendererOptions): String {
-        val descriptor = getSymbolDescriptor(symbol)
-        if (descriptor != null) {
-            return descriptor.render(analysisContext, options)
-        }
+        when (symbol) {
+            is KtPackageSymbol -> {
+                return "package ${symbol.fqName.asString()}"
+            }
+            else -> {
+                val descriptor = getSymbolDescriptor(symbol)
+                if (descriptor != null) {
+                    return descriptor.render(analysisContext, options)
+                }
 
-        // Rendering for unresolved symbols is not implemented
-        return ""
+                // Rendering for unresolved symbols is not implemented
+                return ""
+            }
+        }
     }
 
     override fun render(type: KtType, options: KtTypeRendererOptions): String {
