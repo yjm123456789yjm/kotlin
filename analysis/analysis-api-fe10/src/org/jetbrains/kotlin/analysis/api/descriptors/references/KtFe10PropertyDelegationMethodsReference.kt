@@ -34,7 +34,7 @@ abstract class KtFe10PropertyDelegationMethodsReference(
         if (propertyDescriptor is PropertyDescriptor) {
             return listOfNotNull(propertyDescriptor.getter, propertyDescriptor.setter)
                 .mapNotNull { accessor ->
-                    val descriptor = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, accessor]?.resultingDescriptor
+                    val descriptor = bindingContext[BindingContext.DELEGATED_PROPERTY_RESOLVED_CALL, accessor]?.candidateDescriptor
                     descriptor?.toKtCallableSymbol(analysisContext)
                 }
         }

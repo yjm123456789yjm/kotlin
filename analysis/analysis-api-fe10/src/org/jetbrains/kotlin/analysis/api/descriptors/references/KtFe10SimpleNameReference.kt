@@ -27,7 +27,7 @@ abstract class KtFe10SimpleNameReference(expression: KtSimpleNameExpression) : K
         val bindingContext = analysisContext.analyze(expression, AnalysisMode.PARTIAL)
 
         val descriptor = bindingContext[BindingContext.REFERENCE_TARGET, expression]
-            ?: expression.getResolvedCall(bindingContext)?.resultingDescriptor
+            ?: expression.getResolvedCall(bindingContext)?.candidateDescriptor
 
         return listOfNotNull(descriptor?.toKtSymbol(analysisContext))
     }

@@ -22,7 +22,7 @@ abstract class KtFe10ArrayAccessReference(expression: KtArrayAccessExpression) :
         require(this is KtFe10AnalysisSession)
 
         val bindingContext = analysisContext.analyze(expression, AnalysisMode.PARTIAL)
-        val descriptor = expression.getResolvedCall(bindingContext)?.resultingDescriptor
+        val descriptor = expression.getResolvedCall(bindingContext)?.candidateDescriptor
         return listOfNotNull(descriptor?.toKtCallableSymbol(analysisContext))
     }
 }

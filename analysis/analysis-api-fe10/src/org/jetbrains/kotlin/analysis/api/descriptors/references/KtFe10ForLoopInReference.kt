@@ -26,7 +26,7 @@ abstract class KtFe10ForLoopInReference(expression: KtForExpression) : KtForLoop
             BindingContext.LOOP_RANGE_ITERATOR_RESOLVED_CALL,
             BindingContext.LOOP_RANGE_HAS_NEXT_RESOLVED_CALL,
             BindingContext.LOOP_RANGE_NEXT_RESOLVED_CALL
-        ).mapNotNull { slice -> bindingContext[slice, loopRange]?.resultingDescriptor?.toKtCallableSymbol(analysisContext) }
+        ).mapNotNull { slice -> bindingContext[slice, loopRange]?.candidateDescriptor?.toKtCallableSymbol(analysisContext) }
     }
 }
 

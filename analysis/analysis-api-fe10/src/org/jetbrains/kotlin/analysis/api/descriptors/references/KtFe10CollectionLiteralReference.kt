@@ -23,7 +23,7 @@ abstract class KtFe10CollectionLiteralReference(
         require(this is KtFe10AnalysisSession)
 
         val bindingContext = analysisContext.analyze(expression, AnalysisMode.PARTIAL)
-        val descriptor = bindingContext[BindingContext.COLLECTION_LITERAL_CALL, expression]?.resultingDescriptor
+        val descriptor = bindingContext[BindingContext.COLLECTION_LITERAL_CALL, expression]?.candidateDescriptor
         return listOfNotNull(descriptor?.toKtCallableSymbol(analysisContext))
     }
 }

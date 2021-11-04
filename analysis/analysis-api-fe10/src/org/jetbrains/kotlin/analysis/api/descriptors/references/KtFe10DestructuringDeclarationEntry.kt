@@ -25,7 +25,7 @@ abstract class KtFe10DestructuringDeclarationEntry(
         val bindingContext = analysisContext.analyze(element, AnalysisMode.PARTIAL)
 
         val variableDescriptor = bindingContext[BindingContext.VARIABLE, element]
-        val componentCallDescriptor = bindingContext[BindingContext.COMPONENT_RESOLVED_CALL, element]?.resultingDescriptor
+        val componentCallDescriptor = bindingContext[BindingContext.COMPONENT_RESOLVED_CALL, element]?.candidateDescriptor
 
         return listOfNotNull(
             variableDescriptor?.toKtCallableSymbol(analysisContext),
