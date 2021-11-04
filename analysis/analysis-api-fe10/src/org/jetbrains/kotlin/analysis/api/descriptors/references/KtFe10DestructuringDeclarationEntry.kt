@@ -23,8 +23,14 @@ abstract class KtFe10DestructuringDeclarationEntry(
         check(this is KtFe10AnalysisSession)
 
         val bindingContext = analysisContext.analyze(element, AnalysisMode.PARTIAL)
-        val descriptor = bindingContext[BindingContext.COMPONENT_RESOLVED_CALL, element]?.resultingDescriptor
-        return listOfNotNull(descriptor?.toKtCallableSymbol(analysisContext))
+
+        val variableDescriptor = bindingContext[BindingContext.VARIABLE, element]
+        val componentCallDescriptor = bindingContext[BindingContext.COMPONENT_RESOLVED_CALL, element]?.resultingDescriptor
+
+        return listOfNotNull(
+            variableDescriptor?.toKtCallableSymbol(analysisContext),
+            componentCallDescriptor?.toKtCallableSymbol(analysisContext)
+        )
     }
 }
 
