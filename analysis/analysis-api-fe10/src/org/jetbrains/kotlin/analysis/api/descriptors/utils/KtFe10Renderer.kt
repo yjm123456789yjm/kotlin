@@ -131,7 +131,7 @@ internal class KtFe10Renderer(
     private fun KtFe10RendererConsumer.renderDeclaration(descriptor: DeclarationDescriptor, isTopLevel: Boolean) {
         when (descriptor) {
             is ClassifierDescriptor -> renderClassifier(descriptor, isTopLevel)
-            is CallableDescriptor -> renderCallable(descriptor)
+            is CallableDescriptor -> renderCallable(descriptor, isTopLevel)
             else -> error("Unexpected descriptor kind: $descriptor")
         }
     }
@@ -309,14 +309,14 @@ internal class KtFe10Renderer(
         renderList(supertypes, separator = ", ", prefix = " : ", postfix = "", renderWhenEmpty = false) { renderType(it) }
     }
 
-    private fun KtFe10RendererConsumer.renderCallable(descriptor: CallableDescriptor) {
+    private fun KtFe10RendererConsumer.renderCallable(descriptor: CallableDescriptor, isTopLevel: Boolean) {
         when (descriptor) {
             is PropertyGetterDescriptor -> renderPropertyAccessor(descriptor)
             is PropertySetterDescriptor -> renderPropertyAccessor(descriptor)
             is PropertyDescriptor -> renderProperty(descriptor)
             is ConstructorDescriptor -> renderConstructor(descriptor)
             is FunctionDescriptor -> renderFunction(descriptor)
-            is ValueParameterDescriptor -> renderValueParameter(descriptor)
+            is ValueParameterDescriptor -> renderValueParameter(descriptor, isTopLevel = isTopLevel)
             is LocalVariableDescriptor -> renderLocalVariable(descriptor)
             else -> error("Unexpected descriptor kind: $descriptor")
         }
@@ -340,7 +340,7 @@ internal class KtFe10Renderer(
                     val valueParameter = descriptor.valueParameters.singleOrNull()
                     if (valueParameter != null) {
                         val name = valueParameter.name.takeIf { !it.isSpecial } ?: Name.identifier("value")
-                        renderValueParameter(valueParameter, name)
+                        renderValueParameter(valueParameter, name, false)
                     }
                     append(")")
                 }
@@ -467,10 +467,20 @@ internal class KtFe10Renderer(
     }
 
     private fun KtFe10RendererConsumer.renderValueParameters(valueParameters: List<ValueParameterDescriptor>) {
-        renderList(valueParameters, separator = ", ", prefix = "(", postfix = ")", renderWhenEmpty = true) { renderValueParameter(it) }
+        renderList(valueParameters, separator = ", ", prefix = "(", postfix = ")", renderWhenEmpty = true) {
+            renderValueParameter(it, isTopLevel = false)
+        }
     }
 
-    private fun KtFe10RendererConsumer.renderValueParameter(descriptor: ValueParameterDescriptor, name: Name = descriptor.name) {
+    private fun KtFe10RendererConsumer.renderValueParameter(
+        descriptor: ValueParameterDescriptor,
+        name: Name = descriptor.name,
+        isTopLevel: Boolean
+    ) {
+        if (isTopLevel) {
+            append("value-parameter ")
+        }
+
         if (options.renderDeclarationHeader) {
             renderAnnotations(descriptor.annotations)
         }
