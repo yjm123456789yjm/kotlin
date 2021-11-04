@@ -124,7 +124,7 @@ abstract class AbstractReferenceResolveTest(configurator: FrontendApiTestConfigu
 
     private val renderingOptions = KtDeclarationRendererOptions.DEFAULT.copy(
         modifiers = RendererModifier.DEFAULT - RendererModifier.ANNOTATIONS,
-        sortNestedDeclarations = true
+        sortElements = true
     )
 
     private fun PsiReference.unwrapMultiReferences(): List<PsiReference> = when (this) {

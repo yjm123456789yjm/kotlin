@@ -255,7 +255,7 @@ internal class KtFe10Renderer(
     }
 
     private fun <T : DeclarationDescriptor> sortDeclarations(declarations: List<T>): List<T> {
-        if (!options.sortNestedDeclarations) {
+        if (!options.sortElements) {
             return declarations
         }
 
@@ -287,7 +287,15 @@ internal class KtFe10Renderer(
         val allowedSuperClasses = (listOfNotNull(descriptor.getSuperClassNotAny()) + descriptor.getSuperInterfaces())
             .filterTo(HashSet()) { it.classId !in IGNORED_SUPERTYPES }
 
-        val supertypes = descriptor.typeConstructor.supertypes.filter { it.constructor.declarationDescriptor in allowedSuperClasses }
+        var supertypes = descriptor.typeConstructor.supertypes
+            .filter { it.constructor.declarationDescriptor in allowedSuperClasses }
+
+        if (options.sortElements) {
+            supertypes = supertypes.sortedBy {
+                KtFe10RendererConsumer().apply { renderType(it) }.toString()
+            }
+        }
+
         renderList(supertypes, separator = ", ", prefix = " : ", postfix = "", renderWhenEmpty = false) { renderType(it) }
     }
 

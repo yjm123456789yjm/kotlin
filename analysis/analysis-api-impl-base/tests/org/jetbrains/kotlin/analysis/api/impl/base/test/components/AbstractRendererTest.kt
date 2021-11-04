@@ -22,7 +22,7 @@ abstract class AbstractRendererTest(configurator: FrontendApiTestConfiguratorSer
             approximateTypes = true,
             renderContainingDeclarations = true,
             typeRendererOptions = KtTypeRendererOptions.SHORT_NAMES,
-            sortNestedDeclarations = true
+            sortElements = true
         )
 
         val actual = executeOnPooledThreadInReadAction {

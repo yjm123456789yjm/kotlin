@@ -671,6 +671,8 @@ internal class FirIdeRenderer private constructor(
             filterNot {
                 (it as? FirResolvedTypeRef)?.coneType?.classId == StandardClassIds.Annotation
             }
+        }.applyIf(options.sortElements) {
+            sortedBy { renderType(it) }
         }
 
         if (supertypes.isEmpty() || klass.superTypeRefs.singleOrNull()?.let { it.isAny || it.isNullableAny } == true) return
@@ -681,7 +683,7 @@ internal class FirIdeRenderer private constructor(
     }
 
     fun sortDeclarations(declarations: List<FirDeclaration>): List<FirDeclaration> {
-        if (!options.sortNestedDeclarations) return declarations
+        if (!options.sortElements) return declarations
 
         fun getDeclarationKind(declaration: FirDeclaration): Int = when (declaration) {
             is FirEnumEntry -> 0

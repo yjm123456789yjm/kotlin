@@ -90,9 +90,10 @@ public data class KtDeclarationRendererOptions(
     val renderDefaultParameterValue: Boolean = true,
 
     /**
-     * Sort nested declarations by kind (enum values, then constructors, then properties, then functions) and name.
+     * Sort elements such as nested declarations or supertypes so renderer can be used in tests that cover multiple frontends.
+     * Declarations are sorted by their kinds (enum values, then constructors, then properties, then functions) and names.
      */
-    val sortNestedDeclarations: Boolean = false,
+    val sortElements: Boolean = false,
 ) {
     public companion object {
         public val DEFAULT: KtDeclarationRendererOptions = KtDeclarationRendererOptions()
