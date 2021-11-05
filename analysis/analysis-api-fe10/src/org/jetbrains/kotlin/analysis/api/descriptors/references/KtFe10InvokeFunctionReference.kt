@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.KtSymbol
 import org.jetbrains.kotlin.idea.references.KtInvokeFunctionReference
 import org.jetbrains.kotlin.psi.KtCallExpression
 import org.jetbrains.kotlin.psi.KtExpression
+import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.resolve.calls.util.getResolvedCall
 
 abstract class KtFe10InvokeFunctionReference(expression: KtCallExpression) : KtInvokeFunctionReference(expression), KtFe10Reference {
@@ -22,8 +23,9 @@ abstract class KtFe10InvokeFunctionReference(expression: KtCallExpression) : KtI
         require(this is KtFe10AnalysisSession)
 
         val bindingContext = analysisContext.analyze(expression, AnalysisMode.PARTIAL)
-        val descriptor = expression.getResolvedCall(bindingContext)?.candidateDescriptor
-        return listOfNotNull(descriptor?.toKtCallableSymbol(analysisContext))
+        val descriptor = expression.getResolvedCall(bindingContext) as? VariableAsFunctionResolvedCall ?: return emptyList()
+        val functionDescriptor = descriptor.functionCall.candidateDescriptor
+        return listOfNotNull(functionDescriptor.toKtCallableSymbol(analysisContext))
     }
 }
 
