@@ -73,6 +73,8 @@ class InapplicableWrongReceiver(
     val actualType: ConeKotlinType? = null,
 ) : ResolutionDiagnostic(INAPPLICABLE_WRONG_RECEIVER)
 
+object TypeAmbiguity : ResolutionDiagnostic(TYPE_AMBIGUITY)
+
 object NoCompanionObject : ResolutionDiagnostic(NO_COMPANION_OBJECT)
 
 class UnsafeCall(val actualType: ConeKotlinType) : ResolutionDiagnostic(UNSAFE_CALL)
