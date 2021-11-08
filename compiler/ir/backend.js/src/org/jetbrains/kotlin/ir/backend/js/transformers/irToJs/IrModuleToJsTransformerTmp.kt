@@ -292,7 +292,7 @@ private fun generateWrappedModuleBody(
             moduleToRef[main]!!,
         )
 
-        val dependencies = others.mapIndexed { index, module ->
+        val dependencies = others.map { module ->
             val moduleName = module.moduleName
 
             moduleName to generateSingleWrappedModuleBody(
