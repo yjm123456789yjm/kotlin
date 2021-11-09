@@ -107,14 +107,14 @@ class FirStatusResolver(
         isLocal: Boolean,
         overriddenExtractor: List<FirResolvedDeclarationStatus>? = null,
     ): FirResolvedDeclarationStatus {
-        val extractor = overriddenExtractor ?: getOverriddenProperties(property, containingClass)
+        val overriddenStatuses = overriddenExtractor ?: getOverriddenProperties(property, containingClass)
             .map {
                 it.ensureResolved(FirResolvePhase.STATUS)
                 it.status as FirResolvedDeclarationStatus
             }
 
         val status = property.applyExtensionTransformers { transformStatus(it, property, containingClass, isLocal) }
-        return resolveStatus(property, status, containingClass, null, isLocal) { extractor }
+        return resolveStatus(property, status, containingClass, null, isLocal) { overriddenStatuses }
     }
 
     @OptIn(ExperimentalStdlibApi::class)
