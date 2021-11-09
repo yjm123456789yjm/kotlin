@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.analysis.api.components.*
 import org.jetbrains.kotlin.analysis.api.descriptors.components.*
 import org.jetbrains.kotlin.analysis.api.symbols.KtSymbolProvider
 import org.jetbrains.kotlin.analysis.api.tokens.ValidityToken
+import org.jetbrains.kotlin.analysis.api.withValidityAssertion
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 
@@ -45,6 +46,8 @@ class KtFe10AnalysisSession(val analysisContext: Fe10AnalysisContext) : KtAnalys
     override val symbolInfoProviderImpl: KtSymbolInfoProvider = KtFe10SymbolInfoProvider(this)
 
     override fun createContextDependentCopy(originalKtFile: KtFile, elementToReanalyze: KtElement): KtAnalysisSession {
-        return KtFe10AnalysisSession(elementToReanalyze, token)
+        withValidityAssertion {
+            return KtFe10AnalysisSession(elementToReanalyze, token)
+        }
     }
 }
