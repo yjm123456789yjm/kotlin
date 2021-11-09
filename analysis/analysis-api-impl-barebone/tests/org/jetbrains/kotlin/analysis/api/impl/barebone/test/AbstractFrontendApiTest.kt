@@ -44,6 +44,8 @@ interface FrontendApiTestConfiguratorService {
     val allowDependedAnalysisSession: Boolean
         get() = true
 
+    fun shouldRunTest(module: TestKtSourceModule): Boolean
+
     fun TestConfigurationBuilder.configureTest(disposable: Disposable)
 
     fun processTestFiles(files: List<KtFile>): List<KtFile> = files
@@ -127,6 +129,7 @@ abstract class AbstractFrontendApiTest(val configurator: FrontendApiTestConfigur
 
         useDirectives(*AbstractKotlinCompilerTest.defaultDirectiveContainers.toTypedArray())
         useDirectives(JvmEnvironmentConfigurationDirectives)
+        useDirectives(FrontendApiTestDirectives)
 
         useSourcePreprocessor(::ExpressionMarkersSourceFilePreprocessor)
         useAdditionalService { ExpressionMarkerProvider() }
@@ -157,6 +160,9 @@ abstract class AbstractFrontendApiTest(val configurator: FrontendApiTestConfigur
         val moduleInfoProvider = testServices.projectModuleProvider
 
         val moduleInfo = moduleInfoProvider.getModule(singleModule.name)
+        if (!configurator.shouldRunTest(moduleInfo)) {
+            return
+        }
 
         with(project as MockProject) {
             configurator.registerProjectServices(this)

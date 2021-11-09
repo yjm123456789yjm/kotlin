@@ -16,6 +16,8 @@ import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisHandlerExtens
 import org.jetbrains.kotlin.analysis.api.descriptors.KtFe10AnalysisSessionProvider
 import org.jetbrains.kotlin.analysis.api.descriptors.references.base.KtFe10KotlinReferenceProviderContributor
 import org.jetbrains.kotlin.analysis.api.impl.barebone.test.FrontendApiTestConfiguratorService
+import org.jetbrains.kotlin.analysis.api.impl.barebone.test.FrontendApiTestDirectives
+import org.jetbrains.kotlin.analysis.api.impl.barebone.test.TestKtSourceModule
 import org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService
 import org.jetbrains.kotlin.idea.references.KotlinReferenceProviderContributor
 import org.jetbrains.kotlin.psi.KotlinReferenceProvidersService
@@ -34,6 +36,10 @@ object KtFe10FrontendApiTestConfiguratorService : FrontendApiTestConfiguratorSer
 
     override val allowDependedAnalysisSession: Boolean
         get() = false
+
+    override fun shouldRunTest(module: TestKtSourceModule): Boolean {
+        return !module.testModule.directives.contains(FrontendApiTestDirectives.IGNORE_FE10)
+    }
 
     override fun TestConfigurationBuilder.configureTest(disposable: Disposable) {
         usePreAnalysisHandlers(::KtFe10ModuleRegistrarPreAnalysisHandler.bind(disposable))

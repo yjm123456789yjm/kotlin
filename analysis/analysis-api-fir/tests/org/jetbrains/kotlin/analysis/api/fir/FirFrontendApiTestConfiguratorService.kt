@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable
 import org.jetbrains.kotlin.analysis.api.InvalidWayOfUsingAnalysisSession
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSessionProvider
 import org.jetbrains.kotlin.analysis.api.impl.barebone.test.FrontendApiTestConfiguratorService
+import org.jetbrains.kotlin.analysis.api.impl.barebone.test.TestKtSourceModule
 import org.jetbrains.kotlin.analysis.api.impl.base.references.HLApiReferenceProviderService
 import org.jetbrains.kotlin.analysis.low.level.api.fir.test.base.FirLowLevelFrontendApiTestConfiguratorService
 import org.jetbrains.kotlin.idea.references.KotlinFirReferenceContributor
@@ -20,6 +21,10 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 
 object FirFrontendApiTestConfiguratorService : FrontendApiTestConfiguratorService {
+    override fun shouldRunTest(module: TestKtSourceModule): Boolean {
+        return FirLowLevelFrontendApiTestConfiguratorService.shouldRunTest(module)
+    }
+
     override fun TestConfigurationBuilder.configureTest(disposable: Disposable) {
         with(FirLowLevelFrontendApiTestConfiguratorService) { configureTest(disposable) }
     }
