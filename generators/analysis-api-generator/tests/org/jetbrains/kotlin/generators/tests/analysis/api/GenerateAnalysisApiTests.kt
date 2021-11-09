@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.generators.tests.analysis.api
 
+import org.jetbrains.kotlin.analysis.api.descriptors.test.AbstractKtFe10ReferenceResolveTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.AbstractKtFe10ResolveCallTest
 import org.jetbrains.kotlin.analysis.api.descriptors.test.components.*
 import org.jetbrains.kotlin.analysis.api.descriptors.test.symbols.AbstractKtFe10CompileTimeConstantEvaluatorTest
@@ -174,9 +175,9 @@ fun main(args: Array<String>) {
                 model("components/declarationRenderer")
             }
 
-//            testClass<AbstractKtFe10ReferenceResolveTest> {
-//                model("referenceResolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
-//            }
+            testClass<AbstractKtFe10ReferenceResolveTest> {
+                model("referenceResolve", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
+            }
 
             testClass<AbstractKtFe10HasCommonSubtypeTest> {
                 model("components/hasCommonSubtype")

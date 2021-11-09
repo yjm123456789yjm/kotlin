@@ -1,0 +1,4 @@
+Resolved to:
+0: (in kotlin.collections.IntIterator) abstract operator fun hasNext(): kotlin.Boolean
+1: (in kotlin.collections.IntIterator) override operator fun next(): kotlin.Int
+2: (in kotlin.ranges.IntRange) operator fun iterator(): kotlin.collections.IntIterator

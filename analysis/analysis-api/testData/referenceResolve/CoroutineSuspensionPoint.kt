@@ -1,3 +1,5 @@
+import kotlin.coroutines.Continuation
+
 class Controller {
     suspend fun suspendHere(x: Continuation<Unit>) {
     }

@@ -1,0 +1,2 @@
+Resolved to:
+0: (in java.util) open class HashMap<K : kotlin.Any!, V : kotlin.Any!> : java.io.Serializable, java.util.AbstractMap<K!, V!>, kotlin.Cloneable, kotlin.collections.MutableMap<K, V>

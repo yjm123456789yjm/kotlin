@@ -1,0 +1,2 @@
+Resolved to:
+0: (in Baz) operator fun getValue(p1: kotlin.Any?, p2: kotlin.Any?): kotlin.Int
