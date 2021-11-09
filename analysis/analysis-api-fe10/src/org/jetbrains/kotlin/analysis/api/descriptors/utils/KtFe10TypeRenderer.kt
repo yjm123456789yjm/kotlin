@@ -155,7 +155,13 @@ internal class KtFe10TypeRenderer(private val options: KtTypeRendererOptions, pr
 
     private fun KtFe10RendererConsumer.renderTypeVariableType(typeConstructor: NewTypeVariableConstructor) {
         val name = typeConstructor.originalTypeParameter?.name ?: SpecialNames.NO_NAME_PROVIDED
-        append("TypeVariable(").append(name.asString()).append(")")
+        if (isDebugText) {
+            append("TypeVariable(")
+        }
+        append(name.asString())
+        if (isDebugText) {
+            append(")")
+        }
     }
 
     private fun KtFe10RendererConsumer.renderIntersectionType(typeConstructor: IntersectionTypeConstructor) {
