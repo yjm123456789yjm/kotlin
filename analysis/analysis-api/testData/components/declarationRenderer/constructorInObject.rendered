@@ -2,7 +2,7 @@ object A {
     constructor()
 }
 enum class B {
-    X,
+    X
 }
 class C {
     companion object {

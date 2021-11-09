@@ -3,7 +3,7 @@ object O1 : Some
 object O2 : Some
 enum class SomeEnum {
     FIRST,
-    SECOND,
+    SECOND;
     constructor(x: Some)
     val x: Some
     abstract fun check(y: Some): Boolean

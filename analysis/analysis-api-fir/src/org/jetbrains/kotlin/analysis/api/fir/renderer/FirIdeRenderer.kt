@@ -400,16 +400,21 @@ internal class FirIdeRenderer private constructor(
 
         fun renderDeclarationForEnumClass() {
             check(regularClass.isEnumClass)
-            val partitioned = regularClass.declarations.partition { it is FirEnumEntry }
-            partitioned.first.forEach { enumEntry ->
+            val (enumEntries, otherDeclarations) = regularClass.declarations.partition { it is FirEnumEntry }
+            val applicableOtherDeclarations = otherDeclarations.filter { !it.skipDeclarationForEnumClass() }
+            enumEntries.forEachIndexed { index, enumEntry ->
                 check(enumEntry is FirEnumEntry)
                 visitEnumEntry(enumEntry, data)
-                data.append(",")
-            }
-            sortDeclarations(partitioned.second).forEach {
-                if (!it.skipDeclarationForEnumClass()) {
-                    it.accept(this, data)
+                if (index == enumEntries.lastIndex) {
+                    if (applicableOtherDeclarations.isNotEmpty()) {
+                        data.append(';')
+                    }
+                } else {
+                    data.append(',')
                 }
+            }
+            sortDeclarations(applicableOtherDeclarations).forEach {
+                it.accept(this, data)
             }
         }
 

@@ -140,7 +140,13 @@ internal class KtFe10Renderer(
         when (descriptor) {
             is TypeAliasDescriptor -> renderTypeAlias(descriptor)
             is TypeParameterDescriptor -> renderTypeParameter(descriptor, isTopLevel)
-            is ClassDescriptor -> renderClass(descriptor)
+            is ClassDescriptor -> {
+                if (descriptor.kind == ClassKind.ENUM_ENTRY) {
+                    renderEnumEntry(descriptor)
+                } else {
+                    renderClass(descriptor)
+                }
+            }
             else -> error("Unexpected descriptor kind: $descriptor")
         }
     }
@@ -200,7 +206,7 @@ internal class KtFe10Renderer(
                     ClassKind.CLASS -> "class"
                     ClassKind.INTERFACE -> "interface"
                     ClassKind.ENUM_CLASS -> "enum class"
-                    ClassKind.ENUM_ENTRY -> "enum entry"
+                    ClassKind.ENUM_ENTRY -> error("Enum entry is not expected here")
                     ClassKind.ANNOTATION_CLASS -> "annotation class"
                     ClassKind.OBJECT -> "object"
                 }
@@ -227,9 +233,22 @@ internal class KtFe10Renderer(
             val constructors = descriptor.constructors
                 .filter { shouldRenderNestedDeclaration(descriptor, it) }
 
-            if (enumEntries.isNotEmpty() || otherDeclarations.isNotEmpty() || constructors.isNotEmpty()) {
+            val hasOrdinaryDeclarations = constructors.isNotEmpty() || otherDeclarations.isNotEmpty()
+
+            if (enumEntries.isNotEmpty() || hasOrdinaryDeclarations) {
                 curlyBlock {
-                    enumEntries.forEach { renderEnumEntry(it as ClassDescriptor) }
+                    enumEntries.forEachIndexed { index, enumEntry ->
+                        appendLine()
+                        renderIndentation()
+                        renderEnumEntry(enumEntry as ClassDescriptor)
+                        if (index == enumEntries.lastIndex) {
+                            if (hasOrdinaryDeclarations) {
+                                append(';')
+                            }
+                        } else {
+                            append(',')
+                        }
+                    }
                     sortDeclarations(constructors).forEach { renderConstructor(it) }
                     sortDeclarations(otherDeclarations).forEach { renderDeclaration(it, isTopLevel = false) }
                 }
@@ -350,12 +369,7 @@ internal class KtFe10Renderer(
 
     private fun KtFe10RendererConsumer.renderEnumEntry(descriptor: ClassDescriptor) {
         assert(descriptor.kind == ClassKind.ENUM_ENTRY)
-
-        appendLine()
-        renderIndentation()
-
         renderName(descriptor)
-        append(',')
     }
 
     private fun KtFe10RendererConsumer.renderLocalVariable(descriptor: LocalVariableDescriptor) {
