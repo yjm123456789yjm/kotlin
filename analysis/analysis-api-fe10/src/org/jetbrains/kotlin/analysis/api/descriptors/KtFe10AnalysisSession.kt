@@ -16,8 +16,7 @@ import org.jetbrains.kotlin.psi.KtFile
 
 @Suppress("LeakingThis")
 class KtFe10AnalysisSession(val analysisContext: Fe10AnalysisContext) : KtAnalysisSession(analysisContext.token) {
-    constructor(contextElement: KtElement, token: ValidityToken) :
-            this(Fe10AnalysisContext(Fe10AnalysisFacade.getInstance(contextElement.project), contextElement, token))
+    constructor(contextElement: KtElement, token: ValidityToken) : this(Fe10AnalysisContext.create(contextElement, token))
 
     override val smartCastProviderImpl: KtSmartCastProvider = KtFe10SmartCastProvider(this)
     override val diagnosticProviderImpl: KtDiagnosticProvider = KtFe10DiagnosticProvider(this)

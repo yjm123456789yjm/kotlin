@@ -23,8 +23,7 @@ interface Fe10AnalysisFacade {
         }
     }
 
-    fun getResolveSession(element: KtElement): ResolveSession
-    fun getDeprecationResolver(element: KtElement): DeprecationResolver
+    fun getAnalysisServices(element: KtElement): Fe10AnalysisServices
 
     fun analyze(element: KtElement, mode: AnalysisMode = AnalysisMode.FULL): BindingContext
 
@@ -37,13 +36,23 @@ interface Fe10AnalysisFacade {
     }
 }
 
+interface Fe10AnalysisServices {
+    val resolveSession: ResolveSession
+    val deprecationResolver: DeprecationResolver
+}
+
 class Fe10AnalysisContext(
     facade: Fe10AnalysisFacade,
-    contextElement: KtElement,
+    services: Fe10AnalysisServices,
     val token: ValidityToken
-) : Fe10AnalysisFacade by facade {
-    val resolveSession: ResolveSession = getResolveSession(contextElement)
-    val deprecationResolver: DeprecationResolver = getDeprecationResolver(contextElement)
+) : Fe10AnalysisFacade by facade, Fe10AnalysisServices by services {
+    companion object {
+        fun create(contextElement: KtElement, token: ValidityToken): Fe10AnalysisContext {
+            val facade = Fe10AnalysisFacade.getInstance(contextElement.project)
+            val services = facade.getAnalysisServices(contextElement)
+            return Fe10AnalysisContext(facade, services, token)
+        }
+    }
 
     val builtIns: KotlinBuiltIns
         get() = resolveSession.moduleDescriptor.builtIns

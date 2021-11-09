@@ -26,16 +26,20 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 class CliFe10AnalysisFacade(project: Project) : Fe10AnalysisFacade {
     private val handler by lazy { KtFe10AnalysisHandlerExtension.getInstance(project) }
 
-    override fun getResolveSession(element: KtElement): ResolveSession {
-        return handler.resolveSession ?: error("Resolution is not performed")
+    private fun getComponentProvider(): ComponentProvider {
+        return handler.componentProvider ?: error("Resolution is not performed")
     }
 
-    override fun getDeprecationResolver(element: KtElement): DeprecationResolver {
-        return handler.deprecationResolver ?: error("Resolution is not performed")
+    override fun getAnalysisServices(element: KtElement): Fe10AnalysisServices {
+        val componentProvider = getComponentProvider()
+        return object : Fe10AnalysisServices {
+            override val resolveSession = componentProvider.get<ResolveSession>()
+            override val deprecationResolver = componentProvider.get<DeprecationResolver>()
+        }
     }
 
     override fun analyze(element: KtElement, mode: Fe10AnalysisFacade.AnalysisMode): BindingContext {
-        return getResolveSession(element).bindingContext
+        return getComponentProvider().get<ResolveSession>().bindingContext
     }
 
     override fun getOrigin(file: VirtualFile): KtSymbolOrigin {
@@ -51,10 +55,7 @@ class KtFe10AnalysisHandlerExtension : AnalysisHandlerExtension {
         }
     }
 
-    var resolveSession: ResolveSession? = null
-        private set
-
-    var deprecationResolver: DeprecationResolver? = null
+    var componentProvider: ComponentProvider? = null
         private set
 
     override fun doAnalysis(
@@ -65,8 +66,7 @@ class KtFe10AnalysisHandlerExtension : AnalysisHandlerExtension {
         bindingTrace: BindingTrace,
         componentProvider: ComponentProvider
     ): AnalysisResult? {
-        resolveSession = componentProvider.get()
-        deprecationResolver = componentProvider.get()
+        this.componentProvider = componentProvider
         return super.doAnalysis(project, module, projectContext, files, bindingTrace, componentProvider)
     }
 }
