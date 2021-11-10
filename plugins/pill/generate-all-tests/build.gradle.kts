@@ -24,7 +24,7 @@ dependencies {
     }
 
     testRuntimeOnly(files("${rootProject.projectDir}/dist/kotlinc/lib/kotlin-reflect.jar"))
-    testRuntimeOnly(platform("org.junit:junit-bom:5.7.0"))
+    testRuntimeOnly(platform("org.junit:junit-bom:5.8.1"))
     testRuntimeOnly("org.junit.jupiter:junit-jupiter")
 }
 
