@@ -6075,7 +6075,7 @@ dependencies {
 
     api project(kotlinCompilerModule)
     api project(path: ':kotlin-native:backend.native', configuration: 'cli_bcApiElements')
-    api 'junit:junit:4.12'
+    api 'junit:junit:4.13.2'
 }
 
 project.tasks.named("test").configure {
