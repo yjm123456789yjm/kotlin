@@ -24,11 +24,30 @@ using SchedulerType = compiler::GCSchedulerType;
 
 
 struct GCSchedulerConfig {
-    std::atomic<size_t> threshold = 100000; // Roughly 1 safepoint per 10ms (on a subset of examples on one particular machine).
-    std::atomic<size_t> allocationThresholdBytes = 10 * 1024 * 1024; // 10MiB by default.
-    std::atomic<uint64_t> cooldownThresholdNs = 200 * 1000 * 1000; // 200 milliseconds by default.
-    std::atomic<bool> autoTune = false;
-    std::atomic<uint64_t> regularGcIntervalUs = 200 * 1000; // 200 milliseconds by default.
+    // Only used when useGCTimer() is false. How many regular safepoints will trigger slow path.
+    std::atomic<size_t> threshold = 100000;
+    // How many object bytes a thread must allocate to trigger slow path.
+    std::atomic<size_t> threadAllocationThresholdBytes = 10 * 1024;
+    std::atomic<bool> autoTune = true;
+    // The maximum interval between two collections.
+    std::atomic<uint64_t> regularGcIntervalUs = 10 * 1000 * 1000;
+    // How many object bytes must be in the heap to trigger collection. Autotunes when autoTune is true.
+    std::atomic<size_t> targetHeapBytes = 10 * 1024 * 1024;
+    // The rate at which targetHeapBytes changes when autoTune = true. Concretely: if after the collection
+    // N object bytes remain in the heap, the next targetHeapBytes will be N / targetHeapUtilization capped
+    // between minHeapBytes and maxHeapBytes.
+    std::atomic<double> targetHeapUtilization = 0.5;
+    // The minimum value of targetHeapBytes for autoTune = true
+    std::atomic<size_t> minHeapBytes = 1024 * 1024;
+    // The maximum value of targetHeapBytes for autoTune = true
+    std::atomic<size_t> maxHeapBytes = std::numeric_limits<size_t>::max();
+
+    void tuneTargetHeapUtilization(size_t aliveSetBytes) noexcept {
+        if (!autoTune.load())
+            return;
+        size_t result = aliveSetBytes / targetHeapUtilization;
+        targetHeapBytes = std::min(std::max(result, minHeapBytes.load()), maxHeapBytes.load());
+    }
 };
 
 class GCSchedulerThreadData;
@@ -99,7 +118,7 @@ private:
         allocatedBytes_ = 0;
         safePointsCounter_ = 0;
 
-        allocatedBytesThreshold_ = config_.allocationThresholdBytes;
+        allocatedBytesThreshold_ = config_.threadAllocationThresholdBytes;
         safePointsCounterThreshold_ = config_.threshold;
     }
 
@@ -111,7 +130,6 @@ private:
     size_t safePointsCounter_ = 0;
     size_t safePointsCounterThreshold_ = 0;
 };
-
 
 class GCScheduler : private Pinned {
 public:

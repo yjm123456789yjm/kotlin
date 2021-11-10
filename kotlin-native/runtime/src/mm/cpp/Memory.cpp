@@ -350,11 +350,11 @@ extern "C" void Kotlin_native_internal_GC_setThresholdAllocations(ObjHeader*, in
     if (value < 0) {
         ThrowIllegalArgumentException();
     }
-    mm::GlobalData::Instance().gcScheduler().config().allocationThresholdBytes = static_cast<size_t>(value);
+    mm::GlobalData::Instance().gcScheduler().config().threadAllocationThresholdBytes = static_cast<size_t>(value);
 }
 
 extern "C" int64_t Kotlin_native_internal_GC_getThresholdAllocations(ObjHeader*) {
-    auto threshold = mm::GlobalData::Instance().gcScheduler().config().allocationThresholdBytes.load();
+    auto threshold = mm::GlobalData::Instance().gcScheduler().config().threadAllocationThresholdBytes.load();
     auto maxValue = std::numeric_limits<int64_t>::max();
     if (threshold > static_cast<size_t>(maxValue)) {
         return maxValue;
