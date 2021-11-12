@@ -62,9 +62,7 @@ class AddContinuationToFunctionCallsLowering(val context: JsCommonBackendContext
                 }
 
                 val oldFun = expression.symbol.owner
-                val newFun: IrSimpleFunction =
-                    context.mapping.suspendFunctionsToFunctionWithContinuations[oldFun]
-                        ?: error("No mapping for ${oldFun.fqNameWhenAvailable}")
+                val newFun: IrSimpleFunction = oldFun.getOrCreateFunctionWithContinuationStub(context)
 
                 return irCall(
                     expression,
