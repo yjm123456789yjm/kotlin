@@ -53,6 +53,8 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.report.BuildMetricsReporterService
 import org.jetbrains.kotlin.gradle.report.ReportingSettings
 import org.jetbrains.kotlin.gradle.targets.js.ir.isProduceUnzippedKlib
+import org.jetbrains.kotlin.gradle.tasks.internal.JAR_SNAPSHOT_ARTIFACT_TYPE
+import org.jetbrains.kotlin.gradle.tasks.internal.JarToJarSnapshotTransform
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.incremental.ChangedFiles
 import org.jetbrains.kotlin.incremental.ClasspathChanges
@@ -516,6 +518,9 @@ abstract class KotlinCompile @Inject constructor(
             private const val DIRECTORY_ARTIFACT_TYPE = "directory"
             private const val JAR_ARTIFACT_TYPE = "jar"
             const val CLASSPATH_ENTRY_SNAPSHOT_ARTIFACT_TYPE = "classpath-entry-snapshot"
+            //transformation for java jar
+            //transformation for module jar. It should exist
+            private const val ABI_SNAPSHOT_ARTIFACT_TYPE = "snapshot"
         }
 
         /**
@@ -529,6 +534,10 @@ abstract class KotlinCompile @Inject constructor(
                 project.configurations.create(classpathSnapshotConfigurationName(taskProvider.name)).apply {
                     project.dependencies.add(name, project.files(project.provider { taskProvider.get().classpath }))
                 }
+            }
+
+            if (properties.useAbiSnapshot) {
+                project.configurations.maybeCreate("kotlin_${taskProvider.name}_configuration")
             }
         }
 
@@ -577,6 +586,39 @@ abstract class KotlinCompile @Inject constructor(
                 task.kotlinOptions.moduleName ?: task.parentKotlinOptionsImpl.orNull?.moduleName ?: compilation.moduleName
             })
 
+            if (properties.useAbiSnapshot) {
+
+                val jarToAbiSnapshot = HashMap<File, File>()
+
+//                task.project.gradle.taskGraph.allTasks.forEach { it ->
+//                    if (task is AbstractKotlinCompile<*>) {
+//                        //TODO
+//                        val jarFiles = task.taskBuildDirectory.dir("libs").get().files().filter { it.name.endsWith(".jar") }
+//
+//                        jarFiles.files.forEach {
+//                            jarToAbiSnapshot[it] = task.abiSnapshotFile.get().asFile
+//                        }
+//                    }
+//                }
+
+                task.project.configurations.getByName("kotlin_${task.name}_configuration").also {
+                    it.extendsFrom(task.project.configurations.getByName("compileClasspath"))
+                    task.project.dependencies.registerTransform(JarToJarSnapshotTransform::class.java) {
+                        it.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_ARTIFACT_TYPE)
+                        it.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
+                        it.parameters {
+                            it.jarToModuleAbiSnapshot = jarToAbiSnapshot
+                        }
+
+                    }
+                    task.jarSnapshots.from(it.incoming.artifactView { viewConfig ->
+                            viewConfig.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
+                        }.files
+                    )
+//                    task.jarSnapshots.from(task.project.provider { task.classpath })
+                }
+
+            }
             if (properties.useClasspathSnapshot) {
                 val classpathSnapshot = task.project.configurations.getByName(classpathSnapshotConfigurationName(task.name))
                 task.classpathSnapshotProperties.classpathSnapshot.from(
@@ -624,6 +666,11 @@ abstract class KotlinCompile @Inject constructor(
     override fun getClasspath(): FileCollection {
         return super.getClasspath()
     }
+
+    @get:Classpath
+    @get:Optional
+    @get:Incremental
+    abstract val jarSnapshots: ConfigurableFileCollection
 
     @get:Nested
     abstract val classpathSnapshotProperties: ClasspathSnapshotProperties
@@ -721,7 +768,7 @@ abstract class KotlinCompile @Inject constructor(
     }
 
     override val incrementalProps: List<FileCollection>
-        get() = listOf(stableSources, commonSourceSet, classpathSnapshotProperties.classpath, classpathSnapshotProperties.classpathSnapshot)
+        get() = listOf(stableSources, commonSourceSet, classpathSnapshotProperties.classpath, classpathSnapshotProperties.classpathSnapshot, jarSnapshots)
 
     override fun getSourceRoots(): SourceRoots.ForJvm = jvmSourceRoots
 

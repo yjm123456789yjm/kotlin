@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.compilerRunner
 import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.build.report.metrics.*
 import org.jetbrains.kotlin.cli.common.CompilerSystemProperties
-import org.jetbrains.kotlin.cli.common.CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_CLASSPATH_SNAPSHOTS
+import org.jetbrains.kotlin.cli.common.CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ABI_SNAPSHOTS
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.common.toBooleanLenient
@@ -135,7 +135,7 @@ internal class GradleKotlinCompilerWork @Inject constructor(
             throwGradleExceptionIfError(exitCode)
         } finally {
             val properties = ArrayList<TaskExecutionProperties>()
-            COMPILE_INCREMENTAL_WITH_CLASSPATH_SNAPSHOTS.value.toBooleanLenient()?.let {
+            COMPILE_INCREMENTAL_WITH_ABI_SNAPSHOTS.value.toBooleanLenient()?.let {
                 if (it) properties.add(ABI_SNAPSHOT)
             }
             CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ARTIFACT_TRANSFORM.value.toBooleanLenient()?.let {

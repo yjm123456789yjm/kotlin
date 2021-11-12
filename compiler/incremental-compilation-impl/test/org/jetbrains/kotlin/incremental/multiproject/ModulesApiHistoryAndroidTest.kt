@@ -27,10 +27,12 @@ class ModulesApiHistoryAndroidTest {
     private lateinit var appKotlinDestination: File
     private lateinit var appHistory: File
     private lateinit var appAbiSnapshot: File
+    private lateinit var appJarSnapshot: Set<File>
     private lateinit var libRoot: File
     private lateinit var libKotlinDestination: File
     private lateinit var libHistory: File
     private lateinit var libAbiSnapshot: File
+    private lateinit var libJarSnapshot: Set<File>
 
     private lateinit var androidHistory: ModulesApiHistoryAndroid
 
@@ -42,7 +44,8 @@ class ModulesApiHistoryAndroidTest {
         appHistory = appRoot.resolve("build/tmp/kotlin/app_history.bin")
         appAbiSnapshot = appRoot.resolve("build/tmp/kotlin/app_abi_snapshot.bin")
         appKotlinDestination = appRoot.resolve("build/tmp/kotlin-classes").apply { mkdirs() }
-        val appEntry = IncrementalModuleEntry(":app", "app", appRoot.resolve("build"), appHistory, appAbiSnapshot)
+        appJarSnapshot = emptySet()
+        val appEntry = IncrementalModuleEntry(":app", "app", appRoot.resolve("build"), appHistory, appAbiSnapshot, appJarSnapshot)
         appRoot.resolve("build/intermediates/classes/meta-inf/").apply {
             mkdirs()
             resolve("app.kotlin_module").createNewFile()
@@ -52,7 +55,8 @@ class ModulesApiHistoryAndroidTest {
         libHistory = libRoot.resolve("lib/build/tmp/kotlin/lib_history.bin")
         libAbiSnapshot = libRoot.resolve("lib/build/tmp/kotlin/lib_abi_snapshot.bin")
         libKotlinDestination = libRoot.resolve("build/tmp/kotlin-classes").apply { mkdirs() }
-        val libEntry = IncrementalModuleEntry(":lib", "lib", libRoot.resolve("build"), libHistory, libAbiSnapshot)
+        libJarSnapshot = emptySet()
+        val libEntry = IncrementalModuleEntry(":lib", "lib", libRoot.resolve("build"), libHistory, libAbiSnapshot, libJarSnapshot)
         libRoot.resolve("build/intermediates/classes/meta-inf/").apply {
             mkdirs()
             resolve("lib.kotlin_module").createNewFile()

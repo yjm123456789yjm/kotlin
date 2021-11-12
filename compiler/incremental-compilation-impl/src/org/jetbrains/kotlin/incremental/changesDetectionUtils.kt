@@ -23,7 +23,8 @@ internal fun getClasspathChanges(
     abiSnapshots: Map<String, AbiSnapshot>,
     withSnapshot: Boolean,
     caches: IncrementalCacheCommon,
-    scopes: Collection<String>
+    scopes: Collection<String>,
+    jarSnapshots: Map<String, JarSnapshot> = emptyMap()
 ): ChangesEither {
     val classpathSet = HashSet<File>()
     for (file in classpath) {
@@ -45,6 +46,15 @@ internal fun getClasspathChanges(
     if (modifiedClasspath.isEmpty()) return ChangesEither.Known()
 
     if (withSnapshot) {
+        fun analyzeJarClasspath(): Collection<LookupSymbol> {
+            val lookups = ArrayList<LookupSymbol>()
+            for (file in classpathSet) {
+                val fileSnapshot = jarSnapshots[file.name]
+                lastBuildInfo.dependencyToJarSnapshot[file.path]?.also {lookups.addAll(it.lookups.values)}
+            }
+            return lookups
+        }
+
         fun analyzeJarFiles(): ChangesEither {
             val symbols = HashSet<LookupSymbol>()
             val fqNames = HashSet<FqName>()
@@ -61,8 +71,10 @@ internal fun getClasspathChanges(
                 fqNames.addAll(diffData.dirtyClassesFqNames)
 
             }
+            symbols.addAll(analyzeJarClasspath())
             return ChangesEither.Known(symbols, fqNames)
         }
+
         return reporter.measure(BuildTime.IC_ANALYZE_JAR_FILES) {
             analyzeJarFiles()
         }

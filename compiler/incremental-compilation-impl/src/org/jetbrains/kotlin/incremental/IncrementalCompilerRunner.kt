@@ -62,7 +62,7 @@ abstract class IncrementalCompilerRunner<
     protected open val kotlinSourceFilesExtensions: List<String> = DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
 
     //TODO(valtman) temporal measure to ensure quick disable, should be deleted after successful release
-    protected val withSnapshot: Boolean = CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_CLASSPATH_SNAPSHOTS.value.toBooleanLenient() ?: false
+    protected val withSnapshot: Boolean = CompilerSystemProperties.COMPILE_INCREMENTAL_WITH_ABI_SNAPSHOTS.value.toBooleanLenient() ?: false
 
     protected abstract fun isICEnabled(): Boolean
     protected abstract fun createCacheManager(args: Args, projectDir: File?): CacheManager
@@ -316,7 +316,8 @@ abstract class IncrementalCompilerRunner<
         originalMessageCollector: MessageCollector,
         withSnapshot: Boolean,
         abiSnapshot: AbiSnapshot = AbiSnapshotImpl(mutableMapOf()),
-        classpathAbiSnapshot: Map<String, AbiSnapshot> = HashMap()
+        classpathAbiSnapshot: Map<String, AbiSnapshot> = HashMap(),
+        classpathJarSnapshot: Map<String, JarSnapshot> = HashMap(),
     ): ExitCode {
         preBuildHook(args, compilationMode)
 
@@ -333,7 +334,7 @@ abstract class IncrementalCompilerRunner<
             }
         }
 
-        val currentBuildInfo = BuildInfo(startTS = System.currentTimeMillis(), classpathAbiSnapshot)
+        val currentBuildInfo = BuildInfo(startTS = System.currentTimeMillis(), classpathAbiSnapshot, classpathJarSnapshot)
         val buildDirtyLookupSymbols = HashSet<LookupSymbol>()
         val buildDirtyFqNames = HashSet<FqName>()
         val allDirtySources = HashSet<File>()

@@ -18,9 +18,14 @@ package org.jetbrains.kotlin.incremental
 
 import org.jetbrains.kotlin.incremental.AbiSnapshotImpl.Companion.readAbiSnapshot
 import org.jetbrains.kotlin.incremental.AbiSnapshotImpl.Companion.writeAbiSnapshot
+import org.jetbrains.kotlin.incremental.JarSnapshotImpl.Companion.readJarSnapshot
+import org.jetbrains.kotlin.incremental.JarSnapshotImpl.Companion.writeJarSnapshot
 import java.io.*
 
-data class BuildInfo(val startTS: Long, val dependencyToAbiSnapshot: Map<String, AbiSnapshot> = mapOf()) : Serializable {
+data class BuildInfo(val startTS: Long,
+                     val dependencyToAbiSnapshot: Map<String, AbiSnapshot> = mapOf(),
+                     val dependencyToJarSnapshot: Map<String, JarSnapshot> = mapOf()
+) : Serializable {
     companion object {
         private fun ObjectInputStream.readBuildInfo() : BuildInfo {
             val ts = readLong()
@@ -31,7 +36,13 @@ data class BuildInfo(val startTS: Long, val dependencyToAbiSnapshot: Map<String,
                 val snapshot = readAbiSnapshot()
                 abiSnapshots.put(identifier, snapshot)
             }
-            return BuildInfo(ts, abiSnapshots)
+            val jarSnapshots = HashMap<String, JarSnapshot>(size)
+            repeat(size) {
+                val identifier = readUTF()
+                val snapshot = readJarSnapshot()
+                jarSnapshots.put(identifier, snapshot)
+            }
+            return BuildInfo(ts, abiSnapshots, jarSnapshots)
         }
 
         private fun ObjectOutputStream.writeBuildInfo(buildInfo: BuildInfo) {
@@ -40,6 +51,11 @@ data class BuildInfo(val startTS: Long, val dependencyToAbiSnapshot: Map<String,
             for((identifier, abiSnapshot) in buildInfo.dependencyToAbiSnapshot) {
                 writeUTF(identifier)
                 writeAbiSnapshot(abiSnapshot)
+            }
+            writeInt(buildInfo.dependencyToJarSnapshot.size)
+            for ((file, lookups) in buildInfo.dependencyToJarSnapshot) {
+                writeUTF(file)
+                writeJarSnapshot(lookups)
             }
         }
 
