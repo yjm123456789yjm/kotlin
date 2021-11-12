@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransf
 import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
-import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
@@ -88,6 +88,10 @@ class TestModuleCache(val moduleName: String, val files: MutableMap<String, File
 
             override fun sourceMap(path: String): ByteArray? {
                 return files[path]?.sourceMap
+            }
+
+            override fun filePaths(): Iterable<String> {
+                return files.keys
             }
         }
     }
@@ -180,7 +184,7 @@ abstract class BasicIrBoxTest(
 
     val runEs6Mode: Boolean = getBoolean("kotlin.js.ir.es6", false)
 
-    val runNewIr2Js: Boolean = getBoolean("kotlin.js.ir.newIr2Js", false)
+    val runNewIr2Js: Boolean = true//getBoolean("kotlin.js.ir.newIr2Js", false)
 
     val perModule: Boolean = getBoolean("kotlin.js.ir.perModule")
 
@@ -248,8 +252,16 @@ abstract class BasicIrBoxTest(
             if (!isMainModule) klibPath else it
         }
 
+        val mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null }
+
         if (incrementalCompilationChecksEnabled && incrementalCompilation) {
-            runtimeKlibs.forEach { createIcCache(it, null, runtimeKlibs, config, icCache) }
+            runtimeKlibs.forEach {
+                createIcCache(
+                    it, null, runtimeKlibs, config, icCache,
+                    setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
+                    mainArguments,
+                )
+            }
         }
 
         if (!recompile) { // In case of incremental recompilation we only rebuild caches, not klib itself
@@ -275,14 +287,21 @@ abstract class BasicIrBoxTest(
 
         if (incrementalCompilation) {
             icCache[klibCannonPath] =
-                createIcCache(klibCannonPath, filesToCompile.map { it.virtualFilePath }, allKlibPaths + klibCannonPath, config, icCache)
+                createIcCache(
+                    klibCannonPath,
+                    filesToCompile.map { it.virtualFilePath },
+                    allKlibPaths + klibCannonPath,
+                    config,
+                    icCache,
+                    setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
+                    mainArguments,
+                )
         }
 
         compilationCache[outputFile.name.replace(".js", ".meta.js")] = actualOutputFile
 
         if (isMainModule) {
             logger.logFile("Output JS", outputFile)
-            val mainArguments = mainCallParameters.run { if (shouldBeGenerated()) arguments() else null }
 
             @Suppress("NAME_SHADOWING")
             val granularity = if (perModule) PER_MODULE else granularity
@@ -295,7 +314,9 @@ abstract class BasicIrBoxTest(
                 if (incrementalCompilation) {
                     val jsOutputFile = if (recompile) File(outputFile.parentFile, outputFile.nameWithoutExtension + "-recompiled.js")
                     else outputFile
-                    val compiledModule = generateJsFromAst(klibPath, icCache.map { it.key to it.value.createModuleCache() }.toMap())
+                    val mainModuleName = config.configuration[CommonConfigurationKeys.MODULE_NAME]!!
+                    val moduleKind = config.configuration[JSConfigurationKeys.MODULE_KIND]!!
+                    val compiledModule = generateJsFromAst(mainModuleName, moduleKind, icCache.map { it.key to it.value.createModuleCache() }.toMap())
                     generateOldModuleSystems(compiledModule, jsOutputFile, dceOutputFile, config, units, dirtyFilesToRecompile)
                 } else {
                     val ir = compileToLoweredIr(
@@ -408,7 +429,7 @@ abstract class BasicIrBoxTest(
         return compile(
             module,
             phaseConfig = phaseConfig,
-            irFactory = IrFactoryImpl,
+            irFactory = IrFactoryImplForJsIC(WholeWorldStageController()),
             exportedDeclarations = setOf(FqName.fromSegments(listOfNotNull(testPackage, testFunction))),
             dceDriven = dceDriven,
             es6mode = runEs6Mode,
@@ -609,12 +630,12 @@ abstract class BasicIrBoxTest(
 //
 //            assert(oldBinaryAst.contentEquals(newBinaryAst)) { "Binary AST changed after recompilation for file $file" }
 //        }
-//
-//        if (isMainModule) {
-//            val originalOutput = FileUtil.loadFile(outputFile)
-//            val recompiledOutput = FileUtil.loadFile(recompiledOutputFile)
-//            assertEquals("Output file changed after recompilation", originalOutput, recompiledOutput)
-//        }
+
+        if (isMainModule) {
+            val originalOutput = FileUtil.loadFile(outputFile)
+            val recompiledOutput = FileUtil.loadFile(recompiledOutputFile)
+            assert(originalOutput == recompiledOutput) { "Output file changed after recompilation" }
+        }
     }
 
     private fun jsOutputSink(perFileOutputDir: File): CompilerOutputSink {
@@ -635,7 +656,9 @@ abstract class BasicIrBoxTest(
         dirtyFiles: Collection<String>?,
         allKlibPaths: Collection<String>,
         config: JsConfig,
-        icCache: MutableMap<String, TestModuleCache>
+        icCache: MutableMap<String, TestModuleCache>,
+        exportedDeclarations: Set<FqName>,
+        mainArguments: List<String>?
     ): TestModuleCache {
 
         val cannonicalPath = File(path).canonicalPath
@@ -658,7 +681,16 @@ abstract class BasicIrBoxTest(
 
             val currentLib = libs[File(cannonicalPath).canonicalPath] ?: error("Expected library at $cannonicalPath")
 
-            rebuildCacheForDirtyFiles(currentLib, config.configuration, dependencyGraph, dirtyFiles, moduleCache.cacheConsumer(), IrFactoryImpl)
+            rebuildCacheForDirtyFiles(
+                currentLib,
+                config.configuration,
+                dependencyGraph,
+                dirtyFiles,
+                moduleCache.cacheConsumer(),
+                IrFactoryImplForJsIC(WholeWorldStageController()),
+                exportedDeclarations,
+                mainArguments,
+            )
 
             if (cannonicalPath in predefinedKlibHasIcCache) {
                 predefinedKlibHasIcCache[cannonicalPath] = moduleCache
