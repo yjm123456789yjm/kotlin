@@ -1208,6 +1208,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
+            @TestMetadata("delegateWithArgInference.kt")
+            public void testDelegateWithArgInference() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateWithArgInference.kt");
+            }
+
+            @Test
             @TestMetadata("delegateWithLambda.kt")
             public void testDelegateWithLambda() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/delegates/delegateWithLambda.kt");
@@ -1235,6 +1241,12 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             @TestMetadata("provideDelegate.kt")
             public void testProvideDelegate() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolve/delegates/provideDelegate.kt");
+            }
+
+            @Test
+            @TestMetadata("receiverInference.kt")
+            public void testReceiverInference() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/delegates/receiverInference.kt");
             }
         }
 
@@ -5046,15 +5058,15 @@ public class FirDiagnosticsWithLightTreeTestGenerated extends AbstractFirDiagnos
             }
 
             @Test
-            @TestMetadata("hideBySeverity.kt")
-            public void testHideBySeverity() throws Exception {
-                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/hideBySeverity.kt");
-            }
-
-            @Test
             @TestMetadata("EnumWithToString.kt")
             public void testEnumWithToString() throws Exception {
                 runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/EnumWithToString.kt");
+            }
+
+            @Test
+            @TestMetadata("hideBySeverity.kt")
+            public void testHideBySeverity() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolveWithStdlib/intellij/hideBySeverity.kt");
             }
 
             @Test
