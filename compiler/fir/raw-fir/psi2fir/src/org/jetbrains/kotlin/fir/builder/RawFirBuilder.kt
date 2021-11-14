@@ -1428,15 +1428,13 @@ open class RawFirBuilder(
                         isLateInit = hasModifier(LATEINIT_KEYWORD)
                     }
 
-                    val receiver = delegateExpression?.toFirExpression("Incorrect delegate expression")
                     generateAccessorsByDelegate(
                         delegateBuilder,
                         baseModuleData,
                         ownerRegularOrAnonymousObjectSymbol = null,
                         ownerRegularClassTypeParametersCount = null,
                         isExtension = false,
-                        stubMode = stubMode,
-                        receiver = receiver
+                        stubMode = stubMode
                     )
                 } else {
                     isLocal = false
@@ -1479,8 +1477,7 @@ open class RawFirBuilder(
                             ownerRegularOrAnonymousObjectSymbol,
                             ownerRegularClassTypeParametersCount,
                             isExtension = receiverTypeReference != null,
-                            stubMode = stubMode,
-                            receiver = receiver
+                            stubMode = stubMode
                         )
                     }
                 }

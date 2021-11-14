@@ -316,8 +316,7 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
     ownerRegularOrAnonymousObjectSymbol: FirClassSymbol<*>?,
     ownerRegularClassTypeParametersCount: Int?,
     isExtension: Boolean,
-    stubMode: Boolean,
-    receiver: FirExpression?
+    stubMode: Boolean
 ) {
     if (delegateBuilder == null) return
     val delegateFieldSymbol = FirDelegateFieldSymbol(symbol.callableId).also {
@@ -400,7 +399,7 @@ fun FirPropertyBuilder.generateAccessorsByDelegate(
     }
 
     delegateBuilder.delegateProvider = if (stubMode) buildExpressionStub() else buildFunctionCall {
-        explicitReceiver = receiver
+        explicitReceiver = delegateBuilder.expression
         calleeReference = buildSimpleNamedReference {
             source = fakeSource
             name = OperatorNameConventions.PROVIDE_DELEGATE
