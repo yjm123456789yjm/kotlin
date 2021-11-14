@@ -46,9 +46,11 @@ class FirCallCompleter(
     private val components: FirAbstractBodyResolveTransformer.BodyResolveTransformerComponents
 ) {
     private val session = components.session
-    val completer = ConstraintSystemCompleter(components)
     private val inferenceSession
         get() = transformer.context.inferenceSession
+
+    val completer = ConstraintSystemCompleter(components, transformer.context)
+
 
     data class CompletionResult<T>(val result: T, val callCompleted: Boolean)
 
@@ -57,7 +59,9 @@ class FirCallCompleter(
         expectedTypeRef: FirTypeRef?,
         expectedTypeMismatchIsReportedInChecker: Boolean = false,
     ): CompletionResult<T> where T : FirResolvable, T : FirStatement =
-        completeCall(call, expectedTypeRef, mayBeCoercionToUnitApplied = false, expectedTypeMismatchIsReportedInChecker, isFromCast = false)
+        completeCall(
+            call, expectedTypeRef, mayBeCoercionToUnitApplied = false, expectedTypeMismatchIsReportedInChecker, isFromCast = false
+        )
 
     fun <T> completeCall(call: T, data: ResolutionMode): CompletionResult<T> where T : FirResolvable, T : FirStatement =
         completeCall(
