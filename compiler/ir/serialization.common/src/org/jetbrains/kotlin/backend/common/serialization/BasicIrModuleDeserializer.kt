@@ -80,11 +80,11 @@ abstract class BasicIrModuleDeserializer(
 
     override fun referenceSimpleFunctionByLocalSignature(file: IrFile, idSignature: IdSignature) : IrSimpleFunctionSymbol =
         fileToDeserializerMap[file]?.symbolDeserializer?.referenceSimpleFunctionByLocalSignature(idSignature)
-            ?: error("No deserializer for file $file in module ${moduleDescriptor.name}")
+            ?: error("No deserializer for file $file in module ${moduleDescriptor?.name}")
 
     override fun referencePropertyByLocalSignature(file: IrFile, idSignature: IdSignature): IrPropertySymbol =
         fileToDeserializerMap[file]?.symbolDeserializer?.referencePropertyByLocalSignature(idSignature)
-            ?: error("No deserializer for file $file in module ${moduleDescriptor.name}")
+            ?: error("No deserializer for file $file in module ${moduleDescriptor?.name}")
 
     // TODO: fix to topLevel checker
     override fun contains(idSig: IdSignature): Boolean = idSig in moduleReversedFileIndex

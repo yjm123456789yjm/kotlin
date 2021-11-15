@@ -51,7 +51,7 @@ class CompatibilityMode(val abiVersion: KotlinAbiVersion) {
     }
 }
 
-abstract class IrModuleDeserializer(val moduleDescriptor: ModuleDescriptor, val libraryAbiVersion: KotlinAbiVersion) {
+abstract class IrModuleDeserializer(val moduleDescriptor: ModuleDescriptor?, val libraryAbiVersion: KotlinAbiVersion) {
     abstract operator fun contains(idSig: IdSignature): Boolean
     abstract fun deserializeIrSymbol(idSig: IdSignature, symbolKind: BinarySymbolData.SymbolKind): IrSymbol
 

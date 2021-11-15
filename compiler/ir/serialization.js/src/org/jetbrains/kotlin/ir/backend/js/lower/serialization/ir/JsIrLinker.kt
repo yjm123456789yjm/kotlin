@@ -30,8 +30,9 @@ class JsIrLinker(
     override val translationPluginContext: TranslationPluginContext?,
     private val icData: ICData? = null,
     private val loweredIcData: Map<ModuleDescriptor, SerializedIcData> = emptyMap(),
-    friendModules: Map<String, Collection<String>> = emptyMap()
-) : KotlinIrLinker(currentModule, messageLogger, builtIns, symbolTable, emptyList()) {
+    friendModules: Map<String, Collection<String>> = emptyMap(),
+    allowUnboundSymbols: Boolean = false
+) : KotlinIrLinker(currentModule, messageLogger, builtIns, symbolTable, emptyList(), allowUnboundSymbols) {
 
     override val fakeOverrideBuilder = FakeOverrideBuilder(this, symbolTable, JsManglerIr, IrTypeSystemContextImpl(builtIns), friendModules)
 
@@ -76,7 +77,7 @@ class JsIrLinker(
         val currentModuleDeserializer = super.createCurrentModuleDeserializer(moduleFragment, dependencies)
         icData?.let {
             return CurrentModuleWithICDeserializer(currentModuleDeserializer, symbolTable, builtIns, it.icData) { lib ->
-                JsModuleDeserializer(currentModuleDeserializer.moduleDescriptor, lib, currentModuleDeserializer.strategyResolver, KotlinAbiVersion.CURRENT, it.containsErrorCode)
+                JsModuleDeserializer(currentModuleDeserializer.moduleDescriptor!!, lib, currentModuleDeserializer.strategyResolver, KotlinAbiVersion.CURRENT, it.containsErrorCode)
             }
         }
         return currentModuleDeserializer
