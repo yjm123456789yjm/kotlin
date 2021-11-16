@@ -1,6 +1,7 @@
 // IGNORE_BACKEND_FIR: JVM_IR
 // FULL_JDK
 // WITH_STDLIB
+// SAM_CONVERSIONS: CLASS
 
 // MODULE: lib
 // FILE: A.kt
@@ -27,9 +28,14 @@ import test.*
 fun box(): String {
     val anotherModule = doWork { "K" }
 
-    if (sameModule.javaClass.name == anotherModule.javaClass.name) return "class should be regenerated, but ${anotherModule.javaClass.name}"
-    if (sameModule.javaClass.name.contains("inlined")) return "Sam in same module shouldn't be copied, but ${sameModule.javaClass.name}"
-    if (!anotherModule.javaClass.name.contains("inlined")) return "Sam in another module should be copied, but ${sameModule.javaClass.name}"
+    val sameModuleClassName = sameModule.javaClass.name
+    val anotherModuleClassName = anotherModule.javaClass.name
+    if (sameModuleClassName == anotherModuleClassName)
+        return "Class should be regenerated, but $sameModuleClassName != $anotherModuleClassName"
+    if (sameModuleClassName.contains("inlined"))
+        return "SAM in same module shouldn't be copied; found $sameModuleClassName"
+    if (!anotherModuleClassName.contains("inlined"))
+        return "SAM in another module should be copied; found $sameModuleClassName"
 
     return sameModule.call() + anotherModule.call()
 }

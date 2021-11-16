@@ -22372,6 +22372,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("kt41174_no_inline.kt")
+            public void testKt41174_no_inline() throws Exception {
+                runTest("compiler/testData/codegen/box/invokedynamic/sam/kt41174_no_inline.kt");
+            }
+
+            @Test
             @TestMetadata("kt45779.kt")
             public void testKt45779() throws Exception {
                 runTest("compiler/testData/codegen/box/invokedynamic/sam/kt45779.kt");

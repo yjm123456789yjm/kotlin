@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.expressions.IrStatementOrigin
 import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionReferenceImpl
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.util.defaultType
 import org.jetbrains.kotlin.ir.util.functions
 import org.jetbrains.kotlin.ir.util.render
 import org.jetbrains.kotlin.name.Name
@@ -137,7 +138,7 @@ internal class SamDelegatingLambdaBuilder(private val jvmContext: JvmBackendCont
     private fun createDelegatingLambda(
         expression: IrExpression,
         superType: IrType,
-        tmp: IrVariable,
+        capturedFunctionValue: IrVariable,
         parent: IrDeclarationParent
     ): IrSimpleFunction {
         val superMethod = superType.getClass()?.getSingleAbstractMethod()
@@ -149,6 +150,7 @@ internal class SamDelegatingLambdaBuilder(private val jvmContext: JvmBackendCont
                 jvmContext.ir.symbols.suspendFunctionN(effectiveValueParametersCount).owner
             else
                 jvmContext.ir.symbols.functionN(effectiveValueParametersCount).owner
+        capturedFunctionValue.type = invocableFunctionClass.defaultType
         val invokeFunction = invocableFunctionClass.functions.single { it.name == OperatorNameConventions.INVOKE }
         val typeSubstitutor = createTypeSubstitutor(superType)
 
@@ -173,7 +175,7 @@ internal class SamDelegatingLambdaBuilder(private val jvmContext: JvmBackendCont
                             // correct substitution of invocableFunctionClass by visiting tmp.type's hierarchy.
                             val rawFunctionType = invocableFunctionClass.typeWith()
 
-                            invokeCall.dispatchReceiver = irImplicitCast(irGet(tmp), rawFunctionType)
+                            invokeCall.dispatchReceiver = irImplicitCast(irGet(capturedFunctionValue), rawFunctionType)
                             var parameterIndex = 0
                             invokeFunction.extensionReceiverParameter?.let {
                                 invokeCall.extensionReceiver = irGet(lambda.valueParameters[parameterIndex++])

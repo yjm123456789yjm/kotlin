@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.backend.jvm.lower.indy
 
 import org.jetbrains.kotlin.backend.common.ir.allOverridden
 import org.jetbrains.kotlin.backend.common.lower.VariableRemapper
-import org.jetbrains.kotlin.backend.common.lower.parents
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
@@ -60,10 +59,6 @@ internal sealed class MetafactoryArgumentsResult {
         // TODO make sure indy and Kotlin bytecode inliner work well together
         object InliningHazard : Failure()
 
-        // Resulting object should be Serializable.
-        // TODO implement serialization support required by j.l.invoke.LambdaMetafactory
-        object SerializationHazard : Failure()
-
         // There's something special about a function we are referencing.
         // Wrapping it into a proxy local function might help.
         object FunctionHazard : Failure()
@@ -97,7 +92,6 @@ internal class LambdaMetafactoryArgumentsBuilder(
 
         var semanticsHazard = false
         var abiHazard = false
-        var inliningHazard = false
         var shouldBeSerializable = false
         var functionHazard = false
 
@@ -185,11 +179,6 @@ internal class LambdaMetafactoryArgumentsBuilder(
                 abiHazard = true
         }
 
-        // Can't use indy-based SAM conversion inside inline fun (Ok in inline lambda).
-        if (implFun.parents.any { it.isInlineFunction() || it.isCrossinlineLambda() }) {
-            inliningHazard = true
-        }
-
         // Don't try to use indy on SAM types with non-invariant projections because buildFakeOverrideMember doesn't support such supertypes
         // (and rightly so: supertypes in Kotlin can't have projections in immediate type arguments). This can happen for example in case
         // the SAM type is instantiated with an intersection type in arguments, which is approximated to an out-projection in psi2ir.
@@ -202,7 +191,6 @@ internal class LambdaMetafactoryArgumentsBuilder(
         when {
             semanticsHazard -> return MetafactoryArgumentsResult.Failure.LambdaMetafactorySemanticsHazard
             abiHazard -> return MetafactoryArgumentsResult.Failure.LambdaMetafactoryAbiHazard
-            inliningHazard -> return MetafactoryArgumentsResult.Failure.InliningHazard
             functionHazard -> return MetafactoryArgumentsResult.Failure.FunctionHazard
         }
 
