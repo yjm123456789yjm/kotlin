@@ -45,12 +45,7 @@ internal fun getOrCreateFirLightClass(classOrObject: KtClassOrObject): KtLightCl
 
 @OptIn(HackToForceAllowRunningAnalyzeOnEDT::class)
 internal fun createFirLightClassNoCache(classOrObject: KtClassOrObject): KtLightClass? = hackyAllowRunningOnEdt {
-
     val containingFile = classOrObject.containingFile
-    if (containingFile is KtCodeFragment) {
-        // Avoid building light classes for code fragments
-        return null
-    }
 
     if (containingFile is KtFile && containingFile.isCompiled) return null
 
@@ -88,10 +83,6 @@ internal fun KtClassOrObjectSymbol.createLightClassNoCache(manager: PsiManager):
         else -> FirLightClassForSymbol(this, manager)
     }
 }
-
-
-
-
 
 private fun lightClassForEnumEntry(ktEnumEntry: KtEnumEntry): KtLightClass? {
     if (ktEnumEntry.body == null) return null
