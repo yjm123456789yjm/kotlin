@@ -139,9 +139,7 @@ internal class UnlinkedDeclarationsProcessor(
                 declaration.reportWarning(kind, fqn.asString())
 
                 declaration.type = errorType
-                declaration.initializer?.let {
-                    it.expression = it.expression.throwLinkageError("Unlinked type of property")
-                }
+                declaration.initializer = null
             } else {
                 declaration.transformChildrenVoid()
             }
