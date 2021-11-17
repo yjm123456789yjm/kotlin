@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.export
 
+import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsNameOrKotlinName
 import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -44,16 +45,20 @@ private val ModuleKind.indent: String
     get() = if (this == ModuleKind.PLAIN) "    " else ""
 
 fun List<ExportedDeclaration>.toTypeScript(moduleKind: ModuleKind): String {
-    return joinToString("\n") {
-        it.toTypeScript(
-            indent = moduleKind.indent,
-            prefix = if (moduleKind == ModuleKind.PLAIN) "" else "export "
-        )
-    }
+    return asSequence()
+        .filter { it.shouldBeIncludedInTypeScriptDefinition() }
+        .joinToString("\n") {
+            it.toTypeScript(
+                indent = moduleKind.indent,
+                prefix = if (moduleKind == ModuleKind.PLAIN) "" else "export "
+            )
+        }
 }
 
 fun List<ExportedDeclaration>.toTypeScript(indent: String): String =
-    joinToString("") { it.toTypeScript(indent) + "\n" }
+    asSequence()
+        .filter { it.shouldBeIncludedInTypeScriptDefinition() }
+        .joinToString("") { it.toTypeScript(indent) + "\n" }
 
 fun ExportedDeclaration.toTypeScript(indent: String, prefix: String = ""): String = indent + when (this) {
     is ErrorDeclaration -> "/* ErrorDeclaration: $message */"
@@ -116,6 +121,30 @@ fun ExportedDeclaration.toTypeScript(indent: String, prefix: String = ""): Strin
             else -> name
         }
         if (!isMember && containsUnresolvedChar) "" else "$prefix$visibility$possibleStatic$keyword$memberName: ${type.toTypeScript(indent)};"
+    }
+
+    is ExportedObject -> {
+        var t: ExportedType = ExportedType.InlineInterfaceType(members + nestedClasses)
+        if (superClass != null)
+            t = ExportedType.IntersectionType(t, superClass)
+
+        for (superInterface in superInterfaces) {
+            t = ExportedType.IntersectionType(t, superInterface)
+        }
+
+        ExportedProperty(
+            name = name,
+            type = t,
+            mutable = false,
+            isMember = ir.parent is IrClass,
+            isStatic = !ir.isInner,
+            isAbstract = false,
+            isProtected = ir.visibility == DescriptorVisibilities.PROTECTED,
+            irGetter = irGetter,
+            irSetter = null,
+            ir = null
+        ).toTypeScript(indent, "")
+            .trimStart()
     }
 
     is ExportedClass -> {
@@ -251,6 +280,7 @@ fun ExportedClass.toReadonlyProperty(): ExportedProperty {
         isStatic = false,
         isAbstract = false,
         isProtected = false,
+        ir = null,
         irGetter = null,
         irSetter = null
     )
@@ -289,5 +319,14 @@ fun ExportedType.toTypeScript(indent: String): String = when (this) {
     is ExportedType.LiteralType.NumberLiteralType -> value.toString()
     is ExportedType.ImplicitlyExportedType -> {
         ExportedType.Primitive.Any.toTypeScript(indent) + "/* ${type.toTypeScript("")} */"
+    }
+}
+
+fun ExportedDeclaration.shouldBeIncludedInTypeScriptDefinition(): Boolean {
+    return when (this) {
+        is ExportedNamespace -> declarations.any { it.shouldBeIncludedInTypeScriptDefinition() }
+        is ExportedFunction -> ir.parent !is IrClass
+        is ExportedProperty -> ir == null || ir.parent !is IrClass
+        else -> true
     }
 }

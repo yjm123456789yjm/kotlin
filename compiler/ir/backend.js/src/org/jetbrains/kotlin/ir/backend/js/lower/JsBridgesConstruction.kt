@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 
 class JsBridgesConstruction(context: JsIrBackendContext) : BridgesConstruction<JsIrBackendContext>(context) {
     override fun getFunctionSignature(function: IrSimpleFunction): String =
-        jsFunctionSignature(function, context)
+        jsFunctionSignature(function)
 
     override fun getBridgeOrigin(bridge: IrSimpleFunction): IrDeclarationOrigin =
-        if (bridge.hasStableJsName(context))
+        if (bridge.hasStableJsName())
             JsLoweredDeclarationOrigin.BRIDGE_WITH_STABLE_NAME
         else
             JsLoweredDeclarationOrigin.BRIDGE_WITHOUT_STABLE_NAME

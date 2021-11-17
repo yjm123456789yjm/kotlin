@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.backend.js.utils
 import org.jetbrains.kotlin.backend.common.ir.isTopLevel
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -109,13 +110,12 @@ fun NameTable<IrDeclaration>.dump(): String =
 
 private const val RESERVED_MEMBER_NAME_SUFFIX = "_k$"
 
-fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext?): String {
+fun jsFunctionSignature(declaration: IrFunction): String {
     require(!declaration.isStaticMethodOfClass)
     require(declaration.dispatchReceiverParameter != null)
 
-    val declarationName = declaration.getJsNameOrKotlinName().asString()
-
-    if (declaration.hasStableJsName(context)) {
+    if (declaration.hasStableJsName()) {
+        val declarationName = declaration.getJsNameOrKotlinName().asString()
         // TODO: Handle reserved suffix in FE
         require(!declarationName.endsWith(RESERVED_MEMBER_NAME_SUFFIX)) {
             "Function ${declaration.fqNameWhenAvailable} uses reserved name suffix \"$RESERVED_MEMBER_NAME_SUFFIX\""
@@ -123,8 +123,8 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext?): 
         return declarationName
     }
 
-    val nameBuilder = StringBuilder()
-    nameBuilder.append(declarationName)
+    val declarationName = declaration.name.asString()
+    val nameBuilder = StringBuilder().apply { append(declarationName) }
 
     // TODO should we skip type parameters and use upper bound of type parameter when print type of value parameters?
     declaration.typeParameters.ifNotEmpty {
@@ -143,6 +143,12 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext?): 
         if (it.getJsInlinedClass() != null || it.isUnit()) {
             nameBuilder.append("_ret$${it.asString()}")
         }
+    }
+
+    // We need it to resolve name clash for default parameters methods
+    // after DefaultParameterClean phase
+    if (declaration.origin == JsLoweredDeclarationOrigin.JS_SHADOWED_EXPORT) {
+        nameBuilder.append("_shadowed$")
     }
 
     val signature = nameBuilder.toString()
