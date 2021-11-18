@@ -50,7 +50,7 @@ public class ClassPreloadingUtils {
 
         Collection<File> classpath = mergeClasspathFromManifests(entries);
         if (!classpath.isEmpty()) {
-            parentClassLoader = preloadClasses(classpath, classCountEstimation, parentClassLoader, null, handler);
+            parentClassLoader = preloadClasses(classpath, classCountEstimation, parentClassLoader, classesToLoadByParent, handler);
         }
 
         return new MemoryBasedClassLoader(classesToLoadByParent, parentClassLoader, entries, handler, createFallbackClassLoader(jarFiles));
