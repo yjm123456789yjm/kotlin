@@ -368,10 +368,9 @@ publishing {
             configureKotlinPomAttributes(project, "Kotlin Test for JS")
         }
         create("wasm", MavenPublication::class) {
-            pom.packaging = "klib"
             artifactId = "kotlin-test-wasm"
             from(wasmComponent)
-            configureKotlinPomAttributes(project, "Kotlin Test for WASM")
+            configureKotlinPomAttributes(project, "Kotlin Test for WASM", packaging = "klib")
         }
         create("common", MavenPublication::class) {
             artifactId = "kotlin-test-common"
