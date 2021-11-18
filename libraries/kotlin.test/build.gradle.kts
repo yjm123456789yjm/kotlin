@@ -370,6 +370,8 @@ publishing {
         create("wasm", MavenPublication::class) {
             artifactId = "kotlin-test-wasm"
             from(wasmComponent)
+            artifact(tasks.getByPath(":kotlin-test:kotlin-test-wasm:sourcesJar") as Jar)
+            artifact(emptyJavadocJar)
             configureKotlinPomAttributes(project, "Kotlin Test for WASM", packaging = "klib")
         }
         create("common", MavenPublication::class) {
