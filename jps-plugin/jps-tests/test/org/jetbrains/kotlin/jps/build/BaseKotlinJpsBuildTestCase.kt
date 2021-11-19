@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.jps.build
 
 import com.intellij.openapi.vfs.StandardFileSystems
+import com.intellij.testFramework.RunAll
 import com.intellij.util.ThrowableRunnable
 import com.intellij.util.io.URLUtil
 import org.jetbrains.jps.builders.JpsBuildTestCase
@@ -28,7 +29,6 @@ import org.jetbrains.jps.model.library.sdk.JpsSdk
 import org.jetbrains.kotlin.compilerRunner.JpsKotlinCompilerRunner
 import org.jetbrains.kotlin.test.WithMutedInDatabaseRunTest
 import org.jetbrains.kotlin.test.runTest
-import org.jetbrains.kotlin.idea.test.runAll
 import org.jetbrains.kotlin.test.AndroidStudioTestUtils
 
 @WithMutedInDatabaseRunTest
@@ -43,7 +43,7 @@ abstract class BaseKotlinJpsBuildTestCase : JpsBuildTestCase() {
     }
 
     override fun tearDown() {
-        runAll(
+        RunAll(
             ThrowableRunnable {
                 System.clearProperty("kotlin.jps.tests")
                 myModel = null
@@ -51,7 +51,7 @@ abstract class BaseKotlinJpsBuildTestCase : JpsBuildTestCase() {
             },
             ThrowableRunnable { JpsKotlinCompilerRunner.releaseCompileServiceSession() },
             ThrowableRunnable { super.tearDown() }
-        )
+        ).run()
     }
 
     override fun addJdk(name: String, path: String?): JpsSdk<JpsDummyElement> {
