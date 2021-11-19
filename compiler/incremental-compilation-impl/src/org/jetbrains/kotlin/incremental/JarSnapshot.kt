@@ -9,10 +9,10 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
 interface JarSnapshot {
-    val lookups : Map<String, LookupSymbol>
+    val lookups : HashMap<String, LookupSymbol>
 }
 
-class JarSnapshotImpl(override val lookups : Map<String, LookupSymbol>) : JarSnapshot {
+class JarSnapshotImpl(override val lookups: HashMap<String, LookupSymbol>) : JarSnapshot {
     companion object {
         fun ObjectOutputStream.writeJarSnapshot(jarSnapshot: JarSnapshot) {
             writeInt(jarSnapshot.lookups.size)

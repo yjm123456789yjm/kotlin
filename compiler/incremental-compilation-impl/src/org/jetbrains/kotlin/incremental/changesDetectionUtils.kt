@@ -24,7 +24,7 @@ internal fun getClasspathChanges(
     withSnapshot: Boolean,
     caches: IncrementalCacheCommon,
     scopes: Collection<String>,
-    jarSnapshots: Map<String, JarSnapshot> = emptyMap()
+//    @SuppressWarnings("UNUSED_PARAMETER") jarSnapshots: Map<String, JarSnapshot> = emptyMap()
 ): ChangesEither {
     val classpathSet = HashSet<File>()
     for (file in classpath) {
@@ -37,32 +37,35 @@ internal fun getClasspathChanges(
     val modifiedClasspath = changedFiles.modified.filterTo(HashSet()) { it in classpathSet }
     val removedClasspath = changedFiles.removed.filterTo(HashSet()) { it in classpathSet }
 
+    if (modifiedClasspath.isEmpty() && removedClasspath.isEmpty()) return ChangesEither.Known()
+
     // todo: removed classes could be processed normally
-    if (removedClasspath.isNotEmpty()) {
+    if (!withSnapshot && removedClasspath.isNotEmpty()) {
         reporter.report { "Some files are removed from classpath: $removedClasspath" }
         return ChangesEither.Unknown(BuildAttribute.DEP_CHANGE_REMOVED_ENTRY)
     }
 
-    if (modifiedClasspath.isEmpty()) return ChangesEither.Known()
-
     if (withSnapshot) {
-        fun analyzeJarClasspath(): Collection<LookupSymbol> {
-            val lookups = ArrayList<LookupSymbol>()
-            for (file in classpathSet) {
-                val fileSnapshot = jarSnapshots[file.name]
-                lastBuildInfo.dependencyToJarSnapshot[file.path]?.also {lookups.addAll(it.lookups.values)}
-            }
-            return lookups
-        }
-
         fun analyzeJarFiles(): ChangesEither {
             val symbols = HashSet<LookupSymbol>()
             val fqNames = HashSet<FqName>()
 
+            //TODO First mark all used lookups as dirty because we can't check signature changes
+            for (file in removedClasspath) {
+                //TODO check if it module
+                val usedLookups = lastBuildInfo.dependencyToJarSnapshot[file.path]
+                usedLookups?.lookups?.also { symbols.addAll(it.values) }
+            }
+
+            for (file in modifiedClasspath) {
+                //TODO check if it module
+                val usedLookups = lastBuildInfo.dependencyToJarSnapshot[file.path]
+                usedLookups?.lookups?.also { symbols.addAll(it.values) }
+            }
+
             for ((module, abiSnapshot) in abiSnapshots) {
                 val actualAbiSnapshot = lastBuildInfo.dependencyToAbiSnapshot[module]
                 if (actualAbiSnapshot == null) {
-
                     reporter.report { "Some jar are removed from classpath $module" }
                     return ChangesEither.Unknown(BuildAttribute.DEP_CHANGE_REMOVED_ENTRY)
                 }
@@ -71,7 +74,6 @@ internal fun getClasspathChanges(
                 fqNames.addAll(diffData.dirtyClassesFqNames)
 
             }
-            symbols.addAll(analyzeJarClasspath())
             return ChangesEither.Known(symbols, fqNames)
         }
 

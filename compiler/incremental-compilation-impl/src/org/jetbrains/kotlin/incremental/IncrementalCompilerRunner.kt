@@ -35,6 +35,7 @@ import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.parsing.classesFqNames
 import org.jetbrains.kotlin.incremental.util.BufferingMessageCollector
+import org.jetbrains.kotlin.incremental.util.JarToJarSnapshotTransform
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.progress.CompilationCanceledStatus
 import java.io.File
@@ -103,6 +104,13 @@ abstract class IncrementalCompilerRunner<
                 emptyMap()
             }
 
+        val classpathJarSnapshot =
+            if (withSnapshot) {
+                setupClasspathJarSnapshot(args, withSnapshot, reporter)
+            } else {
+                emptyMap()
+            }
+
         fun rebuild(reason: BuildAttribute): ExitCode {
             reporter.report { "Non-incremental compilation will be performed: $reason" }
             caches.close(false)
@@ -114,9 +122,14 @@ abstract class IncrementalCompilerRunner<
             if (providedChangedFiles == null) {
                 caches.inputsCache.sourceSnapshotMap.compareAndUpdate(allSourceFiles)
             }
+
+//            val scopes = caches.lookupCache.lookupMap.keys.map { it.scope.ifBlank { it.name } }.distinct()
+//            args.classpathAsList
+
+
             val allKotlinFiles = allSourceFiles.filter { it.isKotlinFile(kotlinSourceFilesExtensions) }
             return compileIncrementally(args, caches, allKotlinFiles, CompilationMode.Rebuild(reason), messageCollector, withSnapshot,
-                                        classpathAbiSnapshot = classpathAbiSnapshot)
+                                        classpathAbiSnapshot = classpathAbiSnapshot, classpathJarSnapshot = classpathJarSnapshot)
         }
 
         // If compilation has crashed or we failed to close caches we have to clear them
@@ -124,6 +137,7 @@ abstract class IncrementalCompilerRunner<
         return try {
             val changedFiles = when (providedChangedFiles) {
                 is ChangedFiles.Dependencies -> {
+                    //TODO store
                     val changedSources = caches.inputsCache.sourceSnapshotMap.compareAndUpdate(allSourceFiles)
                     ChangedFiles.Known(
                         providedChangedFiles.modified + changedSources.modified,
@@ -256,6 +270,7 @@ abstract class IncrementalCompilerRunner<
     ): CompilationMode
 
     protected open fun setupJarDependencies(args: Args, withSnapshot: Boolean, reporter: BuildReporter): Map<String, AbiSnapshot> = mapOf()
+    protected open fun setupClasspathJarSnapshot(args: Args, withSnapshot: Boolean, reporter: BuildReporter) : Map<String, JarSnapshot> = mapOf()
 
     protected fun initDirtyFiles(dirtyFiles: DirtyFilesContainer, changedFiles: ChangedFiles.Known) {
         dirtyFiles.add(changedFiles.modified, "was modified since last time")
@@ -437,6 +452,11 @@ abstract class IncrementalCompilerRunner<
 
         if (exitCode == ExitCode.OK) {
             reporter.measure(BuildTime.STORE_BUILD_INFO) {
+                val scopes = caches.lookupCache.lookupMap.keys.map { it.scope.ifBlank { it.name } }.distinct()
+                currentBuildInfo.dependencyToJarSnapshot.forEach { (path, jarSnapshot) ->
+                    jarSnapshot.lookups.putAll(JarToJarSnapshotTransform.filter(File(path), scopes))
+                }
+
                 BuildInfo.write(currentBuildInfo, lastBuildInfoFile)
 
                 //write abi snapshot

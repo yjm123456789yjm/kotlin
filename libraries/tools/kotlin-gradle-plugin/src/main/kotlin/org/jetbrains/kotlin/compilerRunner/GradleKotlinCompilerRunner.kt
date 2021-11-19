@@ -281,19 +281,12 @@ internal open class GradleCompilerRunner(
                 }
 
                 if (task is AbstractKotlinCompile<*>) {
-                    val classpathJarSnapshot = if (task is KotlinCompile) {
-                        task.jarSnapshots.files
-                    } else {
-                        emptySet()
-                    }
-
                     val module = IncrementalModuleEntry(
                         project.path,
                         task.moduleName.get(),
                         project.buildDir,
                         task.buildHistoryFile.get().asFile,
-                        task.abiSnapshotFile.get().asFile,
-                        classpathJarSnapshot
+                        task.abiSnapshotFile.get().asFile
                     )
                     dirToModule[task.destinationDir] = module
                     task.javaOutputDir.orNull?.asFile?.let { dirToModule[it] = module }
@@ -329,19 +322,13 @@ internal open class GradleCompilerRunner(
                         }
 
                         val kotlinTask = mainCompilation.compileKotlinTask as? AbstractKotlinCompile<*> ?: continue
-                        //TODO duplication
-                        val classpathJarSnapshot = if (kotlinTask is KotlinCompile) {
-                            kotlinTask.jarSnapshots.files
-                        } else {
-                            emptySet()
-                        }
+
                         val module = IncrementalModuleEntry(
                             project.path,
                             kotlinTask.moduleName.get(),
                             project.buildDir,
                             kotlinTask.buildHistoryFile.get().asFile,
                             kotlinTask.abiSnapshotFile.get().asFile,
-                            classpathJarSnapshot
                         )
                         val jarTask = project.tasks.findByName(target.artifactsTaskName) as? AbstractArchiveTask ?: continue
                         jarToModule[jarTask.archivePathCompatible.canonicalFile] = module

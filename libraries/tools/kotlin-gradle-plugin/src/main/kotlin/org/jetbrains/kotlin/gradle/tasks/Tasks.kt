@@ -586,39 +586,28 @@ abstract class KotlinCompile @Inject constructor(
                 task.kotlinOptions.moduleName ?: task.parentKotlinOptionsImpl.orNull?.moduleName ?: compilation.moduleName
             })
 
-            if (properties.useAbiSnapshot) {
-
-                val jarToAbiSnapshot = HashMap<File, File>()
-
-//                task.project.gradle.taskGraph.allTasks.forEach { it ->
-//                    if (task is AbstractKotlinCompile<*>) {
-//                        //TODO
-//                        val jarFiles = task.taskBuildDirectory.dir("libs").get().files().filter { it.name.endsWith(".jar") }
+//            if (properties.useAbiSnapshot) {
 //
-//                        jarFiles.files.forEach {
-//                            jarToAbiSnapshot[it] = task.abiSnapshotFile.get().asFile
+//                val jarToAbiSnapshot = HashMap<File, File>()
+//
+//                task.project.configurations.getByName("kotlin_${task.name}_configuration").also {
+//                    it.extendsFrom(task.project.configurations.getByName("compileClasspath"))
+//                    task.project.dependencies.registerTransform(JarToJarSnapshotTransform::class.java) {
+//                        it.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_ARTIFACT_TYPE)
+//                        it.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
+//                        it.parameters {
+//                            it.jarToModuleAbiSnapshot = jarToAbiSnapshot
 //                        }
+//
 //                    }
+//                    task.jarSnapshots.from(it.incoming.artifactView { viewConfig ->
+//                            viewConfig.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
+//                        }.files
+//                    )
+////                    task.jarSnapshots.from(task.project.provider { task.classpath })
 //                }
-
-                task.project.configurations.getByName("kotlin_${task.name}_configuration").also {
-                    it.extendsFrom(task.project.configurations.getByName("compileClasspath"))
-                    task.project.dependencies.registerTransform(JarToJarSnapshotTransform::class.java) {
-                        it.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_ARTIFACT_TYPE)
-                        it.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
-                        it.parameters {
-                            it.jarToModuleAbiSnapshot = jarToAbiSnapshot
-                        }
-
-                    }
-                    task.jarSnapshots.from(it.incoming.artifactView { viewConfig ->
-                            viewConfig.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
-                        }.files
-                    )
-//                    task.jarSnapshots.from(task.project.provider { task.classpath })
-                }
-
-            }
+//
+//            }
             if (properties.useClasspathSnapshot) {
                 val classpathSnapshot = task.project.configurations.getByName(classpathSnapshotConfigurationName(task.name))
                 task.classpathSnapshotProperties.classpathSnapshot.from(
@@ -666,11 +655,11 @@ abstract class KotlinCompile @Inject constructor(
     override fun getClasspath(): FileCollection {
         return super.getClasspath()
     }
-
-    @get:Classpath
-    @get:Optional
-    @get:Incremental
-    abstract val jarSnapshots: ConfigurableFileCollection
+//
+//    @get:Classpath
+//    @get:Optional
+//    @get:Incremental
+//    abstract val jarSnapshots: ConfigurableFileCollection
 
     @get:Nested
     abstract val classpathSnapshotProperties: ClasspathSnapshotProperties
@@ -768,7 +757,7 @@ abstract class KotlinCompile @Inject constructor(
     }
 
     override val incrementalProps: List<FileCollection>
-        get() = listOf(stableSources, commonSourceSet, classpathSnapshotProperties.classpath, classpathSnapshotProperties.classpathSnapshot, jarSnapshots)
+        get() = listOf(stableSources, commonSourceSet, classpathSnapshotProperties.classpath, classpathSnapshotProperties.classpathSnapshot)
 
     override fun getSourceRoots(): SourceRoots.ForJvm = jvmSourceRoots
 

@@ -52,6 +52,7 @@ import org.jetbrains.kotlin.incremental.ClasspathChanges.NotAvailable.ForJSCompi
 import org.jetbrains.kotlin.incremental.ClasspathChanges.NotAvailable.ReservedForTestsOnly
 import org.jetbrains.kotlin.incremental.ClasspathChanges.NotAvailable.ForNonIncrementalRun
 import org.jetbrains.kotlin.incremental.ClasspathChanges.NotAvailable.ClasspathSnapshotIsDisabled
+import org.jetbrains.kotlin.incremental.util.JarToJarSnapshotTransform
 import org.jetbrains.kotlin.load.java.JavaClassesTracker
 import org.jetbrains.kotlin.load.kotlin.header.KotlinClassHeader
 import org.jetbrains.kotlin.load.kotlin.incremental.components.IncrementalCompilationComponents
@@ -203,11 +204,27 @@ class IncrementalJvmCompilerRunner(
         return abiSnapshots
     }
 
+    override fun setupClasspathJarSnapshot(
+        args: K2JVMCompilerArguments,
+        withSnapshot: Boolean,
+        reporter: BuildReporter
+    ): Map<String, JarSnapshot> {
+        if (!withSnapshot) return emptyMap()
+        val jarSnapshots = HashMap<String, JarSnapshot>()
+        args.classpathAsList
+            .filter { it.extension.equals("jar", ignoreCase = true) }
+            .forEach {
+                jarSnapshots.put(it.path, JarSnapshotImpl(HashMap()))
+            }
+        return jarSnapshots
+    }
+
     private fun calculateSourcesToCompileImpl(
         caches: IncrementalJvmCachesManager,
         changedFiles: ChangedFiles.Known,
         args: K2JVMCompilerArguments,
-        abiSnapshots: Map<String, AbiSnapshot> = HashMap()
+        abiSnapshots: Map<String, AbiSnapshot> = HashMap(),
+//        jarSnapshots: Map<String, JarSnapshot> = HashMap(),
     ): CompilationMode {
         val dirtyFiles = DirtyFilesContainer(caches, reporter, kotlinSourceFilesExtensions)
         initDirtyFiles(dirtyFiles, changedFiles)
@@ -224,7 +241,8 @@ class IncrementalJvmCompilerRunner(
                         val scopes = caches.lookupCache.lookupMap.keys.map { it.scope.ifBlank { it.name } }.distinct()
                         getClasspathChanges(
                             args.classpathAsList, changedFiles, lastBuildInfo, modulesApiHistory, reporter, abiSnapshots, withSnapshot,
-                            caches.platformCache, scopes
+                            caches.platformCache, scopes,
+//                            jarSnapshots
                         )
                     }
                 }

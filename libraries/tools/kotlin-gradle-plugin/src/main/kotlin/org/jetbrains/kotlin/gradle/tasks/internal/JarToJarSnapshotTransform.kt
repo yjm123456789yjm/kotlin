@@ -122,7 +122,7 @@ abstract class JarToJarSnapshotTransform : TransformAction<JarToJarSnapshotTrans
             lookupCacheDir.writeText("${lookups.size} \n")
 
             lookups.forEach {
-                lookupCacheDir.writeText("${it.filePath}:${it.name}:${it.scopeFqName}")
+                lookupCacheDir.writeText("${it.filePath}:${it.name}:${it.scope}")
             }
         } catch (_: FileNotFoundException) {
             //module jar will be changed to abiSnapshot
@@ -133,7 +133,7 @@ abstract class JarToJarSnapshotTransform : TransformAction<JarToJarSnapshotTrans
 
     data class SimpleLookupInfo(
         val filePath: String,
-        val scopeFqName: String,
+        val scope: String,
         val name: String
     ) : Serializable
 
