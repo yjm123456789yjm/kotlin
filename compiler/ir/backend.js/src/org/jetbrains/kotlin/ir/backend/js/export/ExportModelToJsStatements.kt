@@ -269,7 +269,7 @@ class ExportModelToJsStatements(
 
         val getterForwarder = property.getter
             .takeIf { it.shouldExportAccessor() }
-            .getOrGenerateIfFinal {
+            .getOrGenerateIfFinal(classPrototypeRef) {
                 propertyAccessorForwarder("getter forwarder") {
                     JsReturn(JsInvocation(it))
                 }
@@ -277,7 +277,7 @@ class ExportModelToJsStatements(
 
         val setterForwarder = property.setter
             .takeIf { it.shouldExportAccessor() }
-            .getOrGenerateIfFinal {
+            .getOrGenerateIfFinal(classPrototypeRef) {
                 val setterArgName = JsName("value", false)
                 propertyAccessorForwarder("setter forwarder") {
                     JsInvocation(it, JsNameRef(setterArgName)).makeStmt()
@@ -327,20 +327,23 @@ class ExportModelToJsStatements(
         return isEffectivelyExternal() || overriddenSymbols.any { it.owner.overridesExternal() }
     }
 
-    private inline fun IrSimpleFunction?.getOrGenerateIfFinal(generateFunc: IrSimpleFunction.() -> JsFunction?): JsExpression? {
+    private inline fun IrSimpleFunction?.getOrGenerateIfFinal(
+        classPrototypeRef: JsNameRef,
+        generateFunc: IrSimpleFunction.() -> JsFunction?
+    ): JsExpression? {
         if (this == null) return null
-        return if (modality == Modality.FINAL) accessorRef() else generateFunc()
+        return if (modality == Modality.FINAL) accessorRef(classPrototypeRef) else generateFunc()
     }
 
     private fun IrSimpleFunction?.shouldExportAccessor(): Boolean {
         if (this == null) return false
 
-        if (parentAsClass.isExported(context.staticContext.backendContext)) return true
+        if (parentAsClass.isExported(backendContext)) return true
 
         val property = correspondingPropertySymbol!!.owner
 
-        if (property.isOverriddenExported(context.staticContext.backendContext)) {
-            return isOverriddenExported(context.staticContext.backendContext)
+        if (property.isOverriddenExported(backendContext)) {
+            return isOverriddenExported(backendContext)
         }
 
         return overridesExternal() || property.getJsName() != null

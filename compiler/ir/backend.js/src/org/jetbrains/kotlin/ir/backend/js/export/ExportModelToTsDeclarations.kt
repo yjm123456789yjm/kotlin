@@ -232,6 +232,7 @@ fun List<ExportedDeclaration>.withMagicProperty(): List<ExportedDeclaration> {
             isStatic = false,
             isAbstract = false,
             isProtected = false,
+            ir = null,
             irGetter = null,
             irSetter = null
         )
