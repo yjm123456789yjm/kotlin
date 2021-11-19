@@ -17,15 +17,16 @@ kotlin {
         nodejs()
     }
 
+    @Suppress("UNUSED_VARIABLE")
     sourceSets {
-        getByName("commonMain") {
+         val commonMain by getting {
             dependencies {
                 api(project(":kotlin-stdlib-wasm"))
             }
             kotlin.srcDir(commonMainSources.get().destinationDir)
         }
 
-        getByName("wasmMain") {
+        val wasmMain by getting {
             dependencies {
                 api(project(":kotlin-stdlib-wasm"))
             }
