@@ -100,9 +100,6 @@ dependencies {
     testCompileOnly(project(":kotlin-annotation-processing-gradle"))
 
     compileOnly("com.gradle:gradle-enterprise-gradle-plugin:3.6.3")
-
-    implementation("org.ow2.asm:asm:9.2")
-    implementation("org.ow2.asm:asm-tree:9.2")
 }
 
 if (kotlinBuildProperties.isInJpsBuildIdeaSync) {

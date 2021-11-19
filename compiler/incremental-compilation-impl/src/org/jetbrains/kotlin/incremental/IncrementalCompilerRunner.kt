@@ -126,7 +126,7 @@ abstract class IncrementalCompilerRunner<
             val allKotlinFiles = allSourceFiles.filter { it.isKotlinFile(kotlinSourceFilesExtensions) }
             return compileIncrementally(args, caches, allKotlinFiles, CompilationMode.Rebuild(reason), messageCollector, withSnapshot,
                                         classpathAbiSnapshot = classpathAbiSnapshot,
-//                                        classpathJarSnapshot = classpathJarSnapshot
+                                        classpathJarSnapshot = classpathJarSnapshot
             )
         }
 

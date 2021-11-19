@@ -50,17 +50,19 @@ internal fun getClasspathChanges(
             val symbols = HashSet<LookupSymbol>()
             val fqNames = HashSet<FqName>()
 
-            for (file in removedClasspath) {
+            for (file in changedFiles.removed) {
                 //TODO check if it module
                 val usedLookups = lastBuildInfo.dependencyToJarSnapshot[file.path] ?: return ChangesEither.Unknown(BuildAttribute.DEP_CHANGE_UNKNOWN_JAR)
                 usedLookups.lookups.values.forEach { symbols.addAll(it) }
             }
 
             //TODO First mark all used lookups as dirty but we can read exact files from Jar to trace changes
-            for (file in modifiedClasspath) {
+            for (file in changedFiles.modified) {
                 //TODO check if it module
-                val usedLookups = lastBuildInfo.dependencyToJarSnapshot[file.path] ?: return ChangesEither.Unknown(BuildAttribute.DEP_CHANGE_UNKNOWN_JAR)
-                usedLookups.lookups.values.forEach { symbols.addAll(it) }
+                //TODO it could be added or modified jar
+//                val usedLookups = lastBuildInfo.dependencyToJarSnapshot[file.path] ?: return ChangesEither.Unknown(BuildAttribute.DEP_CHANGE_UNKNOWN_JAR)
+                val usedLookups = lastBuildInfo.dependencyToJarSnapshot[file.path]
+                usedLookups?.lookups?.values?.forEach { symbols.addAll(it) }
             }
 
             for ((module, abiSnapshot) in abiSnapshots) {
