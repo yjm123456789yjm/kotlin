@@ -22,27 +22,39 @@ import org.jetbrains.kotlin.incremental.JarSnapshotImpl.Companion.readJarSnapsho
 import org.jetbrains.kotlin.incremental.JarSnapshotImpl.Companion.writeJarSnapshot
 import java.io.*
 
-data class BuildInfo(val startTS: Long,
-                     val dependencyToAbiSnapshot: Map<String, AbiSnapshot> = mapOf(),
-                     val dependencyToJarSnapshot: Map<String, JarSnapshot> = mapOf()
+data class BuildInfo(
+    val startTS: Long,
+    val dependencyToAbiSnapshot: Map<String, AbiSnapshot> = mapOf(),
+    val dependencyToJarSnapshot: Map<String, JarSnapshot> = mapOf()
 ) : Serializable {
     companion object {
         private fun ObjectInputStream.readBuildInfo() : BuildInfo {
             val ts = readLong()
+            val abiSnapshots = readAbiSnapshots()
+            val jarSnapshots = readJarSnapshots()
+            return BuildInfo(ts, abiSnapshots, jarSnapshots)
+        }
+
+        private fun ObjectInputStream.readJarSnapshots(): HashMap<String, JarSnapshot> {
+            val size = readInt()
+            val jarSnapshots = HashMap<String, JarSnapshot>(size)
+            repeat(size) {
+                val jarPath = readUTF()
+                val snapshot = readJarSnapshot()
+                jarSnapshots[jarPath] = snapshot
+            }
+            return jarSnapshots
+        }
+
+        private fun ObjectInputStream.readAbiSnapshots(): HashMap<String, AbiSnapshot> {
             val size = readInt()
             val abiSnapshots = HashMap<String, AbiSnapshot>(size)
             repeat(size) {
                 val identifier = readUTF()
                 val snapshot = readAbiSnapshot()
-                abiSnapshots.put(identifier, snapshot)
+                abiSnapshots[identifier] = snapshot
             }
-            val jarSnapshots = HashMap<String, JarSnapshot>(size)
-            repeat(size) {
-                val identifier = readUTF()
-                val snapshot = readJarSnapshot()
-                jarSnapshots.put(identifier, snapshot)
-            }
-            return BuildInfo(ts, abiSnapshots, jarSnapshots)
+            return abiSnapshots
         }
 
         private fun ObjectOutputStream.writeBuildInfo(buildInfo: BuildInfo) {

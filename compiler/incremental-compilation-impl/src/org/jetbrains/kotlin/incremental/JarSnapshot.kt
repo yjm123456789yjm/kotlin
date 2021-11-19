@@ -9,26 +9,40 @@ import java.io.ObjectInputStream
 import java.io.ObjectOutputStream
 
 interface JarSnapshot {
-    val lookups : HashMap<String, LookupSymbol>
+    val lookups: Map<String, List<LookupSymbol>>
 }
 
-class JarSnapshotImpl(override val lookups: HashMap<String, LookupSymbol>) : JarSnapshot {
+class JarSnapshotImpl(internal val lookupsMap: HashMap<String, ArrayList<LookupSymbol>>) : JarSnapshot {
     companion object {
         fun ObjectOutputStream.writeJarSnapshot(jarSnapshot: JarSnapshot) {
             writeInt(jarSnapshot.lookups.size)
-            for (lookup in jarSnapshot.lookups) {
-                writeUTF(lookup.key)
-                writeUTF(lookup.value.name)
-                writeUTF(lookup.value.scope)
+            for ((classFile, lookupList) in jarSnapshot.lookups) {
+                writeUTF(classFile)
+                writeInt(lookupList.size)
+                for (lookup in lookupList) {
+                    writeUTF(lookup.name)
+                    writeUTF(lookup.scope)
+                }
             }
         }
+
         fun ObjectInputStream.readJarSnapshot(): JarSnapshotImpl {
             val size = readInt()
-            val lookups = hashMapOf<String, LookupSymbol>()
+            val lookups = HashMap<String, ArrayList<LookupSymbol>>()
             repeat(size) {
-                lookups[readUTF()] = LookupSymbol(readUTF(), readUTF())
+                val classFile = readUTF()
+                val lookupSize = readInt()
+                val lookupsList = ArrayList<LookupSymbol>(lookupSize)
+                repeat(lookupSize) {
+                    lookupsList.add(LookupSymbol(readUTF(), readUTF()))
+
+                }
+                lookups[classFile] = lookupsList
             }
             return JarSnapshotImpl(lookups)
         }
     }
+
+    override val lookups: HashMap<String, ArrayList<LookupSymbol>>
+        get() = lookupsMap
 }

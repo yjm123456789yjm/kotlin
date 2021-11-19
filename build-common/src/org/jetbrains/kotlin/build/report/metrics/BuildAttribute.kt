@@ -24,6 +24,7 @@ enum class BuildAttribute(val kind: BuildAttributeKind, val readableString: Stri
     JAVA_CHANGE_UNEXPECTED_PSI(BuildAttributeKind.REBUILD_REASON, "Java PSI file is expected"),
     JAVA_CHANGE_UNKNOWN_QUALIFIER(BuildAttributeKind.REBUILD_REASON, "Unknown Java qualifier name"),
     DEP_CHANGE_REMOVED_ENTRY(BuildAttributeKind.REBUILD_REASON, "Jar file is removed form dependency"),
+    DEP_CHANGE_UNKNOWN_JAR(BuildAttributeKind.REBUILD_REASON, "Unknown Jar file is changed in dependency classpath"),
     DEP_CHANGE_HISTORY_IS_NOT_FOUND(BuildAttributeKind.REBUILD_REASON, "Dependency history not found"),
     DEP_CHANGE_HISTORY_CANNOT_BE_READ(BuildAttributeKind.REBUILD_REASON, "Dependency history can not be read"),
     DEP_CHANGE_HISTORY_NO_KNOWN_BUILDS(BuildAttributeKind.REBUILD_REASON, "Dependency history id not available"),

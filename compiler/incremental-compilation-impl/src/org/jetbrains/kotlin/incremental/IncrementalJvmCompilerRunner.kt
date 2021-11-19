@@ -173,10 +173,13 @@ class IncrementalJvmCompilerRunner(
         changedFiles: ChangedFiles.Known,
         args: K2JVMCompilerArguments,
         messageCollector: MessageCollector,
-        classpathAbiSnapshots: Map<String, AbiSnapshot>
+        classpathAbiSnapshots: Map<String, AbiSnapshot>,
+//        classpathJarSnapshots: HashMap<String, out JarSnapshot>
     ): CompilationMode {
         return try {
-            calculateSourcesToCompileImpl(caches, changedFiles, args, classpathAbiSnapshots)
+            calculateSourcesToCompileImpl(caches, changedFiles, args, classpathAbiSnapshots,
+//                                          classpathJarSnapshots
+            )
         } finally {
             psiFileProvider.messageCollector.flush(messageCollector)
             psiFileProvider.messageCollector.clear()
@@ -208,9 +211,9 @@ class IncrementalJvmCompilerRunner(
         args: K2JVMCompilerArguments,
         withSnapshot: Boolean,
         reporter: BuildReporter
-    ): Map<String, JarSnapshot> {
-        if (!withSnapshot) return emptyMap()
-        val jarSnapshots = HashMap<String, JarSnapshot>()
+    ): HashMap<String, JarSnapshotImpl> {
+        if (!withSnapshot) return HashMap()
+        val jarSnapshots = HashMap<String, JarSnapshotImpl>()
         args.classpathAsList
             .filter { it.extension.equals("jar", ignoreCase = true) }
             .forEach {
@@ -223,8 +226,8 @@ class IncrementalJvmCompilerRunner(
         caches: IncrementalJvmCachesManager,
         changedFiles: ChangedFiles.Known,
         args: K2JVMCompilerArguments,
-        abiSnapshots: Map<String, AbiSnapshot> = HashMap(),
-//        jarSnapshots: Map<String, JarSnapshot> = HashMap(),
+        abiSnapshots: Map<String, AbiSnapshot>,
+//        jarSnapshots: HashMap<String, out JarSnapshot>
     ): CompilationMode {
         val dirtyFiles = DirtyFilesContainer(caches, reporter, kotlinSourceFilesExtensions)
         initDirtyFiles(dirtyFiles, changedFiles)

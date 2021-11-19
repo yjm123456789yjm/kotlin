@@ -22,6 +22,7 @@ enum class BuildTime(val parent: BuildTime? = null, val readableString: String) 
             NON_INCREMENTAL_COMPILATION_OUT_OF_PROCESS(RUN_COMPILER, "Out of process compilation"),
             NON_INCREMENTAL_COMPILATION_DAEMON(RUN_COMPILER, "Non incremental compilation"),
             INCREMENTAL_COMPILATION(RUN_COMPILER, "Incremental compilation"),
+                FILTER_JAR_SNAPSHOT_LOOKUPS(INCREMENTAL_COMPILATION, "Filter JAR snapshots by found lookups"),
                 STORE_BUILD_INFO(INCREMENTAL_COMPILATION, "Store build info"),
                 JAR_SNAPSHOT(INCREMENTAL_COMPILATION, "ABI JAR Snapshot support"),
                     SET_UP_ABI_SNAPSHOTS(JAR_SNAPSHOT, "Set up ABI snapshot"),

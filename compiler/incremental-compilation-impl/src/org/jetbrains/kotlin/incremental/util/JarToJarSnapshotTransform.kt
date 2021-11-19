@@ -6,59 +6,32 @@
 package org.jetbrains.kotlin.incremental.util
 
 import org.jetbrains.kotlin.incremental.LookupSymbol
+import org.jetbrains.kotlin.incremental.storage.LookupSymbolKey
 import org.jetbrains.org.objectweb.asm.ClassReader
-//import org.objectweb.asm.ClassReader
-//import org.objectweb.asm.Opcodes
-//import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.io.*
 import java.util.jar.JarFile
-import java.util.zip.ZipInputStream
 
 abstract class JarToJarSnapshotTransform {
 
     companion object {
-        fun filter(jarFile: File, scope: List<String>): Map<String, LookupSymbol> {
-            val lookups = HashMap<String, LookupSymbol>()
+        fun filter(jarFile: File, scopesMap: Map<String, List<LookupSymbolKey>>): ArrayList<LookupSymbol> {
+            val lookups = ArrayList<LookupSymbol>()
             load(jarFile).mapValues { classReader ->
-//                val node = ClassNode()
-//                classReader.value.accept(node, 0)
                 val fqName = classReader.key.substringBeforeLast(".class").replace("/", ".")
-                if (scope.contains(fqName)) {
-                    lookups.put(classReader.key,
-                            //add all public methods? or add existed lookups
-                        LookupSymbol(
-                            fqName,
-                            fqName
-                        )
-                    )
+                val className = fqName.substringAfterLast(".")
+                val packageName = fqName.substringBeforeLast(".")
+
+                scopesMap[fqName]?.also {
+                    lookups.addAll(it.map { lookup -> LookupSymbol(lookup.name, lookup.scope) })
                 }
-//                lookups.addAll(node.methods
-//                                   .filter { (it.access and Opcodes.ACC_PUBLIC) == 1 }
-//                                   .map { method ->
-//                                       LookupSymbol(
-//                                           classReader.key,
-//                                           method.name,
-//                                           node.name
-//                                       )
-//                                   }
-//                )
-//                lookups.putAll(node.fields
-//                                   .filter { (it.access and Opcodes.ACC_PUBLIC) == 1 }
-//                                   .fil { method ->
-//                                       SimpleLookupInfo(
-//                                           classReader.key,
-//                                           method.name,
-//                                           node.name
-//                                       )
-//                                   }
-//                )
+                scopesMap[packageName]?.also {
+                    it.filter { lookup -> lookup.name == className }.forEach { lookup ->
+                        lookups.add(LookupSymbol(lookup.name, lookup.scope))
+                    }
+                }
             }
             return lookups
         }
-
-//        fun filter(jarFile: File, scope: List<String>): List<String, LookupSymbol> {
-//
-//        }
 
         fun load(jarFile: File): Map<String, ClassReader> {
             val classReaderMap: MutableMap<String, ClassReader> = HashMap()
@@ -75,27 +48,7 @@ abstract class JarToJarSnapshotTransform {
             return classReaderMap
         }
 
-        fun storeLookups(jarFile: File, lookupCacheDir: File) {
-            val classNames: MutableList<String> = ArrayList()
-            val zip = ZipInputStream(FileInputStream(jarFile))
-            var entry = zip.nextEntry
-            while (entry != null) {
-                if (!entry.isDirectory && entry.name.endsWith(".class")) {
-                    // This ZipEntry represents a class. Now, what class does it represent?
-                    val className: String = entry.getName().replace('/', '.') // including ".class"
-                    classNames.add(className.substring(0, className.length - ".class".length))
-
-                }
-                entry = zip.nextEntry
-            }
-
-            classNames.forEach { lookupCacheDir.writeText("$it\n") }
-
-
-        }
     }
-
-
 }
 
 

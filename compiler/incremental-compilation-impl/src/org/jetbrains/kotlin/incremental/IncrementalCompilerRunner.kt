@@ -108,7 +108,7 @@ abstract class IncrementalCompilerRunner<
             if (withSnapshot) {
                 setupClasspathJarSnapshot(args, withSnapshot, reporter)
             } else {
-                emptyMap()
+                HashMap()
             }
 
         fun rebuild(reason: BuildAttribute): ExitCode {
@@ -123,13 +123,11 @@ abstract class IncrementalCompilerRunner<
                 caches.inputsCache.sourceSnapshotMap.compareAndUpdate(allSourceFiles)
             }
 
-//            val scopes = caches.lookupCache.lookupMap.keys.map { it.scope.ifBlank { it.name } }.distinct()
-//            args.classpathAsList
-
-
             val allKotlinFiles = allSourceFiles.filter { it.isKotlinFile(kotlinSourceFilesExtensions) }
             return compileIncrementally(args, caches, allKotlinFiles, CompilationMode.Rebuild(reason), messageCollector, withSnapshot,
-                                        classpathAbiSnapshot = classpathAbiSnapshot, classpathJarSnapshot = classpathJarSnapshot)
+                                        classpathAbiSnapshot = classpathAbiSnapshot,
+//                                        classpathJarSnapshot = classpathJarSnapshot
+            )
         }
 
         // If compilation has crashed or we failed to close caches we have to clear them
@@ -164,7 +162,8 @@ abstract class IncrementalCompilerRunner<
                                 messageCollector,
                                 withSnapshot,
                                 abiSnapshot,
-                                classpathAbiSnapshot
+                                classpathAbiSnapshot,
+                                classpathJarSnapshot
                             )
                         } else {
                             rebuild(BuildAttribute.NO_ABI_SNAPSHOT)
@@ -176,7 +175,8 @@ abstract class IncrementalCompilerRunner<
                             allSourceFiles,
                             compilationMode,
                             messageCollector,
-                            withSnapshot)
+                            withSnapshot
+                        )
                     }
                 }
                 is CompilationMode.Rebuild -> {
@@ -245,7 +245,8 @@ abstract class IncrementalCompilerRunner<
         changedFiles: ChangedFiles,
         args: Args,
         messageCollector: MessageCollector,
-        dependenciesAbiSnapshots: Map<String, AbiSnapshot>
+        dependenciesAbiSnapshots: Map<String, AbiSnapshot>,
+//        classpathJarSnapshots: HashMap<String, out JarSnapshot>
     ): CompilationMode =
         when (changedFiles) {
             is ChangedFiles.Known -> calculateSourcesToCompile(caches, changedFiles, args, messageCollector, dependenciesAbiSnapshots)
@@ -255,7 +256,8 @@ abstract class IncrementalCompilerRunner<
 
     private fun calculateSourcesToCompile(
         caches: CacheManager, changedFiles: ChangedFiles.Known, args: Args, messageCollector: MessageCollector,
-        abiSnapshots: Map<String, AbiSnapshot>
+        abiSnapshots: Map<String, AbiSnapshot>,
+//        jarSnapshots: HashMap<String, out JarSnapshot>
     ): CompilationMode =
         reporter.measure(BuildTime.IC_CALCULATE_INITIAL_DIRTY_SET) {
             calculateSourcesToCompileImpl(caches, changedFiles, args, messageCollector, abiSnapshots)
@@ -266,11 +268,12 @@ abstract class IncrementalCompilerRunner<
         changedFiles: ChangedFiles.Known,
         args: Args,
         messageCollector: MessageCollector,
-        classpathAbiSnapshots: Map<String, AbiSnapshot>
+        classpathAbiSnapshots: Map<String, AbiSnapshot>,
+//        classpathJarSnapshots: HashMap<String, JarSnapshot>
     ): CompilationMode
 
     protected open fun setupJarDependencies(args: Args, withSnapshot: Boolean, reporter: BuildReporter): Map<String, AbiSnapshot> = mapOf()
-    protected open fun setupClasspathJarSnapshot(args: Args, withSnapshot: Boolean, reporter: BuildReporter) : Map<String, JarSnapshot> = mapOf()
+    protected open fun setupClasspathJarSnapshot(args: Args, withSnapshot: Boolean, reporter: BuildReporter): HashMap<String, JarSnapshotImpl> = HashMap()
 
     protected fun initDirtyFiles(dirtyFiles: DirtyFilesContainer, changedFiles: ChangedFiles.Known) {
         dirtyFiles.add(changedFiles.modified, "was modified since last time")
@@ -332,7 +335,7 @@ abstract class IncrementalCompilerRunner<
         withSnapshot: Boolean,
         abiSnapshot: AbiSnapshot = AbiSnapshotImpl(mutableMapOf()),
         classpathAbiSnapshot: Map<String, AbiSnapshot> = HashMap(),
-        classpathJarSnapshot: Map<String, JarSnapshot> = HashMap(),
+        classpathJarSnapshot: Map<String, JarSnapshotImpl> = HashMap(),
     ): ExitCode {
         preBuildHook(args, compilationMode)
 
@@ -349,7 +352,7 @@ abstract class IncrementalCompilerRunner<
             }
         }
 
-        val currentBuildInfo = BuildInfo(startTS = System.currentTimeMillis(), classpathAbiSnapshot, classpathJarSnapshot)
+        val startTS = System.currentTimeMillis()
         val buildDirtyLookupSymbols = HashSet<LookupSymbol>()
         val buildDirtyFqNames = HashSet<FqName>()
         val allDirtySources = HashSet<File>()
@@ -451,11 +454,18 @@ abstract class IncrementalCompilerRunner<
         }
 
         if (exitCode == ExitCode.OK) {
-            reporter.measure(BuildTime.STORE_BUILD_INFO) {
-                val scopes = caches.lookupCache.lookupMap.keys.map { it.scope.ifBlank { it.name } }.distinct()
-                currentBuildInfo.dependencyToJarSnapshot.forEach { (path, jarSnapshot) ->
-                    jarSnapshot.lookups.putAll(JarToJarSnapshotTransform.filter(File(path), scopes))
+            reporter.measure(BuildTime.FILTER_JAR_SNAPSHOT_LOOKUPS) {
+                //TODO update incremental
+                val scopes = caches.lookupCache.lookupMap.keys.groupBy { it.scope.ifBlank { it.name } }
+                classpathJarSnapshot.forEach { (path, jarSnapshot) ->
+                    jarSnapshot.lookupsMap[path] = JarToJarSnapshotTransform.filter(File(path), scopes)
                 }
+            }
+        }
+
+        val currentBuildInfo = BuildInfo(startTS = startTS, classpathAbiSnapshot, classpathJarSnapshot)
+        if (exitCode == ExitCode.OK) {
+            reporter.measure(BuildTime.STORE_BUILD_INFO) {
 
                 BuildInfo.write(currentBuildInfo, lastBuildInfoFile)
 
