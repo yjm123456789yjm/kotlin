@@ -29,7 +29,7 @@ dependencies {
     testRuntimeOnly(intellijDep()) { includeJars("lz4-java", "jna", "idea_rt", rootProject = rootProject) }
 
     implementation("org.ow2.asm:asm:9.2")
-    implementation("org.ow2.asm:asm-tree:9.1")
+    implementation("org.ow2.asm:asm-tree:9.2")
 }
 
 sourceSets {

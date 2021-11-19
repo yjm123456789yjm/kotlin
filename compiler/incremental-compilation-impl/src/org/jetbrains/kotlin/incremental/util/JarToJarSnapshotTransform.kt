@@ -6,9 +6,10 @@
 package org.jetbrains.kotlin.incremental.util
 
 import org.jetbrains.kotlin.incremental.LookupSymbol
+import org.jetbrains.org.objectweb.asm.ClassReader
 //import org.objectweb.asm.ClassReader
-import org.objectweb.asm.Opcodes
-import org.objectweb.asm.tree.ClassNode
+//import org.objectweb.asm.Opcodes
+//import org.jetbrains.org.objectweb.asm.tree.ClassNode
 import java.io.*
 import java.util.jar.JarFile
 import java.util.zip.ZipInputStream
@@ -21,11 +22,13 @@ abstract class JarToJarSnapshotTransform {
             load(jarFile).mapValues { classReader ->
 //                val node = ClassNode()
 //                classReader.value.accept(node, 0)
-                if (scope.contains(classReader.key)) {
+                val fqName = classReader.key.substringBeforeLast(".class").replace("/", ".")
+                if (scope.contains(fqName)) {
                     lookups.put(classReader.key,
+                            //add all public methods? or add existed lookups
                         LookupSymbol(
-                            classReader.key,
-                            classReader.key
+                            fqName,
+                            fqName
                         )
                     )
                 }

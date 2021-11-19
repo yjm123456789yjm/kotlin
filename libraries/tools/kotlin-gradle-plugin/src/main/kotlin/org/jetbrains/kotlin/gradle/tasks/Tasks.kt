@@ -53,8 +53,6 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.report.BuildMetricsReporterService
 import org.jetbrains.kotlin.gradle.report.ReportingSettings
 import org.jetbrains.kotlin.gradle.targets.js.ir.isProduceUnzippedKlib
-import org.jetbrains.kotlin.gradle.tasks.internal.JAR_SNAPSHOT_ARTIFACT_TYPE
-import org.jetbrains.kotlin.gradle.tasks.internal.JarToJarSnapshotTransform
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.incremental.ChangedFiles
 import org.jetbrains.kotlin.incremental.ClasspathChanges
@@ -586,28 +584,6 @@ abstract class KotlinCompile @Inject constructor(
                 task.kotlinOptions.moduleName ?: task.parentKotlinOptionsImpl.orNull?.moduleName ?: compilation.moduleName
             })
 
-//            if (properties.useAbiSnapshot) {
-//
-//                val jarToAbiSnapshot = HashMap<File, File>()
-//
-//                task.project.configurations.getByName("kotlin_${task.name}_configuration").also {
-//                    it.extendsFrom(task.project.configurations.getByName("compileClasspath"))
-//                    task.project.dependencies.registerTransform(JarToJarSnapshotTransform::class.java) {
-//                        it.from.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_ARTIFACT_TYPE)
-//                        it.to.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
-//                        it.parameters {
-//                            it.jarToModuleAbiSnapshot = jarToAbiSnapshot
-//                        }
-//
-//                    }
-//                    task.jarSnapshots.from(it.incoming.artifactView { viewConfig ->
-//                            viewConfig.attributes.attribute(ARTIFACT_TYPE_ATTRIBUTE, JAR_SNAPSHOT_ARTIFACT_TYPE)
-//                        }.files
-//                    )
-////                    task.jarSnapshots.from(task.project.provider { task.classpath })
-//                }
-//
-//            }
             if (properties.useClasspathSnapshot) {
                 val classpathSnapshot = task.project.configurations.getByName(classpathSnapshotConfigurationName(task.name))
                 task.classpathSnapshotProperties.classpathSnapshot.from(
