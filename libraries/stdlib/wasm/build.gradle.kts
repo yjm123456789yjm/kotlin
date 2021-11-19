@@ -121,7 +121,13 @@ tasks.withType<KotlinCompile<*>>().configureEach {
 }
 
 tasks.named("compileKotlinWasm") {
-    (this as KotlinCompile<*>).kotlinOptions.freeCompilerArgs += "-Xir-module-name=kotlin"
+    val kotlinOptions = (this as KotlinCompile<*>).kotlinOptions
+    kotlinOptions.freeCompilerArgs = kotlinOptions.freeCompilerArgs
+        .map {
+            if (it.startsWith("-Xir-module-name"))
+                "-Xir-module-name=kotlin"
+            else it
+        }
     dependsOn(commonMainSources)
     dependsOn(builtInsSources)
 }

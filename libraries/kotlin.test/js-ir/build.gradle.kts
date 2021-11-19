@@ -55,7 +55,13 @@ tasks.withType<KotlinCompile<*>>().configureEach {
 }
 
 tasks.named("compileKotlinJs") {
-    (this as KotlinCompile<*>).kotlinOptions.freeCompilerArgs += "-Xir-module-name=kotlin-test"
+    val kotlinOptions = (this as KotlinCompile<*>).kotlinOptions
+    kotlinOptions.freeCompilerArgs = kotlinOptions.freeCompilerArgs
+        .map {
+            if (it.startsWith("-Xir-module-name"))
+                "-Xir-module-name=kotlin-test"
+            else it
+        }
     dependsOn(commonMainSources)
     dependsOn(jsMainSources)
 }
