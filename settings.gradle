@@ -173,7 +173,13 @@ include ":benchmarks",
         ":native:kotlin-klib-commonizer-api",
         ":native:kotlin-klib-commonizer-embeddable",
         ":native:native.tests",
-        ":core:compiler.common",
+        ":core:compiler.common"
+
+if (!buildProperties.inJpsBuildIdeaSync) {
+    include ":native:native.tests"
+}
+
+include ":core:compiler.common",
         ":core:compiler.common.jvm",
         ":compiler:backend.common.jvm",
         ":core:descriptors",
@@ -590,7 +596,9 @@ project(':kotlin-util-klib').projectDir = "$rootDir/compiler/util-klib" as File
 project(':kotlin-util-klib-metadata').projectDir = "$rootDir/compiler/util-klib-metadata" as File
 project(':native:kotlin-native-utils').projectDir = "$rootDir/native/utils" as File
 project(':native:frontend.native').projectDir = "$rootDir/native/frontend" as File
-project(':native:native.tests').projectDir = "$rootDir/native/native.tests" as File
+if (!buildProperties.inJpsBuildIdeaSync) {
+    project(':native:native.tests').projectDir = "$rootDir/native/native.tests" as File
+}
 project(':native:kotlin-klib-commonizer').projectDir = "$rootDir/native/commonizer" as File
 project(":native:kotlin-klib-commonizer-api").projectDir = "$rootDir/native/commonizer-api" as File
 project(':native:kotlin-klib-commonizer-embeddable').projectDir = "$rootDir/native/commonizer-embeddable" as File
