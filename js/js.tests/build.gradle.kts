@@ -76,7 +76,7 @@ dependencies {
     antLauncherJar(commonDep("org.apache.ant", "ant"))
     antLauncherJar(toolsJar())
 
-    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:5.8.1")
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine:${commonVer("org.junit", "junit-bom")}")
 }
 
 val generationRoot = projectDir.resolve("tests-gen")
