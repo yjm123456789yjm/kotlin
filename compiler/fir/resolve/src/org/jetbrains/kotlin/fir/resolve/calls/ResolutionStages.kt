@@ -69,11 +69,6 @@ internal object CheckExplicitReceiverConsistency : ResolutionStage() {
 
 object CheckExtensionReceiver : ResolutionStage() {
     override suspend fun check(candidate: Candidate, callInfo: CallInfo, sink: CheckerSink, context: ResolutionContext) {
-        if (candidate.symbol is FirErrorClassLikeSymbol) {
-            candidate.addDiagnostic(TypeAmbiguity)
-            return
-        }
-
         val expectedReceiverType = candidate.getReceiverType(context) ?: return
 
         val argumentExtensionReceiverValue = candidate.extensionReceiverValue ?: return
