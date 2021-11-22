@@ -103,6 +103,12 @@ public class FirMemberScopeByFqNameTestGenerated extends AbstractFirMemberScopeB
     }
 
     @Test
+    @TestMetadata("MemberPropertyWithOuterTypeParameterBound.kt")
+    public void testMemberPropertyWithOuterTypeParameterBound() throws Exception {
+        runTest("analysis/analysis-api/testData/scopes/memberScopeByFqName/MemberPropertyWithOuterTypeParameterBound.kt");
+    }
+
+    @Test
     @TestMetadata("MutableList.kt")
     public void testMutableList() throws Exception {
         runTest("analysis/analysis-api/testData/scopes/memberScopeByFqName/MutableList.kt");

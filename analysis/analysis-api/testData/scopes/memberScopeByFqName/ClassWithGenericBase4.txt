@@ -68,6 +68,76 @@ KtKotlinPropertySymbol:
   annotatedType: [] test/SomeClass1
   annotationClassIds: []
   annotations: []
+  callableIdIfNonLocal: test/InterfaceWithVal.withOwnGeneric_InterfaceWithVal
+  getter: KtPropertyGetterSymbol(<getter>)
+  hasBackingField: false
+  hasGetter: true
+  hasSetter: false
+  initializer: null
+  isConst: false
+  isDelegatedProperty: false
+  isExtension: true
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: true
+  modality: ABSTRACT
+  name: withOwnGeneric_InterfaceWithVal
+  origin: SOURCE
+  receiverType: [] Own
+  setter: null
+  symbolKind: CLASS_MEMBER
+  typeParameters: [
+    KtTypeParameterSymbol(Own)
+  ]
+  visibility: Public
+  getDispatchReceiver(): test/InterfaceWithVal<T>
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getWithOwnGeneric_InterfaceWithVal
+  javaSetterName: null
+  setterDeprecationStatus: null
+
+KtKotlinPropertySymbol:
+  annotatedType: [] test/SomeClass2
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: test/ClassWithInterfaceWithVal.withOwnAndOuterGeneric_InterfaceWithVal
+  getter: null
+  hasBackingField: false
+  hasGetter: false
+  hasSetter: false
+  initializer: null
+  isConst: false
+  isDelegatedProperty: false
+  isExtension: true
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: true
+  modality: ABSTRACT
+  name: withOwnAndOuterGeneric_InterfaceWithVal
+  origin: SOURCE
+  receiverType: [] Own
+  setter: null
+  symbolKind: CLASS_MEMBER
+  typeParameters: [
+    KtTypeParameterSymbol(Own)
+  ]
+  visibility: Public
+  getDispatchReceiver(): test/ClassWithInterfaceWithVal
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getWithOwnAndOuterGeneric_InterfaceWithVal
+  javaSetterName: null
+  setterDeprecationStatus: null
+
+KtKotlinPropertySymbol:
+  annotatedType: [] test/SomeClass1
+  annotationClassIds: []
+  annotations: []
   callableIdIfNonLocal: test/InterfaceWithValBase.noGenerics_InterfaceWithValBase
   getter: KtPropertyGetterSymbol(<getter>)
   hasBackingField: false
@@ -160,6 +230,111 @@ KtKotlinPropertySymbol:
   deprecationStatus: null
   getterDeprecationStatus: null
   javaGetterName: getWithOuterGenericT2_InterfaceWithValBase
+  javaSetterName: null
+  setterDeprecationStatus: null
+
+KtKotlinPropertySymbol:
+  annotatedType: [] test/SomeClass1
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: test/InterfaceWithValBase.withOwnGeneric_InterfaceWithValBase
+  getter: KtPropertyGetterSymbol(<getter>)
+  hasBackingField: false
+  hasGetter: true
+  hasSetter: false
+  initializer: null
+  isConst: false
+  isDelegatedProperty: false
+  isExtension: true
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: true
+  modality: ABSTRACT
+  name: withOwnGeneric_InterfaceWithValBase
+  origin: SOURCE
+  receiverType: [] Own
+  setter: null
+  symbolKind: CLASS_MEMBER
+  typeParameters: [
+    KtTypeParameterSymbol(Own)
+  ]
+  visibility: Public
+  getDispatchReceiver(): test/InterfaceWithValBase<T1, T2>
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getWithOwnGeneric_InterfaceWithValBase
+  javaSetterName: null
+  setterDeprecationStatus: null
+
+KtKotlinPropertySymbol:
+  annotatedType: [] test/SomeClass1
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: test/InterfaceWithVal.withOwnAndOuterGenericT1_InterfaceWithValBase
+  getter: null
+  hasBackingField: false
+  hasGetter: false
+  hasSetter: false
+  initializer: null
+  isConst: false
+  isDelegatedProperty: false
+  isExtension: true
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: true
+  modality: ABSTRACT
+  name: withOwnAndOuterGenericT1_InterfaceWithValBase
+  origin: SOURCE
+  receiverType: [] Own
+  setter: null
+  symbolKind: CLASS_MEMBER
+  typeParameters: [
+    KtTypeParameterSymbol(Own)
+  ]
+  visibility: Public
+  getDispatchReceiver(): test/InterfaceWithVal<T>
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getWithOwnAndOuterGenericT1_InterfaceWithValBase
+  javaSetterName: null
+  setterDeprecationStatus: null
+
+KtKotlinPropertySymbol:
+  annotatedType: [] test/SomeClass2
+  annotationClassIds: []
+  annotations: []
+  callableIdIfNonLocal: test/ClassWithInterfaceWithVal.withOwnAndOuterGenericT2_InterfaceWithValBase
+  getter: null
+  hasBackingField: false
+  hasGetter: false
+  hasSetter: false
+  initializer: null
+  isConst: false
+  isDelegatedProperty: false
+  isExtension: true
+  isFromPrimaryConstructor: false
+  isLateInit: false
+  isOverride: false
+  isStatic: false
+  isVal: true
+  modality: ABSTRACT
+  name: withOwnAndOuterGenericT2_InterfaceWithValBase
+  origin: SOURCE
+  receiverType: [] Own
+  setter: null
+  symbolKind: CLASS_MEMBER
+  typeParameters: [
+    KtTypeParameterSymbol(Own)
+  ]
+  visibility: Public
+  getDispatchReceiver(): test/ClassWithInterfaceWithVal
+  deprecationStatus: null
+  getterDeprecationStatus: null
+  javaGetterName: getWithOwnAndOuterGenericT2_InterfaceWithValBase
   javaSetterName: null
   setterDeprecationStatus: null
 

@@ -436,11 +436,14 @@ internal class KtSymbolByFirBuilder private constructor(
         val containingClass = getContainingClass(rootSession) ?: return null
         val originalDeclaration = originalForSubstitutionOverride ?: return null
 
-        val allowedTypeParameters = run {
-            val declarationTypeParameter = originalDeclaration.typeParameters
-            val capturedTypeParameters = containingClass.typeParameters.filterIsInstance<FirOuterClassTypeParameterRef>()
+        val allowedTypeParameters = buildSet {
+            // declaration's own parameters
+            originalDeclaration.typeParameters.mapTo(this) { it.symbol.toLookupTag() }
 
-            (declarationTypeParameter + capturedTypeParameters).map { it.symbol.toLookupTag() }.toSet()
+            // captured outer parameters
+            containingClass.typeParameters.mapNotNullTo(this) {
+                (it as? FirOuterClassTypeParameterRef)?.symbol?.toLookupTag()
+            }
         }
 
         val usedTypeParameters = collectReferencedTypeParameters(originalDeclaration)
@@ -516,6 +519,8 @@ private fun collectReferencedTypeParameters(declaration: FirCallableDeclaration)
         }
 
         override fun visitProperty(property: FirProperty) {
+            property.typeParameters.forEach { it.accept(this) }
+
             property.receiverTypeRef?.accept(this)
             property.returnTypeRef.accept(this)
         }
@@ -528,25 +533,14 @@ private fun collectReferencedTypeParameters(declaration: FirCallableDeclaration)
 
         private fun handleTypeRef(resolvedTypeRef: FirResolvedTypeRef) {
             val resolvedType = resolvedTypeRef.type
-            val referencedParameters = findReferencedTypeParameters(resolvedType)
 
-            referencedParameters.mapTo(allUsedTypeParameters) { it.lookupTag }
+            resolvedType.forEachType {
+                if (it is ConeTypeParameterType) {
+                    allUsedTypeParameters.add(it.lookupTag)
+                }
+            }
         }
     })
 
     return allUsedTypeParameters
-}
-
-private fun findReferencedTypeParameters(type: ConeKotlinType): Sequence<ConeTypeParameterType> = sequence {
-    val queue = ArrayDeque(listOf(type))
-
-    while (queue.isNotEmpty()) {
-        val loweredType = queue.removeFirst().lowerBoundIfFlexible()
-
-        if (loweredType is ConeTypeParameterType) {
-            yield(loweredType)
-        }
-
-        loweredType.typeArguments.mapNotNullTo(queue) { it.type }
-    }
 }
