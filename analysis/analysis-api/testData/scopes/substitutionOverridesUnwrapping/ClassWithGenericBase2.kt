@@ -12,6 +12,4 @@ abstract class Base<T> {
     val <TT> TT.withOuterAndOwnGeneric: T? get() = null
 }
 
-class ClassWithGenericBase : Base<Foo>()
-
-// class: test/ClassWithGenericBase
+class <caret>ClassWithGenericBase : Base<Foo>()

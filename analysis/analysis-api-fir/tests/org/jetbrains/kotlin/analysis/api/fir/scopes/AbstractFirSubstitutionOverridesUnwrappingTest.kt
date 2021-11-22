@@ -6,6 +6,6 @@
 package org.jetbrains.kotlin.analysis.api.fir.scopes
 
 import org.jetbrains.kotlin.analysis.api.fir.FirFrontendApiTestConfiguratorService
-import org.jetbrains.kotlin.analysis.api.impl.base.test.scopes.AbstractMemberScopeByCaretTest
+import org.jetbrains.kotlin.analysis.api.impl.base.test.scopes.AbstractSubstitutionOverridesUnwrappingTest
 
-abstract class AbstractFirMemberScopeByCaretTest : AbstractMemberScopeByCaretTest(FirFrontendApiTestConfiguratorService)
+abstract class AbstractFirSubstitutionOverridesUnwrappingTest : AbstractSubstitutionOverridesUnwrappingTest(FirFrontendApiTestConfiguratorService)

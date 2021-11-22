@@ -7,10 +7,6 @@ open class TopLevel<Outer> {
         fun noGeneric() {}
         fun withOuter(): Outer? = null
     }
+    inner class <caret>Child : Base()
 }
 
-class OtherTopLevel : TopLevel<SomeClass>() {
-    inner class Child : Base()
-}
-
-// class: test/OtherTopLevel.Child

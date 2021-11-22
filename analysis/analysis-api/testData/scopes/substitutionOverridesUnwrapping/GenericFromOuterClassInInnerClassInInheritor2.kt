@@ -10,7 +10,5 @@ open class TopLevel<Outer> {
 }
 
 class OtherTopLevel<T> : TopLevel<T>() {
-    inner class Child : Base()
+    inner class <caret>Child : Base()
 }
-
-// class: test/OtherTopLevel.Child

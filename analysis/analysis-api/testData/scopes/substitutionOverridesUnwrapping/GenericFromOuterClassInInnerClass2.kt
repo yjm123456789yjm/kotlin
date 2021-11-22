@@ -9,7 +9,5 @@ open class TopLevel<Outer> {
         fun withOwnAndOuter(t: T): Outer? = null
     }
 
-    inner class Child : Base<SomeClass>()
+    inner class <caret>Child : Base<SomeClass>()
 }
-
-// class: test/TopLevel.Child

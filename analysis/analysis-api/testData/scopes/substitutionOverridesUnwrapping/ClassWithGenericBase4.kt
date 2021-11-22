@@ -28,6 +28,4 @@ interface InterfaceWithVal<T> : InterfaceWithValBase<SomeClass1, T> {
 }
 
 
-abstract class ClassWithInterfaceWithVal : InterfaceWithVal<SomeClass2>
-
-// class: test/ClassWithInterfaceWithVal
+abstract class <caret>ClassWithInterfaceWithVal : InterfaceWithVal<SomeClass2>

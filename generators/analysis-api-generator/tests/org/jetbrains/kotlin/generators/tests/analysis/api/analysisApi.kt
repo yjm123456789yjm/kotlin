@@ -34,7 +34,7 @@ import org.jetbrains.kotlin.analysis.api.fir.components.typeProvider.AbstractFir
 import org.jetbrains.kotlin.analysis.api.fir.components.typeProvider.AbstractFirHasCommonSubtypeTest
 import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirDelegateMemberScopeTest
 import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirFileScopeTest
-import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirMemberScopeByCaretTest
+import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirSubstitutionOverridesUnwrappingTest
 import org.jetbrains.kotlin.analysis.api.fir.scopes.AbstractFirMemberScopeByFqNameTest
 import org.jetbrains.kotlin.analysis.api.fir.symbols.AbstractFirSymbolByFqNameTest
 import org.jetbrains.kotlin.analysis.api.fir.symbols.AbstractFirSymbolByPsiTest
@@ -56,10 +56,10 @@ private fun TestGroupSuite.generateAnalysisApiNonComponentsTests() {
 
     group("scopes") {
         test(
-            fir = AbstractFirMemberScopeByCaretTest::class,
+            fir = AbstractFirSubstitutionOverridesUnwrappingTest::class,
             fe10 = null,
         ) {
-            model("memberScopeByCaret")
+            model("substitutionOverridesUnwrapping")
         }
 
         test(

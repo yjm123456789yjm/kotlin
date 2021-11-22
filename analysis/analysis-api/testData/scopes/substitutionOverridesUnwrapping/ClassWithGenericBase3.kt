@@ -17,6 +17,4 @@ interface InterfaceWithFun<T> : InterfaceWithFunBase<SomeClass1, T> {
     fun withOuterGeneric_InterfaceWithFun(): T {}
 }
 
-abstract class ClassWithInterfaceWithFun : InterfaceWithFun<SomeClass2>
-
-// class: test/ClassWithInterfaceWithFun
+abstract class <caret>ClassWithInterfaceWithFun : InterfaceWithFun<SomeClass2>

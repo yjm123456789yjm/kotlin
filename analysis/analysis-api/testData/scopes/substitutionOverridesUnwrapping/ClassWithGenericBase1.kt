@@ -12,6 +12,4 @@ abstract class Base<T> {
     fun <TT> withOuterAndOwnGeneric(t: T, tt: TT) {}
 }
 
-class ClassWithGenericBase : Base<Foo>()
-
-// class: test/ClassWithGenericBase
+class <caret>ClassWithGenericBase : Base<Foo>()

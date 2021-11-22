@@ -8,6 +8,4 @@ interface MyInterface<T> {
     val <Own : T> Own.withOwnAndOuterGenericAsTypeBound_InterfaceWithValBase: ClassA
 }
 
-abstract class Inheritor : MyInterface<ClassB>
-
-// class: test/Inheritor
+abstract class <caret>Inheritor : MyInterface<ClassB>
