@@ -27,7 +27,7 @@ object IdeaStandaloneExecutionSetup {
         // if  application is null it means that we are in progress of set-up application environment i.e. we are not in the running IDEA
         val application = ApplicationManager.getApplication() ?: return
         if (!application.isHeadlessEnvironment) {
-            LOG.error(Throwable("IdeaStandaloneExecutionSetup should be called only in headless environment"))
+            throw Throwable("IdeaStandaloneExecutionSetup should be called only in headless environment")
         }
     }
 }
