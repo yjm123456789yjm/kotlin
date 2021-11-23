@@ -348,3 +348,14 @@ projectTest("wasmTest", true) {
 
     setUpBoxTests()
 }
+
+projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit5) {
+    workingDir = rootDir
+
+    include("org/jetbrains/kotlin/incremental/*")
+
+    dependsOn(":dist")
+    dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
+
+    systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-1.6.255-SNAPSHOT.klib")
+}
