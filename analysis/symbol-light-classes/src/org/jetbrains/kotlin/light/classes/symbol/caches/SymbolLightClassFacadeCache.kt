@@ -86,22 +86,30 @@ class SymbolLightClassFacadeCache(project: Project) {
         }
         javaFileStub.psiFactory = ClsWrapperStubPsiFactory.INSTANCE
         val manager = PsiManager.getInstance(mirrorFile.project)
-        val fakeFile = object : ClsFileImpl(ClassFileViewProvider(manager, classFile)) {
-            override fun getNavigationElement(): PsiElement {
-                if (correspondingClassOrObject != null) {
-                    return correspondingClassOrObject.navigationElement.containingFile
-                }
-                return super.getNavigationElement()
-            }
-
-            override fun getStub() = javaFileStub
-
-            override fun getMirror() = mirrorFile
-
-            override fun isPhysical() = false
-        }
+        val fakeFile = FakeClsFileImpl(manager, classFile, mirrorFile, correspondingClassOrObject, javaFileStub)
         javaFileStub.psi = fakeFile
         return fakeFile.classes.single() as ClsClassImpl
+    }
+
+    private inner class FakeClsFileImpl(
+        manager: PsiManager,
+        classFile: VirtualFile,
+        private val mirrorFile: KtFile,
+        private val correspondingClassOrObject: KtClassOrObject?,
+        private val javaFileStub: PsiJavaFileStubImpl,
+    ) : ClsFileImpl(ClassFileViewProvider(manager, classFile)) {
+        override fun getNavigationElement(): PsiElement {
+            if (correspondingClassOrObject != null) {
+                return correspondingClassOrObject.navigationElement.containingFile
+            }
+            return super.getNavigationElement()
+        }
+
+        override fun getStub() = javaFileStub
+
+        override fun getMirror() = mirrorFile
+
+        override fun isPhysical() = false
     }
 
     private data class FacadeKey(val fqName: FqName, val files: Set<KtFile>)
