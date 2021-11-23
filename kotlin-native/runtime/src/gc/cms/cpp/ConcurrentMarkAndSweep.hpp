@@ -12,6 +12,7 @@
 #include "ObjectFactory.hpp"
 #include "Types.h"
 #include "Utils.hpp"
+#include "GCState.hpp"
 
 namespace kotlin {
 
@@ -24,11 +25,6 @@ namespace gc {
 // Stop-the-world Mark-and-Sweep that runs on mutator threads. Can support targets that do not have threads.
 class ConcurrentMarkAndSweep : private Pinned {
 public:
-    enum class SafepointFlag {
-        kNone,
-        kNeedsSuspend,
-        kNeedsGC,
-    };
 
     class ObjectData {
     public:
@@ -56,28 +52,43 @@ public:
         void SafePointLoopBody() noexcept;
         void SafePointExceptionUnwind() noexcept;
         void SafePointAllocation(size_t size) noexcept;
+        void WaitFinalizersForTests() noexcept;
 
-        void PerformFullGC() noexcept;
+        void ScheduleAndWaitFullGC() noexcept;
 
         void OnOOM(size_t size) noexcept;
 
     private:
         void SafePointRegular(size_t weight) noexcept;
-        void SafePointSlowPath(SafepointFlag flag) noexcept;
+        void SafePointSlowPath() noexcept;
 
         ConcurrentMarkAndSweep& gc_;
         mm::ThreadData& threadData_;
     };
 
     ConcurrentMarkAndSweep() noexcept;
-    ~ConcurrentMarkAndSweep() = default;
+    ~ConcurrentMarkAndSweep();
 
 private:
     // Returns `true` if GC has happened, and `false` if not (because someone else has suspended the threads).
     bool PerformFullGC() noexcept;
+    void StartFinalizerThreadIfNone() noexcept;
+    void StopFinalizerThread() noexcept;
 
     size_t epoch_ = 0;
     uint64_t lastGCTimestampUs_ = 0;
+    GCStateHolder state_;
+    std::thread gcThread_;
+    std::thread finalizerThread_;
+    mm::ObjectFactory<ConcurrentMarkAndSweep>::FinalizerQueue finalizerQueue_;
+    std::mutex finalizerQueueMutex_;
+    std::condition_variable finalizerQueueCondVar_;
+    enum class FinalizerState {
+        NotRunning,
+        Running,
+        Shutdown
+    };
+    std::atomic<FinalizerState> finalizersState_ = FinalizerState::NotRunning;
 };
 
 } // namespace gc

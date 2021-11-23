@@ -251,7 +251,7 @@ TEST_F(ConcurrentMarkAndSweepTest, RootSet) {
         ASSERT_THAT(GetColor(stack2.header()), Color::kWhite);
         ASSERT_THAT(GetColor(stack3.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -297,7 +297,7 @@ TEST_F(ConcurrentMarkAndSweepTest, InterconnectedRootSet) {
         ASSERT_THAT(GetColor(stack2.header()), Color::kWhite);
         ASSERT_THAT(GetColor(stack3.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -321,7 +321,7 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjects) {
         ASSERT_THAT(GetColor(object1.header()), Color::kWhite);
         ASSERT_THAT(GetColor(object2.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -338,7 +338,8 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectsWithFinalizers) {
 
         EXPECT_CALL(finalizerHook(), Call(object1.header()));
         EXPECT_CALL(finalizerHook(), Call(object2.header()));
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().WaitFinalizersForTests();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -357,7 +358,8 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectWithFreeWeak) {
         ASSERT_THAT(GetColor(weak1.header()), Color::kWhite);
         ASSERT_THAT(weak1->referred, object1.header());
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().WaitFinalizersForTests();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -374,7 +376,7 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectWithHoldedWeak) {
         ASSERT_THAT(GetColor(weak1.header()), Color::kWhite);
         ASSERT_THAT(weak1->referred, object1.header());
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre(weak1.header(), stack.header()));
         EXPECT_THAT(GetColor(weak1.header()), Color::kWhite);
@@ -407,7 +409,7 @@ TEST_F(ConcurrentMarkAndSweepTest, ObjectReferencedFromRootSet) {
         ASSERT_THAT(GetColor(object3.header()), Color::kWhite);
         ASSERT_THAT(GetColor(object4.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -456,7 +458,7 @@ TEST_F(ConcurrentMarkAndSweepTest, ObjectsWithCycles) {
         ASSERT_THAT(GetColor(object5.header()), Color::kWhite);
         ASSERT_THAT(GetColor(object6.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -507,7 +509,8 @@ TEST_F(ConcurrentMarkAndSweepTest, ObjectsWithCyclesAndFinalizers) {
 
         EXPECT_CALL(finalizerHook(), Call(object5.header()));
         EXPECT_CALL(finalizerHook(), Call(object6.header()));
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().WaitFinalizersForTests();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -540,7 +543,7 @@ TEST_F(ConcurrentMarkAndSweepTest, ObjectsWithCyclesIntoRootSet) {
         ASSERT_THAT(GetColor(object1.header()), Color::kWhite);
         ASSERT_THAT(GetColor(object2.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre(global.header(), stack.header(), object1.header(), object2.header()));
         EXPECT_THAT(GetColor(global.header()), Color::kWhite);
@@ -584,8 +587,8 @@ TEST_F(ConcurrentMarkAndSweepTest, RunGCTwice) {
         ASSERT_THAT(GetColor(object5.header()), Color::kWhite);
         ASSERT_THAT(GetColor(object6.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -615,7 +618,7 @@ TEST_F(ConcurrentMarkAndSweepTest, PermanentObjects) {
         ASSERT_THAT(Alive(threadData), testing::UnorderedElementsAre(global2.header()));
         EXPECT_THAT(GetColor(global2.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre(global2.header()));
         EXPECT_THAT(GetColor(global2.header()), Color::kWhite);
@@ -635,7 +638,7 @@ TEST_F(ConcurrentMarkAndSweepTest, SameObjectInRootSet) {
         EXPECT_THAT(GetColor(global.header()), Color::kWhite);
         EXPECT_THAT(GetColor(object.header()), Color::kWhite);
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre(global.header(), object.header()));
         EXPECT_THAT(GetColor(global.header()), Color::kWhite);
@@ -771,7 +774,7 @@ TEST_F(ConcurrentMarkAndSweepTest, MultipleMutatorsCollect) {
 
     KStdVector<std::future<void>> gcFutures(kDefaultThreadCount);
 
-    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().PerformFullGC(); });
+    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
 
     // Spin until thread suspension is requested.
     while (!mm::IsThreadSuspensionRequested()) {
@@ -829,7 +832,7 @@ TEST_F(ConcurrentMarkAndSweepTest, MultipleMutatorsAllCollect) {
 
     // TODO: Maybe check that only one GC is performed.
     for (int i = 0; i < kDefaultThreadCount; ++i) {
-        gcFutures[i] = mutators[i].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().PerformFullGC(); });
+        gcFutures[i] = mutators[i].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
     }
 
     for (auto& future : gcFutures) {
@@ -891,7 +894,7 @@ TEST_F(ConcurrentMarkAndSweepTest, MultipleMutatorsAddToRootSetAfterCollectionRe
     }
 
     KStdVector<std::future<void>> gcFutures(kDefaultThreadCount);
-    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().PerformFullGC(); });
+    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
 
     // Spin until thread suspension is requested.
     while (!mm::IsThreadSuspensionRequested()) {
@@ -956,7 +959,7 @@ TEST_F(ConcurrentMarkAndSweepTest, CrossThreadReference) {
 
     KStdVector<std::future<void>> gcFutures(kDefaultThreadCount);
 
-    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().PerformFullGC(); });
+    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
 
     // Spin until thread suspension is requested.
     while (!mm::IsThreadSuspensionRequested()) {
@@ -1018,7 +1021,7 @@ TEST_F(ConcurrentMarkAndSweepTest, MultipleMutatorsWeaks) {
     KStdVector<std::future<void>> gcFutures(kDefaultThreadCount);
 
     gcFutures[0] = mutators[0].Execute([weak](mm::ThreadData& threadData, Mutator& mutator) {
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
         EXPECT_THAT((*weak)->referred, nullptr);
     });
 
@@ -1069,7 +1072,7 @@ TEST_F(ConcurrentMarkAndSweepTest, NewThreadsWhileRequestingCollection) {
 
     KStdVector<std::future<void>> gcFutures(kDefaultThreadCount);
 
-    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().PerformFullGC(); });
+    gcFutures[0] = mutators[0].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
 
     // Spin until thread suspension is requested.
     while (!mm::IsThreadSuspensionRequested()) {
@@ -1135,7 +1138,7 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectWithFreeWeakReversedOrder) {
         object1 = &object1_local;
         global1->field1 = object1_local.header();
         while (weak.load() == nullptr);
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         ASSERT_THAT(Alive(threadData), testing::UnorderedElementsAre(object1_local.header(), weak.load()->header(), global1.header()));
         ASSERT_THAT(GetColor(global1.header()), Color::kWhite);
@@ -1145,7 +1148,7 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectWithFreeWeakReversedOrder) {
 
         global1->field1 = nullptr;
 
-        threadData.gc().PerformFullGC();
+        threadData.gc().ScheduleAndWaitFullGC();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre(global1.header()));
         done = true;

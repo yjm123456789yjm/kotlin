@@ -56,8 +56,9 @@ public:
         void SafePointLoopBody() noexcept;
         void SafePointExceptionUnwind() noexcept;
         void SafePointAllocation(size_t size) noexcept;
+        void WaitFinalizersForTests() noexcept {}
 
-        void PerformFullGC() noexcept;
+        void ScheduleAndWaitFullGC() noexcept;
 
         void OnOOM(size_t size) noexcept;
 
