@@ -6,12 +6,12 @@
 #ifndef RUNTIME_GC_STMS_GC_H
 #define RUNTIME_GC_STMS_GC_H
 
-#include "SameThreadMarkAndSweep.hpp"
+#include "ConcurrentMarkAndSweep.hpp"
 
 namespace kotlin {
 namespace gc {
 
-using GC = kotlin::gc::SameThreadMarkAndSweep;
+using GC = kotlin::gc::ConcurrentMarkAndSweep;
 
 inline constexpr bool kSupportsMultipleMutators = true;
 
