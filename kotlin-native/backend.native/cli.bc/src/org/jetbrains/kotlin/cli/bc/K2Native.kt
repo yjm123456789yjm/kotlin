@@ -305,8 +305,8 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                         configuration.report(ERROR, "-Xgc is only supported for -memory-model experimental")
                     }
                 }
-                put(GARBAGE_COLLECTOR, when (arguments.gc) {
-                    null -> GC.SAME_THREAD_MARK_AND_SWEEP
+                putIfNotNull(GARBAGE_COLLECTOR, when (arguments.gc) {
+                    null -> null
                     "noop" -> {
                         assertGcSupported()
                         GC.NOOP
@@ -321,7 +321,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
                     }
                     else -> {
                         configuration.report(ERROR, "Unsupported GC ${arguments.gc}")
-                        GC.SAME_THREAD_MARK_AND_SWEEP
+                        null
                     }
                 })
                 if (memoryModel != MemoryModel.EXPERIMENTAL && arguments.gcAggressive) {
