@@ -50,6 +50,9 @@ abstract class BridgesConstruction<T : JsCommonBackendContext>(val context: T) :
 
     abstract fun getFunctionSignature(function: IrSimpleFunction): Any
 
+    // Should change the name of original overridden function
+    protected open fun manipulateWithOriginalFunctionAfterBridgeCreation(function: IrSimpleFunction) {}
+
     // Should dispatch receiver type be casted inside a bridge.
     open val shouldCastDispatchReceiver: Boolean = false
 
@@ -137,7 +140,7 @@ abstract class BridgesConstruction<T : JsCommonBackendContext>(val context: T) :
             annotations += bridge.annotations
             overriddenSymbols += delegateTo.overriddenSymbols
             overriddenSymbols += bridge.symbol
-        }
+        }.also { manipulateWithOriginalFunctionAfterBridgeCreation(delegateTo) }
 
         irFunction.body = context.irFactory.createBlockBody(UNDEFINED_OFFSET, UNDEFINED_OFFSET) {
             statements += context.createIrBuilder(irFunction.symbol).irBlockBody(irFunction) {
