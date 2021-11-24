@@ -17,8 +17,8 @@
 package org.jetbrains.kotlin.config
 
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
-import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.components.InlineConstTracker
+import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 
 object CommonConfigurationKeys {
@@ -58,6 +58,10 @@ object CommonConfigurationKeys {
     @JvmField
     val PARALLEL_BACKEND_THREADS =
         CompilerConfigurationKey.create<Int>("When using the IR backend, run lowerings by file in N parallel threads")
+
+    @JvmField
+    val RELATIVE_PATH_BASE =
+        CompilerConfigurationKey.create<String>("Provides a path from which relative paths are being computed")
 }
 
 var CompilerConfiguration.languageVersionSettings: LanguageVersionSettings
