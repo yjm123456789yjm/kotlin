@@ -90,6 +90,8 @@ typename Traits::ObjectFactory::FinalizerQueue Sweep(typename Traits::ObjectFact
     return finalizerQueue;
 }
 
+KStdVector<ObjHeader*> collectRootSet();
+
 } // namespace gc
 } // namespace kotlin
 
