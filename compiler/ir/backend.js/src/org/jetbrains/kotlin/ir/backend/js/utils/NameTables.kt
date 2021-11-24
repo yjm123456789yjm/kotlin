@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
+import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.file
 import org.jetbrains.kotlin.ir.util.fqNameWhenAvailable
@@ -24,6 +25,7 @@ import org.jetbrains.kotlin.js.common.isES5IdentifierPart
 import org.jetbrains.kotlin.js.common.isES5IdentifierStart
 import org.jetbrains.kotlin.js.common.isValidES5Identifier
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 import java.util.*
 import kotlin.collections.set
@@ -109,13 +111,59 @@ fun NameTable<IrDeclaration>.dump(): String =
 
 private const val RESERVED_MEMBER_NAME_SUFFIX = "_k$"
 
+data class JsSignature(
+    val name: Name,
+    val typeParameters: List<IrTypeParameter>,
+    val extensionReceiverType: IrType?,
+    val valueParametersType: List<IrType>,
+    val returnType: IrType,
+) {
+    override fun toString(): String {
+        val nameBuilder = StringBuilder().apply { append(name) }
+
+        // TODO should we skip type parameters and use upper bound of type parameter when print type of value parameters?
+        typeParameters.ifNotEmpty {
+            nameBuilder.append("_\$t")
+            joinTo(nameBuilder, "") { "_${it.name.asString()}" }
+        }
+        extensionReceiverType?.let {
+            nameBuilder.append("_r$${it.asString()}")
+        }
+        valueParametersType.ifNotEmpty {
+            joinTo(nameBuilder, "") { "_${it.asString()}" }
+        }
+        returnType.let {
+            // Return type is only used in signature for inline class and Unit types because
+            // they are binary incompatible with supertypes.
+            if (it.getJsInlinedClass() != null || it.isUnit()) {
+                nameBuilder.append("_ret$${it.asString()}")
+            }
+        }
+
+        val signature = nameBuilder.toString()
+
+        // TODO: Use better hashCode
+        return sanitizeName(name.asString()) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
+    }
+}
+
+
+fun jsFunctionSignatureWithoutStable(declaration: IrFunction): JsSignature {
+    return JsSignature(
+        declaration.getJsNameOrKotlinName(),
+        declaration.typeParameters,
+        declaration.extensionReceiverParameter?.type,
+        declaration.valueParameters.map { it.type },
+        declaration.returnType
+    )
+}
+
 fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext?): String {
     require(!declaration.isStaticMethodOfClass)
     require(declaration.dispatchReceiverParameter != null)
 
-    val declarationName = declaration.getJsNameOrKotlinName().asString()
-
     if (declaration.hasStableJsName(context)) {
+        val declarationName = declaration.getJsNameOrKotlinName().asString()
         // TODO: Handle reserved suffix in FE
         require(!declarationName.endsWith(RESERVED_MEMBER_NAME_SUFFIX)) {
             "Function ${declaration.fqNameWhenAvailable} uses reserved name suffix \"$RESERVED_MEMBER_NAME_SUFFIX\""
@@ -123,32 +171,7 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext?): 
         return declarationName
     }
 
-    val nameBuilder = StringBuilder()
-    nameBuilder.append(declarationName)
-
-    // TODO should we skip type parameters and use upper bound of type parameter when print type of value parameters?
-    declaration.typeParameters.ifNotEmpty {
-        nameBuilder.append("_\$t")
-        joinTo(nameBuilder, "") { "_${it.name.asString()}" }
-    }
-    declaration.extensionReceiverParameter?.let {
-        nameBuilder.append("_r$${it.type.asString()}")
-    }
-    declaration.valueParameters.ifNotEmpty {
-        joinTo(nameBuilder, "") { "_${it.type.asString()}" }
-    }
-    declaration.returnType.let {
-        // Return type is only used in signature for inline class and Unit types because
-        // they are binary incompatible with supertypes.
-        if (it.getJsInlinedClass() != null || it.isUnit()) {
-            nameBuilder.append("_ret$${it.asString()}")
-        }
-    }
-
-    val signature = nameBuilder.toString()
-
-    // TODO: Use better hashCode
-    return sanitizeName(declarationName) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
+    return jsFunctionSignatureWithoutStable(declaration).toString()
 }
 
 class NameTables(

@@ -653,6 +653,13 @@ private val bridgesConstructionPhase = makeDeclarationTransformerPhase(
     prerequisite = setOf(suspendFunctionsLoweringPhase)
 )
 
+private val bridgesCallsLowering = makeBodyLoweringPhase(
+    ::JsBridgesCallsLowering,
+    name = "BridgesCall",
+    description = "Generate bridges calls",
+    prerequisite = setOf(bridgesConstructionPhase)
+)
+
 private val singleAbstractMethodPhase = makeBodyLoweringPhase(
     ::JsSingleAbstractMethodLowering,
     name = "SingleAbstractMethod",
@@ -889,6 +896,7 @@ val loweringList = listOf<Lowering>(
     errorExpressionLoweringPhase,
     errorDeclarationLoweringPhase,
     bridgesConstructionPhase,
+    bridgesCallsLowering,
     typeOperatorLoweringPhase,
     secondaryConstructorLoweringPhase,
     secondaryFactoryInjectorLoweringPhase,
