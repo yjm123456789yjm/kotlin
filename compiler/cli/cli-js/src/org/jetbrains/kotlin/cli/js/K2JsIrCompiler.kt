@@ -144,6 +144,10 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             configuration.addKotlinSourceRoot(arg, commonSources.contains(arg))
         }
 
+        arguments.relativePathBase?.let {
+            configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASE, it)
+        }
+
         val environmentForJS =
             KotlinCoreEnvironment.createForProduction(rootDisposable, configuration, EnvironmentConfigFiles.JS_CONFIG_FILES)
         val projectJs = environmentForJS.project
