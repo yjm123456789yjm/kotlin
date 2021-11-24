@@ -27,7 +27,7 @@ class JvmIrSerializerSession(
 ) : IrFileSerializer(
     messageLogger, declarationTable, expectDescriptorToSymbol, CompatibilityMode.CURRENT,
     bodiesOnlyForInlines = mode == JvmSerializeIrMode.INLINE,
-    skipExpects
+    skipExpects, relativePathBase = null
 ) {
     init {
         assert(mode != JvmSerializeIrMode.NONE)

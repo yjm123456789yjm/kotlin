@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.library.impl.IrMemoryDeclarationWriter
 import org.jetbrains.kotlin.library.impl.IrMemoryStringWriter
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.types.Variance
+import java.io.File
 import org.jetbrains.kotlin.backend.common.serialization.proto.AccessorIdSignature as ProtoAccessorIdSignature
 import org.jetbrains.kotlin.backend.common.serialization.proto.Actual as ProtoActual
 import org.jetbrains.kotlin.backend.common.serialization.proto.CommonIdSignature as ProtoCommonIdSignature
@@ -127,7 +128,8 @@ open class IrFileSerializer(
     // required for JS IC caches
     private val skipMutableState: Boolean = false,
     private val allowErrorStatementOrigins: Boolean = false, // TODO: support InlinerExpressionLocationHint
-    private val addDebugInfo: Boolean = true
+    private val addDebugInfo: Boolean = true,
+    private val relativePathBase: String?
 ) {
     private val loopIndex = mutableMapOf<IrLoop, Int>()
     private var currentLoopIndex = 0
@@ -1576,7 +1578,7 @@ open class IrFileSerializer(
         return SerializedIrFile(
             proto.build().toByteArray(),
             file.fqName.asString(),
-            file.path,
+            file.relativePath(),
             IrMemoryArrayWriter(protoTypeArray.map { it.toByteArray() }).writeIntoMemory(),
             IrMemoryArrayWriter(protoIdSignatureArray.map { it.toByteArray() }).writeIntoMemory(),
             IrMemoryStringWriter(protoStringArray).writeIntoMemory(),
@@ -1584,6 +1586,13 @@ open class IrFileSerializer(
             IrMemoryDeclarationWriter(topLevelDeclarations).writeIntoMemory(),
             if (addDebugInfo) IrMemoryStringWriter(protoDebugInfoArray).writeIntoMemory() else null
         )
+    }
+
+    private fun IrFile.relativePath(): String {
+        return relativePathBase?.let { base ->
+            val file = File(fileEntry.name)
+            file.relativeToOrNull(File(base))?.path
+        } ?: fileEntry.name
     }
 
     private fun serializeExpectActualSubstitutionTable(proto: ProtoFile.Builder) {

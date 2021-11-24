@@ -19,11 +19,19 @@ class JsIrModuleSerializer(
     irBuiltIns: IrBuiltIns,
     private val expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
     compatibilityMode: CompatibilityMode,
-    val skipExpects: Boolean
-) : IrModuleSerializer<JsIrFileSerializer>(messageLogger, compatibilityMode) {
+    val skipExpects: Boolean,
+    relativePathBase: String?
+) : IrModuleSerializer<JsIrFileSerializer>(messageLogger, compatibilityMode, relativePathBase) {
 
     private val globalDeclarationTable = JsGlobalDeclarationTable(irBuiltIns)
 
     override fun createSerializerForFile(file: IrFile): JsIrFileSerializer =
-        JsIrFileSerializer(messageLogger, DeclarationTable(globalDeclarationTable), expectDescriptorToSymbol, skipExpects = skipExpects, compatibilityMode = compatibilityMode)
+        JsIrFileSerializer(
+            messageLogger,
+            DeclarationTable(globalDeclarationTable),
+            expectDescriptorToSymbol,
+            skipExpects = skipExpects,
+            compatibilityMode = compatibilityMode,
+            relativePathBase = relativePathBase
+        )
 }
