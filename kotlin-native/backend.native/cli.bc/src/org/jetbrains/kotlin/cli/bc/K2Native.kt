@@ -75,6 +75,11 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
             configuration.put(CommonConfigurationKeys.METADATA_VERSION, KlibMetadataVersion.INSTANCE)
         }
 
+        val relativePathBase = arguments.relativePathBase
+        if (relativePathBase != null) {
+            configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASE, relativePathBase)
+        }
+
         try {
             val konanConfig = KonanConfig(project, configuration)
             ensureModuleName(konanConfig, environment)
