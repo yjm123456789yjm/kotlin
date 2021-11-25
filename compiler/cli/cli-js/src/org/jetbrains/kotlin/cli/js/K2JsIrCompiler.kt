@@ -38,7 +38,6 @@ import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.ic.actualizeCacheForModule
 import org.jetbrains.kotlin.ir.backend.js.ic.buildCache
 import org.jetbrains.kotlin.ir.backend.js.ic.checkCaches
-import org.jetbrains.kotlin.ir.backend.js.utils.sanitizeName
 import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
@@ -144,7 +143,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             configuration.addKotlinSourceRoot(arg, commonSources.contains(arg))
         }
 
-        arguments.relativePathBase?.let {
+        arguments.relativePathBases?.let {
             configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASE, it)
         }
 
