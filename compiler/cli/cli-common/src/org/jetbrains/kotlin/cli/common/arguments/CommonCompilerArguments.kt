@@ -378,7 +378,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
 
     @Argument(
         value = "-Xrelative-path-base",
-        description = "Provide a base path to compute source's relative paths from"
+        description = "Provide a base paths to compute source's relative paths in klibs"
     )
     var relativePathBase: String? by FreezableVar(null)
 
