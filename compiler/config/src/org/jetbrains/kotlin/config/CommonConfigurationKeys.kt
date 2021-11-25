@@ -60,8 +60,8 @@ object CommonConfigurationKeys {
         CompilerConfigurationKey.create<Int>("When using the IR backend, run lowerings by file in N parallel threads")
 
     @JvmField
-    val RELATIVE_PATH_BASE =
-        CompilerConfigurationKey.create<String>("Provides a path from which relative paths are being computed")
+    val RELATIVE_PATH_BASES =
+        CompilerConfigurationKey.create<List<String>>("Provides a path from which relative paths are being computed")
 }
 
 var CompilerConfiguration.languageVersionSettings: LanguageVersionSettings

@@ -28,21 +28,21 @@ import org.jetbrains.kotlin.cli.common.messages.MessageUtil
 import org.jetbrains.kotlin.cli.jvm.compiler.EnvironmentConfigFiles
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
 import org.jetbrains.kotlin.cli.jvm.plugins.PluginCliParser
-import org.jetbrains.kotlin.config.*
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
+import org.jetbrains.kotlin.config.CompilerConfiguration
+import org.jetbrains.kotlin.config.IncrementalCompilation
+import org.jetbrains.kotlin.config.Services
 import org.jetbrains.kotlin.incremental.components.ExpectActualTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.incremental.js.IncrementalDataProvider
 import org.jetbrains.kotlin.incremental.js.IncrementalNextRoundChecker
 import org.jetbrains.kotlin.incremental.js.IncrementalResultsConsumer
 import org.jetbrains.kotlin.ir.backend.js.*
-import org.jetbrains.kotlin.ir.backend.js.ic.actualizeCacheForModule
-import org.jetbrains.kotlin.ir.backend.js.ic.buildCache
-import org.jetbrains.kotlin.ir.backend.js.ic.checkCaches
-import org.jetbrains.kotlin.ir.backend.js.ic.*
-import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
+import org.jetbrains.kotlin.ir.backend.js.ic.*
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformer
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
 import org.jetbrains.kotlin.ir.declarations.persistent.PersistentIrFactory
 import org.jetbrains.kotlin.js.analyzer.JsAnalysisResult
 import org.jetbrains.kotlin.js.config.*
@@ -58,7 +58,6 @@ import org.jetbrains.kotlin.utils.fileUtils.withReplacedExtensionOrNull
 import org.jetbrains.kotlin.utils.join
 import java.io.File
 import java.io.IOException
-import java.lang.IllegalArgumentException
 
 enum class ProduceKind {
     DEFAULT,  // Determine what to produce based on js-v1 options
@@ -144,7 +143,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         arguments.relativePathBases?.let {
-            configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASE, it)
+            configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, it.split(File.pathSeparator))
         }
 
         val environmentForJS =

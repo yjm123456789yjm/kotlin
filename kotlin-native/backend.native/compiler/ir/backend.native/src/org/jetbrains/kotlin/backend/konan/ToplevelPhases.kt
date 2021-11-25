@@ -219,9 +219,9 @@ internal val serializerPhase = konanUnitPhase(
         op = {
             val expectActualLinker = config.configuration.get(CommonConfigurationKeys.EXPECT_ACTUAL_LINKER) ?: false
             val messageLogger = config.configuration.get(IrMessageLogger.IR_MESSAGE_LOGGER) ?: IrMessageLogger.None
-            val relativePathBase = config.configuration.get(CommonConfigurationKeys.RELATIVE_PATH_BASE)
+            val relativePathBase = config.configuration.get(CommonConfigurationKeys.RELATIVE_PATH_BASES)?.let { it[0]
 
-            serializedIr = irModule?.let { ir ->
+                serializedIr = irModule?.let { ir ->
                 KonanIrModuleSerializer(
                     messageLogger, ir.irBuiltins, expectDescriptorToSymbol, skipExpects = !expectActualLinker, compatibilityMode = CompatibilityMode.CURRENT, relativePathBase = relativePathBase
                 ).serializedIrModule(ir)
