@@ -1,0 +1,6 @@
+public final class A /* A*/ {
+  public  A();//  .ctor()
+
+  public final int foo();//  foo()
+
+}

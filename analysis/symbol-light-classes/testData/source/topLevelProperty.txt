@@ -1,0 +1,8 @@
+public final class TopLevelPropertyKt /* TopLevelPropertyKt*/ {
+  private static final int p;
+
+  public static final int getP();//  getP()
+
+  public static final void foo();//  foo()
+
+}

@@ -52,7 +52,7 @@ import org.jetbrains.kotlin.analysis.api.fir.symbols.AbstractFirSymbolByReferenc
 import org.jetbrains.kotlin.generators.TestGroupSuite
 import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 
-fun TestGroupSuite.generateAnalysisApiTests() {
+internal fun TestGroupSuite.generateAnalysisApiTests() {
     generateAnalysisApiComponentsTests()
     generateAnalysisApiNonComponentsTests()
 }

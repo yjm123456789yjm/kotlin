@@ -19,17 +19,9 @@ import org.jetbrains.kotlin.psi.KotlinReferenceProvidersService
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 
-object FirFrontendApiTestConfiguratorService : FrontendApiTestConfiguratorService {
+object FirFrontendApiTestConfiguratorService : FrontendApiTestConfiguratorService by FirLowLevelFrontendApiTestConfiguratorService {
     override fun TestConfigurationBuilder.configureTest(disposable: Disposable) {
         with(FirLowLevelFrontendApiTestConfiguratorService) { configureTest(disposable) }
-    }
-
-    override fun processTestFiles(files: List<KtFile>): List<KtFile> {
-        return FirLowLevelFrontendApiTestConfiguratorService.processTestFiles(files)
-    }
-
-    override fun getOriginalFile(file: KtFile): KtFile {
-        return FirLowLevelFrontendApiTestConfiguratorService.getOriginalFile(file)
     }
 
     @OptIn(InvalidWayOfUsingAnalysisSession::class)
@@ -44,9 +36,5 @@ object FirFrontendApiTestConfiguratorService : FrontendApiTestConfiguratorServic
             application.registerService(KotlinReferenceProvidersService::class.java, HLApiReferenceProviderService::class.java)
             application.registerService(KotlinReferenceProviderContributor::class.java, KotlinFirReferenceContributor::class.java)
         }
-    }
-
-    override fun doOutOfBlockModification(file: KtFile) {
-        FirLowLevelFrontendApiTestConfiguratorService.doOutOfBlockModification(file)
     }
 }

@@ -1,0 +1,6 @@
+public final class TopLevelFunctionKt /* TopLevelFunctionKt*/ {
+  public static final int foo();//  foo()
+
+  public static final void bar();//  bar()
+
+}

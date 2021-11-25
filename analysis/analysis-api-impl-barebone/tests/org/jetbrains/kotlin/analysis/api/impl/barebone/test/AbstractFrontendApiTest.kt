@@ -204,6 +204,6 @@ abstract class AbstractFrontendApiTest(val configurator: FrontendApiTestConfigur
     protected class SkipDependedModeException : Exception()
 
     companion object {
-        val DISABLE_DEPENDED_MODE_DIRECTIVE = "DISABLE_DEPENDED_MODE"
+        const val DISABLE_DEPENDED_MODE_DIRECTIVE = "DISABLE_DEPENDED_MODE"
     }
 }

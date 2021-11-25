@@ -1,0 +1,8 @@
+public enum Color /* Color*/ {
+  RED,
+  GREEN,
+  BLUE;
+
+  private  Color();//  .ctor()
+
+}
