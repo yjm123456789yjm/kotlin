@@ -275,7 +275,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
             generateKLib(
                 sourceModule,
-                irFactory = PersistentIrFactory(), // TODO IrFactoryImpl?
+                irFactory = IrFactoryImpl,
                 outputKlibPath = outputFile.path,
                 nopack = arguments.irProduceKlibDir,
                 jsOutputName = arguments.irPerModuleOutputName,
