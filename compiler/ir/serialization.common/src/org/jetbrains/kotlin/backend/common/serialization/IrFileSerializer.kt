@@ -1433,7 +1433,7 @@ open class IrFileSerializer(
 // ---------- Top level ------------------------------------------------------
 
     private fun serializeFileEntry(entry: IrFileEntry): ProtoFileEntry = ProtoFileEntry.newBuilder()
-        .setName(entry.name)
+        .setName(entry.normalizedRelativePath())
         .addAllLineStartOffset(entry.lineStartOffsets.asIterable())
         .build()
 
@@ -1578,7 +1578,7 @@ open class IrFileSerializer(
         return SerializedIrFile(
             proto.build().toByteArray(),
             file.fqName.asString(),
-            file.normalizedRelativePath(),
+            file.path,
             IrMemoryArrayWriter(protoTypeArray.map { it.toByteArray() }).writeIntoMemory(),
             IrMemoryArrayWriter(protoIdSignatureArray.map { it.toByteArray() }).writeIntoMemory(),
             IrMemoryStringWriter(protoStringArray).writeIntoMemory(),
@@ -1588,13 +1588,13 @@ open class IrFileSerializer(
         )
     }
 
-    private fun IrFile.normalizedRelativePath(): String {
+    private fun IrFileEntry.normalizedRelativePath(): String {
         val path = relativePathBase?.let { base ->
-            val file = File(fileEntry.name)
+            val file = File(name)
             file.relativeToOrNull(File(base))?.path
-        } ?: fileEntry.name
+        } ?: name
 
-        return path.replace('\\', '/')
+        return path.replace(File.separatorChar, '/')
     }
 
     private fun serializeExpectActualSubstitutionTable(proto: ProtoFile.Builder) {
