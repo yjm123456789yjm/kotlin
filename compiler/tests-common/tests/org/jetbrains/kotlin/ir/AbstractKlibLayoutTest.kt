@@ -115,7 +115,7 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
     }
 
     private fun assertNotEquals(expected: Collection<String>, actual: Collection<String>) {
-        TestCase.assertFalse(expected.containsAll(actual))
+        TestCase.assertFalse(expected.containsAll(actual) && actual.containsAll(expected))
     }
 
     private fun checkPaths(
