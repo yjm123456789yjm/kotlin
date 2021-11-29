@@ -88,7 +88,6 @@ NO_EXTERNAL_CALLS_CHECK void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAnd
     RuntimeAssert(state == GCState::kWorldIsStopped, "I'm not suspended, someone started GC, but no suspension requested?");
     threadData_.suspensionData().suspendIfRequested();
     gc_.state_.waitUntil([this] { return gc_.state_.get() != GCState::kGCRunning; });
-    SafePointRegular(0);
 }
 
 void gc::ConcurrentMarkAndSweep::ThreadData::WaitFinalizersForTests() noexcept {
