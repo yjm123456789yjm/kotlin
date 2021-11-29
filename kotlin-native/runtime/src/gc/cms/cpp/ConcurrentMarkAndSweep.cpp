@@ -74,29 +74,20 @@ void gc::ConcurrentMarkAndSweep::ThreadData::SafePointAllocation(size_t size) no
         SafePointSlowPath();
     }
 }
-
-NO_EXTERNAL_CALLS_CHECK void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
-    auto state = gc_.state_.get();
-    while (true) {
-        if (state == GCState::kNeedsGC || state == GCState::kWorldIsStopped) {
-            break;
-        }
-        // TODO: what if state now is kShutdown?
-        gc_.state_.compareAndSwap(state, GCState::kNeedsGC);
-    }
-    state = gc_.state_.waitUntil([this] { return gc_.state_.get() != GCState::kNeedsGC; });
-    RuntimeAssert(state == GCState::kWorldIsStopped, "I'm not suspended, someone started GC, but no suspension requested?");
-    threadData_.suspensionData().suspendIfRequested();
-    gc_.state_.waitUntil([this] { return gc_.state_.get() != GCState::kGCRunning; });
+void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGC() noexcept {
+    ThreadStateGuard guard(ThreadState::kNative);
+    auto scheduled_epoch = gc_.state_.schedule();
+    gc_.state_.waitEpochFinished(scheduled_epoch);
 }
 
-void gc::ConcurrentMarkAndSweep::ThreadData::WaitFinalizersForTests() noexcept {
-    gc_.state_.waitUntil([&] { return gc_.state_.get() == GCState::kNone; });
-    while (true) {
-        std::unique_lock lock(gc_.finalizerQueueMutex_);
-        if (gc_.finalizerQueue_.size() == 0 && gc_.finalizersState_ == FinalizerState::NotRunning) break;
-    }
-    gc_.StopFinalizerThread();
+void gc::ConcurrentMarkAndSweep::ThreadData::ScheduleAndWaitFullGCWithFinalizers() noexcept {
+    ThreadStateGuard guard(ThreadState::kNative);
+    auto scheduled_epoch = gc_.state_.schedule();
+    gc_.state_.waitEpochFinalized(scheduled_epoch);
+}
+
+void gc::ConcurrentMarkAndSweep::ThreadData::StopFinalizerThreadForTests() noexcept {
+    gc_.StopFinalizerThreadForTests();
 }
 
 void gc::ConcurrentMarkAndSweep::ThreadData::OnOOM(size_t size) noexcept {
@@ -112,30 +103,23 @@ ALWAYS_INLINE void gc::ConcurrentMarkAndSweep::ThreadData::SafePointRegular(size
 }
 
 NO_EXTERNAL_CALLS_CHECK NO_INLINE void gc::ConcurrentMarkAndSweep::ThreadData::SafePointSlowPath() noexcept {
-    auto state = gc_.state_.get();
-    if (state == GCState::kNone) {
-        return;
-    }
     threadData_.suspensionData().suspendIfRequested();
 }
 
-gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep() noexcept : state_(gNeedSafepointSlowpath) {
+gc::ConcurrentMarkAndSweep::ConcurrentMarkAndSweep() noexcept  {
     mm::GlobalData::Instance().gcScheduler().SetScheduleGC([this]() NO_EXTERNAL_CALLS_CHECK NO_INLINE {
         RuntimeLogDebug({kTagGC}, "Scheduling GC by thread %d", konan::currentThreadId());
-        state_.compareAndSet(GCState::kNone, GCState::kNeedsGC);
+        state_.schedule();
     });
     gcThread_ = std::thread([this] {
         while (true) {
-            auto state = state_.waitUntil([this] {
-                auto state = state_.get();
-                return state == GCState::kNeedsGC || state == GCState::kShutdown;
-            });
-            if (state == GCState::kNeedsGC) {
-                PerformFullGC();
-            } else if (state == GCState::kShutdown){
-                break;
+            auto epoch = state_.waitScheduled();
+            if (epoch != std::numeric_limits<int64_t>::max()) {
+                PerformFullGC(epoch);
             } else {
-                RuntimeFail("GC thread wake up in strange state %d", static_cast<int>(state));
+                state_.start(epoch);
+                state_.finish(epoch);
+                break;
             }
         }
     });
@@ -146,60 +130,55 @@ void gc::ConcurrentMarkAndSweep::StartFinalizerThreadIfNone() noexcept {
     finalizerThread_ = std::thread([this] {
         Kotlin_initRuntimeIfNeeded();
         while (true) {
+            auto finalizersEpoch = state_.waitFinalizersRequired();
+            if (finalizersEpoch == std::numeric_limits<int64_t>::max()) break;
             std::unique_lock lock(finalizerQueueMutex_);
-            finalizerQueueCondVar_.wait(lock, [this] {
-                return finalizerQueue_.size() > 0 || finalizersState_ == FinalizerState::Shutdown;
-            });
-            auto finState = finalizersState_.load();
-            if (finState == FinalizerState::Shutdown) break;
-            finalizersState_.compare_exchange_strong(finState, FinalizerState::Running);
             auto queue = std::move(finalizerQueue_);
             lock.unlock();
             if (queue.size() > 0) {
                 ThreadStateGuard guard(ThreadState::kRunnable);
                 queue.Finalize();
             }
-            finState = FinalizerState::Running;
-            finalizersState_.compare_exchange_strong(finState, FinalizerState::NotRunning);
+            state_.finalized(finalizersEpoch);
         }
     });
 }
 
-void gc::ConcurrentMarkAndSweep::StopFinalizerThread() noexcept {
+void gc::ConcurrentMarkAndSweep::StopFinalizerThreadForTests() noexcept {
+    auto epoch = state_.waitCurrentFinished();
     if (finalizerThread_.joinable()) {
-        {
-            std::unique_lock lock(finalizerQueueMutex_);
-            finalizersState_ = FinalizerState::Shutdown;
-            finalizerQueueCondVar_.notify_all();
-        }
+        state_.finish(std::numeric_limits<int64_t>::max());
         finalizerThread_.join();
-        finalizersState_ = FinalizerState::NotRunning;
+        RuntimeAssert(finalizerQueue_.size() == 0, "Finalizer queue should be empty when killing finalizer thread");
+        state_.finish(epoch);
+        state_.finalized(epoch);
     }
 }
 
 gc::ConcurrentMarkAndSweep::~ConcurrentMarkAndSweep() {
-    state_.waitUntil(
-        [this] { return state_.get() == GCState::kNone; },
-        [this] { state_.compareAndSet(state_.get(), GCState::kShutdown); }
-    );
+    state_.shutdown();
     gcThread_.join();
-    StopFinalizerThread();
+    if (finalizerThread_.joinable()) {
+        finalizerThread_.join();
+    }
 }
 
-bool gc::ConcurrentMarkAndSweep::PerformFullGC() noexcept {
+void gc::ConcurrentMarkAndSweep::RequestThreadsSuspension() noexcept {
+    gNeedSafepointSlowpath = true;
+    bool didSuspend = mm::RequestThreadsSuspension();
+    RuntimeAssert(didSuspend, "Only GC thread can request suspension");
+}
+
+void gc::ConcurrentMarkAndSweep::ResumeThreads() noexcept {
+    mm::ResumeThreads();
+    gNeedSafepointSlowpath = false;
+}
+
+bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
     RuntimeLogDebug({kTagGC}, "Attempt to suspend threads by thread %d", konan::currentThreadId());
     auto timeStartUs = konan::getTimeMicros();
-    bool didSuspend = mm::RequestThreadsSuspension();
-    if (!didSuspend) {
-        RuntimeLogDebug({kTagGC}, "Failed to suspend threads by thread %d", konan::currentThreadId());
-        // Somebody else suspended the threads, and so ran a GC.
-        // TODO: This breaks if suspension is used by something apart from GC.
-        return false;
-    }
+    RequestThreadsSuspension();
     RuntimeLogDebug({kTagGC}, "Requested thread suspension by thread %d", konan::currentThreadId());
-    if (!state_.compareAndSet(GCState::kNeedsGC, GCState::kWorldIsStopped)) {
-        RuntimeFail("Someone steel kNeedsGC state before moving to kWorldIsStopped");
-    }
 
     RuntimeAssert(!kotlin::mm::IsCurrentThreadRegistered(), "Concurrent GC must run on unregistered thread");
 
@@ -210,8 +189,9 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC() noexcept {
     auto& scheduler = mm::GlobalData::Instance().gcScheduler();
     scheduler.gcData().OnPerformFullGC();
 
+    state_.start(epoch);
     RuntimeLogInfo(
-            {kTagGC}, "Started GC epoch %zu. Time since last GC %" PRIu64 " microseconds", epoch_, timeStartUs - lastGCTimestampUs_);
+            {kTagGC}, "Started GC epoch %" PRId64 ". Time since last GC %" PRIu64 " microseconds", epoch, timeStartUs - lastGCTimestampUs_);
     auto timeRootSetUs = konan::getTimeMicros();
     // Can be unsafe, because we've stopped the world.
     auto objectsCountBefore = mm::GlobalData::Instance().objectFactory().GetSizeUnsafe();
@@ -228,10 +208,7 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC() noexcept {
 
     auto objectFactoryIterable = mm::GlobalData::Instance().objectFactory().LockForIter();
 
-    if (!state_.compareAndSet(GCState::kWorldIsStopped, GCState::kGCRunning)) {
-        RuntimeFail("Someone changed kWorldIsStopped during stop-the-world-phase");
-    }
-    mm::ResumeThreads();
+    ResumeThreads();
     auto timeResumeUs = konan::getTimeMicros();
 
     RuntimeLogDebug({kTagGC},
@@ -253,19 +230,18 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC() noexcept {
         StartFinalizerThreadIfNone();
         std::unique_lock guard(finalizerQueueMutex_);
         finalizerQueue_.MergeWith(std::move(finalizerQueue));
-        finalizerQueueCondVar_.notify_all();
     }
 
-    if (!state_.compareAndSet(GCState::kGCRunning, GCState::kNone)) {
-        RuntimeLogDebug({kTagGC}, "New GC is already scheduled while finishing previous one");
+    state_.finish(epoch);
+    if (!finalizerThread_.joinable()) {
+        state_.finalized(epoch);
     }
 
     RuntimeLogInfo(
             {kTagGC},
-            "Finished GC epoch %zu. Collected %zu objects, to be finalized %zu objects, %zu objects and %zd extra data objects remain. Total pause time %" PRIu64
+            "Finished GC epoch %" PRId64 ". Collected %zu objects, to be finalized %zu objects, %zu objects and %zd extra data objects remain. Total pause time %" PRIu64
             " microseconds",
-            epoch_, collectedCount, finalizersCount, objectsCountAfter, extraObjectsCountAfter, timeSweepUs - timeStartUs);
-    ++epoch_;
+            epoch, collectedCount, finalizersCount, objectsCountAfter, extraObjectsCountAfter, timeSweepUs - timeStartUs);
     lastGCTimestampUs_ = timeResumeUs;
     return true;
 }

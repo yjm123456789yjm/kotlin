@@ -51,9 +51,10 @@ public:
         void SafePointLoopBody() noexcept;
         void SafePointExceptionUnwind() noexcept;
         void SafePointAllocation(size_t size) noexcept;
-        void WaitFinalizersForTests() noexcept;
 
         void ScheduleAndWaitFullGC() noexcept;
+        void ScheduleAndWaitFullGCWithFinalizers() noexcept;
+        void StopFinalizerThreadForTests() noexcept;
 
         void OnOOM(size_t size) noexcept;
 
@@ -67,27 +68,21 @@ public:
 
     ConcurrentMarkAndSweep() noexcept;
     ~ConcurrentMarkAndSweep();
+    void StopFinalizerThreadForTests() noexcept;
 
 private:
     // Returns `true` if GC has happened, and `false` if not (because someone else has suspended the threads).
-    bool PerformFullGC() noexcept;
+    bool PerformFullGC(int64_t epoch) noexcept;
     void StartFinalizerThreadIfNone() noexcept;
-    void StopFinalizerThread() noexcept;
+    void RequestThreadsSuspension() noexcept;
+    void ResumeThreads() noexcept;
 
-    size_t epoch_ = 0;
     uint64_t lastGCTimestampUs_ = 0;
     GCStateHolder state_;
     std::thread gcThread_;
     std::thread finalizerThread_;
     mm::ObjectFactory<ConcurrentMarkAndSweep>::FinalizerQueue finalizerQueue_;
     std::mutex finalizerQueueMutex_;
-    std::condition_variable finalizerQueueCondVar_;
-    enum class FinalizerState {
-        NotRunning,
-        Running,
-        Shutdown
-    };
-    std::atomic<FinalizerState> finalizersState_ = FinalizerState::NotRunning;
 };
 
 } // namespace gc

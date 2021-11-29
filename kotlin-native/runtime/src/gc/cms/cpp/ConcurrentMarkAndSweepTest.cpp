@@ -338,8 +338,8 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectsWithFinalizers) {
 
         EXPECT_CALL(finalizerHook(), Call(object1.header()));
         EXPECT_CALL(finalizerHook(), Call(object2.header()));
-        threadData.gc().ScheduleAndWaitFullGC();
-        threadData.gc().WaitFinalizersForTests();
+        threadData.gc().ScheduleAndWaitFullGCWithFinalizers();
+        threadData.gc().StopFinalizerThreadForTests();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -358,8 +358,8 @@ TEST_F(ConcurrentMarkAndSweepTest, FreeObjectWithFreeWeak) {
         ASSERT_THAT(GetColor(weak1.header()), Color::kWhite);
         ASSERT_THAT(weak1->referred, object1.header());
 
-        threadData.gc().ScheduleAndWaitFullGC();
-        threadData.gc().WaitFinalizersForTests();
+        threadData.gc().ScheduleAndWaitFullGCWithFinalizers();
+        threadData.gc().StopFinalizerThreadForTests();
 
         EXPECT_THAT(Alive(threadData), testing::UnorderedElementsAre());
     });
@@ -509,8 +509,8 @@ TEST_F(ConcurrentMarkAndSweepTest, ObjectsWithCyclesAndFinalizers) {
 
         EXPECT_CALL(finalizerHook(), Call(object5.header()));
         EXPECT_CALL(finalizerHook(), Call(object6.header()));
-        threadData.gc().ScheduleAndWaitFullGC();
-        threadData.gc().WaitFinalizersForTests();
+        threadData.gc().ScheduleAndWaitFullGCWithFinalizers();
+        threadData.gc().StopFinalizerThreadForTests();
 
         EXPECT_THAT(
                 Alive(threadData),
@@ -830,13 +830,25 @@ TEST_F(ConcurrentMarkAndSweepTest, MultipleMutatorsAllCollect) {
 
     KStdVector<std::future<void>> gcFutures(kDefaultThreadCount);
 
-    // TODO: Maybe check that only one GC is performed.
     for (int i = 0; i < kDefaultThreadCount; ++i) {
-        gcFutures[i] = mutators[i].Execute([](mm::ThreadData& threadData, Mutator& mutator) { threadData.gc().ScheduleAndWaitFullGC(); });
+        gcFutures[i] = mutators[i].Execute([](mm::ThreadData& threadData, Mutator& mutator) {
+            threadData.gc().ScheduleAndWaitFullGC();
+            // If GC starts before all thread executed line above, two gc will be run
+            // We need thread waiting only for the first of them to suspend on second.
+            SwitchThreadState(mm::GetMemoryState(), kotlin::ThreadState::kNative);
+        });
     }
 
     for (auto& future : gcFutures) {
         future.wait();
+    }
+
+    for (int i = 0; i < kDefaultThreadCount; ++i) {
+        mutators[i]
+        .Execute([](mm::ThreadData& threadData, Mutator& mutator) {
+                    SwitchThreadState(mm::GetMemoryState(), kotlin::ThreadState::kRunnable);
+                })
+        .wait();
     }
 
     KStdVector<ObjHeader*> expectedAlive;

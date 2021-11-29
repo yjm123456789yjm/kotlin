@@ -9,51 +9,76 @@
 #include <mutex>
 #include <atomic>
 
-enum class GCState {
-    kNone,
-    kNeedsGC,
-    kWorldIsStopped,
-    kGCRunning,
-    kShutdown,
-};
-
-
 class GCStateHolder {
 public:
-    explicit GCStateHolder(std::atomic<bool>& gNeedSafepointSlowpath): gNeedSafepointSlowpath_(gNeedSafepointSlowpath) {}
-    GCState get() { return state_.load(); }
-    bool compareAndSwap(GCState &oldState, GCState newState) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        if (state_.compare_exchange_strong(oldState, newState)) {
+    int64_t schedule() {
+        std::unique_lock lock(mutex_);
+        if (scheduledEpoch <= startedEpoch) {
+            scheduledEpoch = startedEpoch + 1;
             cond_.notify_all();
-            gNeedSafepointSlowpath_ = recalcNeedSlowPath(newState);
-            return true;
         }
-        return false;
-    }
-    bool compareAndSet(GCState oldState, GCState newState) {
-        return compareAndSwap(oldState, newState);
+        return scheduledEpoch;
     }
 
-    template<class WaitF>
-    GCState waitUntil(WaitF fun) {
-        return waitUntil(std::move(fun), []{});
+    void shutdown() {
+        std::unique_lock lock(mutex_);
+        scheduledEpoch = std::numeric_limits<int64_t>::max();
+        cond_.notify_all();
     }
-    template<class WaitF, class AfterF>
-    GCState waitUntil(WaitF fun, AfterF after) {
-        std::unique_lock<std::mutex> lock(mutex_);
-        cond_.wait(lock, std::move(fun));
-        after();
-        return state_.load();
+
+    void start(int64_t epoch) {
+        std::unique_lock lock(mutex_);
+        startedEpoch = epoch;
+        cond_.notify_all();
     }
+
+    void finish(int64_t epoch) {
+        std::unique_lock lock(mutex_);
+        finishedEpoch = epoch;
+        cond_.notify_all();
+    }
+
+    void finalized(int64_t epoch) {
+        std::unique_lock lock(mutex_);
+        finalizedEpoch = epoch;
+        cond_.notify_all();
+    }
+
+    void waitEpochFinished(int64_t epoch) {
+        std::unique_lock lock(mutex_);
+        cond_.wait(lock, [this, epoch] { return finishedEpoch >= epoch; });
+    }
+
+    void waitEpochFinalized(int64_t epoch) {
+        std::unique_lock lock(mutex_);
+        cond_.wait(lock, [this, epoch] { return finalizedEpoch >= epoch; });
+    }
+
+    int64_t waitCurrentFinished() {
+        std::unique_lock lock(mutex_);
+        int64_t epoch = startedEpoch;
+        cond_.wait(lock, [this, epoch] { return finishedEpoch >= epoch; });
+        return epoch;
+    }
+
+    int64_t waitScheduled() {
+        std::unique_lock lock(mutex_);
+        cond_.wait(lock, [this] { return scheduledEpoch > finishedEpoch; });
+        return scheduledEpoch;
+    }
+
+    int64_t waitFinalizersRequired() {
+        std::unique_lock lock(mutex_);
+        cond_.wait(lock, [this] { return finishedEpoch > finalizedEpoch; });
+        return finishedEpoch;
+    }
+
 
 private:
-    static bool recalcNeedSlowPath(GCState state) {
-        return state == GCState::kWorldIsStopped;
-    }
-
-    std::atomic<GCState> state_ = GCState::kNone;
     std::mutex mutex_;
     std::condition_variable cond_;
-    std::atomic<bool>& gNeedSafepointSlowpath_;
+    int64_t startedEpoch = 0;
+    int64_t finishedEpoch = 0;
+    int64_t scheduledEpoch = 0;
+    int64_t finalizedEpoch = 0;
 };
