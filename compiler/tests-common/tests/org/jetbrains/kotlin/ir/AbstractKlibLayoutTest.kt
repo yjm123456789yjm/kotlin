@@ -95,13 +95,12 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         produceKlib(moduleA, moduleAAbsolute)
         produceKlib(moduleB, moduleBAbsolute)
 
+        configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, listOf(dirAFile.canonicalPath, dirBFile.canonicalPath))
+
         val moduleARelative = File(dirAFile, "${MODULE_NAME}_R.klib")
         val moduleBRelative = File(dirBFile, "${MODULE_NAME}_R.klib")
 
-        configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, listOf(dirAFile.canonicalPath, dirBFile.canonicalPath))
         produceKlib(moduleA, moduleARelative)
-
-//        configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, listOf(dirBFile.canonicalPath))
         produceKlib(moduleB, moduleBRelative)
 
         checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
