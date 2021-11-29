@@ -136,6 +136,7 @@ private fun FirTypeAliasSymbol.findSAMConstructorForTypeAlias(
     return FirFakeOverrideGenerator.createSubstitutionOverrideFunction(
         session, samConstructorForClass, namedSymbol,
         newDispatchReceiverType = null,
+        substitutor,
         newReceiverType = null,
         newReturnType, newParameterTypes, typeParameters,
         expansionRegularClass.classId,

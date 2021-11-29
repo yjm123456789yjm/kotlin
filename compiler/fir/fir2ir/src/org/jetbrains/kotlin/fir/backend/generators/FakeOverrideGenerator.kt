@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.resolve.defaultType
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.getDirectOverriddenFunctions
@@ -119,6 +120,7 @@ class FakeOverrideGenerator(
                     FirFakeOverrideGenerator.createSubstitutionOverrideFunction(
                         session, firFunction, callableSymbol,
                         newDispatchReceiverType = firClass.defaultType(),
+                        ConeSubstitutor.Empty,
                         derivedClassId = firClass.symbol.classId,
                         isExpect = (firClass as? FirRegularClass)?.isExpect == true
                     )
@@ -143,6 +145,7 @@ class FakeOverrideGenerator(
                     FirFakeOverrideGenerator.createSubstitutionOverrideProperty(
                         session, firProperty, callableSymbol,
                         newDispatchReceiverType = firClass.defaultType(),
+                        ConeSubstitutor.Empty,
                         derivedClassId = firClass.symbol.classId,
                         isExpect = (firClass as? FirRegularClass)?.isExpect == true
                     )

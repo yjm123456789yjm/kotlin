@@ -126,6 +126,7 @@ class JvmMappedScope(
                 oldConstructor,
                 symbol.fir.origin,
                 newDispatchReceiverType = null,
+                substitutor,
                 newReturnType = substitutor.substituteOrSelf(oldConstructor.returnTypeRef.coneType),
                 newParameterTypes = oldConstructor.valueParameters.map { substitutor.substituteOrSelf(it.returnTypeRef.coneType) },
                 newTypeParameters = null,

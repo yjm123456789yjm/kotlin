@@ -5,10 +5,9 @@
 
 package org.jetbrains.kotlin.fir
 
-import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isLocal
-import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.types.ConeClassLikeType
@@ -88,6 +87,16 @@ inline fun <reified D : FirCallableDeclaration> D.unwrapFakeOverrides(): D {
 }
 
 inline fun <reified S : FirCallableSymbol<*>> S.unwrapFakeOverrides(): S = fir.unwrapFakeOverrides().symbol as S
+
+private object SubstitutedOverrideSubstitutorKey : FirDeclarationDataKey()
+
+/**
+ * The substitutor that replace type parameters in the original declaration with type arguments so that the substituted signature matches
+ * the new declaration. This attribute is available if and only if [originalForSubstitutionOverrideAttr] is available.
+ */
+var FirCallableDeclaration.substitutorForSubstitutionOverrideAttr: ConeSubstitutor? by FirDeclarationDataRegistry.data(
+    SubstitutedOverrideSubstitutorKey
+)
 
 private object SubstitutedOverrideOriginalKey : FirDeclarationDataKey()
 

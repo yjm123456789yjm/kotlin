@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.fir.declarations.builder.*
 import org.jetbrains.kotlin.fir.declarations.synthetic.FirSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.synthetic.buildSyntheticProperty
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
-import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
+import org.jetbrains.kotlin.fir.resolve.substitution.chain
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideSubstitution
 import org.jetbrains.kotlin.fir.scopes.fakeOverrideSubstitution
@@ -34,6 +34,7 @@ object FirFakeOverrideGenerator {
         baseFunction: FirSimpleFunction,
         baseSymbol: FirNamedFunctionSymbol,
         newDispatchReceiverType: ConeKotlinType?,
+        bridgingSubstitutor: ConeSubstitutor,
         newReceiverType: ConeKotlinType? = null,
         newReturnType: ConeKotlinType? = null,
         newParameterTypes: List<ConeKotlinType?>? = null,
@@ -48,7 +49,7 @@ object FirFakeOverrideGenerator {
             FirNamedFunctionSymbol(CallableId(derivedClassId, baseFunction.name))
         }
         createSubstitutionOverrideFunction(
-            symbol, session, baseFunction, newDispatchReceiverType, newReceiverType, newReturnType,
+            symbol, session, baseFunction, newDispatchReceiverType, bridgingSubstitutor, newReceiverType, newReturnType,
             newParameterTypes, newTypeParameters, isExpect, fakeOverrideSubstitution
         )
         return symbol
@@ -59,6 +60,7 @@ object FirFakeOverrideGenerator {
         session: FirSession,
         baseFunction: FirSimpleFunction,
         newDispatchReceiverType: ConeKotlinType?,
+        bridgingSubstitutor: ConeSubstitutor,
         newReceiverType: ConeKotlinType?,
         newReturnType: ConeKotlinType?,
         newParameterTypes: List<ConeKotlinType?>?,
@@ -82,6 +84,7 @@ object FirFakeOverrideGenerator {
             fakeOverrideSubstitution = fakeOverrideSubstitution
         ).apply {
             originalForSubstitutionOverrideAttr = baseFunction
+            substitutorForSubstitutionOverrideAttr = bridgingSubstitutor
         }
     }
 
@@ -124,6 +127,7 @@ object FirFakeOverrideGenerator {
         baseConstructor: FirConstructor,
         origin: FirDeclarationOrigin,
         newDispatchReceiverType: ConeKotlinType?,
+        bridgingSubstitutor: ConeSubstitutor,
         newReturnType: ConeKotlinType?,
         newParameterTypes: List<ConeKotlinType?>?,
         newTypeParameters: List<FirTypeParameterRef>?,
@@ -157,6 +161,7 @@ object FirFakeOverrideGenerator {
             deprecation = baseConstructor.deprecation
         }.apply {
             originalForSubstitutionOverrideAttr = baseConstructor
+            substitutorForSubstitutionOverrideAttr = bridgingSubstitutor
         }
     }
 
@@ -257,6 +262,7 @@ object FirFakeOverrideGenerator {
         baseProperty: FirProperty,
         baseSymbol: FirPropertySymbol,
         newDispatchReceiverType: ConeKotlinType?,
+        bridgingSubstitutor: ConeSubstitutor,
         newReceiverType: ConeKotlinType? = null,
         newReturnType: ConeKotlinType? = null,
         newTypeParameters: List<FirTypeParameter>? = null,
@@ -275,6 +281,7 @@ object FirFakeOverrideGenerator {
             fakeOverrideSubstitution = fakeOverrideSubstitution
         ).apply {
             originalForSubstitutionOverrideAttr = baseProperty
+            substitutorForSubstitutionOverrideAttr = bridgingSubstitutor
         }
         return symbol
     }
@@ -399,7 +406,8 @@ object FirFakeOverrideGenerator {
         baseField: FirField,
         baseSymbol: FirFieldSymbol,
         newReturnType: ConeKotlinType?,
-        derivedClassId: ClassId?
+        derivedClassId: ClassId?,
+        bridgingSubstitutor: ConeSubstitutor,
     ): FirFieldSymbol {
         val symbol = FirFieldSymbol(
             CallableId(derivedClassId ?: baseSymbol.callableId.classId!!, baseField.name)
@@ -421,6 +429,7 @@ object FirFakeOverrideGenerator {
             dispatchReceiverType = baseField.dispatchReceiverType
         }.apply {
             originalForSubstitutionOverrideAttr = baseField
+            substitutorForSubstitutionOverrideAttr = bridgingSubstitutor
         }
         return symbol
     }
@@ -431,6 +440,7 @@ object FirFakeOverrideGenerator {
         baseSymbol: FirSyntheticPropertySymbol,
         newDispatchReceiverType: ConeKotlinType?,
         newReturnType: ConeKotlinType?,
+        bridgingSubstitutor: ConeSubstitutor,
         newGetterParameterTypes: List<ConeKotlinType?>?,
         newSetterParameterTypes: List<ConeKotlinType?>?,
         fakeOverrideSubstitution: FakeOverrideSubstitution?
@@ -441,6 +451,7 @@ object FirFakeOverrideGenerator {
             session,
             baseProperty.getter.delegate,
             newDispatchReceiverType,
+            bridgingSubstitutor,
             newReceiverType = null,
             newReturnType,
             newGetterParameterTypes,
@@ -454,6 +465,7 @@ object FirFakeOverrideGenerator {
             session,
             baseSetter.delegate,
             newDispatchReceiverType,
+            bridgingSubstitutor,
             newReceiverType = null,
             StandardClassIds.Unit.constructClassLikeType(emptyArray(), isNullable = false),
             newSetterParameterTypes,
@@ -477,8 +489,8 @@ object FirFakeOverrideGenerator {
         member: FirTypeParameterRefsOwner,
         substitutor: ConeSubstitutor,
         forceTypeParametersRecreation: Boolean = true
-    ): Pair<List<FirTypeParameterRef>, ConeSubstitutor> {
-        if (member.typeParameters.isEmpty()) return Pair(member.typeParameters, substitutor)
+    ): NewTypeParameterInfo {
+        if (member.typeParameters.isEmpty()) return NewTypeParameterInfo(member.typeParameters, substitutor, false)
         val newTypeParameters = member.typeParameters.map { typeParameterRef ->
             val typeParameter = typeParameterRef.symbol.fir
             FirTypeParameterBuilder().apply {
@@ -517,12 +529,18 @@ object FirFakeOverrideGenerator {
             }
         }
 
-        if (!wereChangesInTypeParameters) return Pair(member.typeParameters, substitutor)
-        return Pair(
+        return NewTypeParameterInfo(
             newTypeParameters.map(FirTypeParameterBuilder::build),
-            ChainedSubstitutor(substitutor, additionalSubstitutor)
+            substitutor.chain(additionalSubstitutor),
+            wereChangesInTypeParameters
         )
     }
+
+    data class NewTypeParameterInfo(
+        val typeParameters: List<FirTypeParameterRef>,
+        val substitutor: ConeSubstitutor,
+        val typeParametersChanged: Boolean
+    )
 
     private sealed class Maybe<out A> {
         class Value<out A>(val value: A) : Maybe<A>()
