@@ -15,8 +15,8 @@ class KonanIrModuleSerializer(
     private val expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
     val skipExpects: Boolean,
     compatibilityMode: CompatibilityMode,
-    relativePathBase: String?
-) : IrModuleSerializer<KonanIrFileSerializer>(messageLogger, compatibilityMode, relativePathBase) {
+    sourceBaseDirs: Collection<String>
+) : IrModuleSerializer<KonanIrFileSerializer>(messageLogger, compatibilityMode, sourceBaseDirs) {
 
     private val globalDeclarationTable = KonanGlobalDeclarationTable(irBuiltIns)
 
@@ -30,5 +30,5 @@ class KonanIrModuleSerializer(
             file.fileEntry.name != IrProviderForCEnumAndCStructStubs.cTypeDefinitionsFileName
 
     override fun createSerializerForFile(file: IrFile): KonanIrFileSerializer =
-            KonanIrFileSerializer(messageLogger, KonanDeclarationTable(globalDeclarationTable), expectDescriptorToSymbol, skipExpects = skipExpects, compatibilityMode = compatibilityMode, relativePathBase = relativePathBase)
+            KonanIrFileSerializer(messageLogger, KonanDeclarationTable(globalDeclarationTable), expectDescriptorToSymbol, skipExpects = skipExpects, compatibilityMode = compatibilityMode, sourceBaseDirs = sourceBaseDirs)
 }

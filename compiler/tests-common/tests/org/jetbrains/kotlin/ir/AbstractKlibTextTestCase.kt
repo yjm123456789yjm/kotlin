@@ -140,7 +140,7 @@ abstract class AbstractKlibTextTestCase : CodegenTestCase() {
                 expectActualSymbols,
                 CompatibilityMode.CURRENT,
                 skipExpect,
-                null
+                emptyList()
             ).serializedIrModule(irModuleFragment)
 
         val moduleDescriptor = irModuleFragment.descriptor

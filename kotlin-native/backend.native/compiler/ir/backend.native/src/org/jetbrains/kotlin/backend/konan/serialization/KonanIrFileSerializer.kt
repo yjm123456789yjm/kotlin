@@ -19,8 +19,8 @@ class KonanIrFileSerializer(
     skipExpects: Boolean,
     bodiesOnlyForInlines: Boolean = false,
     compatibilityMode: CompatibilityMode,
-    relativePathBase: String?
-): IrFileSerializer(messageLogger, declarationTable, expectDescriptorToSymbol, compatibilityMode, bodiesOnlyForInlines, skipExpects, relativePathBase = relativePathBase) {
+    sourceBaseDirs: Collection<String>
+): IrFileSerializer(messageLogger, declarationTable, expectDescriptorToSymbol, compatibilityMode, bodiesOnlyForInlines, skipExpects, sourceBaseDirs = sourceBaseDirs) {
 
     override fun backendSpecificExplicitRoot(node: IrAnnotationContainer): Boolean {
         val fqn = when (node) {

@@ -20,8 +20,8 @@ class JsIrModuleSerializer(
     private val expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
     compatibilityMode: CompatibilityMode,
     val skipExpects: Boolean,
-    relativePathBase: String?
-) : IrModuleSerializer<JsIrFileSerializer>(messageLogger, compatibilityMode, relativePathBase) {
+    sourceBaseDirs: Collection<String>
+) : IrModuleSerializer<JsIrFileSerializer>(messageLogger, compatibilityMode, sourceBaseDirs) {
 
     private val globalDeclarationTable = JsGlobalDeclarationTable(irBuiltIns)
 
@@ -32,6 +32,6 @@ class JsIrModuleSerializer(
             expectDescriptorToSymbol,
             skipExpects = skipExpects,
             compatibilityMode = compatibilityMode,
-            relativePathBase = relativePathBase
+            sourceBaseDirs = sourceBaseDirs
         )
 }

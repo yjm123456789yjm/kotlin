@@ -12,7 +12,7 @@ import org.jetbrains.kotlin.ir.util.IrMessageLogger
 import org.jetbrains.kotlin.library.SerializedIrFile
 import org.jetbrains.kotlin.library.SerializedIrModule
 
-abstract class IrModuleSerializer<F : IrFileSerializer>(protected val messageLogger: IrMessageLogger, protected val compatibilityMode: CompatibilityMode, protected val relativePathBase: String?) {
+abstract class IrModuleSerializer<F : IrFileSerializer>(protected val messageLogger: IrMessageLogger, protected val compatibilityMode: CompatibilityMode, protected val sourceBaseDirs: Collection<String>) {
     abstract fun createSerializerForFile(file: IrFile): F
 
     /**
