@@ -9,7 +9,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.JavaPsiFacade
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.util.containers.ContainerUtil
-import org.jetbrains.kotlin.analysis.api.*
+import org.jetbrains.kotlin.analysis.api.KtStarProjectionTypeArgument
+import org.jetbrains.kotlin.analysis.api.KtTypeArgument
+import org.jetbrains.kotlin.analysis.api.KtTypeArgumentWithVariance
+import org.jetbrains.kotlin.analysis.api.ValidityTokenOwner
 import org.jetbrains.kotlin.analysis.api.fir.symbols.*
 import org.jetbrains.kotlin.analysis.api.fir.types.*
 import org.jetbrains.kotlin.analysis.api.fir.utils.weakRef
@@ -32,6 +35,7 @@ import org.jetbrains.kotlin.fir.resolve.originalConstructorIfTypeAlias
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutorByMap
+import org.jetbrains.kotlin.fir.resolve.substitution.chain
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
 import org.jetbrains.kotlin.fir.symbols.ConeTypeParameterLookupTag
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassifierSymbol
@@ -55,6 +59,7 @@ internal class KtSymbolByFirBuilder private constructor(
     override val token: ValidityToken,
     val withReadOnlyCaching: Boolean,
     private val symbolsCache: BuilderCache<FirDeclaration, KtSymbol>,
+    private val symbolsAndSubstitutorsCache: BuilderCache<FirCallableDeclaration, Pair<KtSymbol, ConeSubstitutor>>,
     private val extensionReceiverSymbolsCache: BuilderCache<FirCallableDeclaration, KtSymbol>,
     private val filesCache: BuilderCache<FirFile, KtFileSymbol>,
     private val backingFieldCache: BuilderCache<FirBackingField, KtBackingFieldSymbol>,
@@ -82,6 +87,7 @@ internal class KtSymbolByFirBuilder private constructor(
         resolveState = resolveState,
         withReadOnlyCaching = false,
         symbolsCache = BuilderCache(),
+        symbolsAndSubstitutorsCache = BuilderCache(),
         extensionReceiverSymbolsCache = BuilderCache(),
         typesCache = BuilderCache(),
         backingFieldCache = BuilderCache(),
@@ -96,6 +102,7 @@ internal class KtSymbolByFirBuilder private constructor(
             resolveState = newResolveState,
             withReadOnlyCaching = true,
             symbolsCache = symbolsCache.createReadOnlyCopy(),
+            symbolsAndSubstitutorsCache = symbolsAndSubstitutorsCache.createReadOnlyCopy(),
             extensionReceiverSymbolsCache = extensionReceiverSymbolsCache.createReadOnlyCopy(),
             typesCache = typesCache.createReadOnlyCopy(),
             filesCache = filesCache.createReadOnlyCopy(),
@@ -104,10 +111,14 @@ internal class KtSymbolByFirBuilder private constructor(
     }
 
     fun buildSymbol(fir: FirDeclaration): KtSymbol {
+        return buildSymbolAndSubstitutor(fir).first
+    }
+
+    fun buildSymbolAndSubstitutor(fir: FirDeclaration): Pair<KtSymbol, ConeSubstitutor> {
         return when (fir) {
-            is FirClassLikeDeclaration -> classifierBuilder.buildClassLikeSymbol(fir)
-            is FirTypeParameter -> classifierBuilder.buildTypeParameterSymbol(fir)
-            is FirCallableDeclaration -> callableBuilder.buildCallableSymbol(fir)
+            is FirClassLikeDeclaration -> classifierBuilder.buildClassLikeSymbol(fir) to ConeSubstitutor.Empty
+            is FirTypeParameter -> classifierBuilder.buildTypeParameterSymbol(fir) to ConeSubstitutor.Empty
+            is FirCallableDeclaration -> callableBuilder.buildCallableSymbolAndSubstitutor(fir)
             else -> throwUnexpectedElementError(fir)
         }
     }
@@ -192,28 +203,39 @@ internal class KtSymbolByFirBuilder private constructor(
 
     inner class FunctionLikeSymbolBuilder {
         fun buildFunctionLikeSymbol(fir: FirFunction): KtFunctionLikeSymbol {
+            return buildFunctionLikeSymbolAndSubstitutor(fir).first
+        }
+
+        fun buildFunctionLikeSymbolAndSubstitutor(fir: FirFunction): Pair<KtFunctionLikeSymbol, ConeSubstitutor> {
             return when (fir) {
                 is FirSimpleFunction -> {
                     if (fir.origin == FirDeclarationOrigin.SamConstructor) {
-                        buildSamConstructorSymbol(fir)
+                        buildSamConstructorSymbol(fir) to ConeSubstitutor.Empty
                     } else {
-                        buildFunctionSymbol(fir)
+                        buildFunctionSymbolAndSubstitutor(fir)
                     }
                 }
-                is FirConstructor -> buildConstructorSymbol(fir)
-                is FirAnonymousFunction -> buildAnonymousFunctionSymbol(fir)
-                is FirPropertyAccessor -> buildPropertyAccessorSymbol(fir)
+                is FirConstructor -> buildConstructorSymbol(fir) to ConeSubstitutor.Empty
+                is FirAnonymousFunction -> buildAnonymousFunctionSymbol(fir) to ConeSubstitutor.Empty
+                is FirPropertyAccessor -> buildPropertyAccessorSymbol(fir) to ConeSubstitutor.Empty
                 else -> throwUnexpectedElementError(fir)
             }
         }
 
         fun buildFunctionSymbol(fir: FirSimpleFunction): KtFirFunctionSymbol {
-            fir.unwrapSubstitutionOverrideIfNeeded()?.let {
-                return buildFunctionSymbol(it)
+            return buildFunctionSymbolAndSubstitutor(fir).first
+        }
+
+        fun buildFunctionSymbolAndSubstitutor(fir: FirSimpleFunction): Pair<KtFirFunctionSymbol, ConeSubstitutor> {
+            fir.unwrapSubstitutionOverrideIfNeeded()?.let { (lowerSymbol, lowerSubstitutor) ->
+                val (upperSymbol, upperSubstitutor) = buildFunctionSymbolAndSubstitutor(lowerSymbol)
+                return upperSymbol to upperSubstitutor.chain(lowerSubstitutor)
             }
 
             check(fir.origin != FirDeclarationOrigin.SamConstructor)
-            return symbolsCache.cache(fir) { KtFirFunctionSymbol(fir, resolveState, token, this@KtSymbolByFirBuilder) }
+            return symbolsAndSubstitutorsCache.cache(fir) {
+                KtFirFunctionSymbol(fir, resolveState, token, this@KtSymbolByFirBuilder) to ConeSubstitutor.Empty
+            }
         }
 
         fun buildAnonymousFunctionSymbol(fir: FirAnonymousFunction): KtFirAnonymousFunctionSymbol {
@@ -245,35 +267,48 @@ internal class KtSymbolByFirBuilder private constructor(
 
     inner class VariableLikeSymbolBuilder {
         fun buildVariableLikeSymbol(fir: FirVariable): KtVariableLikeSymbol {
+            return buildVariableLikeSymbolAndSubstitutor(fir).first
+        }
+
+        fun buildVariableLikeSymbolAndSubstitutor(fir: FirVariable): Pair<KtVariableLikeSymbol, ConeSubstitutor> {
             return when (fir) {
-                is FirProperty -> buildVariableSymbol(fir)
-                is FirValueParameter -> buildValueParameterSymbol(fir)
-                is FirField -> buildFieldSymbol(fir)
-                is FirEnumEntry -> buildEnumEntrySymbol(fir) // TODO enum entry should not be callable
-                is FirBackingField -> buildBackingFieldSymbol(fir)
+                is FirProperty -> buildVariableSymbolAndSubstitutor(fir)
+                is FirValueParameter -> buildValueParameterSymbol(fir) to ConeSubstitutor.Empty
+                is FirField -> buildFieldSymbol(fir) to ConeSubstitutor.Empty
+                is FirEnumEntry -> buildEnumEntrySymbol(fir) to ConeSubstitutor.Empty // TODO enum entry should not be callable
+                is FirBackingField -> buildBackingFieldSymbol(fir) to ConeSubstitutor.Empty
 
                 is FirErrorProperty -> throwUnexpectedElementError(fir)
             }
         }
 
         fun buildVariableSymbol(fir: FirProperty): KtVariableSymbol {
+            return buildVariableSymbolAndSubstitutor(fir).first
+        }
+
+        fun buildVariableSymbolAndSubstitutor(fir: FirProperty): Pair<KtVariableSymbol, ConeSubstitutor> {
             return when {
-                fir.isLocal -> buildLocalVariableSymbol(fir)
-                fir is FirSyntheticProperty -> buildSyntheticJavaPropertySymbol(fir)
-                else -> buildPropertySymbol(fir)
+                fir.isLocal -> buildLocalVariableSymbol(fir) to ConeSubstitutor.Empty
+                fir is FirSyntheticProperty -> buildSyntheticJavaPropertySymbol(fir) to ConeSubstitutor.Empty
+                else -> buildPropertySymbolAndSubstitutor(fir)
             }
         }
 
         fun buildPropertySymbol(fir: FirProperty): KtVariableSymbol {
+            return buildPropertySymbolAndSubstitutor(fir).first
+        }
+
+        fun buildPropertySymbolAndSubstitutor(fir: FirProperty): Pair<KtVariableSymbol, ConeSubstitutor> {
             checkRequirementForBuildingSymbol<KtKotlinPropertySymbol>(fir, !fir.isLocal)
             checkRequirementForBuildingSymbol<KtKotlinPropertySymbol>(fir, fir !is FirSyntheticProperty)
 
-            fir.unwrapSubstitutionOverrideIfNeeded()?.let {
-                return buildVariableSymbol(it)
+            fir.unwrapSubstitutionOverrideIfNeeded()?.let { (lowerSymbol, lowerSubstitutor) ->
+                val (upperSymbol, upperSubstitutor) = buildPropertySymbolAndSubstitutor(lowerSymbol)
+                return upperSymbol to upperSubstitutor.chain(lowerSubstitutor)
             }
 
-            return symbolsCache.cache(fir) {
-                KtFirKotlinPropertySymbol(fir, resolveState, token, this@KtSymbolByFirBuilder)
+            return symbolsAndSubstitutorsCache.cache(fir) {
+                KtFirKotlinPropertySymbol(fir, resolveState, token, this@KtSymbolByFirBuilder) to ConeSubstitutor.Empty
             }
         }
 
@@ -323,10 +358,14 @@ internal class KtSymbolByFirBuilder private constructor(
 
     inner class CallableSymbolBuilder {
         fun buildCallableSymbol(fir: FirCallableDeclaration): KtCallableSymbol {
+            return buildCallableSymbolAndSubstitutor(fir).first
+        }
+
+        fun buildCallableSymbolAndSubstitutor(fir: FirCallableDeclaration): Pair<KtCallableSymbol, ConeSubstitutor> {
             return when (fir) {
-                is FirPropertyAccessor -> buildPropertyAccessorSymbol(fir)
-                is FirFunction -> functionLikeBuilder.buildFunctionLikeSymbol(fir)
-                is FirVariable -> variableLikeBuilder.buildVariableLikeSymbol(fir)
+                is FirPropertyAccessor -> buildPropertyAccessorSymbol(fir) to ConeSubstitutor.Empty
+                is FirFunction -> functionLikeBuilder.buildFunctionLikeSymbolAndSubstitutor(fir)
+                is FirVariable -> variableLikeBuilder.buildVariableLikeSymbolAndSubstitutor(fir)
                 else -> throwUnexpectedElementError(fir)
             }
         }
@@ -432,9 +471,10 @@ internal class KtSymbolByFirBuilder private constructor(
      * @return An unsubstituted declaration ([originalForSubstitutionOverride]]) if it exists and if it does not have any change
      * in signature; `null` otherwise.
      */
-    private inline fun <reified T : FirCallableDeclaration> T.unwrapSubstitutionOverrideIfNeeded(): T? {
+    private inline fun <reified T : FirCallableDeclaration> T.unwrapSubstitutionOverrideIfNeeded(): Pair<T, ConeSubstitutor>? {
         val containingClass = getContainingClass(rootSession) ?: return null
         val originalDeclaration = originalForSubstitutionOverride ?: return null
+        val bridgingSubstitutor = substitutorForSubstitutionOverrideAttr ?: error("expect substitutor to be set")
 
         @Suppress("RemoveExplicitTypeArguments")
         val allowedTypeParameters = buildSet<ConeTypeParameterLookupTag> {
@@ -450,7 +490,7 @@ internal class KtSymbolByFirBuilder private constructor(
         val usedTypeParameters = collectReferencedTypeParameters(originalDeclaration)
 
         return if (allowedTypeParameters.containsAll(usedTypeParameters)) {
-            originalDeclaration
+            originalDeclaration to bridgingSubstitutor
         } else {
             null
         }
