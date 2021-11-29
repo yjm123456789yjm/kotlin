@@ -104,6 +104,17 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         produceKlib(moduleB, moduleBRelative)
 
         checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
+
+        val dummyPath = kotlin.io.path.createTempDirectory()
+        configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, listOf(dummyPath.toFile().canonicalPath))
+
+        moduleAAbsolute.delete()
+        moduleBAbsolute.delete()
+
+        produceKlib(moduleA, moduleAAbsolute)
+        produceKlib(moduleB, moduleBAbsolute)
+
+        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
     }
 
     private fun File.md5(): Long = readBytes().md5()
