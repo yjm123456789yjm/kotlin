@@ -377,7 +377,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     var selfUpperBoundInference: Boolean by FreezableVar(false)
 
     @Argument(
-        value = "-Xrelative-path-base",
+        value = "-Xklib-relative-path-base",
         description = "Provide a base paths to compute source's relative paths in klib"
     )
     var relativePathBases: String? by FreezableVar(null)
