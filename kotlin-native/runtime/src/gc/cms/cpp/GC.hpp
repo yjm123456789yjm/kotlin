@@ -3,8 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#ifndef RUNTIME_GC_STMS_GC_H
-#define RUNTIME_GC_STMS_GC_H
+#pragma once
 
 #include "ConcurrentMarkAndSweep.hpp"
 
@@ -18,4 +17,3 @@ inline constexpr bool kSupportsMultipleMutators = true;
 } // namespace gc
 } // namespace kotlin
 
-#endif // RUNTIME_GC_STMS_GC_H

@@ -3,8 +3,7 @@
  * that can be found in the LICENSE file.
  */
 
-#ifndef RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
-#define RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
+#pragma once
 
 #include <cstddef>
 
@@ -93,5 +92,3 @@ private:
 
 } // namespace gc
 } // namespace kotlin
-
-#endif // RUNTIME_GC_STMS_SAME_THREAD_MARK_AND_SWEEP_H
