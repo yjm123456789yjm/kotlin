@@ -40,7 +40,6 @@ class CacheVersionManager(
     override fun writeVersion(values: CacheVersion?) {
         if (values == null) Files.deleteIfExists(versionFile)
         else {
-
             Files.createDirectories(versionFile.parent)
             Files.newOutputStream(versionFile).bufferedWriter().use { it.append(values.intValue.toString()) }
         }
