@@ -219,7 +219,7 @@ internal val serializerPhase = konanUnitPhase(
         op = {
             val expectActualLinker = config.configuration.get(CommonConfigurationKeys.EXPECT_ACTUAL_LINKER) ?: false
             val messageLogger = config.configuration.get(IrMessageLogger.IR_MESSAGE_LOGGER) ?: IrMessageLogger.None
-            val relativePathBase = config.configuration.get(CommonConfigurationKeys.RELATIVE_PATH_BASES) ?: emptyList()
+            val relativePathBase = config.configuration.get(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES) ?: emptyList()
 
             serializedIr = irModule?.let { ir ->
                 KonanIrModuleSerializer(

@@ -95,7 +95,7 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         produceKlib(moduleA, moduleAAbsolute)
         produceKlib(moduleB, moduleBAbsolute)
 
-        configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, listOf(dirAFile.canonicalPath, dirBFile.canonicalPath))
+        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dirAFile.canonicalPath, dirBFile.canonicalPath))
 
         val moduleARelative = File(dirAFile, "${MODULE_NAME}_R.klib")
         val moduleBRelative = File(dirBFile, "${MODULE_NAME}_R.klib")
@@ -106,7 +106,7 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
 
         val dummyPath = kotlin.io.path.createTempDirectory()
-        configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, listOf(dummyPath.toFile().canonicalPath))
+        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dummyPath.toFile().canonicalPath))
 
         moduleAAbsolute.delete()
         moduleBAbsolute.delete()

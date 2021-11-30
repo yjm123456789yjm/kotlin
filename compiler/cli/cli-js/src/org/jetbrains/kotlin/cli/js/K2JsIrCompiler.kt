@@ -143,7 +143,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         arguments.relativePathBases?.let {
-            configuration.put(CommonConfigurationKeys.RELATIVE_PATH_BASES, it.split(File.pathSeparator))
+            configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, it.toList())
         }
 
         val environmentForJS =

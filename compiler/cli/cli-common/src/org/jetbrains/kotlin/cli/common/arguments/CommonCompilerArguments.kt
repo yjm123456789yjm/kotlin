@@ -380,7 +380,7 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
         value = "-Xklib-relative-path-base",
         description = "Provide a base paths to compute source's relative paths in klib"
     )
-    var relativePathBases: String? by FreezableVar(null)
+    var relativePathBases: Array<String>? by FreezableVar(null)
 
     open fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         return HashMap<AnalysisFlag<*>, Any>().apply {
