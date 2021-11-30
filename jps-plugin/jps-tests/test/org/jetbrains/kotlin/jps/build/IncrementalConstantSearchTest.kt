@@ -16,8 +16,7 @@
 
 package org.jetbrains.kotlin.jps.build
 
-import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.test.util.KtTestUtil
 
 class IncrementalConstantSearchTest : AbstractIncrementalJpsTest() {
     fun testJavaConstantChangedUsedInKotlin() {
@@ -45,6 +44,6 @@ class IncrementalConstantSearchTest : AbstractIncrementalJpsTest() {
     }
 
     override fun doTest(testDataPath: String) {
-        super.doTest(KotlinRoot.DIR.resolve(testDataPath).slashedPath)
+        super.doTest("${KtTestUtil.getHomeDirectory()}/$testDataPath")
     }
 }

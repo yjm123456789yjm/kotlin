@@ -19,8 +19,7 @@ package org.jetbrains.kotlin.jps.build
 import com.intellij.openapi.util.SystemInfoRt
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.kotlin.incremental.testingUtils.Modification
-import org.jetbrains.kotlin.test.KotlinRoot
-import org.jetbrains.kotlin.test.util.slashedPath
+import org.jetbrains.kotlin.test.util.KtTestUtil
 
 class IncrementalProjectPathCaseChangedTest : AbstractIncrementalJpsTest(checkDumpsCaseInsensitively = true) {
     fun testProjectPathCaseChanged() {
@@ -36,7 +35,7 @@ class IncrementalProjectPathCaseChangedTest : AbstractIncrementalJpsTest(checkDu
             return
         }
 
-        super.doTest(KotlinRoot.DIR.resolve(testDataPath).slashedPath)
+        super.doTest("${KtTestUtil.getHomeDirectory()}/$testDataPath")
     }
 
     override fun performAdditionalModifications(modifications: List<Modification>) {
