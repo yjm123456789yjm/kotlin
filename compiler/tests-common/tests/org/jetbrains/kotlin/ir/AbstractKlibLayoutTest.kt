@@ -147,8 +147,8 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         TestCase.assertFalse(aB_md5 == rB_md5)
         TestCase.assertFalse(aA_md5 == aB_md5)
 
-        val moduleAAbsolutePaths = moduleAAbsolute.loadKlibFilePaths()
-        val moduleBAbsolutePaths = moduleBAbsolute.loadKlibFilePaths()
+        val moduleAAbsolutePaths = moduleAAbsolute.loadKlibFilePaths(denormalize = false)
+        val moduleBAbsolutePaths = moduleBAbsolute.loadKlibFilePaths(denormalize = false)
 
         val dirACCanonicalPaths = dirAFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.canonicalPath }
         val dirBCCanonicalPaths = dirBFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.canonicalPath }
@@ -156,8 +156,8 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         assertEquals(moduleAAbsolutePaths, dirACCanonicalPaths)
         assertEquals(moduleBAbsolutePaths, dirBCCanonicalPaths)
 
-        val moduleARelativePaths = moduleARelative.loadKlibFilePaths()
-        val moduleBRelativePaths = moduleBRelative.loadKlibFilePaths()
+        val moduleARelativePaths = moduleARelative.loadKlibFilePaths(denormalize = true)
+        val moduleBRelativePaths = moduleBRelative.loadKlibFilePaths(denormalize = true)
 
         assertEquals(moduleARelativePaths, moduleBRelativePaths)
         assertNotEquals(moduleAAbsolutePaths, moduleBAbsolutePaths)
@@ -172,7 +172,7 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         assertEquals(aPathsA2R, bPathsA2R)
     }
 
-    private fun File.loadKlibFilePaths(): List<String> {
+    private fun File.loadKlibFilePaths(denormalize: Boolean): List<String> {
         val libs = jsResolveLibraries(listOf(runtimeKlibPath, canonicalPath), emptyList(), DummyLogger).getFullList()
         val lib = libs.last()
         val fileSize = lib.fileCount()
@@ -183,8 +183,13 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         for (i in 0 until fileSize) {
             val fileStream = lib.file(i).codedInputStream
             val fileProto = IrFile.parseFrom(fileStream, extReg)
+            val fileName = fileProto.fileEntry.name
 
-            result.add(fileProto.fileEntry.name.replace("/", File.separator))
+            if (denormalize) {
+                result.add(fileName.replace("/", File.separator))
+            } else {
+                result.add(fileName)
+            }
         }
 
         return result
