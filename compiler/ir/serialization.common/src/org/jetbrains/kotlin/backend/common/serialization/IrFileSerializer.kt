@@ -1603,8 +1603,7 @@ open class IrFileSerializer(
     }
 
     private fun IrFileEntry.matchAndNormalizeFilePath(): String {
-        val path = tryMatchPath(name) ?: name
-        return path.replace(File.separatorChar, '/')
+        return tryMatchPath(name)?.replace(File.separatorChar, '/') ?: name
     }
 
     private fun serializeExpectActualSubstitutionTable(proto: ProtoFile.Builder) {
