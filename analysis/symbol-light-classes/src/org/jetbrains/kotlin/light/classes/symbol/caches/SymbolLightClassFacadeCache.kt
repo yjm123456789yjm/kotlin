@@ -14,13 +14,14 @@ import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.impl.compiled.ClsFileImpl
 import com.intellij.psi.impl.java.stubs.impl.PsiJavaFileStubImpl
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
-import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForDecompiledFacade
-import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForFacadeBase
 import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForFacade
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.analysis.utils.caches.*
 import org.jetbrains.kotlin.asJava.builder.ClsWrapperStubPsiFactory
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
+import org.jetbrains.kotlin.asJava.decompiled.KtLightClassForDecompiledFacade
+import org.jetbrains.kotlin.asJava.decompiler.classFile.KtClsFile
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import java.util.concurrent.ConcurrentHashMap
@@ -30,7 +31,7 @@ class SymbolLightClassFacadeCache(project: Project) {
         project,
         project.createProjectWideOutOfBlockModificationTracker()
     ) {
-        ConcurrentHashMap<FacadeKey, FirLightClassForFacadeBase>()
+        ConcurrentHashMap<FacadeKey, KtLightClassForFacade>()
     }
 
     // TODO: need to use modification timestamp as part of key?
@@ -44,7 +45,7 @@ class SymbolLightClassFacadeCache(project: Project) {
     fun getOrCreateSymbolLightFacade(
         ktFiles: List<KtFile>,
         facadeClassFqName: FqName,
-    ): FirLightClassForFacadeBase? {
+    ): KtLightClassForFacade? {
         if (ktFiles.isEmpty()) return null
         val key = FacadeKey(facadeClassFqName, ktFiles.toSet())
         return cache.computeIfAbsent(key) {
@@ -55,13 +56,13 @@ class SymbolLightClassFacadeCache(project: Project) {
     private fun getOrCreateFirLightFacadeNoCache(
         ktFiles: List<KtFile>,
         facadeClassFqName: FqName,
-    ): FirLightClassForFacadeBase {
+    ): KtLightClassForFacade {
         val firstFile = ktFiles.first()
         return when {
             ktFiles.none { it.isCompiled } ->
                 FirLightClassForFacade(firstFile.manager, facadeClassFqName, ktFiles)
             ktFiles.all { it.isCompiled } -> {
-                val file = ktFiles.firstOrNull { it.javaFileFacadeFqName == facadeClassFqName }
+                val file = ktFiles.firstOrNull { it.javaFileFacadeFqName == facadeClassFqName } as? KtClsFile
                     ?: error("Can't find the representative decompiled file for $facadeClassFqName")
                 val classOrObject = file.declarations.filterIsInstance<KtClassOrObject>().singleOrNull()
                 val clsDelegate = createClsJavaClassFromVirtualFile(
@@ -69,7 +70,7 @@ class SymbolLightClassFacadeCache(project: Project) {
                     classFile = file.virtualFile,
                     correspondingClassOrObject = classOrObject
                 )
-                FirLightClassForDecompiledFacade(clsDelegate, firstFile.manager, facadeClassFqName, ktFiles)
+                KtLightClassForDecompiledFacade(clsDelegate, clsDelegate.parent, file, classOrObject, ktFiles)
             }
             else ->
                 error("Source and compiled files are mixed: $ktFiles}")

@@ -10,9 +10,9 @@ import com.intellij.psi.util.CachedValuesManager
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.classes.shouldNotBeVisibleAsLightClass
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
-import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForFacadeBase
 import org.jetbrains.kotlin.light.classes.symbol.caches.SymbolLightClassFacadeCache
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
@@ -46,7 +46,7 @@ private fun createFirLightClassForDeserializedNoCache(decompiledClassOrObject: K
     return findCorrespondingLightClass(decompiledClassOrObject, rootLightClassForDecompiledFile)
 }
 
-private fun getOrCreateLightClassForDecompiledKotlinFile(file: KtFile): FirLightClassForFacadeBase? {
+private fun getOrCreateLightClassForDecompiledKotlinFile(file: KtFile): KtLightClassForFacade? {
     // `ClsFileImpl.buildFileStub` expects to load class name from the given .class file.
     // Technically, we need to check specific header via `ClassReader`, but perhaps too much here.
     // Instead, checking file path name seems to work.
@@ -57,7 +57,7 @@ private fun getOrCreateLightClassForDecompiledKotlinFile(file: KtFile): FirLight
 
 private fun findCorrespondingLightClass(
     decompiledClassOrObject: KtClassOrObject,
-    rootLightClassForDecompiledFile: FirLightClassForFacadeBase,
+    rootLightClassForDecompiledFile: KtLightClassForFacade,
 ): KtLightClass? {
     val relativeFqName = getClassRelativeName(decompiledClassOrObject) ?: return null
     val iterator = relativeFqName.pathSegments().iterator()
