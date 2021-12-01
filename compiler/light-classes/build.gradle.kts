@@ -9,6 +9,7 @@ dependencies {
     api(project(":compiler:backend"))
     api(project(":compiler:frontend"))
     api(project(":compiler:frontend.java"))
+    api(project(":js:js.serializer"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
 
     compileOnly(intellijDep()) { includeJars("platform-core-ui", "platform-util-ui") }
