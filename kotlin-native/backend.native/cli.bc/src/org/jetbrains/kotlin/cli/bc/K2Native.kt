@@ -77,7 +77,7 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
 
         val relativePathBases = arguments.relativePathBases
         if (relativePathBases != null) {
-            configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, relativePathBase.toList())
+            configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, relativePathBases.toList())
         }
 
         try {
