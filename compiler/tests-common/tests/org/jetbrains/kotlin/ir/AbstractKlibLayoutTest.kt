@@ -8,7 +8,6 @@ package org.jetbrains.kotlin.ir
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.psi.PsiManager
-import junit.framework.TestCase
 import org.jetbrains.kotlin.backend.common.serialization.codedInputStream
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrFile
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
@@ -65,8 +64,8 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
 
 
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
-        val dirAPath = kotlin.io.path.createTempDirectory()
-        val dirBPath = kotlin.io.path.createTempDirectory()
+        val dirAPath = kotlin.io.path.createTempDirectory().also { it.toFile().deleteOnExit() }
+        val dirBPath = kotlin.io.path.createTempDirectory().also { it.toFile().deleteOnExit() }
 
         val dirAFile = dirAPath.toFile().also { assert(it.isDirectory) }
         val dirBFile = dirBPath.toFile().also { assert(it.isDirectory) }
@@ -105,7 +104,7 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
 
         checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
 
-        val dummyPath = kotlin.io.path.createTempDirectory()
+        val dummyPath = kotlin.io.path.createTempDirectory().also { it.toFile().deleteOnExit() }
         configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dummyPath.toFile().canonicalPath))
 
         moduleAAbsolute.delete()
@@ -119,15 +118,6 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
 
     private fun File.md5(): Long = readBytes().md5()
 
-    private fun assertEquals(expected: Collection<String>, actual: Collection<String>) {
-        TestCase.assertEquals("Collection sizes are not equals", expected.size, actual.size)
-        TestCase.assertTrue(expected.containsAll(actual))
-    }
-
-    private fun assertNotEquals(expected: Collection<String>, actual: Collection<String>) {
-        TestCase.assertFalse(expected.containsAll(actual) && actual.containsAll(expected))
-    }
-
     private fun checkPaths(
         dirAFile: File,
         dirBFile: File,
@@ -136,16 +126,10 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         moduleARelative: File,
         moduleBRelative: File
     ) {
-        val aA_md5 = moduleAAbsolute.md5()
-        val aB_md5 = moduleBAbsolute.md5()
-
         val rA_md5 = moduleARelative.md5()
         val rB_md5 = moduleBRelative.md5()
 
-        TestCase.assertEquals(rA_md5, rB_md5)
-        TestCase.assertFalse(aA_md5 == rA_md5)
-        TestCase.assertFalse(aB_md5 == rB_md5)
-        TestCase.assertFalse(aA_md5 == aB_md5)
+        assertEquals(rA_md5, rB_md5)
 
         val moduleAAbsolutePaths = moduleAAbsolute.loadKlibFilePaths(denormalize = false)
         val moduleBAbsolutePaths = moduleBAbsolute.loadKlibFilePaths(denormalize = false)
@@ -153,23 +137,20 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         val dirACCanonicalPaths = dirAFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.canonicalPath }
         val dirBCCanonicalPaths = dirBFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.canonicalPath }
 
-        assertEquals(moduleAAbsolutePaths, dirACCanonicalPaths)
-        assertEquals(moduleBAbsolutePaths, dirBCCanonicalPaths)
+        assertSameElements(moduleAAbsolutePaths, dirACCanonicalPaths)
+        assertSameElements(moduleBAbsolutePaths, dirBCCanonicalPaths)
 
         val moduleARelativePaths = moduleARelative.loadKlibFilePaths(denormalize = true)
         val moduleBRelativePaths = moduleBRelative.loadKlibFilePaths(denormalize = true)
 
-        assertEquals(moduleARelativePaths, moduleBRelativePaths)
-        assertNotEquals(moduleAAbsolutePaths, moduleBAbsolutePaths)
-        assertNotEquals(moduleAAbsolutePaths, moduleARelativePaths)
-        assertNotEquals(moduleBAbsolutePaths, moduleBRelativePaths)
+        assertSameElements(moduleARelativePaths, moduleBRelativePaths)
 
         val aPathsA2R = moduleAAbsolutePaths.map { File(it).relativeTo(dirAFile).path }
         val bPathsA2R = moduleBAbsolutePaths.map { File(it).relativeTo(dirBFile).path }
 
-        assertEquals(aPathsA2R, moduleARelativePaths)
-        assertEquals(bPathsA2R, moduleBRelativePaths)
-        assertEquals(aPathsA2R, bPathsA2R)
+        assertSameElements(aPathsA2R, moduleARelativePaths)
+        assertSameElements(bPathsA2R, moduleBRelativePaths)
+        assertSameElements(aPathsA2R, bPathsA2R)
     }
 
     private fun File.loadKlibFilePaths(denormalize: Boolean): List<String> {
