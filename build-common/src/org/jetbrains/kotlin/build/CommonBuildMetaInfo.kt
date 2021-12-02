@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.metadata.jvm.deserialization.JvmMetadataVersion
 /**
  * If you want to add a new field, check its type is supported by [serializeToPlainText], [deserializeFromPlainText]
  */
+@Suppress("unused") // Used in JPS plugin (see intellij-community repo)
 data class CommonBuildMetaInfo(
     override val isEAP: Boolean,
     override val compilerBuildVersion: String,

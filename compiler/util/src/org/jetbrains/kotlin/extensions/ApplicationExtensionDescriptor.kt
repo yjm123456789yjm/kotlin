@@ -14,6 +14,7 @@ open class ApplicationExtensionDescriptor<T : Any>(name: String, private val ext
     val extensionPointName: ExtensionPointName<T> = ExtensionPointName.create(name)
 
     fun registerExtensionPoint() {
+        // It doesn't work
         ApplicationManager.getApplication().extensionArea.registerExtensionPoint(
             extensionPointName.name,
             extensionClass.name,

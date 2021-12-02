@@ -79,7 +79,9 @@ open class IncrementalJvmCache(
 
     private val outputDir by lazy(LazyThreadSafetyMode.NONE) { requireNotNull(targetOutputDir) { "Target is expected to have output directory" } }
 
-    protected open fun debugLog(message: String) {}
+    protected open fun debugLog(message: String) {
+        com.intellij.openapi.diagnostic.Logger.getInstance("#org.jetbrains.kotlin.jps.build.KotlinBuilder")
+    }
 
     fun isTrackedFile(file: File) = sourceToClassesMap.contains(file)
 

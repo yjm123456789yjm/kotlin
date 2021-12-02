@@ -11,7 +11,7 @@ import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.metadata.deserialization.BinaryVersion
 import kotlin.reflect.KClass
 
-interface BuildMetaInfo {
+interface BuildMetaInfo { // todo Move to intellij repo?
     val isEAP: Boolean
     val compilerBuildVersion: String
     val languageVersionString: String

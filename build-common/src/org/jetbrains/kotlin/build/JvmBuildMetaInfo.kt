@@ -50,7 +50,7 @@ data class JvmBuildMetaInfo(
             multiplatformVersion: Int,
             metadataVersionArray: IntArray?
         ): JvmBuildMetaInfo {
-            val metadataVersion = metadataVersionArray?.let(::JvmMetadataVersion) ?: JvmMetadataVersion.INSTANCE
+            val metadataVersion = metadataVersionArray?.let(::JvmMetadataVersion) ?: JvmMetadataVersion.INSTANCE // We should use not bundled version but the version from facet?
             return JvmBuildMetaInfo(
                 isEAP = isEAP,
                 compilerBuildVersion = compilerBuildVersion,

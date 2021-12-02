@@ -36,14 +36,20 @@ open class BasicMapsOwner(val cachesDir: File) {
         return map
     }
 
+    // Same signature as `org.jetbrains.jps.incremental.storage.StorageOwner.clean`
+    // because BasicMapsOwner participates in intersection override in IDEA JPS plugin
     open fun clean() {
         forEachMapSafe("clean", BasicMap<*, *>::clean)
     }
 
+    // Same signature as `org.jetbrains.jps.incremental.storage.StorageOwner.close`
+    // because BasicMapsOwner participates in intersection override in IDEA JPS plugin
     open fun close() {
         forEachMapSafe("close", BasicMap<*, *>::close)
     }
 
+    // Same signature as `org.jetbrains.jps.incremental.storage.StorageOwner.flush`
+    // because BasicMapsOwner participates in intersection override in IDEA JPS plugin
     open fun flush(memoryCachesOnly: Boolean) {
         forEachMapSafe("flush") { it.flush(memoryCachesOnly) }
     }
