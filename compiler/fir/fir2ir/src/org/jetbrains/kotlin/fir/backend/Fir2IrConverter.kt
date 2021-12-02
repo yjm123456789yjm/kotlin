@@ -41,8 +41,8 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 import org.jetbrains.kotlin.psi2ir.generators.GeneratorExtensions
-import org.jetbrains.kotlin.psi2ir.generators.generateTypicalIrProviderList
 import org.jetbrains.kotlin.resolve.BindingContext
 
 class Fir2IrConverter(
@@ -385,17 +385,6 @@ class Fir2IrConverter(
             for (firFile in allFirFiles) {
                 converter.registerFileAndClasses(firFile, irModuleFragment)
             }
-            val irProviders =
-                generateTypicalIrProviderList(
-                    irModuleFragment.descriptor, irBuiltIns, symbolTable, descriptorMangler,
-                    extensions = generatorExtensions
-                )
-            val externalDependenciesGenerator = ExternalDependenciesGenerator(
-                symbolTable,
-                irProviders
-            )
-            // Necessary call to generate built-in IR classes
-            externalDependenciesGenerator.generateUnboundSymbolsAsDependencies()
             classifierStorage.preCacheBuiltinClasses()
             // The file processing is performed phase-to-phase:
             //   1. Creation of all non-local regular classes
@@ -422,8 +411,9 @@ class Fir2IrConverter(
                 firFile.accept(fir2irVisitor, null)
             }
 
-            externalDependenciesGenerator.generateUnboundSymbolsAsDependencies()
-            val stubGenerator = irProviders.filterIsInstance<DeclarationStubGenerator>().first()
+            val stubGenerator = DeclarationStubGeneratorImpl(
+                irModuleFragment.descriptor, symbolTable, irBuiltIns, descriptorMangler, generatorExtensions
+            )
             irModuleFragment.acceptVoid(ExternalPackageParentPatcher(stubGenerator))
 
             evaluateConstants(irModuleFragment)
