@@ -36,6 +36,7 @@ import org.jetbrains.kotlin.jvm.compiler.ir.AbstractIrCompileJavaAgainstKotlinTe
 import org.jetbrains.kotlin.jvm.compiler.ir.AbstractIrCompileKotlinAgainstJavaTest
 import org.jetbrains.kotlin.jvm.compiler.ir.AbstractIrLoadJavaTest
 import org.jetbrains.kotlin.jvm.compiler.javac.AbstractLoadJavaUsingJavacTest
+import org.jetbrains.kotlin.klib.AbstractKlibABITestCase
 import org.jetbrains.kotlin.klib.AbstractKlibJsTextTestCase
 import org.jetbrains.kotlin.klib.AbstractKlibTextTestCase
 import org.jetbrains.kotlin.lexer.kdoc.AbstractKDocLexerTest
@@ -124,6 +125,10 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
 
             testClass<AbstractKlibTextTestCase> {
                 model("ir/irText", pattern = "^(.+)\\.kt\$", targetBackend = TargetBackend.JS_IR)
+            }
+
+            testClass<AbstractKlibABITestCase> {
+                model("klibABI/", extension = null, recursive = false)
             }
 
             testClass<AbstractIrCfgTestCase> {
