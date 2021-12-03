@@ -1,6 +1,7 @@
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 import org.gradle.crypto.checksum.Checksum
 import org.gradle.plugins.ide.idea.model.IdeaModel
+import org.jetbrains.kotlin.ideaExt.settings
 import proguard.gradle.ProGuardTask
 
 buildscript {
@@ -607,6 +608,16 @@ allprojects {
 
         apply(from = "$rootDir/gradle/testRetry.gradle.kts")
     }
+//    val startParameter = project.gradle.startParameter
+//    val taskNames = mutableListOf<String>()
+//    taskNames.addAll(startParameter.taskNames)
+//
+//    val POD_IMPORT_TASK_NAME = "qwe"
+//    if (project.tasks.findByPath(POD_IMPORT_TASK_NAME) != null && POD_IMPORT_TASK_NAME !in taskNames) {
+//        taskNames.add(POD_IMPORT_TASK_NAME)
+//        startParameter.setTaskNames(taskNames)
+//    }
+
 }
 
 gradle.taskGraph.whenReady {
@@ -1172,6 +1183,9 @@ plugins.withType(org.jetbrains.kotlin.gradle.targets.js.nodejs.NodeJsRootPlugin:
 }
 
 afterEvaluate {
+//    taskTriggers {
+//
+//    }
     val cacheRedirectorEnabled = findProperty("cacheRedirectorEnabled")?.toString()?.toBoolean() == true
     if (cacheRedirectorEnabled) {
         rootProject.plugins.withType(org.jetbrains.kotlin.gradle.targets.js.yarn.YarnPlugin::class.java) {
@@ -1179,4 +1193,53 @@ afterEvaluate {
                 "https://cache-redirector.jetbrains.com/github.com/yarnpkg/yarn/releases/download"
         }
     }
+//    val startParameter = this.gradle.startParameter
+//    val taskNames = mutableListOf<String>()
+//    taskNames.addAll(startParameter.taskNames)
+//    val POD_IMPORT_TASK_NAME = "qwe"
+//    if (project.tasks.findByPath(POD_IMPORT_TASK_NAME) != null && POD_IMPORT_TASK_NAME !in taskNames) {
+//        taskNames.add(POD_IMPORT_TASK_NAME)
+//        startParameter.setTaskNames(taskNames)
+//    }
+
+}
+
+//subprojects.forEach { subproject ->
+//    subproject.run {
+//        afterEvaluate {
+//            taskTriggers {
+//                val classpathManifest = tasks.findByName("classpathManifest")
+//                if (classpathManifest != null) {
+//                    afterSync(classpathManifest)
+//                }
+//                when (subproject.name) {
+//                    "baseServices" -> afterSync(tasks.getByName("buildReceiptResource"))
+//                    "core" -> afterSync(tasks.getByName("pluginsManifest"), tasks.getByName("implementationPluginsManifest"))
+//                    "docs" -> afterSync(tasks.getByName("defaultImports"))
+//                    "internalIntegTesting" -> afterSync(tasks.getByName("prepareVersionsInfo"))
+//                    "kotlinCompilerEmbeddable" -> afterSync(tasks.getByName("classes"))
+//                    "kotlinDsl" -> afterSync(tasks["generateExtensions"])
+//                }
+//            }
+//        }
+//    }
+//}
+//idea.project {
+//    this
+//}
+
+tasks.register("buildArtifactsForJpsBuild") {
+    dependsOn(":kotlin-gradle-plugin-test-utils-embeddable:build")
+    dependsOn(":kotlin-gradle-subplugin-example:publish")
+    dependsOn(":kotlin-annotation-processing-gradle:publish")
+    dependsOn(":kotlin-compiler-runner:publish")
+}
+
+val startParameter = project.gradle.startParameter
+val taskNames = mutableListOf<String>()
+taskNames.addAll(startParameter.taskNames)
+val POD_IMPORT_TASK_NAME = "buildArtifactsForJpsBuild"
+if (project.tasks.findByPath(POD_IMPORT_TASK_NAME) != null && POD_IMPORT_TASK_NAME !in taskNames) {
+    taskNames.add(POD_IMPORT_TASK_NAME)
+    startParameter.setTaskNames(taskNames)
 }
