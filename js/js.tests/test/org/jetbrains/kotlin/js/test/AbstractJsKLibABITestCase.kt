@@ -6,36 +6,42 @@
 package org.jetbrains.kotlin.js.test
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.createPhaseConfig
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.CompilerConfiguration
 import org.jetbrains.kotlin.ir.backend.js.*
 import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.IrModuleToJsTransformerTmp
 import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImpl
+import org.jetbrains.kotlin.ir.declarations.impl.IrFactoryImplForJsIC
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.testOld.V8IrJsTestChecker
 import org.jetbrains.kotlin.klib.AbstractKlibABITestCase
+import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.serialization.js.ModuleKind
 import java.io.File
 
 abstract class AbstractJsKLibABITestCase : AbstractKlibABITestCase() {
 
     override fun compileBinaryAndRun(project: Project, configuration: CompilerConfiguration, libraries: Collection<String>, mainModulePath: String, buildDir: File) {
         configuration.put(JSConfigurationKeys.PARTIAL_LINKAGE, true)
+        configuration.put(JSConfigurationKeys.MODULE_KIND, ModuleKind.PLAIN)
+        configuration.put(CommonConfigurationKeys.MODULE_NAME, MAIN_MODULE_NAME)
         val kLib = MainModule.Klib(mainModulePath)
         val moduleStructure = ModulesStructure(project, kLib, configuration, libraries, emptyList(), false, false, emptyMap())
 
-        val phaseConfig = createPhaseConfig(jsPhases, K2JSCompilerArguments(), MessageCollector.NONE)
-
         val ir = compile(
             moduleStructure,
-            phaseConfig,
-            IrFactoryImpl,
+            PhaseConfig(jsPhases),
+            IrFactoryImplForJsIC(WholeWorldStageController()),
             propertyLazyInitialization = true,
             granularity = JsGenerationGranularity.PER_MODULE,
+            exportedDeclarations = setOf(FqName("box")),
             icCompatibleIr2Js = true
         )
 
@@ -52,20 +58,25 @@ abstract class AbstractJsKLibABITestCase : AbstractKlibABITestCase() {
 
         val dceOutput = compiledResult.outputsAfterDce ?: error("No DCE output")
 
-        val mainBinary = File(buildDir, MAIN_MODULE_NAME).toBinaryFile(MAIN_MODULE_NAME)
-        mainBinary.writeText(dceOutput.jsCode)
+        val binariesDir = File(buildDir, BIN_DIR_NAME).also { it.mkdirs() }
 
         val binaries = ArrayList<File>(libraries.size)
-        binaries.add(mainBinary)
 
         for ((name, code) in dceOutput.dependencies) {
-            val depBinary = File(buildDir, name).toBinaryFile(name)
+            val depBinary = binariesDir.binJsFile(name)
+            depBinary.parentFile?.let { if (!it.exists()) it.mkdirs() }
             depBinary.writeText(code.jsCode)
             binaries.add(depBinary)
         }
 
+        val mainBinary = binariesDir.binJsFile(MAIN_MODULE_NAME)
+        mainBinary.writeText(dceOutput.jsCode)
+        binaries.add(mainBinary)
+
         executeAndCheckBinaries(MAIN_MODULE_NAME, binaries)
     }
+
+    private fun File.binJsFile(name: String): File = File(this, "$name.js")
 
     private fun executeAndCheckBinaries(mainModuleName: String, dependencies: Collection<File>) {
         val checker = V8IrJsTestChecker

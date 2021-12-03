@@ -54,10 +54,12 @@ abstract class AbstractKlibABITestCase : KtUsefulTestCase() {
 
         val disposable = TestDisposable()
         val environment = createEnvironment(disposable)
+        val buildDir = createTempDirectory().toFile().also { it.mkdirs() }
 
         try {
-            doTestImpl(environment, testDir, projectInfo, modulesMap)
+            doTestImpl(environment, testDir, buildDir, projectInfo, modulesMap)
         } finally {
+            buildDir.deleteRecursively()
             disposable.dispose()
         }
     }
@@ -67,7 +69,7 @@ abstract class AbstractKlibABITestCase : KtUsefulTestCase() {
         val moduleDir = File(buildDir, moduleName)
         File(moduleDir, SOURCE_DIR_NAME).mkdirs()
         File(moduleDir, KLIB_DIR_NAME).mkdirs()
-        File(moduleDir, BIN_DIR_NAME).mkdirs()
+//        File(moduleDir, BIN_DIR_NAME).mkdirs()
         moduleDir.deleteOnExit()
         return moduleDir
     }
@@ -93,17 +95,17 @@ abstract class AbstractKlibABITestCase : KtUsefulTestCase() {
     }
 
     private fun collectDependenciesKlib(buildDir: File, dependencies: Collection<String>): List<String> {
-        val result = ArrayList<String>(dependencies.size + 1)
-        result.add(stdlibPath())
+        val result = ArrayList<String>(dependencies.size)
+
 
         return dependencies.mapTo(result) { dep ->
-            val depBuildDir = File(buildDir, dep)
-            depBuildDir.toKlibFile(dep).canonicalPath
+            if (dep == "stdlib") {
+                stdlibPath()
+            } else {
+                val depBuildDir = File(buildDir, dep)
+                depBuildDir.toKlibFile(dep).canonicalPath
+            }
         }
-    }
-
-    protected fun File.toBinaryFile(name: String): File {
-        return File(File(this, BIN_DIR_NAME), "$name.js")
     }
 
     private fun File.toKlibFile(name: String): File {
@@ -113,11 +115,10 @@ abstract class AbstractKlibABITestCase : KtUsefulTestCase() {
     private fun doTestImpl(
         environment: KotlinCoreEnvironment,
         testDir: File,
+        buildDir: File,
         projectInfo: ProjectInfo,
         modulesInfo: Map<String, ModuleInfo>
     ) {
-
-        val buildDir = createTempDirectory().toFile().also { it.mkdirs(); it.deleteOnExit() }
         val modulesBuildDirs = prepareBuildDirs(testDir, buildDir, projectInfo)
 
         for (projectStep in projectInfo.steps) {
@@ -161,9 +162,12 @@ abstract class AbstractKlibABITestCase : KtUsefulTestCase() {
         val psiManager = PsiManager.getInstance(project)
         val fileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL) as CoreLocalFileSystem
 
-        val vFile = fileSystem.findFileByIoFile(sourceDir) ?: error("File not found: $sourceDir")
+        val sourceFile = sourceDir.listFiles()!!.first()
+        val vFile = fileSystem.findFileByIoFile(sourceFile) ?: error("Virtual File for $sourceFile not found")
 
-        return SingleRootFileViewProvider(psiManager, vFile).allFiles.mapNotNull { it as? KtFile }
+        val provider = SingleRootFileViewProvider(psiManager, vFile)
+        val allfiles = provider.allFiles
+        return allfiles.mapNotNull { it as? KtFile }
     }
 
     abstract fun buildKlibImpl(
@@ -191,7 +195,7 @@ abstract class AbstractKlibABITestCase : KtUsefulTestCase() {
     companion object {
         private const val SOURCE_DIR_NAME = "sources"
         private const val KLIB_DIR_NAME = "klibs"
-        private const val BIN_DIR_NAME = "bins"
+        const val BIN_DIR_NAME = "_bins_js"
 
         const val MAIN_MODULE_NAME = "main"
     }
