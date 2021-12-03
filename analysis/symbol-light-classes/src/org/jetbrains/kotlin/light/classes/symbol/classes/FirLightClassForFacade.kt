@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.scopes.KtScope
 import org.jetbrains.kotlin.analysis.api.symbols.KtCallableSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtFunctionSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.KtKotlinPropertySymbol
+import org.jetbrains.kotlin.analysis.api.symbols.markers.KtAnnotatedSymbol
 import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithVisibility
 import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.asJava.elements.FakeFileForLightClass
@@ -90,6 +91,7 @@ internal class FirLightClassForFacade(
                     for (callableSymbol in fileSymbol.getFileScope().getCallableSymbols()) {
                         if (callableSymbol !is KtFunctionSymbol && callableSymbol !is KtKotlinPropertySymbol) continue
                         if (callableSymbol !is KtSymbolWithVisibility) continue
+                        if ((callableSymbol as? KtAnnotatedSymbol)?.hasInlineOnlyAnnotation() == true) continue
                         val isPrivate = callableSymbol.toPsiVisibilityForMember(isTopLevel = true) == PsiModifier.PRIVATE
                         if (isPrivate && multiFileClass) continue
                         yield(callableSymbol)
