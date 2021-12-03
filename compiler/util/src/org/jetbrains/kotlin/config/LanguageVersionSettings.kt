@@ -243,7 +243,6 @@ enum class LanguageFeature(
     EliminateAmbiguitiesOnInheritedSamInterfaces(KOTLIN_1_7),
     ConsiderExtensionReceiverFromConstrainsInLambda(KOTLIN_1_7, kind = BUG_FIX), // KT-49832
     ProperInternalVisibilityCheckInImportingScope(KOTLIN_1_7, kind = BUG_FIX),
-    AllowKotlinFunInterfaceConstructorReference(KOTLIN_1_7),
 
     // 1.8
 
@@ -271,6 +270,7 @@ enum class LanguageFeature(
     JsAllowInvalidCharsIdentifiersEscaping(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     JsAllowValueClassesInExternals(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     ContextReceivers(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
+    KotlinFunInterfaceConstructorReference(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
 
     ;
 
