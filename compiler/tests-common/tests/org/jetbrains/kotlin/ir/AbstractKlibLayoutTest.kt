@@ -64,8 +64,8 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
 
 
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
-        val dirAPath = kotlin.io.path.createTempDirectory().also { it.toFile().deleteOnExit() }
-        val dirBPath = kotlin.io.path.createTempDirectory().also { it.toFile().deleteOnExit() }
+        val dirAPath = kotlin.io.path.createTempDirectory()
+        val dirBPath = kotlin.io.path.createTempDirectory()
 
         val dirAFile = dirAPath.toFile().also { assert(it.isDirectory) }
         val dirBFile = dirBPath.toFile().also { assert(it.isDirectory) }
@@ -102,10 +102,11 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         produceKlib(moduleA, moduleARelative)
         produceKlib(moduleB, moduleBRelative)
 
-        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
+        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, false)
 
-        val dummyPath = kotlin.io.path.createTempDirectory().also { it.toFile().deleteOnExit() }
-        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dummyPath.toFile().canonicalPath))
+        val dummyPath = kotlin.io.path.createTempDirectory()
+        val dummyDir = dummyPath.toFile()
+        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dummyDir.canonicalPath))
 
         moduleAAbsolute.delete()
         moduleBAbsolute.delete()
@@ -113,7 +114,22 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         produceKlib(moduleA, moduleAAbsolute)
         produceKlib(moduleB, moduleBAbsolute)
 
-        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative)
+        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, false)
+
+        moduleAAbsolute.delete()
+        moduleBAbsolute.delete()
+
+        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, emptyList())
+        configuration.put(CommonConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH, true)
+
+        produceKlib(moduleA, moduleAAbsolute)
+        produceKlib(moduleB, moduleBAbsolute)
+
+        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, true)
+
+        dirAFile.deleteRecursively()
+        dirBFile.deleteRecursively()
+        dummyDir.deleteRecursively()
     }
 
     private fun File.md5(): Long = readBytes().md5()
@@ -124,15 +140,16 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
         moduleAAbsolute: File,
         moduleBAbsolute: File,
         moduleARelative: File,
-        moduleBRelative: File
+        moduleBRelative: File,
+        denormalizeAbsolutePath: Boolean
     ) {
         val rA_md5 = moduleARelative.md5()
         val rB_md5 = moduleBRelative.md5()
 
         assertEquals(rA_md5, rB_md5)
 
-        val moduleAAbsolutePaths = moduleAAbsolute.loadKlibFilePaths(denormalize = false)
-        val moduleBAbsolutePaths = moduleBAbsolute.loadKlibFilePaths(denormalize = false)
+        val moduleAAbsolutePaths = moduleAAbsolute.loadKlibFilePaths(denormalize = denormalizeAbsolutePath)
+        val moduleBAbsolutePaths = moduleBAbsolute.loadKlibFilePaths(denormalize = denormalizeAbsolutePath)
 
         val dirACCanonicalPaths = dirAFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.canonicalPath }
         val dirBCCanonicalPaths = dirBFile.listFiles { _, name -> name.endsWith(".kt") }!!.map { it.canonicalPath }
