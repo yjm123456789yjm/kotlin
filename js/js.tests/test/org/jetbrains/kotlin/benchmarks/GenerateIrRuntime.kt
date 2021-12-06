@@ -530,6 +530,7 @@ class GenerateIrRuntime {
             mutableMapOf(),
             CompatibilityMode.CURRENT,
             true,
+            false,
             emptyList()
         ).serializedIrModule(module)
         return serializedIr
