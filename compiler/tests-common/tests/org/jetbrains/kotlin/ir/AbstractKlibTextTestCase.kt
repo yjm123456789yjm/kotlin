@@ -140,6 +140,7 @@ abstract class AbstractKlibTextTestCase : CodegenTestCase() {
                 expectActualSymbols,
                 CompatibilityMode.CURRENT,
                 skipExpect,
+                false,
                 emptyList()
             ).serializedIrModule(irModuleFragment)
 

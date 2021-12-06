@@ -24,6 +24,7 @@ class JsIrFileSerializer(
     bodiesOnlyForInlines: Boolean = false,
     icMode: Boolean = false,
     allowErrorStatementOrigins: Boolean = false,
+    normalizeAbsolutePaths: Boolean,
     sourceBaseDirs: Collection<String>
 ) : IrFileSerializer(
     messageLogger,
@@ -34,6 +35,7 @@ class JsIrFileSerializer(
     skipExpects = skipExpects,
     skipMutableState = icMode,
     allowErrorStatementOrigins = allowErrorStatementOrigins,
+    normalizeAbsolutePaths = normalizeAbsolutePaths,
     sourceBaseDirs = sourceBaseDirs
 ) {
     companion object {

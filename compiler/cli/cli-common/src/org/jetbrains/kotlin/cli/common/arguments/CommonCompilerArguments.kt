@@ -382,6 +382,12 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     )
     var relativePathBases: Array<String>? by FreezableVar(null)
 
+    @Argument(
+        value = "-Xklib-normalize-absolute-path",
+        description = "Normalize absolute paths too"
+    )
+    var normalizeAbsolutePath: Boolean by FreezableVar(false)
+
     open fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         return HashMap<AnalysisFlag<*>, Any>().apply {
             put(AnalysisFlags.skipMetadataVersionCheck, skipMetadataVersionCheck)

@@ -62,6 +62,10 @@ object CommonConfigurationKeys {
     @JvmField
     val KLIB_RELATIVE_PATH_BASES =
         CompilerConfigurationKey.create<Collection<String>>("Provides a path from which relative paths in klib are being computed")
+
+    @JvmField
+    val KLIB_NORMALIZE_ABSOLUTE_PATH =
+        CompilerConfigurationKey.create<Boolean>("Normalize absolute paths in klib (replace file separator with '/')")
 }
 
 var CompilerConfiguration.languageVersionSettings: LanguageVersionSettings

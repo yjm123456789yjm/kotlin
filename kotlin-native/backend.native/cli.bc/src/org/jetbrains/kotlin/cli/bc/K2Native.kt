@@ -80,6 +80,8 @@ class K2Native : CLICompiler<K2NativeCompilerArguments>() {
             configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, relativePathBases.toList())
         }
 
+        configuration.put(CommonConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH, arguments.normalizeAbsolutePath)
+
         try {
             val konanConfig = KonanConfig(project, configuration)
             ensureModuleName(konanConfig, environment)

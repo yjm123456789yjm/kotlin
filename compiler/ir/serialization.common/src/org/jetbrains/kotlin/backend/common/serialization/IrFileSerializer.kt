@@ -130,6 +130,7 @@ open class IrFileSerializer(
     private val skipMutableState: Boolean = false,
     private val allowErrorStatementOrigins: Boolean = false, // TODO: support InlinerExpressionLocationHint
     private val addDebugInfo: Boolean = true,
+    private val normalizeAbsolutePaths: Boolean = false,
     private val sourceBaseDirs: Collection<String>
 ) {
     private val loopIndex = mutableMapOf<IrLoop, Int>()
@@ -1603,7 +1604,12 @@ open class IrFileSerializer(
     }
 
     private fun IrFileEntry.matchAndNormalizeFilePath(): String {
-        return tryMatchPath(name)?.replace(File.separatorChar, '/') ?: name
+        tryMatchPath(name)?.let { return it.replace(File.separatorChar, '/') }
+
+        if (!normalizeAbsolutePaths) return name
+
+        return name.replace(File.separatorChar, '/')
+
     }
 
     private fun serializeExpectActualSubstitutionTable(proto: ProtoFile.Builder) {

@@ -87,6 +87,7 @@ class IcSerializer(
                 icMode = true,
                 allowErrorStatementOrigins = true,
                 compatibilityMode = CompatibilityMode.CURRENT,
+                normalizeAbsolutePaths = false,
                 sourceBaseDirs = emptyList()
             )
 
