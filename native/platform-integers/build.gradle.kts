@@ -1,3 +1,5 @@
+import plugins.configureDefaultPublishing
+
 plugins {
     `maven-publish`
     kotlin("multiplatform")
@@ -75,7 +77,4 @@ afterEvaluate {
     }
 }
 
-val runtimeElements by configurations.creating {}
-val apiElements by configurations.creating {}
-
-publish()
+configureDefaultPublishing()
