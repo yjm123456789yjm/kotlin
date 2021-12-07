@@ -74,3 +74,8 @@ afterEvaluate {
         )
     }
 }
+
+val runtimeElements by configurations.creating {}
+val apiElements by configurations.creating {}
+
+publish()
