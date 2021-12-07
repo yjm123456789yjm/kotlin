@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.targets.native.tasks.artifact
 
-import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
@@ -27,6 +26,7 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
     @get:Input val konanTarget: KonanTarget,
     @get:Input val outputKind: CompilerOutputKind
 ) : DefaultTask() {
+    private val gradleProps = PropertiesProvider(project)
 
     @get:Input
     var baseName: String = project.name
@@ -103,15 +103,19 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
     @get:Input
     var linkerOptions: List<String> = emptyList()
 
-    @get:Input
+    @get:Internal
     var binaryOptions: Map<String, String> = emptyMap()
+
+    @get:Input
+    val finalBinaryOptions: Map<String, String>
+        get() = gradleProps.nativeBinaryOptions + binaryOptions
 
     @get:Internal
     val kotlinOptions = object : KotlinCommonToolOptions {
         override var allWarningsAsErrors: Boolean = false
         override var suppressWarnings: Boolean = false
         override var verbose: Boolean = false
-        override var freeCompilerArgs: List<String> = listOf()
+        override var freeCompilerArgs: List<String> = emptyList()
     }
 
     fun kotlinOptions(fn: KotlinCommonToolOptions.() -> Unit) {
@@ -136,7 +140,7 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
 
     @get:Input
     val freeCompilerArgs: List<String>
-        get() = kotlinOptions.freeCompilerArgs
+        get() = kotlinOptions.freeCompilerArgs + gradleProps.nativeBinaryBuildingArgs
 
     @get:Internal
     val outputFile: File
@@ -152,7 +156,12 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
 
         fun FileCollection.klibs() = files.filter { it.extension == "klib" }
 
-        val localBinaryOptions = PropertiesProvider(project).nativeBinaryOptions + binaryOptions
+        val localKotlinOptions = object : KotlinCommonToolOptions {
+            override var allWarningsAsErrors = this@KotlinNativeLinkArtifactTask.allWarningsAsErrors
+            override var suppressWarnings = this@KotlinNativeLinkArtifactTask.suppressWarnings
+            override var verbose = this@KotlinNativeLinkArtifactTask.verbose
+            override var freeCompilerArgs = this@KotlinNativeLinkArtifactTask.freeCompilerArgs
+        }
 
         val buildArgs = buildKotlinNativeBinaryLinkerArgs(
             outFile,
@@ -163,13 +172,13 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
             libraries.klibs(),
             emptyList(), //todo FriendModules
             enableEndorsedLibs,
-            kotlinOptions,
+            localKotlinOptions,
             emptyList(),//todo CompilerPlugins
             processTests,
             entryPoint,
             embedBitcode,
             linkerOptions,
-            localBinaryOptions,
+            finalBinaryOptions,
             isStaticFramework,
             exportLibraries.klibs(),
             includeLibraries.klibs(),

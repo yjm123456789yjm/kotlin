@@ -8,9 +8,7 @@ package org.jetbrains.kotlin.gradle.native
 import com.intellij.testFramework.TestDataFile
 import org.gradle.util.GradleVersion
 import org.jdom.input.SAXBuilder
-import org.jetbrains.kotlin.gradle.BaseGradleIT
-import org.jetbrains.kotlin.gradle.GradleVersionRequired
-import org.jetbrains.kotlin.gradle.chooseWrapperVersionOrFinishTest
+import org.jetbrains.kotlin.gradle.*
 import org.jetbrains.kotlin.gradle.internals.DISABLED_NATIVE_TARGETS_REPORTER_DISABLE_WARNING_PROPERTY_NAME
 import org.jetbrains.kotlin.gradle.internals.DISABLED_NATIVE_TARGETS_REPORTER_WARNING_PREFIX
 import org.jetbrains.kotlin.gradle.internals.NO_NATIVE_STDLIB_PROPERTY_WARNING
@@ -1083,6 +1081,63 @@ class GeneralNativeIT : BaseGradleIT() {
         build(":dependencyInsight", "--configuration", "hostCompileKlibraries", "--dependency", ":projectLibrary") {
             assertSuccessful()
             assertVariantInDependencyInsight("hostApiElements")
+        }
+    }
+
+    @Test
+    fun testGradlePropertiesWithExplicitLinkerArgs() {
+        with(transformProjectWithPluginsDsl("native-platform-libraries")) {
+            setupWorkingDir()
+            gradleProperties().appendText("\nkotlin.native.binaryBuildingArgs=-Xfoo=bar -Xbaz=qux")
+            gradleBuildScript().appendText("""
+                kotlin.linuxX64() {
+                    binaries.sharedLib {
+                        freeCompilerArgs += "-Xmen=pool"
+                    }
+                }
+            """.trimIndent())
+            build("linkDebugSharedLinuxX64") {
+                assertSuccessful()
+                assertTasksExecuted(
+                    ":compileKotlinLinuxX64",
+                    ":linkDebugSharedLinuxX64"
+                )
+                withNativeCommandLineArguments(":linkDebugSharedLinuxX64") {
+                    assertTrue(it.contains("-Xfoo=bar"))
+                    assertTrue(it.contains("-Xbaz=qux"))
+                    assertTrue(it.contains("-Xmen=pool"))
+                }
+                assertFileExists("/build/bin/linuxX64/debugShared/libnative_platform_libraries.so")
+                assertFileExists("/build/bin/linuxX64/debugShared/libnative_platform_libraries_api.h")
+            }
+        }
+    }
+
+    @Test
+    fun testJustExplicitDslLinkerArgs() {
+        with(transformProjectWithPluginsDsl("native-platform-libraries")) {
+            setupWorkingDir()
+            gradleBuildScript().appendText("""
+                kotlin.linuxX64() {
+                    binaries.sharedLib {
+                        freeCompilerArgs += "-Xmen=pool"
+                    }
+                }
+            """.trimIndent())
+            build("linkDebugSharedLinuxX64") {
+                assertSuccessful()
+                assertTasksExecuted(
+                    ":compileKotlinLinuxX64",
+                    ":linkDebugSharedLinuxX64"
+                )
+                withNativeCommandLineArguments(":linkDebugSharedLinuxX64") {
+                    assertFalse(it.contains("-Xfoo=bar"))
+                    assertFalse(it.contains("-Xbaz=qux"))
+                    assertTrue(it.contains("-Xmen=pool"))
+                }
+                assertFileExists("/build/bin/linuxX64/debugShared/libnative_platform_libraries.so")
+                assertFileExists("/build/bin/linuxX64/debugShared/libnative_platform_libraries_api.h")
+            }
         }
     }
 
