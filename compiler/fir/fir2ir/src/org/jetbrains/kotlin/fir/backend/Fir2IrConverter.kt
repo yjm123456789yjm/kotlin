@@ -41,7 +41,6 @@ import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi2ir.generators.DeclarationStubGeneratorImpl
 import org.jetbrains.kotlin.psi2ir.generators.GeneratorExtensions
 import org.jetbrains.kotlin.resolve.BindingContext
 
@@ -337,9 +336,8 @@ class Fir2IrConverter(
             scopeSession: ScopeSession,
             firFiles: List<FirFile>,
             languageVersionSettings: LanguageVersionSettings,
-            descriptorMangler: KotlinMangler.DescriptorMangler,
             signaturer: IdSignatureComposer,
-            generatorExtensions: GeneratorExtensions,
+            fir2IrExtensions: Fir2IrExtensions,
             mangler: FirMangler,
             irFactory: IrFactory,
             visibilityConverter: Fir2IrVisibilityConverter,
@@ -411,10 +409,7 @@ class Fir2IrConverter(
                 firFile.accept(fir2irVisitor, null)
             }
 
-            val stubGenerator = DeclarationStubGeneratorImpl(
-                irModuleFragment.descriptor, symbolTable, irBuiltIns, descriptorMangler, generatorExtensions
-            )
-            irModuleFragment.acceptVoid(ExternalPackageParentPatcher(stubGenerator))
+            irModuleFragment.acceptVoid(ExternalPackageParentPatcher(components, fir2IrExtensions))
 
             evaluateConstants(irModuleFragment)
 
