@@ -66,70 +66,73 @@ abstract class AbstractKlibLayoutTest : CodegenTestCase() {
     override fun doMultiFileTest(wholeFile: File, files: List<TestFile>) {
         val dirAPath = kotlin.io.path.createTempDirectory()
         val dirBPath = kotlin.io.path.createTempDirectory()
+        val dummyPath = kotlin.io.path.createTempDirectory()
+
 
         val dirAFile = dirAPath.toFile().also { assert(it.isDirectory) }
         val dirBFile = dirBPath.toFile().also { assert(it.isDirectory) }
-
-        for (testFile in files) {
-            val testFileA = File(dirAFile, testFile.name).also { it.parentFile.let { p -> if (!p.exists()) p.mkdirs() } }
-            val testFileB = File(dirBFile, testFile.name).also { it.parentFile.let { p -> if (!p.exists()) p.mkdirs() } }
-
-            testFileA.writeText(testFile.content)
-            testFileB.writeText(testFile.content)
-        }
-
-        val configuration = CompilerConfiguration()
-        configuration.put(CommonConfigurationKeys.MODULE_NAME, MODULE_NAME)
-        setupEnvironment(configuration)
-
-        val ktFilesA = loadKtFiles(dirAFile)
-        val ktFilesB = loadKtFiles(dirBFile)
-
-        val moduleA = analyseKtFiles(configuration, ktFilesA)
-        val moduleB = analyseKtFiles(configuration, ktFilesB)
-
-        val moduleAAbsolute = File(dirAFile, "${MODULE_NAME}_A.klib")
-        val moduleBAbsolute = File(dirBFile, "${MODULE_NAME}_A.klib")
-
-        produceKlib(moduleA, moduleAAbsolute)
-        produceKlib(moduleB, moduleBAbsolute)
-
-        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dirAFile.canonicalPath, dirBFile.canonicalPath))
-
-        val moduleARelative = File(dirAFile, "${MODULE_NAME}_R.klib")
-        val moduleBRelative = File(dirBFile, "${MODULE_NAME}_R.klib")
-
-        produceKlib(moduleA, moduleARelative)
-        produceKlib(moduleB, moduleBRelative)
-
-        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, false)
-
-        val dummyPath = kotlin.io.path.createTempDirectory()
         val dummyDir = dummyPath.toFile()
-        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dummyDir.canonicalPath))
 
-        moduleAAbsolute.delete()
-        moduleBAbsolute.delete()
+        try {
+            for (testFile in files) {
+                val testFileA = File(dirAFile, testFile.name).also { it.parentFile.let { p -> if (!p.exists()) p.mkdirs() } }
+                val testFileB = File(dirBFile, testFile.name).also { it.parentFile.let { p -> if (!p.exists()) p.mkdirs() } }
 
-        produceKlib(moduleA, moduleAAbsolute)
-        produceKlib(moduleB, moduleBAbsolute)
+                testFileA.writeText(testFile.content)
+                testFileB.writeText(testFile.content)
+            }
 
-        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, false)
+            val configuration = CompilerConfiguration()
+            configuration.put(CommonConfigurationKeys.MODULE_NAME, MODULE_NAME)
+            setupEnvironment(configuration)
 
-        moduleAAbsolute.delete()
-        moduleBAbsolute.delete()
+            val ktFilesA = loadKtFiles(dirAFile)
+            val ktFilesB = loadKtFiles(dirBFile)
 
-        configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, emptyList())
-        configuration.put(CommonConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH, true)
+            val moduleA = analyseKtFiles(configuration, ktFilesA)
+            val moduleB = analyseKtFiles(configuration, ktFilesB)
 
-        produceKlib(moduleA, moduleAAbsolute)
-        produceKlib(moduleB, moduleBAbsolute)
+            val moduleAAbsolute = File(dirAFile, "${MODULE_NAME}_A.klib")
+            val moduleBAbsolute = File(dirBFile, "${MODULE_NAME}_A.klib")
 
-        checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, true)
+            produceKlib(moduleA, moduleAAbsolute)
+            produceKlib(moduleB, moduleBAbsolute)
 
-        dirAFile.deleteRecursively()
-        dirBFile.deleteRecursively()
-        dummyDir.deleteRecursively()
+            configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dirAFile.canonicalPath, dirBFile.canonicalPath))
+
+            val moduleARelative = File(dirAFile, "${MODULE_NAME}_R.klib")
+            val moduleBRelative = File(dirBFile, "${MODULE_NAME}_R.klib")
+
+            produceKlib(moduleA, moduleARelative)
+            produceKlib(moduleB, moduleBRelative)
+
+            checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, false)
+
+            configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, listOf(dummyDir.canonicalPath))
+
+            moduleAAbsolute.delete()
+            moduleBAbsolute.delete()
+
+            produceKlib(moduleA, moduleAAbsolute)
+            produceKlib(moduleB, moduleBAbsolute)
+
+            checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, false)
+
+            moduleAAbsolute.delete()
+            moduleBAbsolute.delete()
+
+            configuration.put(CommonConfigurationKeys.KLIB_RELATIVE_PATH_BASES, emptyList())
+            configuration.put(CommonConfigurationKeys.KLIB_NORMALIZE_ABSOLUTE_PATH, true)
+
+            produceKlib(moduleA, moduleAAbsolute)
+            produceKlib(moduleB, moduleBAbsolute)
+
+            checkPaths(dirAFile, dirBFile, moduleAAbsolute, moduleBAbsolute, moduleARelative, moduleBRelative, true)
+        } finally {
+            dirAFile.deleteRecursively()
+            dirBFile.deleteRecursively()
+            dummyDir.deleteRecursively()
+        }
     }
 
     private fun File.md5(): Long = readBytes().md5()
