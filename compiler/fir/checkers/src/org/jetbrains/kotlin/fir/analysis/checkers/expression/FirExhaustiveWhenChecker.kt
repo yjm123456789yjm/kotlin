@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.utils.modality
 import org.jetbrains.kotlin.fir.expressions.ExhaustivenessStatus
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
@@ -33,8 +34,10 @@ object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
     }
 
     private fun reportNotExhaustive(whenExpression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (whenExpression.isExhaustive) return
-
+        val fqName = whenExpression.subject?.typeRef?.coneType
+        val path = context.containingDeclarations.firstOrNull()?.let { (it as? FirFile)?.path }
+        println(fqName)
+        println(path)
         val source = whenExpression.source ?: return
 
         if (whenExpression.usedAsExpression) {
