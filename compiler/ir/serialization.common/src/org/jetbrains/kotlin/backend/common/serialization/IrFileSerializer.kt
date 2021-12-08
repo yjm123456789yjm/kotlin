@@ -1608,7 +1608,9 @@ open class IrFileSerializer(
     }
 
     private fun IrFileEntry.matchAndNormalizeFilePath(): String {
-        tryMatchPath(name)?.let { return it.replace(File.separatorChar, '/') }
+        tryMatchPath(name)?.let {
+            return it.replace(File.separatorChar, '/')
+        }
 
         if (!normalizeAbsolutePaths) return name
 
