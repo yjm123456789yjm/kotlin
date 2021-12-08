@@ -384,13 +384,13 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
 
     @Argument(
         value = "-Xklib-relative-path-base",
-        description = "Provide a base paths to compute source's relative paths in klib"
+        description = "Provide a base paths to compute source's relative paths in klib (default is empty)"
     )
     var relativePathBases: Array<String>? by FreezableVar(null)
 
     @Argument(
         value = "-Xklib-normalize-absolute-path",
-        description = "Normalize absolute paths too"
+        description = "Normalize absolute paths in klibs"
     )
     var normalizeAbsolutePath: Boolean by FreezableVar(false)
 
