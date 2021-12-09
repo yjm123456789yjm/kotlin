@@ -6,15 +6,16 @@
 package org.jetbrains.kotlin.incremental
 
 import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
+import java.util.concurrent.ConcurrentHashMap
 
 @Suppress("unused")
 class EnumWhenTrackerImpl: EnumWhenTracker {
-    private val pathWhenToEnumClass = hashMapOf<String, MutableSet<String>>()
+    private val whenExpressionFilePathToEnumClass = ConcurrentHashMap<String, MutableSet<String>>()
 
-    val pathWhenToEnumClassMap: Map<String, Collection<String>>
-        get() = pathWhenToEnumClass
+    val whenExpressionFilePathToEnumClassMap: Map<String, Collection<String>>
+        get() = whenExpressionFilePathToEnumClass
 
-    override fun report(whenUsageClassPath: String, enumClassFqName: String) {
-        pathWhenToEnumClass.getOrPut(whenUsageClassPath) { hashSetOf() }.add(enumClassFqName)
+    override fun report(whenExpressionFilePath: String, enumClassFqName: String) {
+        whenExpressionFilePathToEnumClass.getOrPut(whenExpressionFilePath) { hashSetOf() }.add(enumClassFqName)
     }
 }

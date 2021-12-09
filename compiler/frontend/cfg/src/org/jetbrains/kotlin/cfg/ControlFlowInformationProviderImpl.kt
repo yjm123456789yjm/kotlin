@@ -60,6 +60,7 @@ import org.jetbrains.kotlin.types.expressions.ExpressionTypingUtils
 import org.jetbrains.kotlin.types.isFlexible
 import org.jetbrains.kotlin.types.typeUtil.isBooleanOrNullableBoolean
 import org.jetbrains.kotlin.util.OperatorNameConventions
+import org.jetbrains.kotlin.util.record
 
 class ControlFlowInformationProviderImpl private constructor(
     private val subroutine: KtElement,
@@ -1060,7 +1061,7 @@ class ControlFlowInformationProviderImpl private constructor(
                         continue
                     }
 
-                    reportEnumWhenUsage(subjectType, subjectExpression, elseEntry)
+                    enumWhenTracker?.record(subjectType, subjectExpression, elseEntry)
 
                     if (!usedAsExpression) {
                         if (languageVersionSettings.supportsFeature(LanguageFeature.WarnAboutNonExhaustiveWhenOnAlgebraicTypes)) {
@@ -1086,24 +1087,6 @@ class ControlFlowInformationProviderImpl private constructor(
                 }
             }
         }
-    }
-
-    private fun reportEnumWhenUsage(subjectType: KotlinType?, subjectExpression: KtExpression, elseEntry: KtWhenEntry?) {
-        if (enumWhenTracker == null) return
-        if (elseEntry != null) return
-        if (subjectExpression !is KtNameReferenceExpression) return
-
-        val declarationDescriptor = subjectType?.constructor?.declarationDescriptor ?: return
-        val containingPackage = declarationDescriptor.containingPackage()?.toString() ?: return
-        val fqName = declarationDescriptor.fqNameSafe.asString()
-        val filePath = subjectExpression.containingFile.virtualFile?.path ?: return
-        val owner = if (fqName.startsWith("$containingPackage.")) {
-            containingPackage + "." + fqName.substring(containingPackage.length + 1).replace(".", "$")
-        } else {
-            fqName.replace(".", "$")
-        }
-
-        enumWhenTracker.report(filePath, owner)
     }
 
     private fun checkWhenStatement(

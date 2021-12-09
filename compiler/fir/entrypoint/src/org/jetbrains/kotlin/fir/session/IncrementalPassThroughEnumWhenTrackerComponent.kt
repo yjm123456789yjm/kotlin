@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
 
 
 class IncrementalPassThroughEnumWhenTrackerComponent(private val enumWhenTracker: EnumWhenTracker) : FirEnumWhenTrackerComponent() {
-    override fun report(path: String, fqName: String) {
-        enumWhenTracker.report(path, fqName)
+    override fun report(whenExpressionFilePath: String, enumClassFqName: String) {
+        enumWhenTracker.report(whenExpressionFilePath, enumClassFqName)
     }
 }

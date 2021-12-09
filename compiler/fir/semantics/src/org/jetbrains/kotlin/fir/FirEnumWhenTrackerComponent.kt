@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.fir
 
 abstract class FirEnumWhenTrackerComponent: FirSessionComponent {
-    abstract fun report(path: String, fqName: String)
+    abstract fun report(whenExpressionFilePath: String, enumClassFqName: String)
 }
 
 val FirSession.enumWhenTracker: FirEnumWhenTrackerComponent? by FirSession.nullableSessionComponentAccessor()
