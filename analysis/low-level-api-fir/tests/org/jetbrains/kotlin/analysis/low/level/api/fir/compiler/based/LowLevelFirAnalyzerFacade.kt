@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.analysis.low.level.api.fir.api.collectDiagnosticsFor
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.resolvedFirToPhase
 import org.jetbrains.kotlin.fir.analysis.AbstractFirAnalyzerFacade
 import org.jetbrains.kotlin.diagnostics.KtDiagnostic
+import org.jetbrains.kotlin.fir.backend.Fir2IrExtensions
 import org.jetbrains.kotlin.fir.backend.Fir2IrResult
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -18,7 +19,6 @@ import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.transformers.FirSealedClassInheritorsProcessor
 import org.jetbrains.kotlin.psi.KtFile
-import org.jetbrains.kotlin.psi2ir.generators.GeneratorExtensions
 import org.jetbrains.kotlin.test.model.TestFile
 
 class LowLevelFirAnalyzerFacade(
@@ -47,7 +47,7 @@ class LowLevelFirAnalyzerFacade(
     }
 
     override fun runResolution(): List<FirFile> = shouldNotBeCalled()
-    override fun convertToIr(extensions: GeneratorExtensions): Fir2IrResult = shouldNotBeCalled()
+    override fun convertToIr(fir2IrExtensions: Fir2IrExtensions): Fir2IrResult = shouldNotBeCalled()
 }
 
 private fun shouldNotBeCalled(): Nothing = error("Should not be called for LL test")
