@@ -97,6 +97,7 @@ abstract class AbstractFirBaseDiagnosticsTest : BaseDiagnosticsTest() {
                 sourceScope = PsiBasedProjectFileSearchScope(scope),
                 librariesScope = PsiBasedProjectFileSearchScope(allProjectScope),
                 lookupTracker = null,
+                enumWhenTracker = null,
                 providerAndScopeForIncrementalCompilation = null,
                 extensionRegistrars = emptyList()
             ) {

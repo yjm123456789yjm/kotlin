@@ -32,6 +32,7 @@ import org.jetbrains.kotlin.fir.resolve.scopes.wrapScopeWithJvmMapped
 import org.jetbrains.kotlin.fir.scopes.FirKotlinScopeProvider
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectEnvironment
 import org.jetbrains.kotlin.fir.session.environment.AbstractProjectFileSearchScope
+import org.jetbrains.kotlin.incremental.components.EnumWhenTracker
 import org.jetbrains.kotlin.incremental.components.LookupTracker
 import org.jetbrains.kotlin.load.kotlin.PackagePartProvider
 import org.jetbrains.kotlin.name.Name
@@ -83,6 +84,7 @@ object FirSessionFactory {
         sourceScope: AbstractProjectFileSearchScope,
         librariesScope: AbstractProjectFileSearchScope,
         lookupTracker: LookupTracker?,
+        enumWhenTracker: EnumWhenTracker?,
         providerAndScopeForIncrementalCompilation: ProviderAndScopeForIncrementalCompilation?,
         extensionRegistrars: List<FirExtensionRegistrar>,
         dependenciesConfigurator: DependencyListForCliModule.Builder.() -> Unit = {},
@@ -117,6 +119,7 @@ object FirSessionFactory {
             extensionRegistrars,
             languageVersionSettings = languageVersionSettings,
             lookupTracker = lookupTracker,
+            enumWhenTracker = enumWhenTracker,
             init = sessionConfigurator
         )
     }
@@ -130,6 +133,7 @@ object FirSessionFactory {
         extensionRegistrars: List<FirExtensionRegistrar>,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
         lookupTracker: LookupTracker? = null,
+        enumWhenTracker: EnumWhenTracker? = null,
         init: FirSessionConfigurator.() -> Unit = {}
     ): FirSession {
         return FirCliSession(sessionProvider, FirSession.Kind.Source).apply session@{
@@ -139,7 +143,7 @@ object FirSessionFactory {
             registerCliCompilerOnlyComponents()
             registerCommonComponents(languageVersionSettings)
             registerCommonJavaComponents(projectEnvironment.getJavaModuleResolver())
-            registerResolveComponents(lookupTracker)
+            registerResolveComponents(lookupTracker, enumWhenTracker)
             registerJavaSpecificResolveComponents()
 
             val kotlinScopeProvider = FirKotlinScopeProvider(::wrapScopeWithJvmMapped)

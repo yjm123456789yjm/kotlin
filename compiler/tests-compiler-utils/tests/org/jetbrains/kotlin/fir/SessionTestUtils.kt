@@ -39,6 +39,7 @@ fun createSessionForTests(
     sourceScope,
     librariesScope,
     lookupTracker = null,
+    enumWhenTracker = null,
     providerAndScopeForIncrementalCompilation = null,
     extensionRegistrars = emptyList(),
     dependenciesConfigurator = {
@@ -65,6 +66,7 @@ fun createSessionForTests(
         PsiBasedProjectFileSearchScope(sourceScope),
         PsiBasedProjectFileSearchScope(librariesScope),
         lookupTracker = null,
+        enumWhenTracker = null,
         providerAndScopeForIncrementalCompilation = null,
         extensionRegistrars = emptyList(),
         dependenciesConfigurator = {

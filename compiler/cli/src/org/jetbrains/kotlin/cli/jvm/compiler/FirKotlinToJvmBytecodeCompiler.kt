@@ -210,6 +210,7 @@ object FirKotlinToJvmBytecodeCompiler {
                 sourceScope,
                 librariesScope,
                 lookupTracker = moduleConfiguration.get(CommonConfigurationKeys.LOOKUP_TRACKER),
+                enumWhenTracker = moduleConfiguration.get(CommonConfigurationKeys.ENUM_WHEN_TRACKER),
                 providerAndScopeForIncrementalCompilation,
                 firExtensionRegistrars,
                 dependenciesConfigurator = {
