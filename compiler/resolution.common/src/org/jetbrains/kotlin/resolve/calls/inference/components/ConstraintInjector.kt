@@ -301,7 +301,7 @@ class ConstraintInjector(
             possibleNewConstraints!!.add(variable to constraint)
         }
 
-        override fun <T> withForkMode(block: Forking.() -> T): T {
+        override fun withForkMode(block: Forking.() -> Boolean): Boolean {
             if (stackForConstraintsSetsFromCurrentFork == null) {
                 stackForConstraintsSetsFromCurrentFork = SmartList()
             }
@@ -316,9 +316,19 @@ class ConstraintInjector(
                 constraintsFromAllForks = SmartList()
             }
 
-            constraintsFromAllForks!!.addIfNotNull(
-                stackForConstraintsSetsFromCurrentFork?.popLast()?.takeIf { it.isNotEmpty() }
-            )
+            val constrainSets = stackForConstraintsSetsFromCurrentFork?.popLast()?.takeIf { it.isNotEmpty() }
+            if (constrainSets != null && constrainSets.size > 1) {
+                constraintsFromAllForks!!.addIfNotNull(
+                    constrainSets
+                )
+                return true
+            } else if (constrainSets?.size == 1) {
+                processForkConstraints(
+                    c,
+                    constrainSets.single(),
+                    position,
+                )
+            }
 
             return res
         }
@@ -326,12 +336,12 @@ class ConstraintInjector(
         private inner class MyForking : Forking {
             override fun fork(block: () -> Boolean): Boolean {
                 stackForCurrentConstraintSetForFork!!.add(SmartList())
-                block()
+                val result = block()
                 stackForConstraintsSetsFromCurrentFork!!.last()
                     .addIfNotNull(
                         stackForCurrentConstraintSetForFork?.popLast()?.takeIf { it.isNotEmpty() }
                     )
-                return true
+                return result
             }
         }
 

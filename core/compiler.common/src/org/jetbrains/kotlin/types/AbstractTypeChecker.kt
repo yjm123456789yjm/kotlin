@@ -62,7 +62,7 @@ open class TypeCheckerState(
         isFromNullabilityConstraint: Boolean = false
     ): Boolean? = null
 
-    open fun <T> withForkMode(block: Forking.() -> T): T = block(Forking.Default)
+    open fun withForkMode(block: Forking.() -> Boolean): Boolean = block(Forking.Default)
 
     interface Forking {
         fun fork(block: () -> Boolean): Boolean
