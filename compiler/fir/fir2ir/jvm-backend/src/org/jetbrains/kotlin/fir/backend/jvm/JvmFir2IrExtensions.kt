@@ -86,7 +86,7 @@ class JvmFir2IrExtensions(configuration: CompilerConfiguration) : Fir2IrExtensio
             } ?: return false
             deserializeFromByteArray(
                 serializedIr,
-                irBuiltIns, symbolTable, listOf(FirIrProvider(this)),
+                irBuiltIns, symbolTable, irProviders,
                 irClass,
                 JvmIrTypeSystemContext(irBuiltIns), allowErrorNodes = false
             )

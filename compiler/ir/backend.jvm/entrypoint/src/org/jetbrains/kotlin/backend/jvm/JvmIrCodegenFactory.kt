@@ -256,29 +256,17 @@ open class JvmIrCodegenFactory(
         state: GenerationState,
         irModuleFragment: IrModuleFragment,
         symbolTable: SymbolTable,
+        irProviders: List<IrProvider>,
         extensions: JvmGeneratorExtensions,
         backendExtension: JvmBackendExtension,
         notifyCodegenStart: () -> Unit = {}
     ) {
-        val irProviders = configureBuiltInsAndGenerateIrProvidersInFrontendIRMode(irModuleFragment, symbolTable, jvmGeneratorExtensions)
         generateModule(
             state,
             JvmIrBackendInput(
                 irModuleFragment, symbolTable, phaseConfig, irProviders, extensions, backendExtension,
                 notifyCodegenStart
             )
-        )
-    }
-
-    fun configureBuiltInsAndGenerateIrProvidersInFrontendIRMode(
-        irModuleFragment: IrModuleFragment,
-        symbolTable: SymbolTable,
-        extensions: JvmGeneratorExtensionsImpl,
-    ): List<IrProvider> {
-        return generateTypicalIrProviderList(
-            irModuleFragment.descriptor, irModuleFragment.irBuiltins, symbolTable,
-            JvmDescriptorMangler(null),
-            extensions = extensions
         )
     }
 }
