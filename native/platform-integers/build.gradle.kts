@@ -16,15 +16,17 @@ kotlin {
     iosArm32()
     iosArm64()
     iosX64()
+    mingwX86()
+    mingwX64()
 
     sourceSets {
         val commonMain by getting
 
         val intPlatforms by creating {
-            //dependsOn(commonMain)
+            dependsOn(commonMain)
         }
         val longPlatforms by creating {
-            //dependsOn(commonMain)
+            dependsOn(commonMain)
         }
 
         val linuxX64Main by getting
@@ -35,6 +37,8 @@ kotlin {
         val iosArm32Main by getting
         val iosArm64Main by getting
         val iosX64Main by getting
+        val mingwX64Main by getting
+        val mingwX86Main by getting
 
         val bitness32 = listOf(
             linuxArm32HfpMain,
@@ -42,12 +46,14 @@ kotlin {
             linuxMips32Main,
             linuxMipsel32Main,
             iosArm32Main,
+            mingwX86Main,
         )
         val bitness64 = listOf(
             linuxX64Main,
             macosX64Main,
             iosArm64Main,
             iosX64Main,
+            mingwX64Main,
         )
 
         bitness32.forEach { sourceSet ->
