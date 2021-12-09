@@ -1915,12 +1915,6 @@ public class BytecodeListingTestGenerated extends AbstractBytecodeListingTest {
         }
 
         @Test
-        @TestMetadata("parameterlessMain_before.kt")
-        public void testParameterlessMain_before() throws Exception {
-            runTest("compiler/testData/codegen/bytecodeListing/main/parameterlessMain_before.kt");
-        }
-
-        @Test
         @TestMetadata("suspendMain.kt")
         public void testSuspendMain() throws Exception {
             runTest("compiler/testData/codegen/bytecodeListing/main/suspendMain.kt");

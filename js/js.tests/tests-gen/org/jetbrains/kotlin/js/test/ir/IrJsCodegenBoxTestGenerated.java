@@ -5211,12 +5211,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         }
 
         @Test
-        @TestMetadata("kt9532_lv10.kt")
-        public void testKt9532_lv10() throws Exception {
-            runTest("compiler/testData/codegen/box/constants/kt9532_lv10.kt");
-        }
-
-        @Test
         @TestMetadata("long.kt")
         public void testLong() throws Exception {
             runTest("compiler/testData/codegen/box/constants/long.kt");
@@ -9704,12 +9698,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
             }
 
             @Test
-            @TestMetadata("kt12708.kt")
-            public void testKt12708() throws Exception {
-                runTest("compiler/testData/codegen/box/dataClasses/copy/kt12708.kt");
-            }
-
-            @Test
             @TestMetadata("kt3033.kt")
             public void testKt3033() throws Exception {
                 runTest("compiler/testData/codegen/box/dataClasses/copy/kt3033.kt");
@@ -12190,12 +12178,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("manyDefaultParameters.kt")
         public void testManyDefaultParameters() throws Exception {
             runTest("compiler/testData/codegen/box/enum/manyDefaultParameters.kt");
-        }
-
-        @Test
-        @TestMetadata("objectInEnum.kt")
-        public void testObjectInEnum() throws Exception {
-            runTest("compiler/testData/codegen/box/enum/objectInEnum.kt");
         }
 
         @Test
@@ -20820,18 +20802,6 @@ public class IrJsCodegenBoxTestGenerated extends AbstractIrJsCodegenBoxTest {
         @TestMetadata("plusExplicit.kt")
         public void testPlusExplicit() throws Exception {
             runTest("compiler/testData/codegen/box/operatorConventions/plusExplicit.kt");
-        }
-
-        @Test
-        @TestMetadata("remAssignmentOperation.kt")
-        public void testRemAssignmentOperation() throws Exception {
-            runTest("compiler/testData/codegen/box/operatorConventions/remAssignmentOperation.kt");
-        }
-
-        @Test
-        @TestMetadata("remOverModOperation.kt")
-        public void testRemOverModOperation() throws Exception {
-            runTest("compiler/testData/codegen/box/operatorConventions/remOverModOperation.kt");
         }
 
         @Nested

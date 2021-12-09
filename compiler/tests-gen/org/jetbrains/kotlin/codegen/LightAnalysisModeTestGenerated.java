@@ -262,11 +262,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/annotations/retentionInJava.kt");
         }
 
-        @TestMetadata("singleAssignmentToVarargInAnnotation.kt")
-        public void testSingleAssignmentToVarargInAnnotation() throws Exception {
-            runTest("compiler/testData/codegen/box/annotations/singleAssignmentToVarargInAnnotation.kt");
-        }
-
         @TestMetadata("syntheticMethodForJvmStaticProperty.kt")
         public void testSyntheticMethodForJvmStaticProperty() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/syntheticMethodForJvmStaticProperty.kt");
@@ -5902,11 +5897,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/constants/kt9532.kt");
         }
 
-        @TestMetadata("kt9532_lv10.kt")
-        public void testKt9532_lv10() throws Exception {
-            runTest("compiler/testData/codegen/box/constants/kt9532_lv10.kt");
-        }
-
         @TestMetadata("long.kt")
         public void testLong() throws Exception {
             runTest("compiler/testData/codegen/box/constants/long.kt");
@@ -10369,11 +10359,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/dataClasses/copy/copyInObjectNestedDataClass.kt");
             }
 
-            @TestMetadata("kt12708.kt")
-            public void testKt12708() throws Exception {
-                runTest("compiler/testData/codegen/box/dataClasses/copy/kt12708.kt");
-            }
-
             @TestMetadata("kt3033.kt")
             public void testKt3033() throws Exception {
                 runTest("compiler/testData/codegen/box/dataClasses/copy/kt3033.kt");
@@ -11853,11 +11838,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/delegation/simple.kt");
         }
 
-        @TestMetadata("simple1.0.kt")
-        public void testSimple1_0() throws Exception {
-            runTest("compiler/testData/codegen/box/delegation/simple1.0.kt");
-        }
-
         @TestMetadata("viaTypeAlias.kt")
         public void testViaTypeAlias() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/viaTypeAlias.kt");
@@ -12812,11 +12792,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("noClassForSimpleEnum.kt")
         public void testNoClassForSimpleEnum() throws Exception {
             runTest("compiler/testData/codegen/box/enum/noClassForSimpleEnum.kt");
-        }
-
-        @TestMetadata("objectInEnum.kt")
-        public void testObjectInEnum() throws Exception {
-            runTest("compiler/testData/codegen/box/enum/objectInEnum.kt");
         }
 
         @TestMetadata("ordinal.kt")
@@ -20602,11 +20577,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             runTest("compiler/testData/codegen/box/jdk/stream.kt");
         }
 
-        @TestMetadata("streamBackwardCompatibility.kt")
-        public void testStreamBackwardCompatibility() throws Exception {
-            runTest("compiler/testData/codegen/box/jdk/streamBackwardCompatibility.kt");
-        }
-
         @TestMetadata("useStream.kt")
         public void testUseStream() throws Exception {
             runTest("compiler/testData/codegen/box/jdk/useStream.kt");
@@ -24696,16 +24666,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         @TestMetadata("plusExplicit.kt")
         public void testPlusExplicit() throws Exception {
             runTest("compiler/testData/codegen/box/operatorConventions/plusExplicit.kt");
-        }
-
-        @TestMetadata("remAssignmentOperation.kt")
-        public void testRemAssignmentOperation() throws Exception {
-            runTest("compiler/testData/codegen/box/operatorConventions/remAssignmentOperation.kt");
-        }
-
-        @TestMetadata("remOverModOperation.kt")
-        public void testRemOverModOperation() throws Exception {
-            runTest("compiler/testData/codegen/box/operatorConventions/remOverModOperation.kt");
         }
 
         @TestMetadata("compiler/testData/codegen/box/operatorConventions/compareTo")
@@ -33022,11 +32982,6 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 @TestMetadata("invoke.kt")
                 public void testInvoke() throws Exception {
                     runTest("compiler/testData/codegen/box/sam/adapters/operators/invoke.kt");
-                }
-
-                @TestMetadata("legacyModOperator.kt")
-                public void testLegacyModOperator() throws Exception {
-                    runTest("compiler/testData/codegen/box/sam/adapters/operators/legacyModOperator.kt");
                 }
 
                 @TestMetadata("multiGetSet.kt")

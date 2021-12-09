@@ -12,3 +12,4 @@ public interface Order {
     public abstract fun notExpired(): kotlin.Boolean
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
 }
+

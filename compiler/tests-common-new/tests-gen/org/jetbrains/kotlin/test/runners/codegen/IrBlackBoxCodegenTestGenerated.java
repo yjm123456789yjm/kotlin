@@ -305,12 +305,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
-        @TestMetadata("singleAssignmentToVarargInAnnotation.kt")
-        public void testSingleAssignmentToVarargInAnnotation() throws Exception {
-            runTest("compiler/testData/codegen/box/annotations/singleAssignmentToVarargInAnnotation.kt");
-        }
-
-        @Test
         @TestMetadata("syntheticMethodForJvmStaticProperty.kt")
         public void testSyntheticMethodForJvmStaticProperty() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/syntheticMethodForJvmStaticProperty.kt");
@@ -7843,12 +7837,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
-        @TestMetadata("kt9532_lv10.kt")
-        public void testKt9532_lv10() throws Exception {
-            runTest("compiler/testData/codegen/box/constants/kt9532_lv10.kt");
-        }
-
-        @Test
         @TestMetadata("long.kt")
         public void testLong() throws Exception {
             runTest("compiler/testData/codegen/box/constants/long.kt");
@@ -12918,12 +12906,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
-            @TestMetadata("kt12708.kt")
-            public void testKt12708() throws Exception {
-                runTest("compiler/testData/codegen/box/dataClasses/copy/kt12708.kt");
-            }
-
-            @Test
             @TestMetadata("kt3033.kt")
             public void testKt3033() throws Exception {
                 runTest("compiler/testData/codegen/box/dataClasses/copy/kt3033.kt");
@@ -14609,12 +14591,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
-        @TestMetadata("simple1.0.kt")
-        public void testSimple1_0() throws Exception {
-            runTest("compiler/testData/codegen/box/delegation/simple1.0.kt");
-        }
-
-        @Test
         @TestMetadata("viaTypeAlias.kt")
         public void testViaTypeAlias() throws Exception {
             runTest("compiler/testData/codegen/box/delegation/viaTypeAlias.kt");
@@ -15692,12 +15668,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("noClassForSimpleEnum.kt")
         public void testNoClassForSimpleEnum() throws Exception {
             runTest("compiler/testData/codegen/box/enum/noClassForSimpleEnum.kt");
-        }
-
-        @Test
-        @TestMetadata("objectInEnum.kt")
-        public void testObjectInEnum() throws Exception {
-            runTest("compiler/testData/codegen/box/enum/objectInEnum.kt");
         }
 
         @Test
@@ -24853,12 +24823,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
-        @TestMetadata("streamBackwardCompatibility.kt")
-        public void testStreamBackwardCompatibility() throws Exception {
-            runTest("compiler/testData/codegen/box/jdk/streamBackwardCompatibility.kt");
-        }
-
-        @Test
         @TestMetadata("useStream.kt")
         public void testUseStream() throws Exception {
             runTest("compiler/testData/codegen/box/jdk/useStream.kt");
@@ -29446,18 +29410,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         @TestMetadata("plusExplicit.kt")
         public void testPlusExplicit() throws Exception {
             runTest("compiler/testData/codegen/box/operatorConventions/plusExplicit.kt");
-        }
-
-        @Test
-        @TestMetadata("remAssignmentOperation.kt")
-        public void testRemAssignmentOperation() throws Exception {
-            runTest("compiler/testData/codegen/box/operatorConventions/remAssignmentOperation.kt");
-        }
-
-        @Test
-        @TestMetadata("remOverModOperation.kt")
-        public void testRemOverModOperation() throws Exception {
-            runTest("compiler/testData/codegen/box/operatorConventions/remOverModOperation.kt");
         }
 
         @Nested
@@ -41534,12 +41486,6 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 @TestMetadata("invoke.kt")
                 public void testInvoke() throws Exception {
                     runTest("compiler/testData/codegen/box/sam/adapters/operators/invoke.kt");
-                }
-
-                @Test
-                @TestMetadata("legacyModOperator.kt")
-                public void testLegacyModOperator() throws Exception {
-                    runTest("compiler/testData/codegen/box/sam/adapters/operators/legacyModOperator.kt");
                 }
 
                 @Test

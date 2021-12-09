@@ -8035,12 +8035,6 @@ public class BoxJsTestGenerated extends AbstractBoxJsTest {
         public void testUnaryOnIntPropertyAsStatement() throws Exception {
             runTest("js/js.translator/testData/box/operatorOverloading/unaryOnIntPropertyAsStatement.kt");
         }
-
-        @Test
-        @TestMetadata("usingModInCaseModAssignNotAvailable.kt")
-        public void testUsingModInCaseModAssignNotAvailable() throws Exception {
-            runTest("js/js.translator/testData/box/operatorOverloading/usingModInCaseModAssignNotAvailable.kt");
-        }
     }
 
     @Nested
