@@ -66,7 +66,11 @@ object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
     }
 
     private fun reportEnumWhenTracker(whenExpression: FirWhenExpression, context: CheckerContext) {
-        //add else check
+        val elseBranch = whenExpression.branches.firstOrNull {
+            it.condition is FirElseIfTrueCondition
+        }
+        if (elseBranch != null) return
+
         val fqName = whenExpression.subject?.typeRef?.coneType?.toString()?.replace(".", "$")?.replace("/", ".") ?: return
         val path = context.containingDeclarations.firstOrNull()?.let { (it as? FirFile)?.path } ?: return
         val tracker = context.session.enumWhenTracker ?: return
