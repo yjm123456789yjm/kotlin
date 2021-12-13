@@ -19,7 +19,7 @@ expect class PlatformInt private constructor() : Number, Comparable<PlatformInt>
     inline operator fun compareTo(other: Float): Int
     inline operator fun compareTo(other: Short): Int
 
-//    external operator fun dec(): PlatformInt
+    external operator fun dec(): PlatformInt
 
     inline operator fun div(other: Byte): PlatformInt
     inline operator fun div(other: Double): Double
@@ -30,7 +30,7 @@ expect class PlatformInt private constructor() : Number, Comparable<PlatformInt>
 
     fun equals(other: PlatformInt): Boolean
 
-//    external operator fun inc(): PlatformInt
+    external operator fun inc(): PlatformInt
 
     inline operator fun minus(other: Byte): PlatformInt
     inline operator fun minus(other: Double): Double

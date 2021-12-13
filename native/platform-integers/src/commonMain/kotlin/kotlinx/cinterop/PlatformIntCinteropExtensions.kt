@@ -15,8 +15,8 @@ expect class PlatformUIntVarOf<T : PlatformUInt> : CVariable
 expect inline fun <reified R : Any> PlatformInt.convert(): R
 expect inline fun <reified R : Any> PlatformUInt.convert(): R
 
-expect val <T : PlatformInt> PlatformIntVarOf<T>.value: T
-expect val <T : PlatformUInt> PlatformUIntVarOf<T>.value: T
+expect var <T : PlatformInt> PlatformIntVarOf<T>.value: T
+expect var <T : PlatformUInt> PlatformUIntVarOf<T>.value: T
 
 expect inline operator fun <T : PlatformIntVarOf<*>> CPointer<T>.plus(index: Int): CPointer<T>?
 expect inline operator fun <T : PlatformIntVarOf<*>> CPointer<T>.plus(index: Long): CPointer<T>?
