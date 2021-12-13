@@ -86,9 +86,7 @@ class JsIrAstSerializer: JsAstSerializerBase() {
             fragmentBuilder.setSuiteFunction(serialize(it))
         }
 
-        fragment.polyfills.forEachIndexed { i, polyfill ->
-            fragmentBuilder.setPolyfills(i, polyfill)
-        }
+        fragmentBuilder.addAllPolyfills(fragment.polyfills)
 
         return fragmentBuilder.build()
     }
