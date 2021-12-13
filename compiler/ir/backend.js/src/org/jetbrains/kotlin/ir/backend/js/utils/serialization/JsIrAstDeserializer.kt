@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.backend.js.utils.serialization
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsIrClassModel
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsIrIcClassModel
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsIrProgramFragment
+import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsPolyfills
 import org.jetbrains.kotlin.ir.backend.js.utils.emptyScope
 import org.jetbrains.kotlin.js.backend.ast.*
 import org.jetbrains.kotlin.js.backend.ast.JsImportedModule
@@ -80,6 +81,8 @@ class JsIrAstDeserializer : JsAstDeserializerBase() {
         }
 
         fragment.dts = proto.dts
+
+        fragment.polyfills = JsPolyfills(proto.polyfillsList)
 
         return fragment
     }

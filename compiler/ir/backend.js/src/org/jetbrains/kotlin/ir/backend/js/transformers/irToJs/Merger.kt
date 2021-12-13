@@ -120,8 +120,8 @@ class Merger(
 
         val moduleBody = mutableListOf<JsStatement>()
 
-        val polyfills = JsPolyfillsVisitor(generateRegionComments)
-            .apply { fragments.forEach { mergeWith(it.polyfills) } }
+        val polyfills = JsPolyfills(generateRegionComments)
+            .apply { fragments.forEach { this += it.polyfills } }
 
         val preDeclarationBlock = JsGlobalBlock()
         val postDeclarationBlock = JsGlobalBlock()
