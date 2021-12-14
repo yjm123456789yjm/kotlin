@@ -143,6 +143,7 @@ fun IrBuilderWithScope.irSet(variable: IrValueDeclaration, value: IrExpression, 
 fun IrBuilderWithScope.irGetField(receiver: IrExpression?, field: IrField) =
     IrGetFieldImpl(startOffset, endOffset, field.symbol, field.type, receiver)
 
+@JvmOverloads
 fun IrBuilderWithScope.irSetField(receiver: IrExpression?, field: IrField, value: IrExpression, origin: IrStatementOrigin? = null) =
     IrSetFieldImpl(startOffset, endOffset, field.symbol, receiver, value, context.irBuiltIns.unitType, origin = origin)
 
