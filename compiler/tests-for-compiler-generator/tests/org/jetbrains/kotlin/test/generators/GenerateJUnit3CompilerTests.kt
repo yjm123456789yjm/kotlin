@@ -122,10 +122,6 @@ fun generateJUnit3CompilerTests(args: Array<String>) {
                 model("ir/irText", pattern = "^(.+)\\.kt\$", targetBackend = TargetBackend.JS_IR)
             }
 
-            testClass<AbstractKlibLayoutTest> {
-                model("ir/klibLayout", pattern = "^(.+)\\.kt\$", targetBackend = TargetBackend.JS_IR)
-            }
-
             testClass<AbstractIrCfgTestCase> {
                 model("ir/irCfg")
             }
