@@ -529,8 +529,8 @@ class GenerateIrRuntime {
             module.irBuiltins,
             mutableMapOf(),
             CompatibilityMode.CURRENT,
-            true,
-            false,
+            skipExpects = true,
+            normalizeAbsolutePaths = false,
             emptyList()
         ).serializedIrModule(module)
         return serializedIr
