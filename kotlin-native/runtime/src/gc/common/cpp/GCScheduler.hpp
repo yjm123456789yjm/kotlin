@@ -29,17 +29,6 @@ struct GCSchedulerConfig {
     std::atomic<uint64_t> cooldownThresholdNs = 200 * 1000 * 1000; // 200 milliseconds by default.
     std::atomic<bool> autoTune = false;
     std::atomic<uint64_t> regularGcIntervalUs = 200 * 1000; // 200 milliseconds by default.
-
-    GCSchedulerConfig() noexcept {
-        if (compiler::gcAggressive()) {
-            // TODO: Make a separate GCSchedulerData for the aggressive mode and move this log there.
-            RuntimeLogInfo({kTagGC}, "Initialize GC scheduler config in the aggressive mode");
-            // TODO: Make it even more aggressive and run on a subset of backend.native tests.
-            threshold = 1000;
-            allocationThresholdBytes = 10000;
-            cooldownThresholdNs = 0;
-        }
-    }
 };
 
 class GCSchedulerThreadData;
@@ -70,12 +59,17 @@ public:
 
     // Should be called on encountering a safepoint.
     void OnSafePointRegular(size_t weight) noexcept {
-        if (compiler::getGCSchedulerType() == compiler::GCSchedulerType::kOnSafepoints) {
-            safePointsCounter_ += weight;
-            if (safePointsCounter_ < safePointsCounterThreshold_) {
+        switch (compiler::getGCSchedulerType()) {
+            case compiler::GCSchedulerType::kOnSafepoints:
+            case compiler::GCSchedulerType::kAggressive:
+                safePointsCounter_ += weight;
+                if (safePointsCounter_ < safePointsCounterThreshold_) {
+                    return;
+                }
+                OnSafePointSlowPath();
                 return;
-            }
-            OnSafePointSlowPath();
+            default:
+                return;
         }
     }
 
