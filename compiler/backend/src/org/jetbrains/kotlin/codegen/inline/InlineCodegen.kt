@@ -107,7 +107,8 @@ abstract class InlineCodegen<out T : BaseExpressionCodegen>(
             "Method inlining " + sourceCompiler.callElementText,
             SourceMapCopier(sourceMapper, nodeAndSmap.classSMAP, callSite),
             info.callSiteInfo, if (isInlineOnly) InlineOnlySmapSkipper(codegen) else null,
-            !isInlinedToInlineFunInKotlinRuntime()
+            shouldPreprocessApiVersionCalls = !isInlinedToInlineFunInKotlinRuntime(),
+            isNodeOptimized = nodeAndSmap.isOptimized
         ) //with captured
 
         val remapper = LocalVarRemapper(parameters, initialFrameSize)

@@ -97,16 +97,22 @@ internal inline fun getMethodNode(classData: ByteArray, classType: Type, crossin
         override fun visitMethod(access: Int, name: String, desc: String, signature: String?, exceptions: Array<String>?): MethodVisitor? {
             if (!match(Method(name, desc))) return null
             node?.let { existing ->
-                throw AssertionError("Can't find proper '$name' method for inline: ambiguity between '${existing.name + existing.desc}' and '${name + desc}'")
+                throw AssertionError(
+                    "Can't find proper '$name' method for inline: ambiguity between '${existing.name + existing.desc}' and '${name + desc}'"
+                )
             }
             node = MethodNode(Opcodes.API_VERSION, access, name, desc, signature, exceptions)
             return node!!
         }
     }, ClassReader.SKIP_FRAMES or if (GENERATE_SMAP) 0 else ClassReader.SKIP_DEBUG)
 
-    return node?.let{
+    return node?.let {
         val (first, last) = listOfNotNull(it).lineNumberRange()
-        SMAPAndMethodNode(it, SMAPParser.parseOrCreateDefault(sourceMap, sourceFile, classType.internalName, first, last))
+        SMAPAndMethodNode(
+            it,
+            SMAPParser.parseOrCreateDefault(sourceMap, sourceFile, classType.internalName, first, last),
+            isOptimized = true
+        )
     }
 }
 
@@ -350,6 +356,7 @@ fun AbstractInsnNode?.insnText(insnList: InsnList): String {
     }
 }
 
+@Suppress("unused")
 fun MethodNode.dumpBody(): String {
     val sw = StringWriter()
     val pw = PrintWriter(sw)

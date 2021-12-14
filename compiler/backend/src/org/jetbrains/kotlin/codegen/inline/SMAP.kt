@@ -136,7 +136,13 @@ class SMAP(val fileMappings: List<FileMapping>) {
     }
 }
 
-data class SMAPAndMethodNode(val node: MethodNode, val classSMAP: SMAP)
+data class SMAPAndMethodNode(
+    val node: MethodNode,
+    val classSMAP: SMAP,
+    val isOptimized: Boolean
+) {
+    constructor(node: MethodNode, classSMAP: SMAP) : this(node, classSMAP, isOptimized = false)
+}
 
 class FileMapping(val name: String, val path: String) {
     val lineMappings = arrayListOf<RangeMapping>()

@@ -48,7 +48,8 @@ class MethodInliner(
     private val sourceMapper: SourceMapCopier,
     private val inlineCallSiteInfo: InlineCallSiteInfo,
     private val inlineOnlySmapSkipper: InlineOnlySmapSkipper?, //non null only for root
-    private val shouldPreprocessApiVersionCalls: Boolean = false
+    private val shouldPreprocessApiVersionCalls: Boolean = false,
+    private val isNodeOptimized: Boolean = false
 ) {
     private val languageVersionSettings = inliningContext.state.languageVersionSettings
     private val invokeCalls = ArrayList<InvokeCall>()
@@ -88,7 +89,7 @@ class MethodInliner(
         finallyDeepShift: Int
     ): InlineResult {
         //analyze body
-        var transformedNode = markPlacesForInlineAndRemoveInlinable(node, returnLabels, finallyDeepShift)
+        var transformedNode = markPlacesForInlineAndRemoveInlinable(node, returnLabels, finallyDeepShift, isNodeOptimized)
 
         //substitute returns with "goto end" instruction to keep non local returns in lambdas
         val end = linkedLabel()
@@ -269,7 +270,8 @@ class MethodInliner(
                         newCapturedRemapper,
                         if (info is DefaultLambda) isSameModule else true /*cause all nested objects in same module as lambda*/,
                         "Lambda inlining " + info.lambdaClassType.internalName,
-                        SourceMapCopier(sourceMapper.parent, info.node.classSMAP, callSite), inlineCallSiteInfo, null
+                        SourceMapCopier(sourceMapper.parent, info.node.classSMAP, callSite), inlineCallSiteInfo, null,
+                        isNodeOptimized = info.node.isOptimized
                     )
 
                     val varRemapper = LocalVarRemapper(lambdaParameters, valueParamShift)
@@ -458,11 +460,14 @@ class MethodInliner(
     }
 
     private fun markPlacesForInlineAndRemoveInlinable(
-        node: MethodNode, returnLabels: Map<String, Label?>, finallyDeepShift: Int
+        node: MethodNode,
+        returnLabels: Map<String, Label?>,
+        finallyDeepShift: Int,
+        isNodeOptimized: Boolean
     ): MethodNode {
         val processingNode = prepareNode(node, finallyDeepShift)
 
-        preprocessNodeBeforeInline(processingNode, returnLabels)
+        preprocessNodeBeforeInline(processingNode, returnLabels, isNodeOptimized)
 
         replaceContinuationAccessesWithFakeContinuationsIfNeeded(processingNode)
 
@@ -736,13 +741,15 @@ class MethodInliner(
         }
     }
 
-    private fun preprocessNodeBeforeInline(node: MethodNode, returnLabels: Map<String, Label?>) {
-        try {
-            InplaceArgumentsMethodTransformer().transform("fake", node)
-            FixStackWithLabelNormalizationMethodTransformer().transform("fake", node)
-            TemporaryVariablesEliminationTransformer(inliningContext.state).transform("fake", node)
-        } catch (e: Throwable) {
-            throw wrapException(e, node, "couldn't inline method call")
+    private fun preprocessNodeBeforeInline(node: MethodNode, returnLabels: Map<String, Label?>, isNodeOptimized: Boolean) {
+        if (!isNodeOptimized) {
+            try {
+                InplaceArgumentsMethodTransformer().transform("fake", node)
+                FixStackWithLabelNormalizationMethodTransformer().transform("fake", node)
+                TemporaryVariablesEliminationTransformer(inliningContext.state).transform("fake", node)
+            } catch (e: Throwable) {
+                throw wrapException(e, node, "couldn't inline method call")
+            }
         }
 
         if (shouldPreprocessApiVersionCalls) {
