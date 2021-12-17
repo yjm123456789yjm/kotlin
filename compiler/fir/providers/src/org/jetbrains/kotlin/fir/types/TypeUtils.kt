@@ -82,6 +82,10 @@ fun ConeDefinitelyNotNullType.Companion.create(
     }
 }
 
+@OptIn(DynamicTypeConstructor::class)
+fun ConeDynamicType.Companion.create(session: FirSession): ConeDynamicType =
+    ConeDynamicType(session.builtinTypes.nothingType.type, session.builtinTypes.nullableAnyType.type)
+
 fun ConeKotlinType.makeConeTypeDefinitelyNotNullOrNotNull(typeContext: ConeTypeContext): ConeKotlinType {
     if (this is ConeIntersectionType) {
         return ConeIntersectionType(intersectedTypes.map { it.makeConeTypeDefinitelyNotNullOrNotNull(typeContext) })
@@ -147,6 +151,7 @@ fun <T : ConeKotlinType> T.withNullability(
         is ConeErrorType -> this
         is ConeClassLikeTypeImpl -> ConeClassLikeTypeImpl(lookupTag, typeArguments, nullability.isNullable, attributes)
         is ConeTypeParameterTypeImpl -> ConeTypeParameterTypeImpl(lookupTag, nullability.isNullable, attributes)
+        is ConeDynamicType -> this
         is ConeFlexibleType -> {
             if (nullability == ConeNullability.UNKNOWN) {
                 if (lowerBound.nullability != upperBound.nullability || lowerBound.nullability == ConeNullability.UNKNOWN) {
