@@ -629,6 +629,7 @@ internal fun checkCondition(condition: FirExpression, context: CheckerContext, r
     }
 }
 
+// Refactor?
 fun extractArgumentTypeRefAndSource(typeRef: FirTypeRef?, index: Int): FirTypeRefSource? {
     if (typeRef is FirResolvedTypeRef) {
         val delegatedTypeRef = typeRef.delegatedTypeRef

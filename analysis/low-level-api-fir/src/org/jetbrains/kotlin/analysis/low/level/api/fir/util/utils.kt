@@ -35,7 +35,7 @@ internal inline fun <T> executeOrReturnDefaultValueOnPCE(defaultValue: T, action
     }
 
 internal inline fun <T> executeWithoutPCE(crossinline action: () -> T): T {
-    var result: T? = null
+    var result: T? = null ?: null
     ProgressManager.getInstance().executeNonCancelableSection { result = action() }
     @Suppress("UNCHECKED_CAST")
     return result as T
