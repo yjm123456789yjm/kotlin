@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+import circlet.pipelines.config.dsl.api.Ide
+
 fun warmupWithDist(ide: Ide) {
     job("Warmup ${ide.name} with dist") {
         startOn {
