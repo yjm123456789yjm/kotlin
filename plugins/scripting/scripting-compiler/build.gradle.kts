@@ -17,7 +17,6 @@ dependencies {
     compileOnly(project(":kotlin-reflect-api"))
     api(project(":kotlin-scripting-common"))
     api(project(":kotlin-scripting-jvm"))
-//    api(project(":kotlin-scripting-js"))
     api(project(":kotlin-scripting-compiler-impl"))
     api(kotlinStdlib())
     compileOnly(intellijCore())
