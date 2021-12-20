@@ -152,6 +152,12 @@ internal abstract class KotlinBuildStatsService internal constructor() : BuildAd
                 gradle.rootProject.properties[ENABLE_STATISTICS_PROPERTY_NAME]?.toString()?.toBoolean() ?: DEFAULT_STATISTICS_STATE
             }
         }
+
+        @JvmStatic
+        @Synchronized
+        internal fun cleanInstance() {
+            instance = null
+        }
     }
 }
 
@@ -186,7 +192,7 @@ internal class JMXKotlinBuildStatsService(private val mbs: MBeanServer, private 
     }
 
     override fun buildFinished(result: BuildResult) {
-        instance = null
+        cleanInstance()
     }
 }
 
@@ -211,10 +217,9 @@ internal class DefaultKotlinBuildStatsService internal constructor(
         }
     }
 
-    @Synchronized
     override fun buildFinished(result: BuildResult) {
         KotlinBuildStatHandler().buildFinished(result.gradle, beanName, sessionLogger, result.action, result.failure)
-        instance = null
+        cleanInstance()
     }
 
     override fun report(metric: BooleanMetrics, value: Boolean, subprojectName: String?) {
