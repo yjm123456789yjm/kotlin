@@ -52,12 +52,6 @@ class ScriptingCompilerConfigurationComponentRegistrar : ComponentRegistrar {
             CompilerConfigurationExtension.registerExtension(project, ScriptingCompilerConfigurationExtension(project, hostConfiguration))
             CollectAdditionalSourcesExtension.registerExtension(project, ScriptingCollectAdditionalSourcesExtension(project))
             ScriptEvaluationExtension.registerExtensionIfRequired(project, JvmCliScriptEvaluationExtension())
-            // Since js evaluator class is not included into bundle by default due to IDE reasons try to load it dynamically
-            loadDynamicallyByFqn("org.jetbrains.kotlin.scripting.js.JsScriptEvaluationExtension")?.let {
-                it.safeAs<ScriptEvaluationExtension>()?.let { scriptExtension ->
-                    ScriptEvaluationExtension.registerExtensionIfRequired(project, scriptExtension)
-                }
-            }
             ShellExtension.registerExtensionIfRequired(project, JvmCliReplShellExtension())
             ReplFactoryExtension.registerExtensionIfRequired(project, JvmStandardReplFactoryExtension())
 
@@ -70,10 +64,6 @@ class ScriptingCompilerConfigurationComponentRegistrar : ComponentRegistrar {
                 project.registerService(ScriptReportSink::class.java, CliScriptReportSink(messageCollector))
             }
         }
-    }
-
-    private fun loadDynamicallyByFqn(fqn: String): Any? {
-        return Class.forName(fqn).newInstance()
     }
 }
 
