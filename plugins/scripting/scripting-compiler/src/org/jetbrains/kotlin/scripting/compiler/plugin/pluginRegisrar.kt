@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.scripting.definitions.ScriptDependenciesProvider
 import org.jetbrains.kotlin.scripting.extensions.ScriptExtraImportsProviderExtension
 import org.jetbrains.kotlin.scripting.extensions.ScriptingResolveExtension
 import org.jetbrains.kotlin.scripting.resolve.ScriptReportSink
+import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import java.net.URLClassLoader
 import kotlin.script.experimental.host.ScriptingHostConfiguration
 import kotlin.script.experimental.jvm.defaultJvmScriptingHostConfiguration
@@ -51,7 +52,12 @@ class ScriptingCompilerConfigurationComponentRegistrar : ComponentRegistrar {
             CompilerConfigurationExtension.registerExtension(project, ScriptingCompilerConfigurationExtension(project, hostConfiguration))
             CollectAdditionalSourcesExtension.registerExtension(project, ScriptingCollectAdditionalSourcesExtension(project))
             ScriptEvaluationExtension.registerExtensionIfRequired(project, JvmCliScriptEvaluationExtension())
-            ScriptEvaluationExtension.registerExtensionIfRequired(project, JsScriptEvaluationExtension())
+            // Since js evaluator class is not included into bundle by default due to IDE reasons try to load it dynamically
+            loadDynamicallyByFqn("org.jetbrains.kotlin.scripting.js.JsScriptEvaluationExtension")?.let {
+                it.safeAs<ScriptEvaluationExtension>()?.let { scriptExtension ->
+                    ScriptEvaluationExtension.registerExtensionIfRequired(project, scriptExtension)
+                }
+            }
             ShellExtension.registerExtensionIfRequired(project, JvmCliReplShellExtension())
             ReplFactoryExtension.registerExtensionIfRequired(project, JvmStandardReplFactoryExtension())
 
@@ -64,6 +70,10 @@ class ScriptingCompilerConfigurationComponentRegistrar : ComponentRegistrar {
                 project.registerService(ScriptReportSink::class.java, CliScriptReportSink(messageCollector))
             }
         }
+    }
+
+    private fun loadDynamicallyByFqn(fqn: String): Any? {
+        return Class.forName(fqn).newInstance()
     }
 }
 
