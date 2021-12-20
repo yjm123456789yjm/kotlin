@@ -1,57 +1,27 @@
+/*
+ * Copyright 2010-2021 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
 
-
-job("Warmup for IJGateway with `dist`") {
-    // optional
-    startOn {
-        // run on schedule every day at 5AM
-        schedule { cron("0 5 * * *") }
-        // run on every commit...
-        gitPush {
-            // ...but only to the main branch
-            branchFilter {
-                +"refs/heads/main"
-            }
+fun warmupWithDist(ide: Ide) {
+    job("Warmup ${ide.name} with dist") {
+        startOn {
+            // run on schedule every day at 5AM
+            schedule { cron("0 5 * * *") }
         }
-    }
 
-    warmup(ide = Ide.IJGateway) {
-        // path to the warm-up script
-        scriptLocation = "./dev-env-warmup.sh"
-    }
+        warmup(ide) {
+            scriptLocation = "./.devenv/warmup-dist.sh"
+        }
 
-    // optional
-    git {
-        // fetch the entire commit history
-        depth = UNLIMITED_DEPTH
-        // fetch all branches
-        refSpec = "refs/*:refs/*"
+        git {
+            // fetch the entire commit history
+            depth = UNLIMITED_DEPTH
+            // fetch all branches
+            refSpec = "refs/*:refs/*"
+        }
     }
 }
 
-job("Warmup for Fleet with `dist`") {
-    // optional
-    startOn {
-        // run on schedule every day at 5AM
-        schedule { cron("0 5 * * *") }
-        // run on every commit...
-        gitPush {
-            // ...but only to the main branch
-            branchFilter {
-                +"refs/heads/main"
-            }
-        }
-    }
-
-    warmup(ide = Ide.Fleet) {
-        // path to the warm-up script
-        scriptLocation = "./dev-env-warmup.sh"
-    }
-
-    // optional
-    git {
-        // fetch the entire commit history
-        depth = UNLIMITED_DEPTH
-        // fetch all branches
-        refSpec = "refs/*:refs/*"
-    }
-}
+warmupWithDist(Ide.IJGateway)
+warmupWithDist(Ide.Fleet)
