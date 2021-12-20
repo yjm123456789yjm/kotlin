@@ -12,9 +12,11 @@ import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.enumWhenTracker
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.LogicOperationKind.OR
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
+import org.jetbrains.kotlin.fir.report
 import org.jetbrains.kotlin.fir.resolve.BodyResolveComponents
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
@@ -96,6 +98,7 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
 
     override fun transformWhenExpression(whenExpression: FirWhenExpression, data: Any?): FirStatement {
         processExhaustivenessCheck(whenExpression)
+        reportEnumWhen(whenExpression)
         return whenExpression
     }
 
@@ -155,6 +158,14 @@ class FirWhenExhaustivenessTransformer(private val bodyResolveComponents: BodyRe
         } else {
             ExhaustivenessStatus.NotExhaustive(whenMissingCases)
         }
+    }
+
+    private fun reportEnumWhen(whenExpression: FirWhenExpression) {
+        val enumWhenTracker = bodyResolveComponents.session.enumWhenTracker ?: return
+        if (whenExpression.branches.any { it.condition is FirElseIfTrueCondition }) return
+
+        val subjectType = getSubjectType(bodyResolveComponents.session, whenExpression) ?: return
+        enumWhenTracker.report(bodyResolveComponents.file.path, subjectType)
     }
 }
 

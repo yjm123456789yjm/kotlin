@@ -16,9 +16,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
-import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.utils.modality
-import org.jetbrains.kotlin.fir.enumWhenTracker
 import org.jetbrains.kotlin.fir.expressions.ExhaustivenessStatus
 import org.jetbrains.kotlin.fir.expressions.FirWhenExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirElseIfTrueCondition
@@ -32,7 +30,6 @@ object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
     override fun check(expression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
         reportNotExhaustive(expression, context, reporter)
         reportElseMisplaced(expression, reporter, context)
-        reportEnumWhenTracker(expression, context)
     }
 
     private fun reportNotExhaustive(whenExpression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
@@ -63,19 +60,6 @@ object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
                 reporter.reportOn(source, FirErrors.NON_EXHAUSTIVE_WHEN_STATEMENT, kind.displayName, whenExpression.missingCases, context)
             }
         }
-    }
-
-    private fun reportEnumWhenTracker(whenExpression: FirWhenExpression, context: CheckerContext) {
-        val elseBranch = whenExpression.branches.firstOrNull {
-            it.condition is FirElseIfTrueCondition
-        }
-        if (elseBranch != null) return
-
-        val fqName = whenExpression.subject?.typeRef?.coneType?.toString()?.replace(".", "$")?.replace("/", ".") ?: return
-        val path = context.containingDeclarations.firstOrNull()?.let { (it as? FirFile)?.path } ?: return
-        val tracker = context.session.enumWhenTracker ?: return
-
-        tracker.report(path, fqName)
     }
 
     private val FirWhenExpression.missingCases: List<WhenMissingCase>

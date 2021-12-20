@@ -5,8 +5,17 @@
 
 package org.jetbrains.kotlin.fir
 
+import org.jetbrains.kotlin.fir.types.ConeKotlinType
+import org.jetbrains.kotlin.fir.types.classId
+
 abstract class FirEnumWhenTrackerComponent: FirSessionComponent {
     abstract fun report(whenExpressionFilePath: String, enumClassFqName: String)
 }
 
 val FirSession.enumWhenTracker: FirEnumWhenTrackerComponent? by FirSession.nullableSessionComponentAccessor()
+
+fun FirEnumWhenTrackerComponent.report(filePath: String?, subjectType: ConeKotlinType) {
+    if (filePath == null) return
+    val fqName = subjectType.classId?.asString()?.replace(".", "$")?.replace("/", ".") ?: return
+    this.report(filePath, fqName)
+}
