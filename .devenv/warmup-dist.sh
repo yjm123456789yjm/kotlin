@@ -1,2 +1,8 @@
-echo "kotlin.build.isObsoleteJdkOverrideEnabled=true" > ./local.properties
-./gradlew dist
+#!/bin/sh
+set -e -x -u
+
+cat <<EOF > ./local.properties
+kotlin.build.isObsoleteJdkOverrideEnabled=true
+EOF
+
+./gradlew assemble dist
