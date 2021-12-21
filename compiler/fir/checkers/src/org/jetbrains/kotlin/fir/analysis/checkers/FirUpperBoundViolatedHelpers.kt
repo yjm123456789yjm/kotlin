@@ -18,6 +18,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.AbstractTypeChecker
+import org.jetbrains.kotlin.types.Variance
+import org.jetbrains.kotlin.types.model.CaptureStatus
 
 /**
  * Recursively analyzes type parameters and reports the diagnostic on the given source calculated using typeRef
@@ -44,21 +46,14 @@ fun checkUpperBoundViolated(
         return
     }
 
-    val count = minOf(typeParameterSymbols.size, type.typeArguments.size)
-    val substitution = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
+    val typeSystemContext = context.session.typeContext
 
-    for (index in 0 until count) {
-        val typeArgument = type.typeArguments[index]
-        val typeParameterSymbol = typeParameterSymbols[index]
-
-        val typeArgumentType = typeArgument.type
-        if (typeArgumentType != null) {
-            substitution[typeParameterSymbol] = typeArgumentType
-        } else {
-            substitution[typeParameterSymbol] =
-                ConeStubTypeForTypeVariableInSubtyping(ConeTypeVariable("", typeParameterSymbol.toLookupTag()), ConeNullability.NOT_NULL)
-        }
+    val capturedType = typeSystemContext.captureFromArguments(type, CaptureStatus.FOR_SUBTYPING) as? ConeClassLikeType ?: type
+    val capturedArguments = capturedType.typeArguments.map {
+        // Still might be error type arguments like ConeKotlinTypeConflictingProjection
+        it as? ConeKotlinType ?: return
     }
+    val substitution = typeParameterSymbols.zip(capturedArguments).toMap()
 
     val substitutor = substitutorByMap(substitution, context.session)
     val typeArgumentsWithSourceInfo = type.typeArguments.withIndex().map { (index, projection) ->
@@ -99,14 +94,27 @@ fun checkUpperBoundViolated(
 
     for (index in 0 until count) {
         val argument = arguments.getOrNull(index) ?: continue
-        val argumentType: ConeKotlinType? = argument.coneTypeProjection.type
+        val typeParameterSymbol = typeParameters[index]
         val argumentTypeRef = argument.typeRef
+
+        // Check upper-bounds violation for argument recursively
+        checkUpperBoundViolated(argumentTypeRef, context, reporter, isIgnoreTypeParameters = isIgnoreTypeParameters)
+
+        val argumentProjection = argument.coneTypeProjection
+        if (argumentProjection.kind == ProjectionKind.OUT ||
+            argumentProjection.kind == ProjectionKind.STAR ||
+            typeParameterSymbol.variance == Variance.OUT_VARIANCE
+        ) {
+            continue
+        }
+
+        val argumentType: ConeKotlinType? = argumentProjection.type
         val argumentSource = argument.source
 
         if (argumentType != null && argumentSource != null) {
             if (!isIgnoreTypeParameters || (argumentType.typeArguments.isEmpty() && argumentType !is ConeTypeParameterType)) {
                 val intersection =
-                    typeSystemContext.intersectTypes(typeParameters[index].resolvedBounds.map { it.coneType }) as? ConeKotlinType
+                    typeSystemContext.intersectTypes(typeParameterSymbol.resolvedBounds.map { it.coneType }) as? ConeKotlinType
                 if (intersection != null) {
                     val upperBound = substitutor.substituteOrSelf(intersection)
                     if (!AbstractTypeChecker.isSubtypeOf(
@@ -125,8 +133,6 @@ fun checkUpperBoundViolated(
                     }
                 }
             }
-
-            checkUpperBoundViolated(argumentTypeRef, context, reporter, isIgnoreTypeParameters = isIgnoreTypeParameters)
         }
     }
 }
