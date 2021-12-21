@@ -30,7 +30,7 @@ class KotlinBuildStatHandler {
 
         internal fun <T> runSafe(methodName: String, action: () -> T?): T? {
             return try {
-                getLogger().debug("Executing [$methodName]")
+                getLogger().info("Executing [$methodName]")
                 action.invoke()
             } catch (e: Throwable) {
                 logException("Could not execute [$methodName]", e)
