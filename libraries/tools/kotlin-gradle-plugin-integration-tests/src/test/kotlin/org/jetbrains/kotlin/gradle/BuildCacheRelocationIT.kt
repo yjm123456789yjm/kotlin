@@ -168,7 +168,6 @@ class BuildCacheRelocationIT : KGPBaseTest() {
 
     @DisplayName("with native project")
     @GradleTest
-    @DisabledOnOs(OS.WINDOWS, disabledReason = "remove after fix of KT-48283")
     fun testRelocationNative(gradleVersion: GradleVersion) {
         val (firstProject, secondProject) = prepareTestProjects(
             "native-build-cache",
