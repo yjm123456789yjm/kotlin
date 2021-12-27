@@ -32,10 +32,10 @@ RUN apt-get -qq update && \
     rm -rf /var/lib/apt/lists/* zulu-repo_${ZULU_REPO_VER}_all.deb
 
 # New naming conventions
-ENV JDK6=/usr/lib/jvm/zulu6-ca-amd64 \
+ENV JDK6=/usr/lib/jvm/zulu-6-amd64 \
     JDK7=/usr/lib/jvm/zulu7-ca-amd64 \
     JDK8=/usr/lib/jvm/zulu8-ca-amd64 \
-    JDK9=/usr/lib/jvm/zulu9-ca-amd64
+    JDK9=/usr/lib/jvm/zulu-9-amd64
 ENV JAVA_HOME=$JDK8
 
 # TeamCity JDK old naming conventions
