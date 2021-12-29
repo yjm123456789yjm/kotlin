@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 
 abstract class IrValueAccessExpression : IrDeclarationReference() {
@@ -25,9 +26,15 @@ abstract class IrValueAccessExpression : IrDeclarationReference() {
 
 abstract class IrGetValue : IrValueAccessExpression() {
     abstract fun copyWithOffsets(newStartOffset: Int, newEndOffset: Int): IrGetValue
+
+    override val tag: IrElementTag
+        get() = IrElementTag.GET_VALUE
 }
 
 abstract class IrSetValue : IrValueAccessExpression() {
     abstract override val symbol: IrValueSymbol
     abstract var value: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SET_VALUE
 }

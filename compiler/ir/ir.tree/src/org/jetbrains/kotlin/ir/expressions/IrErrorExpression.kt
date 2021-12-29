@@ -16,11 +16,19 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrErrorExpression : IrExpression() {
     abstract val description: String
+
+    override val tag: IrElementTag
+        get() = IrElementTag.ERROR_EXPRESSION
 }
 
 abstract class IrErrorCallExpression : IrErrorExpression() {
     abstract var explicitReceiver: IrExpression?
     abstract val arguments: MutableList<IrExpression>
+
+    override val tag: IrElementTag
+        get() = IrElementTag.ERROR_CALL_EXPRESSION
 }

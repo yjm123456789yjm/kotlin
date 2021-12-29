@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrDynamicExpression : IrExpression()
 
 abstract class IrDynamicOperatorExpression : IrDynamicExpression() {
@@ -13,6 +15,9 @@ abstract class IrDynamicOperatorExpression : IrDynamicExpression() {
     abstract var receiver: IrExpression
 
     abstract val arguments: MutableList<IrExpression>
+
+    override val tag: IrElementTag
+        get() = IrElementTag.DYNAMIC_OPERATOR_EXPRESSION
 }
 
 var IrDynamicOperatorExpression.left: IrExpression
@@ -34,6 +39,9 @@ abstract class IrDynamicMemberExpression : IrDynamicExpression() {
     abstract val memberName: String
 
     abstract var receiver: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.DYNAMIC_MEMBER_EXPRESSION
 }
 
 enum class IrDynamicOperator(val image: String, val isAssignmentOperator: Boolean = false) {

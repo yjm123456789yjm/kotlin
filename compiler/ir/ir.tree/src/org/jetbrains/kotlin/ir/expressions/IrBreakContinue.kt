@@ -16,12 +16,20 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrBreakContinue : IrExpression() {
     abstract var loop: IrLoop
 
     var label: String? = null
 }
 
-abstract class IrBreak : IrBreakContinue()
+abstract class IrBreak : IrBreakContinue() {
+    override val tag: IrElementTag
+        get() = IrElementTag.BREAK
+}
 
-abstract class IrContinue : IrBreakContinue()
+abstract class IrContinue : IrBreakContinue() {
+    override val tag: IrElementTag
+        get() = IrElementTag.CONTINUE
+}

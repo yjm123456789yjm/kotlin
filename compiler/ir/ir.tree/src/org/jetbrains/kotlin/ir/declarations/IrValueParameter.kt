@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.ParameterDescriptor
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.expressions.IrExpressionBody
 import org.jetbrains.kotlin.ir.symbols.IrValueParameterSymbol
@@ -55,4 +56,7 @@ abstract class IrValueParameter : IrValueDeclaration() {
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {
         defaultValue = defaultValue?.transform(transformer, data)
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.VALUE_PARAMETER
 }

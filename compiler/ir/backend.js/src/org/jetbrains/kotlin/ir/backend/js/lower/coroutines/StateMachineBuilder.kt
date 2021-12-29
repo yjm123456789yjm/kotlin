@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.backend.common.peek
 import org.jetbrains.kotlin.backend.common.pop
 import org.jetbrains.kotlin.backend.common.push
 import org.jetbrains.kotlin.ir.IrElement
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsCommonBackendContext
@@ -56,6 +57,9 @@ class IrDispatchPoint(val target: SuspendState) : IrExpression() {
     override fun <D> acceptChildren(visitor: IrElementVisitor<Unit, D>, data: D) {}
 
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {}
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CUSTOM_ELEMENT
 }
 
 class DispatchPointTransformer(val action: (SuspendState) -> IrExpression) : IrElementTransformerVoid() {

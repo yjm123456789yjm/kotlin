@@ -16,6 +16,8 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrLoop : IrExpression() {
     abstract val origin: IrStatementOrigin?
 
@@ -24,6 +26,12 @@ abstract class IrLoop : IrExpression() {
     var label: String? = null
 }
 
-abstract class IrWhileLoop : IrLoop()
+abstract class IrWhileLoop : IrLoop() {
+    override val tag: IrElementTag
+        get() = IrElementTag.WHILE_LOOP
+}
 
-abstract class IrDoWhileLoop : IrLoop()
+abstract class IrDoWhileLoop : IrLoop() {
+    override val tag: IrElementTag
+        get() = IrElementTag.DO_WHILE_LOOP
+}

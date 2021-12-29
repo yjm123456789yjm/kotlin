@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.PropertyDescriptor
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
@@ -59,4 +60,7 @@ abstract class IrProperty :
         getter = getter?.run { transform(transformer, data) as IrSimpleFunction }
         setter = setter?.run { transform(transformer, data) as IrSimpleFunction }
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.PROPERTY
 }

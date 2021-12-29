@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrReturnTarget
 import org.jetbrains.kotlin.ir.declarations.IrSymbolOwner
@@ -45,11 +46,17 @@ abstract class IrContainerExpression : IrExpression(), IrStatementContainer {
 abstract class IrBlock : IrContainerExpression() {
     override val isTransparentScope: Boolean
         get() = false
+
+    override val tag: IrElementTag
+        get() = IrElementTag.BLOCK
 }
 
 abstract class IrComposite : IrContainerExpression() {
     override val isTransparentScope: Boolean
         get() = true
+
+    override val tag: IrElementTag
+        get() = IrElementTag.COMPOSITE
 }
 
 abstract class IrReturnableBlock : IrBlock(), IrSymbolOwner, IrReturnTarget {

@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 
@@ -23,6 +24,9 @@ abstract class IrCall(
     typeArgumentsCount: Int,
     valueArgumentsCount: Int,
 ) : IrFunctionAccessExpression(typeArgumentsCount, valueArgumentsCount) {
-    override abstract val symbol: IrSimpleFunctionSymbol
+    abstract override val symbol: IrSimpleFunctionSymbol
     abstract val superQualifierSymbol: IrClassSymbol?
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CALL
 }

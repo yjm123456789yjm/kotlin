@@ -16,6 +16,11 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrGetClass : IrExpression() {
     abstract var argument: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.GET_CLASS
 }

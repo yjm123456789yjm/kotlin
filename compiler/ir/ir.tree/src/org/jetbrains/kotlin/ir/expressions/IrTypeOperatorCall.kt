@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 
@@ -71,4 +72,7 @@ abstract class IrTypeOperatorCall : IrExpression() {
     abstract var argument: IrExpression
     abstract var typeOperand: IrType
     abstract val typeOperandClassifier: IrClassifierSymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.TYPE_OPERATOR_CALL
 }

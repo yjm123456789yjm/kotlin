@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 
@@ -37,6 +38,9 @@ abstract class IrConstructorCall(
             else
                 irConstructorCall.getTypeArgument(index)
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CONSTRUCTOR_CALL
 }
 
 fun IrConstructorCall.getConstructorTypeArgumentIndex(constructorTypeArgumentIndex: Int) =

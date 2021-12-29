@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.VariableDescriptorWithAccessors
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.symbols.IrLocalDelegatedPropertySymbol
 import org.jetbrains.kotlin.ir.types.IrType
@@ -43,4 +44,7 @@ abstract class IrLocalDelegatedProperty :
         getter = getter.transform(transformer, data) as IrSimpleFunction
         setter = setter?.transform(transformer, data) as? IrSimpleFunction
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.LOCAL_DELEGATED_PROPERTY
 }

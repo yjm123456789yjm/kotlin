@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.TypeAliasDescriptor
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.symbols.IrTypeAliasSymbol
 import org.jetbrains.kotlin.ir.types.IrType
@@ -36,4 +37,7 @@ abstract class IrTypeAlias :
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {
         typeParameters = typeParameters.transformIfNeeded(transformer, data)
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.TYPE_ALIAS
 }

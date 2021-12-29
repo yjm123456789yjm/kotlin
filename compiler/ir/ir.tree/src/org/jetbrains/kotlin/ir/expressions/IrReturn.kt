@@ -16,9 +16,13 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrReturnTargetSymbol
 
 abstract class IrReturn : IrExpression() {
     abstract var value: IrExpression
     abstract val returnTargetSymbol: IrReturnTargetSymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.RETURN
 }

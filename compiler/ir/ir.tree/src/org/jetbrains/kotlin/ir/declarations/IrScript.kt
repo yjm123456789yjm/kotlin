@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.declarations
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.expressions.IrStatementContainer
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
@@ -40,4 +41,7 @@ abstract class IrScript :
     abstract var targetClass: IrClassSymbol?
 
     abstract var constructor: IrConstructor?
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SCRIPT
 }

@@ -5,15 +5,22 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 
 abstract class IrSuspensionPoint : IrExpression() {
     abstract var suspensionPointIdParameter: IrVariable
     abstract var result: IrExpression
     abstract var resumeResult: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SUSPENSION_POINT
 }
 
 abstract class IrSuspendableExpression : IrExpression() {
     abstract var suspensionPointId: IrExpression
     abstract var result: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SUSPENDABLE_EXPRESSION
 }

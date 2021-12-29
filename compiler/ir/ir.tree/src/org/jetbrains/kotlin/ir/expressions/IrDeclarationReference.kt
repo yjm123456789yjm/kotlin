@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrEnumEntrySymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
@@ -29,10 +30,16 @@ abstract class IrGetSingletonValue : IrDeclarationReference()
 
 abstract class IrGetObjectValue : IrGetSingletonValue() {
     abstract override val symbol: IrClassSymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.GET_OBJECT_VALUE
 }
 
 abstract class IrGetEnumValue : IrGetSingletonValue() {
     abstract override val symbol: IrEnumEntrySymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.GET_ENUM_VALUE
 }
 
 /**
@@ -43,4 +50,7 @@ abstract class IrGetEnumValue : IrGetSingletonValue() {
  */
 abstract class IrRawFunctionReference : IrDeclarationReference() {
     abstract override val symbol: IrFunctionSymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.RAW_FUNCTION_REFERENCE
 }

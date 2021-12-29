@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.expressions.IrBlockBody
 import org.jetbrains.kotlin.ir.symbols.IrAnonymousInitializerSymbol
@@ -42,4 +43,7 @@ abstract class IrAnonymousInitializer : IrDeclarationBase() {
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {
         body = body.transform(transformer, data) as IrBlockBody
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.ANONYMOUS_INITIALIZER
 }

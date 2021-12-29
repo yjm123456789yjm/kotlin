@@ -177,19 +177,19 @@ fun IrValueParameter.createStubDefaultValue(): IrExpressionBody =
     )
 
 val IrClass.functions: Sequence<IrSimpleFunction>
-    get() = declarations.asSequence().filterIsInstance<IrSimpleFunction>()
+    get() = declarations.asSequence().filterIs(IrElementTag.SIMPLE_FUNCTION)
 
 val IrClassSymbol.functions: Sequence<IrSimpleFunctionSymbol>
     get() = owner.functions.map { it.symbol }
 
 val IrClass.constructors: Sequence<IrConstructor>
-    get() = declarations.asSequence().filterIsInstance<IrConstructor>()
+    get() = declarations.asSequence().filterIs(IrElementTag.CONSTRUCTOR)
 
 val IrClassSymbol.constructors: Sequence<IrConstructorSymbol>
     get() = owner.constructors.map { it.symbol }
 
 val IrClass.fields: Sequence<IrField>
-    get() = declarations.asSequence().filterIsInstance<IrField>()
+    get() = declarations.asSequence().filterIs(IrElementTag.FIELD)
 
 val IrClassSymbol.fields: Sequence<IrFieldSymbol>
     get() = owner.fields.map { it.symbol }
@@ -198,7 +198,7 @@ val IrClass.primaryConstructor: IrConstructor?
     get() = this.declarations.singleOrNull { it is IrConstructor && it.isPrimary } as IrConstructor?
 
 val IrDeclarationContainer.properties: Sequence<IrProperty>
-    get() = declarations.asSequence().filterIsInstance<IrProperty>()
+    get() = declarations.asSequence().filterIs(IrElementTag.PROPERTY)
 
 fun IrFunction.addExplicitParametersTo(parametersList: MutableList<IrValueParameter>) {
     parametersList.addIfNotNull(dispatchReceiverParameter)

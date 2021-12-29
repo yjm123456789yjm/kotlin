@@ -24,6 +24,8 @@ interface IrElement {
     val startOffset: Int
     val endOffset: Int
 
+    val tag: IrElementTag
+
     fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R
 
     fun <D> acceptChildren(visitor: IrElementVisitor<Unit, D>, data: D): Unit

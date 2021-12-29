@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.symbols.IrTypeParameterSymbol
 import org.jetbrains.kotlin.ir.types.IrType
@@ -47,4 +48,7 @@ abstract class IrTypeParameter : IrDeclarationBase(), IrDeclarationWithName {
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {
         // no children
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.TYPE_PARAMETER
 }

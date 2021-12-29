@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.ir.expressions
 
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrElementBase
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 
@@ -29,6 +30,9 @@ abstract class IrVararg : IrExpression() {
     abstract val elements: List<IrVarargElement>
 
     abstract fun putElement(i: Int, element: IrVarargElement)
+
+    override val tag: IrElementTag
+        get() = IrElementTag.VARARG
 }
 
 abstract class IrSpreadElement : IrElementBase(), IrVarargElement {
@@ -36,4 +40,7 @@ abstract class IrSpreadElement : IrElementBase(), IrVarargElement {
 
     override fun <D> transform(transformer: IrElementTransformer<D>, data: D): IrElement =
         accept(transformer, data) as IrSpreadElement
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SPREAD_ELEMENT
 }

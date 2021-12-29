@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 
@@ -15,6 +16,9 @@ abstract class IrConstantValue : IrExpression() {
 
 abstract class IrConstantPrimitive : IrConstantValue() {
     abstract var value: IrConst<*>
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CONSTANT_PRIMITIVE
 }
 
 abstract class IrConstantObject : IrConstantValue() {
@@ -22,9 +26,15 @@ abstract class IrConstantObject : IrConstantValue() {
     abstract val valueArguments: List<IrConstantValue>
     abstract val typeArguments: List<IrType>
     abstract fun putArgument(index: Int, value: IrConstantValue)
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CONSTANT_OBJECT
 }
 
 abstract class IrConstantArray : IrConstantValue() {
     abstract val elements: List<IrConstantValue>
     abstract fun putElement(index: Int, value: IrConstantValue)
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CONSTANT_ARRAY
 }

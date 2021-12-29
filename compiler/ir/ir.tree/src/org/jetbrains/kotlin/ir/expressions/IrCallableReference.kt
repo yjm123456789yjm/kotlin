@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.name.Name
 
@@ -25,6 +26,9 @@ abstract class IrCallableReference<S : IrSymbol>(typeArgumentsCount: Int) : IrMe
 
 abstract class IrFunctionReference(typeArgumentsCount: Int) : IrCallableReference<IrFunctionSymbol>(typeArgumentsCount) {
     abstract val reflectionTarget: IrFunctionSymbol?
+
+    override val tag: IrElementTag
+        get() = IrElementTag.FUNCTION_REFERENCE
 }
 
 val IrFunctionReference.isWithReflection: Boolean
@@ -40,6 +44,9 @@ abstract class IrPropertyReference(typeArgumentsCount: Int) : IrCallableReferenc
 
     override val valueArgumentsCount: Int
         get() = 0
+
+    override val tag: IrElementTag
+        get() = IrElementTag.PROPERTY_REFERENCE
 }
 
 abstract class IrLocalDelegatedPropertyReference : IrCallableReference<IrLocalDelegatedPropertySymbol>(0) {
@@ -49,4 +56,7 @@ abstract class IrLocalDelegatedPropertyReference : IrCallableReference<IrLocalDe
 
     override val valueArgumentsCount: Int
         get() = 0
+
+    override val tag: IrElementTag
+        get() = IrElementTag.LOCAL_DELEGATED_PROPERTY_REFERENCE
 }

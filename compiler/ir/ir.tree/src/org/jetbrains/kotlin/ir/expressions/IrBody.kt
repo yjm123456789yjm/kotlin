@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.expressions
 
 import org.jetbrains.kotlin.ir.IrElementBase
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.ir.declarations.IrFactory
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
@@ -45,6 +46,9 @@ abstract class IrExpressionBody : IrBody() {
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {
         expression = expression.transform(transformer, data)
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.EXPRESSION_BODY
 }
 
 abstract class IrBlockBody : IrBody(), IrStatementContainer {
@@ -62,10 +66,16 @@ abstract class IrBlockBody : IrBody(), IrStatementContainer {
             statements[i] = irStatement.transform(transformer, data) as IrStatement
         }
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.BLOCK_BODY
 }
 
 abstract class IrSyntheticBody : IrBody() {
     abstract val kind: IrSyntheticBodyKind
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SYNTHETIC_BODY
 }
 
 enum class IrSyntheticBodyKind {

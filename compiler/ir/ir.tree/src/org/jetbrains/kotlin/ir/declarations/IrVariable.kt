@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.VariableDescriptor
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.symbols.IrVariableSymbol
@@ -31,4 +32,7 @@ abstract class IrVariable : IrValueDeclaration() {
     abstract val isLateinit: Boolean
 
     abstract var initializer: IrExpression?
+
+    override val tag: IrElementTag
+        get() = IrElementTag.VARIABLE
 }

@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.declarations
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrPropertySymbol
 import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
@@ -26,6 +27,9 @@ abstract class IrSimpleFunction :
 
     override fun <R, D> accept(visitor: IrElementVisitor<R, D>, data: D): R =
         visitor.visitSimpleFunction(this, data)
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SIMPLE_FUNCTION
 }
 
 val IrFunction.isPropertyAccessor: Boolean

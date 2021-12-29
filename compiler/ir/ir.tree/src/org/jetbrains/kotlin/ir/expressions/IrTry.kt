@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.expressions
 
 import org.jetbrains.kotlin.ir.IrElementBase
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 
@@ -26,6 +27,9 @@ abstract class IrTry : IrExpression() {
     abstract val catches: List<IrCatch>
 
     abstract var finallyExpression: IrExpression?
+
+    override val tag: IrElementTag
+        get() = IrElementTag.TRY
 }
 
 abstract class IrCatch : IrElementBase() {
@@ -34,4 +38,7 @@ abstract class IrCatch : IrElementBase() {
 
     override fun <D> transform(transformer: IrElementTransformer<D>, data: D): IrCatch =
         super.transform(transformer, data) as IrCatch
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CATCH
 }

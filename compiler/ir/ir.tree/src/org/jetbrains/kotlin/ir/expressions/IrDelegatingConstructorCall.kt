@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 
 abstract class IrDelegatingConstructorCall(
@@ -23,4 +24,7 @@ abstract class IrDelegatingConstructorCall(
     valueArgumentsCount: Int,
 ) : IrFunctionAccessExpression(typeArgumentsCount, valueArgumentsCount) {
     abstract override val symbol: IrConstructorSymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.DELEGATING_CONSTRUCTOR_CALL
 }

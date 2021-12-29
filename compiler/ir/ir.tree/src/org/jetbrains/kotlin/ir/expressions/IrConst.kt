@@ -16,11 +16,16 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrConst<T> : IrExpression() {
     abstract val kind: IrConstKind<T>
     abstract val value: T
 
     abstract fun copyWithOffsets(startOffset: Int, endOffset: Int): IrConst<T>
+
+    override val tag: IrElementTag
+        get() = IrElementTag.CONST
 }
 
 sealed class IrConstKind<T>(val asString: kotlin.String) {

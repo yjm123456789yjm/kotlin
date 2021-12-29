@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.declarations
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
@@ -34,4 +35,7 @@ abstract class IrErrorDeclaration : IrDeclarationBase() {
 
     override val symbol: IrSymbol
         get() = error("Should never be called")
+
+    override val tag: IrElementTag
+        get() = IrElementTag.ERROR_DECLARATION
 }

@@ -5,10 +5,14 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
 
 abstract class IrFunctionExpression : IrExpression() {
     abstract val origin: IrStatementOrigin
 
     abstract var function: IrSimpleFunction
+
+    override val tag: IrElementTag
+        get() = IrElementTag.FUNCTION_EXPRESSION
 }

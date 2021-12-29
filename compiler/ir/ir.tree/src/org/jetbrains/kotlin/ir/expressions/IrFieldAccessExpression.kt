@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFieldSymbol
 
@@ -28,8 +29,14 @@ abstract class IrFieldAccessExpression : IrDeclarationReference() {
     abstract val origin: IrStatementOrigin?
 }
 
-abstract class IrGetField : IrFieldAccessExpression()
+abstract class IrGetField : IrFieldAccessExpression() {
+    override val tag: IrElementTag
+        get() = IrElementTag.GET_FIELD
+}
 
 abstract class IrSetField : IrFieldAccessExpression() {
     abstract var value: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.SET_FIELD
 }

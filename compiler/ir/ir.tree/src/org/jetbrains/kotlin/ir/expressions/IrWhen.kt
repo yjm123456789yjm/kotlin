@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.ir.expressions
 
 import org.jetbrains.kotlin.ir.IrElementBase
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformer
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitor
 
@@ -37,6 +38,9 @@ abstract class IrWhen : IrExpression() {
             branches[i] = irBranch.transform(transformer, data)
         }
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.WHEN
 }
 
 abstract class IrBranch : IrElementBase() {
@@ -54,6 +58,12 @@ abstract class IrBranch : IrElementBase() {
         condition = condition.transform(transformer, data)
         result = result.transform(transformer, data)
     }
+
+    override val tag: IrElementTag
+        get() = IrElementTag.BRANCH
 }
 
-abstract class IrElseBranch : IrBranch()
+abstract class IrElseBranch : IrBranch() {
+    override val tag: IrElementTag
+        get() = IrElementTag.ELSE_BRANCH
+}

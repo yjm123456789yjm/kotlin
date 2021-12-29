@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.ir.declarations
 
 import org.jetbrains.kotlin.descriptors.PackageFragmentDescriptor
 import org.jetbrains.kotlin.ir.IrElementBase
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.IrFileEntry
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.symbols.IrExternalPackageFragmentSymbol
@@ -39,6 +40,9 @@ abstract class IrPackageFragment : IrElementBase(), IrDeclarationContainer, IrSy
 abstract class IrExternalPackageFragment : IrPackageFragment() {
     abstract override val symbol: IrExternalPackageFragmentSymbol
     abstract val containerSource: DeserializedContainerSource?
+
+    override val tag: IrElementTag
+        get() = IrElementTag.EXTERNAL_PACKAGE_FRAGMENT
 }
 
 abstract class IrFile : IrPackageFragment(), IrMutableAnnotationContainer, IrMetadataSourceOwner {
@@ -50,6 +54,9 @@ abstract class IrFile : IrPackageFragment(), IrMutableAnnotationContainer, IrMet
 
     override fun <D> transform(transformer: IrElementTransformer<D>, data: D): IrFile =
         accept(transformer, data) as IrFile
+
+    override val tag: IrElementTag
+        get() = IrElementTag.FILE
 }
 
 val IrFile.path: String get() = fileEntry.name

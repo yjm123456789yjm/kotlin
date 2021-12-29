@@ -16,6 +16,11 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
+
 abstract class IrThrow : IrExpression() {
     abstract var value: IrExpression
+
+    override val tag: IrElementTag
+        get() = IrElementTag.THROW
 }

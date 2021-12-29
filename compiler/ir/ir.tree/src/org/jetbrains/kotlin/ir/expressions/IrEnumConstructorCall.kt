@@ -16,6 +16,7 @@
 
 package org.jetbrains.kotlin.ir.expressions
 
+import org.jetbrains.kotlin.ir.IrElementTag
 import org.jetbrains.kotlin.ir.symbols.IrConstructorSymbol
 
 abstract class IrEnumConstructorCall(
@@ -23,4 +24,7 @@ abstract class IrEnumConstructorCall(
     valueArgumentsCount: Int,
 ) : IrFunctionAccessExpression(typeArgumentsCount, valueArgumentsCount) {
     abstract override val symbol: IrConstructorSymbol
+
+    override val tag: IrElementTag
+        get() = IrElementTag.ENUM_CONSTRUCTOR_CALL
 }
