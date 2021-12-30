@@ -34,14 +34,14 @@ class IrLazyFunction(
     override val name: Name,
     override var visibility: DescriptorVisibility,
     override val modality: Modality,
-    override val isInline: Boolean,
-    override val isExternal: Boolean,
-    override val isTailrec: Boolean,
-    override val isSuspend: Boolean,
-    override val isExpect: Boolean,
-    override val isFakeOverride: Boolean,
-    override val isOperator: Boolean,
-    override val isInfix: Boolean,
+    isInline: Boolean,
+    isExternal: Boolean,
+    isTailrec: Boolean,
+    isSuspend: Boolean,
+    isExpect: Boolean,
+    isFakeOverride: Boolean,
+    isOperator: Boolean,
+    isInfix: Boolean,
     override val stubGenerator: DeclarationStubGenerator,
     override val typeTranslator: TypeTranslator,
 ) : IrSimpleFunction(), IrLazyFunctionBase {
@@ -124,6 +124,36 @@ class IrLazyFunction(
         }
         return current
     }
+
+    private val flags = collectFlags(
+        isInline = isInline,
+        isExternal = isExternal,
+        isTailrec = isTailrec,
+        isSuspend = isSuspend,
+        isOperator = isOperator,
+        isInfix = isInfix,
+        isExpect = isExpect,
+        isFakeOverride = isFakeOverride
+    )
+
+    private fun getFlag(mask: Int) = (flags and mask) != 0
+
+    override val isExternal: Boolean
+        get() = getFlag(IS_EXTERNAL)
+    override val isInline: Boolean
+        get() = getFlag(IS_INLINE)
+    override val isExpect: Boolean
+        get() = getFlag(IS_EXPECT)
+    override val isTailrec: Boolean
+        get() = getFlag(IS_TAILREC)
+    override val isSuspend: Boolean
+        get() = getFlag(IS_SUSPEND)
+    override val isFakeOverride: Boolean
+        get() = getFlag(IS_FAKE_OVERRIDE)
+    override val isOperator: Boolean
+        get() = getFlag(IS_OPERATOR)
+    override val isInfix: Boolean
+        get() = getFlag(IS_INFIX)
 
     init {
         symbol.bind(this)

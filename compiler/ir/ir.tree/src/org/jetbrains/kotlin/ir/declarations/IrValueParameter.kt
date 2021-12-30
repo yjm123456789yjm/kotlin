@@ -55,4 +55,25 @@ abstract class IrValueParameter : IrValueDeclaration() {
     override fun <D> transformChildren(transformer: IrElementTransformer<D>, data: D) {
         defaultValue = defaultValue?.transform(transformer, data)
     }
+
+    companion object {
+        const val IS_CROSSINLINE = 0x0000_0000_0000_0001
+        const val IS_NOINLINE = 0x0000_0000_0000_0002
+        const val IS_HIDDEN = 0x0000_0000_0000_0004
+        const val IS_ASSIGNABLE = 0x0000_0000_0000_0008
+
+        fun collectFlags(
+            isCrossinline: Boolean,
+            isNoinline: Boolean,
+            isHidden: Boolean,
+            isAssignable: Boolean
+        ): Int {
+            var result = 0
+            if (isCrossinline) result += IS_CROSSINLINE
+            if (isNoinline) result += IS_NOINLINE
+            if (isHidden) result += IS_HIDDEN
+            if (isAssignable) result += IS_ASSIGNABLE
+            return result
+        }
+    }
 }

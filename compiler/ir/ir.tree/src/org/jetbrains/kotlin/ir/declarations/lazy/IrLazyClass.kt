@@ -29,13 +29,13 @@ class IrLazyClass(
     override val kind: ClassKind,
     override var visibility: DescriptorVisibility,
     override var modality: Modality,
-    override val isCompanion: Boolean,
-    override val isInner: Boolean,
-    override val isData: Boolean,
-    override val isExternal: Boolean,
-    override val isInline: Boolean,
-    override val isExpect: Boolean,
-    override val isFun: Boolean,
+    isCompanion: Boolean,
+    isInner: Boolean,
+    isData: Boolean,
+    isExternal: Boolean,
+    isInline: Boolean,
+    isExpect: Boolean,
+    isFun: Boolean,
     override val stubGenerator: DeclarationStubGenerator,
     override val typeTranslator: TypeTranslator
 ) : IrClass(), IrLazyDeclarationBase, DeserializableClass {
@@ -119,7 +119,37 @@ class IrLazyClass(
 
     override fun loadIr(): Boolean {
         assert(parent is IrPackageFragment)
-        return irLoaded ?:
-            stubGenerator.extensions.deserializeClass(this, stubGenerator, parent, allowErrorNodes = false).also { irLoaded = it }
+        return irLoaded
+            ?: stubGenerator.extensions.deserializeClass(this, stubGenerator, parent, allowErrorNodes = false)
+                .also { irLoaded = it }
     }
+
+    private var flags =
+        collectFlags(
+            isCompanion = isCompanion,
+            isInner = isInner,
+            isData = isData,
+            isExternal = isExternal,
+            isInline = isInline,
+            isExpect = isExpect,
+            isFun = isFun
+        )
+
+    private fun getFlag(mask: Int) = (flags and mask) != 0
+
+    override val isCompanion: Boolean
+        get() = getFlag(IS_COMPANION)
+    override val isInner: Boolean
+        get() = getFlag(IS_INNER)
+    override val isData: Boolean
+        get() = getFlag(IS_DATA)
+    override val isInline: Boolean
+        get() = getFlag(IS_INLINE)
+    override val isExpect: Boolean
+        get() = getFlag(IS_EXPECT)
+    override val isFun: Boolean
+        get() = getFlag(IS_FUN)
+    override val isExternal: Boolean
+        get() = getFlag(IS_EXTERNAL)
+
 }

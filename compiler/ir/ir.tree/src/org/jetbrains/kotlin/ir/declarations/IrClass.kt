@@ -67,6 +67,36 @@ abstract class IrClass :
         typeParameters = typeParameters.transformIfNeeded(transformer, data)
         declarations.transformInPlace(transformer, data)
     }
+
+    companion object {
+        const val IS_COMPANION = 0x0000_0000_0000_0001
+        const val IS_INNER = 0x0000_0000_0000_0002
+        const val IS_DATA = 0x0000_0000_0000_0004
+        const val IS_EXTERNAL = 0x0000_0000_0000_0008
+        const val IS_INLINE = 0x0000_0000_0000_0010
+        const val IS_EXPECT = 0x0000_0000_0000_0020
+        const val IS_FUN = 0x0000_0000_0000_0040
+
+        fun collectFlags(
+            isCompanion: Boolean,
+            isInner: Boolean,
+            isData: Boolean,
+            isExternal: Boolean,
+            isInline: Boolean,
+            isExpect: Boolean,
+            isFun: Boolean,
+        ): Int {
+            var result = 0
+            if (isCompanion) result += IS_COMPANION
+            if (isInner) result += IS_INNER
+            if (isData) result += IS_DATA
+            if (isExternal) result += IS_EXTERNAL
+            if (isInline) result += IS_INLINE
+            if (isExpect) result += IS_EXPECT
+            if (isFun) result += IS_FUN
+            return result
+        }
+    }
 }
 
 fun IrClass.addMember(member: IrDeclaration) {

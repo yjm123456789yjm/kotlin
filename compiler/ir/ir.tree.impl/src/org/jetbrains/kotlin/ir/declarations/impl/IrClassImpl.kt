@@ -34,13 +34,13 @@ open class IrClassImpl(
     override val kind: ClassKind,
     override var visibility: DescriptorVisibility,
     override var modality: Modality,
-    override val isCompanion: Boolean = false,
-    override var isInner: Boolean = false,
-    override val isData: Boolean = false,
-    override val isExternal: Boolean = false,
-    override val isInline: Boolean = false,
-    override val isExpect: Boolean = false,
-    override val isFun: Boolean = false,
+    isCompanion: Boolean = false,
+    isInner: Boolean = false,
+    isData: Boolean = false,
+    isExternal: Boolean = false,
+    isInline: Boolean = false,
+    isExpect: Boolean = false,
+    isFun: Boolean = false,
     override val source: SourceElement = SourceElement.NO_SOURCE,
     override val factory: IrFactory = IrFactoryImpl
 ) : IrClass() {
@@ -70,4 +70,44 @@ open class IrClassImpl(
     override var attributeOwnerId: IrAttributeContainer = this
 
     override var sealedSubclasses: List<IrClassSymbol> = emptyList()
+
+    private var flags =
+        collectFlags(
+            isCompanion = isCompanion,
+            isInner = isInner,
+            isData = isData,
+            isExternal = isExternal,
+            isInline = isInline,
+            isExpect = isExpect,
+            isFun = isFun
+        )
+
+    private fun getFlag(mask: Int) = (flags and mask) != 0
+
+    private fun setFlag(mask: Int, value: Boolean) {
+        flags = if (value) {
+            flags or mask
+        } else {
+            flags and mask.inv()
+        }
+    }
+
+    override val isCompanion: Boolean
+        get() = getFlag(IS_COMPANION)
+    override var isInner: Boolean
+        get() = getFlag(IS_INNER)
+        set(v) {
+            setFlag(IS_INNER, v)
+        }
+    override val isData: Boolean
+        get() = getFlag(IS_DATA)
+    override val isInline: Boolean
+        get() = getFlag(IS_INLINE)
+    override val isExpect: Boolean
+        get() = getFlag(IS_EXPECT)
+    override val isFun: Boolean
+        get() = getFlag(IS_FUN)
+    override val isExternal: Boolean
+        get() = getFlag(IS_EXTERNAL)
+
 }
