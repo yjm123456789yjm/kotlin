@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.light.classes.symbol
 
+import com.intellij.openapi.util.TextRange
 import com.intellij.psi.*
 import com.intellij.psi.impl.InheritanceImplUtil
 import com.intellij.psi.impl.PsiClassImplUtil
@@ -145,6 +146,8 @@ internal class FirLightAnonymousClassForSymbol(
 
     override fun copy() =
         FirLightAnonymousClassForSymbol(anonymousObjectSymbol, manager)
+
+    override fun getTextRange(): TextRange? = kotlinOrigin?.textRange ?: TextRange.EMPTY_RANGE
 
     override fun isValid(): Boolean = super.isValid() && anonymousObjectSymbol.isValid()
 
