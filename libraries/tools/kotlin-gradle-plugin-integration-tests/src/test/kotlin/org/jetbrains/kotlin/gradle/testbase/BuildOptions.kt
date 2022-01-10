@@ -101,7 +101,27 @@ data class BuildOptions(
         }
 
         if (jsOptions != null) {
-            jsOptions.incrementalJs?.let { arguments.add("-Pkotlin.incremental.js=$it") }
+            jsOptions.incrementalJs?.let {
+                if (jsOptions.useIrBackend == true) {
+                    arguments.add("-Pkotlin.incremental.js.ir=$it")
+                } else {
+                    when (jsOptions.jsCompilerType) {
+                        KotlinJsCompilerType.LEGACY -> {
+                            arguments.add("-Pkotlin.incremental.js=$it")
+                        }
+                        KotlinJsCompilerType.IR -> {
+                            arguments.add("-Pkotlin.incremental.js.ir=$it")
+                        }
+                        KotlinJsCompilerType.BOTH -> {
+                            arguments.add("-Pkotlin.incremental.js=$it")
+                            arguments.add("-Pkotlin.incremental.js.ir=$it")
+                        }
+                        null -> {
+                        }
+                    }
+                }
+
+            }
             jsOptions.incrementalJsKlib?.let { arguments.add("-Pkotlin.incremental.js.klib=$it") }
             jsOptions.useIrBackend?.let { arguments.add("-Pkotlin.js.useIrBackend=$it") }
             jsOptions.jsCompilerType?.let { arguments.add("-Pkotlin.js.compiler=$it") }

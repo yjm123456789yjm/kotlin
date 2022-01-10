@@ -40,12 +40,17 @@ abstract class AbstractJsConfigurationCacheIT(protected val irBackend: Boolean) 
     @DisplayName("configuration cache is working for kotlin/js browser project")
     @GradleTest
     fun testBrowserDistribution(gradleVersion: GradleVersion) {
-        project("kotlin-js-browser-project", gradleVersion) {
+        val buildOptions = defaultBuildOptions.copy(jsOptions = defaultJsOptions.copy(incrementalJs = false))
+        project(
+            "kotlin-js-browser-project",
+            gradleVersion,
+            buildOptions = buildOptions
+        ) {
             buildGradleKts.modify(::transformBuildScriptWithPluginsDsl)
 
             assertSimpleConfigurationCacheScenarioWorks(
                 ":app:build",
-                buildOptions = defaultBuildOptions,
+                buildOptions = buildOptions,
                 executedTaskNames = listOf(
                     ":app:packageJson",
                     ":app:publicPackageJson",
@@ -60,10 +65,15 @@ abstract class AbstractJsConfigurationCacheIT(protected val irBackend: Boolean) 
     @DisplayName("configuration cache is working for kotlin/js node project")
     @GradleTest
     fun testNodeJs(gradleVersion: GradleVersion) {
-        project("kotlin-js-nodejs-project", gradleVersion) {
+        val buildOptions = defaultBuildOptions.copy(jsOptions = defaultJsOptions.copy(incrementalJs = false))
+        project(
+            "kotlin-js-nodejs-project",
+            gradleVersion,
+            buildOptions = buildOptions
+        ) {
             assertSimpleConfigurationCacheScenarioWorks(
                 ":build",
-                buildOptions = defaultBuildOptions,
+                buildOptions = buildOptions,
                 executedTaskNames = listOf(
                     ":packageJson",
                     ":publicPackageJson",
