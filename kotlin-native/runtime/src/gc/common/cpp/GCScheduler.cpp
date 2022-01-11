@@ -71,8 +71,8 @@ public:
 
     // Called by the mutators or the timer thread.
     bool NeedsGC() const noexcept {
-        auto currentTimeProvider = currentTimeProvider_();
-        return currentTimeProvider >= lastGC_.load() + config_.regularGcInterval();
+        auto currentTime = currentTimeProvider_();
+        return currentTime >= lastGC_.load() + config_.regularGcInterval();
     }
 
     // Called by the GC thread.
