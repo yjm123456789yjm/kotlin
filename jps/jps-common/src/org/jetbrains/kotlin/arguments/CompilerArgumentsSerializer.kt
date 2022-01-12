@@ -19,27 +19,30 @@ class CompilerArgumentsSerializerV5<T : CommonToolArguments>(override val argume
         val newInstance = arguments::class.java.getConstructor().newInstance()
         val flagArgumentsByName = CompilerArgumentsContentProspector.getFlagCompilerArgumentProperties(arguments::class)
             .mapNotNull { prop ->
-                prop.safeAs<KProperty1<T, Boolean>>()
+                prop.safeAs<KProperty1<T, Any?>>()
                     ?.takeIf { it.get(arguments) != it.get(newInstance) }
                     ?.get(arguments)
+                    ?.safeAs<Boolean>()
                     ?.let { prop.name to it }
             }.toMap()
         saveFlagArguments(this, flagArgumentsByName)
 
         val stringArgumentsByName = CompilerArgumentsContentProspector.getStringCompilerArgumentProperties(arguments::class)
             .mapNotNull { prop ->
-                prop.safeAs<KProperty1<T, String?>>()
+                prop.safeAs<KProperty1<T, Any?>>()
                     ?.takeIf { it.get(arguments) != it.get(newInstance) }
                     ?.get(arguments)
+                    ?.safeAs<String>()
                     ?.let { prop.name to it }
             }.toMap()
         saveStringArguments(this, stringArgumentsByName)
 
         val arrayArgumentsByName = CompilerArgumentsContentProspector.getArrayCompilerArgumentProperties(arguments::class)
             .mapNotNull { prop ->
-                prop.safeAs<KProperty1<T, Array<String>?>>()
+                prop.safeAs<KProperty1<T, Any?>>()
                     ?.takeIf { it.get(arguments)?.contentEquals(it.get(newInstance)) != true }
                     ?.get(arguments)
+                    ?.safeAs<Array<String>>()
                     ?.let { prop.name to it }
             }.toMap()
         saveArrayArguments(this, arrayArgumentsByName)
