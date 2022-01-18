@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.test.services.configuration
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.backend.common.phaser.toPhaseMap
 import org.jetbrains.kotlin.backend.jvm.jvmPhases
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
@@ -25,7 +26,7 @@ import org.jetbrains.kotlin.test.MockLibraryUtil
 import org.jetbrains.kotlin.test.MockLibraryUtil.compileJavaFilesLibraryToJar
 import org.jetbrains.kotlin.test.TestJavacVersion
 import org.jetbrains.kotlin.test.TestJdkKind
-import org.jetbrains.kotlin.test.backend.handlers.PhasedIrDumpHandler
+import org.jetbrains.kotlin.test.backend.handlers.DUMPED_IR_FOLDER_NAME
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives
@@ -360,12 +361,13 @@ class JvmEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfig
     }
 
     private fun CompilerConfiguration.putCustomPhaseConfigWithEnabledDump(module: TestModule) {
-        val dumpDirectory = testServices.getOrCreateTempDirectory(PhasedIrDumpHandler.DUMPED_IR_FOLDER_NAME)
+        val dumpDirectory = testServices.getOrCreateTempDirectory(DUMPED_IR_FOLDER_NAME)
         val phases = module.directives[CodegenTestDirectives.DUMP_IR_FOR_GIVEN_PHASES].toSet()
         if (phases.isNotEmpty()) {
             val phaseConfig = PhaseConfig(
                 jvmPhases,
-                toDumpStateAfter = phases,
+//                toDumpStateAfter = jvmPhases.toPhaseMap().filter { it.key in phases }.map { it.value }.toSet(),
+                toDumpStateBefore = jvmPhases.toPhaseMap().filter { it.key in phases }.map { it.value }.toSet(),
                 dumpToDirectory = dumpDirectory.absolutePath
             )
             put(CLIConfigurationKeys.PHASE_CONFIG, phaseConfig)

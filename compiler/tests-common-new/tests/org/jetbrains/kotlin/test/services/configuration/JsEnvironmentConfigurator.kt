@@ -6,6 +6,8 @@
 package org.jetbrains.kotlin.test.services.configuration
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
+import org.jetbrains.kotlin.backend.common.phaser.toPhaseMap
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.config.CommonConfigurationKeys
@@ -14,6 +16,7 @@ import org.jetbrains.kotlin.descriptors.impl.ModuleDescriptorImpl
 import org.jetbrains.kotlin.config.AnalysisFlag
 import org.jetbrains.kotlin.config.AnalysisFlags.allowFullyQualifiedNameInKClass
 import org.jetbrains.kotlin.config.LanguageVersion
+import org.jetbrains.kotlin.ir.backend.js.jsPhases
 import org.jetbrains.kotlin.js.config.*
 import org.jetbrains.kotlin.js.facade.MainCallParameters
 import org.jetbrains.kotlin.library.KotlinLibrary
@@ -22,6 +25,8 @@ import org.jetbrains.kotlin.serialization.js.JsModuleDescriptor
 import org.jetbrains.kotlin.serialization.js.KotlinJavascriptSerializationUtil
 import org.jetbrains.kotlin.serialization.js.ModuleKind
 import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.test.backend.handlers.DUMPED_IR_FOLDER_NAME
+import org.jetbrains.kotlin.test.directives.CodegenTestDirectives
 import org.jetbrains.kotlin.test.directives.ConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives.ERROR_POLICY
@@ -279,6 +284,24 @@ class JsEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfigu
         )
 
         configuration.put(CommonConfigurationKeys.EXPECT_ACTUAL_LINKER, EXPECT_ACTUAL_LINKER in registeredDirectives)
+
+        if (CodegenTestDirectives.DUMP_IR_FOR_GIVEN_PHASES in module.directives) {
+            configuration.putCustomPhaseConfigWithEnabledDump(module)
+        }
+    }
+
+    private fun CompilerConfiguration.putCustomPhaseConfigWithEnabledDump(module: TestModule) {
+        val dumpDirectory = testServices.getOrCreateTempDirectory(DUMPED_IR_FOLDER_NAME)
+        val phases = module.directives[CodegenTestDirectives.DUMP_IR_FOR_GIVEN_PHASES].toSet()
+        if (phases.isNotEmpty()) {
+            val phaseConfig = PhaseConfig(
+                jsPhases,
+//                toDumpStateAfter = jsPhases.toPhaseMap().filter { it.key in phases }.map { it.value }.toSet(),
+                toDumpStateBefore = jsPhases.toPhaseMap().filter { it.key in phases }.map { it.value }.toSet(),
+                dumpToDirectory = dumpDirectory.absolutePath
+            )
+            put(CLIConfigurationKeys.PHASE_CONFIG, phaseConfig)
+        }
     }
 }
 

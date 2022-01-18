@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.js.test.ir
 
+import org.jetbrains.kotlin.ir.backend.js.functionInliningPhase
 import org.jetbrains.kotlin.js.test.AbstractJsBlackBoxCodegenTestBase
 import org.jetbrains.kotlin.js.test.converters.JsIrBackendFacade
 import org.jetbrains.kotlin.js.test.converters.JsKlibBackendFacade
@@ -13,9 +14,11 @@ import org.jetbrains.kotlin.js.test.handlers.*
 import org.jetbrains.kotlin.parsing.parseBoolean
 import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TargetBackend
+import org.jetbrains.kotlin.test.backend.handlers.PhasedJsIrDumpHandler
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.configureJsArtifactsHandlersStep
+import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.DUMP_IR_FOR_GIVEN_PHASES
 import org.jetbrains.kotlin.test.directives.JsEnvironmentConfigurationDirectives
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2IrConverter
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendFacade
@@ -88,7 +91,20 @@ open class AbstractIrJsCodegenBoxErrorTest : AbstractJsIrTest(
 open class AbstractIrJsCodegenInlineTest : AbstractJsIrTest(
     pathToTestDir = "compiler/testData/codegen/boxInline/",
     testGroupOutputDirPrefix = "codegen/irBoxInline/"
-)
+) {
+    override fun configure(builder: TestConfigurationBuilder) {
+        super.configure(builder)
+        with(builder) {
+            defaultDirectives {
+                DUMP_IR_FOR_GIVEN_PHASES with "FunctionInliningPhase"
+            }
+
+            configureJsArtifactsHandlersStep {
+                useHandlers(::PhasedJsIrDumpHandler)
+            }
+        }
+    }
+}
 
 open class AbstractIrJsTypeScriptExportTest : AbstractJsIrTest(
     pathToTestDir = "${JsEnvironmentConfigurator.TEST_DATA_DIR_PATH}/typescript-export/",
