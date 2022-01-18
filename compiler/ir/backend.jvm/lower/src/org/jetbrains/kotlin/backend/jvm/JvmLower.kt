@@ -57,15 +57,15 @@ private val validateIrAfterLowering = makeCustomPhase(
     description = "Validate IR after lowering"
 )
 
-private val stripTypeAliasDeclarationsPhase = makeIrFilePhase<CommonBackendContext>(
+private val stripTypeAliasDeclarationsPhase = makeIrModulePhase<CommonBackendContext>(
     { StripTypeAliasDeclarationsLowering() },
     name = "StripTypeAliasDeclarations",
     description = "Strip typealias declarations"
 )
 
 // TODO make all lambda-related stuff work with IrFunctionExpression and drop this phase
-private val provisionalFunctionExpressionPhase = makeIrFilePhase<CommonBackendContext>(
-//private val provisionalFunctionExpressionPhase = makeIrModulePhase<CommonBackendContext>(
+//private val provisionalFunctionExpressionPhase = makeIrFilePhase<CommonBackendContext>(
+private val provisionalFunctionExpressionPhase = makeIrModulePhase<CommonBackendContext>(
     { ProvisionalFunctionExpressionLowering() },
     name = "FunctionExpression",
     description = "Transform IrFunctionExpression to a local function reference"
@@ -84,22 +84,22 @@ internal val expectDeclarationsRemovingPhase = makeIrModulePhase(
     description = "Remove expect declaration from module fragment"
 )
 
-//private val lateinitNullableFieldsPhase = makeIrModulePhase(
-private val lateinitNullableFieldsPhase = makeIrFilePhase(
+private val lateinitNullableFieldsPhase = makeIrModulePhase(
+//private val lateinitNullableFieldsPhase = makeIrFilePhase(
     ::NullableFieldsForLateinitCreationLowering,
     name = "LateinitNullableFields",
     description = "Create nullable fields for lateinit properties"
 )
 
-//private val lateinitDeclarationLoweringPhase = makeIrModulePhase(
-private val lateinitDeclarationLoweringPhase = makeIrFilePhase(
+private val lateinitDeclarationLoweringPhase = makeIrModulePhase(
+//private val lateinitDeclarationLoweringPhase = makeIrFilePhase(
     ::NullableFieldsDeclarationLowering,
     name = "LateinitDeclarations",
     description = "Reference nullable fields from properties and getters + insert checks"
 )
 
-//private val lateinitUsageLoweringPhase = makeIrModulePhase(
-private val lateinitUsageLoweringPhase = makeIrFilePhase(
+private val lateinitUsageLoweringPhase = makeIrModulePhase(
+//private val lateinitUsageLoweringPhase = makeIrFilePhase(
     ::LateinitUsageLowering,
     name = "LateinitUsage",
     description = "Insert checks for lateinit field references"
@@ -151,7 +151,8 @@ internal val localDeclarationsPhase = makeIrFilePhase(
                 private fun scopedVisibility(inInlineFunctionScope: Boolean): DescriptorVisibility =
                     if (inInlineFunctionScope) DescriptorVisibilities.PUBLIC else JavaDescriptorVisibilities.PACKAGE_VISIBILITY
             },
-            forceFieldsForInlineCaptures = true
+            forceFieldsForInlineCaptures = true,
+//            suggestUniqueNames = false
         )
     },
     name = "JvmLocalDeclarations",
@@ -159,54 +160,9 @@ internal val localDeclarationsPhase = makeIrFilePhase(
     prerequisite = setOf(functionReferencePhase, sharedVariablesPhase)
 )
 
-internal val localDeclarationsPhase2 = makeIrFilePhase(
-//internal val localDeclarationsPhase = makeIrModulePhase(
-    { context ->
-        LocalDeclarationsLowering(
-            context,
-            object : LocalNameProvider {
-                override fun localName(declaration: IrDeclarationWithName): String =
-                    NameUtils.sanitizeAsJavaIdentifier(super.localName(declaration))
-            },
-            object : VisibilityPolicy {
-                // Note: any condition that results in non-`LOCAL` visibility here should be duplicated in `JvmLocalClassPopupLowering`,
-                // else it won't detect the class as local.
-                override fun forClass(declaration: IrClass, inInlineFunctionScope: Boolean): DescriptorVisibility =
-                    if (declaration.isGeneratedLambdaClass) {
-                        scopedVisibility(inInlineFunctionScope)
-                    } else {
-                        declaration.visibility
-                    }
-
-                override fun forConstructor(declaration: IrConstructor, inInlineFunctionScope: Boolean): DescriptorVisibility =
-                    if (declaration.parentAsClass.isAnonymousObject)
-                        scopedVisibility(inInlineFunctionScope)
-                    else
-                        declaration.visibility
-
-                override fun forCapturedField(value: IrValueSymbol): DescriptorVisibility =
-                    JavaDescriptorVisibilities.PACKAGE_VISIBILITY // avoid requiring a synthetic accessor for it
-
-                private fun scopedVisibility(inInlineFunctionScope: Boolean): DescriptorVisibility =
-                    if (inInlineFunctionScope) DescriptorVisibilities.PUBLIC else JavaDescriptorVisibilities.PACKAGE_VISIBILITY
-            },
-            forceFieldsForInlineCaptures = true
-        )
-    },
-    name = "JvmLocalDeclarations2",
-    description = "Move local declarations to classes",
-    prerequisite = setOf(functionReferencePhase, sharedVariablesPhase)
-)
-
 private val jvmLocalClassExtractionPhase = makeIrFilePhase(
     ::JvmLocalClassPopupLowering,
     name = "JvmLocalClassExtraction",
-    description = "Move local classes from field initializers and anonymous init blocks into the containing class"
-)
-
-private val jvmLocalClassExtractionPhase2 = makeIrFilePhase(
-    ::JvmLocalClassPopupLowering,
-    name = "JvmLocalClassExtraction2",
     description = "Move local classes from field initializers and anonymous init blocks into the containing class"
 )
 
@@ -312,14 +268,6 @@ private val returnableBlocksPhase = makeIrFilePhase(
     prerequisite = setOf(arrayConstructorPhase, assertionPhase)
 )
 
-private val returnableBlocksPhase2 = makeIrFilePhase(
-    ::ReturnableBlockLowering,
-    name = "ReturnableBlock2",
-    description = "Replace returnable blocks with do-while(false) loops",
-//    prerequisite = setOf(functionInliningPhase)
-)
-
-
 private val syntheticAccessorPhase = makeIrFilePhase(
     ::SyntheticAccessorLowering,
     name = "SyntheticAccessor",
@@ -339,32 +287,32 @@ private val kotlinNothingValueExceptionPhase = makeIrFilePhase<CommonBackendCont
     description = "Throw proper exception for calls returning value of type 'kotlin.Nothing'"
 )
 
-//private val localClassesInInlineLambdasPhase = makeIrModulePhase(
-private val localClassesInInlineLambdasPhase = makeIrFilePhase(
+private val localClassesInInlineLambdasPhase = makeIrModulePhase(
+//private val localClassesInInlineLambdasPhase = makeIrFilePhase(
     ::LocalClassesInInlineLambdasLowering,
     name = "LocalClassesInInlineLambdasPhase",
     description = "Extract local classes from inline lambdas",
 //    prerequisite = setOf(inventNamesForLocalClassesPhase)
 )
 
-//private val localClassesInInlineFunctionsPhase = makeIrModulePhase(
-private val localClassesInInlineFunctionsPhase = makeIrFilePhase(
+private val localClassesInInlineFunctionsPhase = makeIrModulePhase(
+//private val localClassesInInlineFunctionsPhase = makeIrFilePhase(
     ::LocalClassesInInlineFunctionsLowering,
     name = "LocalClassesInInlineFunctionsPhase",
     description = "Extract local classes from inline functions",
 //    prerequisite = setOf(inventNamesForLocalClassesPhase)
 )
 
-//private val localClassesExtractionFromInlineFunctionsPhase = makeIrModulePhase(
-private val localClassesExtractionFromInlineFunctionsPhase = makeIrFilePhase(
+private val localClassesExtractionFromInlineFunctionsPhase = makeIrModulePhase(
+//private val localClassesExtractionFromInlineFunctionsPhase = makeIrFilePhase(
     ::LocalClassesExtractionFromInlineFunctionsLowering,
     name = "localClassesExtractionFromInlineFunctionsPhase",
     description = "Move local classes from inline functions into nearest declaration container",
 //    prerequisite = setOf(localClassesInInlineFunctionsPhase)
 )
 
-private val functionInliningPhase = makeIrFilePhase<JvmBackendContext>(
-//private val functionInliningPhase = makeIrModulePhase<JvmBackendContext>(
+//private val functionInliningPhase = makeIrFilePhase<JvmBackendContext>(
+private val functionInliningPhase = makeIrModulePhase<JvmBackendContext>(
     { context ->
         class JvmInlineFunctionResolver : InlineFunctionResolver {
             override fun getFunctionDeclaration(symbol: IrFunctionSymbol): IrFunction {
@@ -390,31 +338,12 @@ private val functionInliningPhase = makeIrFilePhase<JvmBackendContext>(
 )
 
 private val jvmFilePhases = listOf(
-    typeAliasAnnotationMethodsPhase,
-    stripTypeAliasDeclarationsPhase,
 
-    jvmOverloadsAnnotationPhase,
-    mainMethodGenerationPhase,
-
-    inventNamesForLocalClassesPhase,
     kCallableNamePropertyPhase,
     annotationPhase,
     annotationImplementationPhase,
     polymorphicSignaturePhase,
     varargPhase,
-
-    lateinitNullableFieldsPhase,
-    lateinitDeclarationLoweringPhase,
-    lateinitUsageLoweringPhase,
-
-    localClassesInInlineLambdasPhase,
-    localClassesInInlineFunctionsPhase,
-    localClassesExtractionFromInlineFunctionsPhase,
-
-    functionInliningPhase, // not working because it will copy local class before local lowering => name clash
-    provisionalFunctionExpressionPhase,
-    inventNamesForLocalClassesPhase2,
-
 
     inlineCallableReferenceToLambdaPhase,
     functionReferencePhase,
@@ -446,26 +375,11 @@ private val jvmFilePhases = listOf(
 
     assertionPhase,
     returnableBlocksPhase,
-    sharedVariablesPhase,
-
-
-//    functionInliningPhase,
-//    returnableBlocksPhase2,
-//    provisionalFunctionExpressionPhase,
-    //functionReferencePhase2,
 
     localDeclarationsPhase,
     makePatchParentsPhase(2),
 
     jvmLocalClassExtractionPhase,
-
-
-
-//    inlineFunctionReferenceLowering,
-
-//    inlineCallableReferenceToLambdaPhase2,
-//    localDeclarationsPhase2,
-//    jvmLocalClassExtractionPhase2,
 
     staticCallableReferencePhase,
 
@@ -537,6 +451,26 @@ val jvmLoweringPhases = NamedCompilerPhase(
             fileClassPhase then
             jvmStaticInObjectPhase then
             repeatedAnnotationPhase then
+
+            typeAliasAnnotationMethodsPhase then
+            stripTypeAliasDeclarationsPhase then
+            jvmOverloadsAnnotationPhase then
+            mainMethodGenerationPhase then
+            inventNamesForLocalClassesPhase then
+            sharedVariablesPhase then
+
+            lateinitNullableFieldsPhase then
+            lateinitDeclarationLoweringPhase then
+            lateinitUsageLoweringPhase then
+
+            localClassesInInlineLambdasPhase then
+            localClassesInInlineFunctionsPhase then
+            localClassesExtractionFromInlineFunctionsPhase then
+
+            functionInliningPhase then
+            provisionalFunctionExpressionPhase then
+            inventNamesForLocalClassesPhase2 then
+
             performByIrFile(lower = jvmFilePhases) then
             generateMultifileFacadesPhase then
             resolveInlineCallsPhase then
