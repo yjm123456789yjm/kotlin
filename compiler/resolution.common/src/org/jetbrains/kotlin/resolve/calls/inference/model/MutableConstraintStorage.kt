@@ -90,6 +90,9 @@ class MutableVariableWithConstraints private constructor(
                             isNullabilityConstraint = false
                         )
                     } else constraint
+                    if (actualConstraint in constraints) {
+                        return actualConstraint to false
+                    }
                     mutableConstraints.add(actualConstraint)
                     simplifiedConstraints = null
                     return actualConstraint to true
