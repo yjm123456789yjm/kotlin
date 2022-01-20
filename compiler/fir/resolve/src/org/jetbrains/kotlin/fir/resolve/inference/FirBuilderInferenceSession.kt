@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.expressions.FirResolvable
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.resolve.calls.Candidate
 import org.jetbrains.kotlin.fir.resolve.calls.ResolutionContext
+import org.jetbrains.kotlin.fir.resolve.calls.candidate
 import org.jetbrains.kotlin.fir.resolve.substitution.ChainedSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.types.*
@@ -32,6 +33,7 @@ class FirBuilderInferenceSession(
     private val lambda: FirAnonymousFunction,
     resolutionContext: ResolutionContext,
     private val stubsForPostponedVariables: Map<ConeTypeVariable, ConeStubType>,
+    private val postponedArgumentsAnalyzer: PostponedArgumentsAnalyzer,
 ) : FirInferenceSessionForChainedResolve(resolutionContext) {
     private val commonCalls: MutableList<Pair<FirStatement, Candidate>> = mutableListOf()
 
@@ -116,19 +118,40 @@ class FirBuilderInferenceSession(
             updateCalls(commonSystem)
             return null
         }
+        @Suppress("UNCHECKED_CAST")
+        val notCompletedCalls = partiallyResolvedCalls.mapNotNull { partiallyResolvedCall ->
+            partiallyResolvedCall.first.takeIf { resolvable ->
+                resolvable.candidate() != null
+            }
+        }
+
 
         val context = commonSystem.asConstraintSystemCompleterContext()
         @Suppress("UNCHECKED_CAST")
         components.callCompleter.completer.complete(
             context,
             completionMode,
-            partiallyResolvedCalls.map { it.first as FirStatement },
+            notCompletedCalls as List<FirStatement>,
             components.session.builtinTypes.unitType.type, resolutionContext,
             collectVariablesFromContext = true
-        ) {
-            error("Shouldn't be called in complete constraint system mode")
+        ) { lambdaAtom ->
+            // Reversed here bc we want top-most call to avoid exponential visit
+            val containingCandidateForLambda = notCompletedCalls.asReversed().first {
+                var found = false
+                it.processAllContainingCallCandidates(processBlocks = true) { subCandidate ->
+                    if (subCandidate.postponedAtoms.contains(lambdaAtom)) {
+                        found = true
+                    }
+                }
+                found
+            }.candidate
+            postponedArgumentsAnalyzer.analyze(
+                commonSystem,
+                lambdaAtom,
+                containingCandidateForLambda,
+                ConstraintSystemCompletionMode.FULL,
+            )
         }
-
         updateCalls(commonSystem)
 
         @Suppress("UNCHECKED_CAST")

@@ -157,9 +157,7 @@ class FirCallCompleter(
 
             ConstraintSystemCompletionMode.PARTIAL -> {
                 runCompletionForCall(candidate, completionMode, call, initialType, analyzer)
-                if (inferenceSession !is FirBuilderInferenceSession) {
-                    inferenceSession.addPartiallyResolvedCall(call)
-                }
+                inferenceSession.addPartiallyResolvedCall(call)
                 CompletionResult(call, false)
             }
 
@@ -304,7 +302,8 @@ class FirCallCompleter(
                 FirBuilderInferenceSession(
                     lambdaArgument,
                     transformer.resolutionContext,
-                    stubsForPostponedVariables as Map<ConeTypeVariable, ConeStubType>
+                    stubsForPostponedVariables as Map<ConeTypeVariable, ConeStubType>,
+                    createPostponedArgumentsAnalyzer(transformer.resolutionContext)
                 )
             }
 
