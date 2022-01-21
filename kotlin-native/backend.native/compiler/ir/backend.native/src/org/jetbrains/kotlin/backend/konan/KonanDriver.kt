@@ -8,8 +8,10 @@ package org.jetbrains.kotlin.backend.konan
 import org.jetbrains.kotlin.analyzer.AnalysisResult
 import org.jetbrains.kotlin.backend.common.phaser.CompilerPhase
 import org.jetbrains.kotlin.backend.common.phaser.invokeToplevel
+import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
 import org.jetbrains.kotlin.cli.common.messages.AnalyzerWithCompilerReport
 import org.jetbrains.kotlin.cli.jvm.compiler.KotlinCoreEnvironment
+import org.jetbrains.kotlin.config.CommonConfigurationKeys
 import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
@@ -46,8 +48,11 @@ internal fun Context.frontendPhase(): Boolean {
     lateinit var analysisResult: AnalysisResult
 
     do {
-        val analyzerWithCompilerReport = AnalyzerWithCompilerReport(messageCollector,
-                environment.configuration.languageVersionSettings)
+        val analyzerWithCompilerReport = AnalyzerWithCompilerReport(
+                messageCollector,
+                environment.configuration.languageVersionSettings,
+                environment.configuration.getBoolean(CLIConfigurationKeys.RENDER_DIAGNOSTIC_INTERNAL_NAME)
+        )
 
         // Build AST and binding info.
         analyzerWithCompilerReport.analyzeAndReport(environment.getSourceFiles()) {

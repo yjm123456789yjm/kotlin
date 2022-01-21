@@ -404,6 +404,9 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     )
     var normalizeAbsolutePath: Boolean by FreezableVar(false)
 
+    @Argument(value = "-Xrender-internal-diagnostic-names", description = "Render internal names of warnings and errors")
+    var renderInternalDiagnosticNames: Boolean by FreezableVar(false)
+
     open fun configureAnalysisFlags(collector: MessageCollector, languageVersion: LanguageVersion): MutableMap<AnalysisFlag<*>, Any> {
         return HashMap<AnalysisFlag<*>, Any>().apply {
             put(AnalysisFlags.skipMetadataVersionCheck, skipMetadataVersionCheck)
