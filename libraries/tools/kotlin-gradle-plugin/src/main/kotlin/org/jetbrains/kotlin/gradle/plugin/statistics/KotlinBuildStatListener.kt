@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.incremental.ChangedFiles
 import org.jetbrains.kotlin.utils.addToStdlib.measureTimeMillisWithResult
 import java.net.InetAddress
 import java.util.*
+import java.util.function.Consumer
 import kotlin.system.measureTimeMillis
 
 enum class TaskExecutionState {
@@ -32,16 +33,12 @@ enum class TaskExecutionState {
     ;
 }
 
-class KotlinBuildStatListener(val projectName: String, val reportStatistics: List<ReportStatistics>) :
+class KotlinBuildStatListener(
+    val projectName: String,
+    val reportStatistics: List<ReportStatistics>,
+    val worker: Consumer<Runnable>
+) :
     OperationCompletionListener, AutoCloseable {
-
-    companion object {
-        /*
-            All listeners process events in single thread pool. After build finished it has only 60 seconds to finish processing.
-            Our listeners should not spend significant amount of time during event processing.
-        */
-        const val LIMIT_DURATION_MS = 5 * 1000
-    }
 
     private val log = Logging.getLogger(this.javaClass)
     val buildUuid: String = UUID.randomUUID().toString()
@@ -55,28 +52,25 @@ class KotlinBuildStatListener(val projectName: String, val reportStatistics: Lis
     }
 
     override fun onFinish(event: FinishEvent?) {
-        val measuredTimeMs = measureTimeMillis {
-            if (event is TaskFinishEvent) {
-                val result = event.result
-                val taskPath = event.descriptor.taskPath
-                val duration = result.endTime - result.startTime
-                val taskResult = when (result) {
-                    is TaskSuccessResult -> when {
-                        result.isFromCache -> TaskExecutionState.FROM_CACHE
-                        result.isUpToDate -> TaskExecutionState.UP_TO_DATE
-                        else -> TaskExecutionState.SUCCESS
-                    }
-
-                    is TaskSkippedResult -> TaskExecutionState.SKIPPED
-                    is TaskFailureResult -> TaskExecutionState.FAILED
-                    else -> TaskExecutionState.UNKNOWN
+        if (event is TaskFinishEvent) {
+            val result = event.result
+            val taskPath = event.descriptor.taskPath
+            val duration = result.endTime - result.startTime
+            val taskResult = when (result) {
+                is TaskSuccessResult -> when {
+                    result.isFromCache -> TaskExecutionState.FROM_CACHE
+                    result.isUpToDate -> TaskExecutionState.UP_TO_DATE
+                    else -> TaskExecutionState.SUCCESS
                 }
 
+                is TaskSkippedResult -> TaskExecutionState.SKIPPED
+                is TaskFailureResult -> TaskExecutionState.FAILED
+                else -> TaskExecutionState.UNKNOWN
+            }
+
+            worker.accept {
                 reportData(taskPath, duration, taskResult)
             }
-        }
-        if (measuredTimeMs > LIMIT_DURATION_MS) {
-            log.warn("Exceed time limit for $event. Takes ${measuredTimeMs}ms ")
         }
     }
 

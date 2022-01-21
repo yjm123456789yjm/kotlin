@@ -22,6 +22,9 @@ import org.jetbrains.kotlin.gradle.report.BuildReportType
 import org.jetbrains.kotlin.gradle.report.ReportingSettings
 import org.jetbrains.kotlin.gradle.report.reportingSettings
 import java.io.File
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
+import java.util.concurrent.TimeUnit
 
 internal abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBuildServices.Parameters>, AutoCloseable {
 
@@ -45,16 +48,24 @@ internal abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBui
         buildHandler.buildFinished(parameters.buildDir, parameters.rootDir)
         log.kotlinDebug(DISPOSE_MESSAGE)
 
+        buildMetricReporterWorker.shutdown()
+        if (!buildMetricReporterWorker.awaitTermination(timeoutInSeconds, TimeUnit.SECONDS)) {//TODO timeout to parameters
+            buildMetricReporterWorker.shutdownNow()
+        }
         TaskLoggers.clear()
         TaskExecutionResults.clear()
     }
 
     companion object {
+        private const val timeoutInSeconds = 10L
+
+        private lateinit var buildMetricReporterWorker: ExecutorService
 
         fun registerIfAbsent(project: Project): Provider<KotlinGradleBuildServices> = project.gradle.sharedServices.registerIfAbsent(
             "kotlin-build-service-${KotlinGradleBuildServices::class.java.canonicalName}_${KotlinGradleBuildServices::class.java.classLoader.hashCode()}",
             KotlinGradleBuildServices::class.java
         ) { service ->
+            buildMetricReporterWorker = Executors.newSingleThreadExecutor()
             service.parameters.rootDir = project.rootProject.rootDir
             service.parameters.buildDir = project.rootProject.buildDir
 
@@ -81,7 +92,9 @@ internal abstract class KotlinGradleBuildServices : BuildService<KotlinGradleBui
 
             if (listeners.get().isNotEmpty()) {
                 val listenerRegistryHolder = BuildEventsListenerRegistryHolder.getInstance(project)
-                val statListener = KotlinBuildStatListener(project.rootProject.name, listeners.get())
+                val statListener = KotlinBuildStatListener(project.rootProject.name, listeners.get()) {
+                    buildMetricReporterWorker.submit(it)
+                }
                 listenerRegistryHolder.listenerRegistry.onTaskCompletion(project.provider { statListener })
             }
         }
