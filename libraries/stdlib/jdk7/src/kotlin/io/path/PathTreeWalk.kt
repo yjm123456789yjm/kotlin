@@ -172,7 +172,6 @@ private class PathTreeWalk(
     private inner class BFSPathTreeWalkIterator : AbstractIterator<Path>() {
         // Queue of entries to be visited. Entries at current depth are divided from the next depth entries by a `null`.
         private val queue = ArrayDeque<Path?>()
-        private var depth = 0
 
         init {
             queue.addLast(start)
@@ -195,10 +194,9 @@ private class PathTreeWalk(
 
             if (path == null) {
                 if (queue.isNotEmpty()) {
-                    // all entries in current depth were visited, seperated entries at the next depth from their children
+                    // all entries in current depth were visited, separate entries at the next depth from their children
                     queue.addLast(null)
                 }
-                depth += 1
                 return gotoNext()
             }
             if (!path.isDirectory(*linkOptions)) {
