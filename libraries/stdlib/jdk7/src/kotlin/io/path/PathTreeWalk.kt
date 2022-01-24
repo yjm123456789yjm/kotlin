@@ -8,7 +8,6 @@
 
 package kotlin.io.path
 
-import java.io.IOException
 import java.nio.file.*
 
 
@@ -45,151 +44,72 @@ private class PathTreeWalk(
     private val linkOptions: Array<LinkOption>
         get() = LinkFollowing.toOptions(followLinks = options.contains(PathWalkOption.FOLLOW_LINKS))
 
-    private val excludeDirectories: Boolean
-        get() = !options.contains(PathWalkOption.INCLUDE_DIRECTORIES)
+    private val includeDirectories: Boolean
+        get() = options.contains(PathWalkOption.INCLUDE_DIRECTORIES)
 
     private val isBFS: Boolean
         get() = options.contains(PathWalkOption.BFS)
 
 
     /** Returns an iterator walking through files. */
-    override fun iterator(): Iterator<Path> = if (isBFS) BFSPathTreeWalkIterator() else DSFPathTreeWalkIterator()
+    override fun iterator(): Iterator<Path> = if (isBFS) bfsIterator() else dfsIterator()
 
-    private inner class DSFPathTreeWalkIterator : AbstractIterator<Path>() {
-
-        // Stack of directory states, beginning from the start directory
-        private val state = ArrayList<WalkState>()
-
-        init {
-            when {
-                start.isDirectory(*linkOptions) -> state.add(DirectoryState(start))
-                start.exists(LinkOption.NOFOLLOW_LINKS) -> state.add(SingleFileState(start))
-                else -> done()
-            }
+    private fun dfsIterator() = iterator<Path> {
+        if (!start.isDirectory(*linkOptions)) {
+            if (start.exists(LinkOption.NOFOLLOW_LINKS)) yield(start)
+            return@iterator
         }
 
-        override fun computeNext() {
-            val next = gotoNext()
-            if (next != null)
-                setNext(next)
-            else
-                done()
-        }
+        // Stack of directory iterators, beginning from the start directory
+        val iterators = ArrayList<Iterator<Path>>()
 
-        private tailrec fun gotoNext(): Path? {
-            // Take next file from the top of the stack or return if there's nothing left
-            val topState = state.lastOrNull() ?: return null
-            val path = topState.step()
-            if (path == null) {
+        if (includeDirectories) yield(start)
+        iterators.add(start.directoryEntriesIterator())
+
+        while (iterators.isNotEmpty()) {
+            val topIterator = iterators.last()
+            if (!topIterator.hasNext()) {
                 // There is nothing more on the top of the stack, go back
-                state.removeLast()
-                return gotoNext()
+                iterators.removeLast()
+                continue
+            }
+
+            val path = topIterator.next()
+
+            // Check that file/directory matches the filter
+            if (!path.isDirectory(*linkOptions)) {
+                // Proceed to a simple file
+                yield(path)
             } else {
-                // Check that file/directory matches the filter
-                if (path == topState.root || !path.isDirectory(*linkOptions)) {
-                    // Proceed to a root directory or a simple file
-                    return path
-                } else {
-                    // Proceed to a sub-directory
-                    state.add(DirectoryState(path))
-                    return gotoNext()
-                }
+                if (includeDirectories) yield(path)
+                // Proceed to a subdirectory
+                iterators.add(path.directoryEntriesIterator())
             }
-        }
-
-        /** Visiting in bottom-up order */
-        private inner class DirectoryState(rootDir: Path) : WalkState(rootDir) {
-
-            private var visitRoot = options.contains(PathWalkOption.INCLUDE_DIRECTORIES)
-
-            private var fileList: List<Path>? = null
-
-            private var fileIndex = 0
-
-            private var failed = false
-
-            override fun step(): Path? {
-                if (visitRoot) {
-                    visitRoot = false
-                    // visit the root dir before entries
-                    return root
-                }
-                if (!failed && fileList == null) {
-                    try {
-                        // TODO: the path may have been deleted using deleteRecursively applied to the parent path
-                        fileList = root.listDirectoryEntries()
-                    } catch (e: IOException) { // NotDirectoryException is also an IOException
-                        failed = true
-                        throw e
-                    }
-                }
-                if (fileList != null && fileIndex < fileList!!.size) {
-                    // visit all entries
-                    return fileList!![fileIndex++]
-                }
-
-                // That's all
-                return null
-            }
-        }
-
-        private inner class SingleFileState(rootFile: Path) : WalkState(rootFile) {
-            private var visited: Boolean = false
-
-            init {
-                assert(rootFile.exists(LinkOption.NOFOLLOW_LINKS)) { "rootFile must exist." }
-            }
-
-            override fun step(): Path? {
-                if (visited) return null
-                visited = true
-                return root
-            }
-        }
-
-        /** Abstract class that encapsulates file visiting in some order, beginning from a given [root] */
-        private abstract inner class WalkState(val root: Path) {
-            /** Call of this function proceeds to a next file for visiting and returns it */
-            public abstract fun step(): Path?
         }
     }
 
-    private inner class BFSPathTreeWalkIterator : AbstractIterator<Path>() {
-        // Queue of entries to be visited. Entries at current depth are divided from the next depth entries by a `null`.
-        private val queue = ArrayDeque<Path?>()
+    private fun Path.directoryEntriesIterator() = listDirectoryEntries().iterator()
 
-        init {
-            queue.addLast(start)
-            queue.addLast(null)
+    private fun bfsIterator() = iterator<Path> {
+        if (!start.isDirectory(*linkOptions)) {
+            if (start.exists(LinkOption.NOFOLLOW_LINKS)) yield(start)
+            return@iterator
         }
 
-        override fun computeNext() {
-            val next = gotoNext()
-            if (next != null)
-                setNext(next)
-            else
-                done()
-        }
+        // Queue of entries to be visited.
+        val queue = ArrayDeque<Path>()
+        queue.addLast(start)
 
-        private tailrec fun gotoNext(): Path? {
-            if (queue.isEmpty()) return null
-
+        while (queue.isNotEmpty()) {
             // TODO: the path may have been deleted using deleteRecursively applied to the parent path
             val path = queue.removeFirst()
 
-            if (path == null) {
-                if (queue.isNotEmpty()) {
-                    // all entries in current depth were visited, separate entries at the next depth from their children
-                    queue.addLast(null)
-                }
-                return gotoNext()
-            }
             if (!path.isDirectory(*linkOptions)) {
-                return path
+                yield(path)
+            } else {
+                if (includeDirectories) yield(path)
+                queue.addAll(path.listDirectoryEntries()) // Don't catch IOExceptions
             }
-            val entries = path.listDirectoryEntries() // Don't catch IOExceptions
-            queue.addAll(entries)
-            return if (excludeDirectories) gotoNext() else path
         }
     }
 }
