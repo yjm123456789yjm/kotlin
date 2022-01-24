@@ -229,43 +229,38 @@ public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int, options
     Files.walkFileTree(this, options, maxDepth, visitor)
 }
 
-public class PathTreeVisitor private constructor(
-    private val onFile: ((Path) -> Unit)?,
-    private val onEnter: ((Path) -> Boolean)?,
-    private val onLeave: ((Path) -> Unit)?,
-    private val onFail: ((f: Path, e: IOException) -> Unit)?,
-    private val maxDepth: Int = Int.MAX_VALUE
+
+// TODO: What to do when the callbacks throw? rethrow or pass to onFail
+internal class SecurePathTreeWalker private constructor(
+    private var onFile: ((Path) -> Unit)?,
+    private var onEnter: ((Path) -> Boolean)?,
+    private var onLeave: ((Path) -> Unit)?,
+    private var onFail: ((f: Path, e: IOException) -> Unit)?,
 ) {
-    public constructor() : this(
+    constructor() : this(
         onFile = null,
         onEnter = null,
         onLeave = null,
         onFail = null
     )
 
-    public fun onFile(function: (Path) -> Unit): PathTreeVisitor {
-        return PathTreeVisitor(onFile = function, onEnter, onLeave, onFail, maxDepth)
+    fun onFile(function: (Path) -> Unit): SecurePathTreeWalker {
+        return this.apply { onFile = function }
     }
 
-    public fun onEnterDirectory(function: (Path) -> Boolean): PathTreeVisitor {
-        return PathTreeVisitor(onFile, onEnter = function, onLeave, onFail, maxDepth)
+    fun onEnterDirectory(function: (Path) -> Boolean): SecurePathTreeWalker {
+        return this.apply { onEnter = function }
     }
 
-    public fun onLeaveDirectory(function: (Path) -> Unit): PathTreeVisitor {
-        return PathTreeVisitor(onFile, onEnter, onLeave = function, onFail, maxDepth)
+    fun onLeaveDirectory(function: (Path) -> Unit): SecurePathTreeWalker {
+        return this.apply { onLeave = function }
     }
 
-    public fun onFail(function: (Path, IOException) -> Unit): PathTreeVisitor {
-        return PathTreeVisitor(onFile, onEnter, onLeave, onFail = function, maxDepth)
+    fun onFail(function: (Path, IOException) -> Unit): SecurePathTreeWalker {
+        return this.apply { onFail = function }
     }
 
-    public fun maxDepth(depth: Int): PathTreeVisitor {
-        if (depth <= 0)
-            throw IllegalArgumentException("depth must be positive, but was $depth.")
-        return PathTreeVisitor(onFile, onEnter, onLeave, onFail, maxDepth = depth)
-    }
-
-    internal fun walk(path: Path, followLinks: Boolean): Unit {
+    fun walk(path: Path, followLinks: Boolean): Unit {
         val linkOptions = LinkFollowing.toOptions(followLinks)
 
         if (path.isDirectory(*linkOptions)) {
@@ -284,9 +279,9 @@ public class PathTreeVisitor private constructor(
             // behavior not documented for symlinks
             Files.newDirectoryStream(path).use { directoryStream ->
                 if (directoryStream is SecureDirectoryStream) {
-                    directoryStream.walkEntries(linkOptions, 1)
+                    directoryStream.walkEntries(linkOptions)
                 } else {
-                    directoryStream.walkEntries(linkOptions, 1)
+                    directoryStream.walkEntries(linkOptions)
                 }
             }
         } catch (e: IOException) {
@@ -308,28 +303,26 @@ public class PathTreeVisitor private constructor(
 
     // secure walk
 
-    private fun SecureDirectoryStream<Path>.walkEntries(linkOptions: Array<LinkOption>, depth: Int) {
+    private fun SecureDirectoryStream<Path>.walkEntries(linkOptions: Array<LinkOption>) {
         for (entry in this) {
             if (isDirectory(entry, linkOptions)) {
-                enterDirectory(entry, linkOptions, depth)
+                enterDirectory(entry, linkOptions)
             } else {
                 onFile?.invoke(entry)
             }
         }
     }
 
-    private fun SecureDirectoryStream<Path>.enterDirectory(path: Path, linkOptions: Array<LinkOption>, depth: Int) {
+    private fun SecureDirectoryStream<Path>.enterDirectory(path: Path, linkOptions: Array<LinkOption>) {
         if (onEnter?.invoke(path) == false) {
             return
         }
 
-        if (depth < maxDepth) {
-            try {
-                newDirectoryStream(path).use { it.walkEntries(linkOptions, depth + 1) }
-            } catch (e: IOException) {
-                // should SecurityException be also caught and passed to onFail?
-                onFail?.invoke(path, e)
-            }
+        try {
+            this.newDirectoryStream(path).use { it.walkEntries(linkOptions) }
+        } catch (e: IOException) {
+            // should SecurityException be also caught and passed to onFail?
+            onFail?.invoke(path, e)
         }
 
         onLeave?.invoke(path)
@@ -341,28 +334,26 @@ public class PathTreeVisitor private constructor(
 
     // insecure walk
 
-    private fun DirectoryStream<Path>.walkEntries(linkOptions: Array<LinkOption>, depth: Int) {
+    private fun DirectoryStream<Path>.walkEntries(linkOptions: Array<LinkOption>) {
         for (entry in this) {
             if (entry.isDirectory(*linkOptions)) {
-                enterDirectory(entry, linkOptions, depth)
+                enterDirectory(entry, linkOptions)
             } else {
                 onFile?.invoke(entry)
             }
         }
     }
 
-    private fun DirectoryStream<Path>.enterDirectory(path: Path, linkOptions: Array<LinkOption>, depth: Int) {
+    private fun enterDirectory(path: Path, linkOptions: Array<LinkOption>) {
         if (onEnter?.invoke(path) == false) {
             return
         }
 
-        if (depth < maxDepth) {
-            try {
-                Files.newDirectoryStream(path).use { it.walkEntries(linkOptions, depth + 1) }
-            } catch (e: IOException) {
-                // should SecurityException be also caught and passed to onFail?
-                onFail?.invoke(path, e)
-            }
+        try {
+            Files.newDirectoryStream(path).use { it.walkEntries(linkOptions) }
+        } catch (e: IOException) {
+            // should SecurityException be also caught and passed to onFail?
+            onFail?.invoke(path, e)
         }
 
         onLeave?.invoke(path)

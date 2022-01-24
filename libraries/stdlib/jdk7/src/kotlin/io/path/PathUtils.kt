@@ -271,6 +271,7 @@ internal object LinkFollowing {
 
 /**
  * Copies this file with all its children to the specified destination [target] path.
+ * Note that if this function fails, then partial copying may have taken place.
  *
  * Unlike `File.copyRecursively`, if some directories on the way to the [target] are missing, then they won't be created automatically.
  * You can use the following approach to ensure that required intermediate directories are created:
@@ -281,104 +282,48 @@ internal object LinkFollowing {
  * If this file path points to a single file, then it will be copied to a file with the path [target].
  * If this file path points to a directory, then its children will be copied to a directory with the path [target].
  *
- * If the [target] already exists, it will be deleted before copying when the [overwrite] parameter permits so.
+ * If an I/O exception occurs attempting to read, open or copy any file under the given directory,
+ * this method skips that file and continues. All such exceptions are collected and, after attempting to copy all files,
+ * an [IOException] is thrown containing those exceptions as suppressed exceptions.
  *
- * The operation doesn't preserve copied file attributes such as creation/modification date, permissions, etc.
- *
- * If any errors occur during the copying, then further actions will depend on the result of the call
- * to `onError(Path, IOException)` function, that will be called with arguments,
- * specifying path of the file that caused the error and the exception itself.
- * By default this function rethrows exceptions.
- *
- * Exceptions that can be passed to the `onError` function:
- *
- * - [NoSuchFileException] - if there was an attempt to copy a non-existent file
- * - [FileAlreadyExistsException] - if there is a conflict
- * - [AccessDeniedException] - if there was an attempt to open a directory that didn't succeed.
- * - [IOException] - if some problems occur when copying.
- *
- * Note that if this function fails, then partial copying may have taken place.
- *
- * @param overwrite `true` if it is allowed to overwrite existing destination files and directories.
- * @param followLinks `true` to recursively copy the file/directory a symbolic link points to,
- * `false` (default) to copy only the symbolic link itself.
- * @return `false` if the copying was terminated, `true` otherwise.
+ * @param target the destination path to copy recursively this file to.
+ * @param followLinks `true` to traverse for copying content of the directory a symbolic link points to, `false` by default.
+ * @param copyFunction the function to call for copying source files/directories to their destination path rooted in [target].
+ * By default, it throws if the destination file already exists,
+ * it doesn't preserve copied file attributes such as creation/modification date, permissions, etc.,
+ * and it copies symbolic links met, not the files they point to.
+ * @throws NoSuchFileException if the file located by this path does not exist.
+ * @throws IOException if any file in the tree can't be copied for any reason.
  */
 public fun Path.copyRecursively(
     target: Path,
     followLinks: Boolean = false,
-    copyFunction: (source: Path, destination: Path) -> Unit = { src, dst -> copyThrowOnError(src, dst, followLinks) }
-) {
+    // TODO: Test when the destination directory already exists.
+    // TODO: Should followLinks value be used in copyTo ?
+    // TODO: Should exceptions thrown from copyFunction be suppressed ? It can throw any exception in contrast to deleteRecursively
+    copyFunction: (source: Path, destination: Path) -> Unit = { src, dst -> src.copyTo(dst, LinkOption.NOFOLLOW_LINKS) }
+): Unit {
     if (!exists(LinkOption.NOFOLLOW_LINKS)) {
         throw NoSuchFileException(this.toString(), target.toString(), "The source file doesn't exist.")
     }
 
     val suppressedExceptions = mutableListOf<IOException>()
 
-    val visitor = PathTreeVisitor().onEnterDirectory { src ->
+    SecurePathTreeWalker().onEnterDirectory { src ->
         copyFunction(src, target.resolve(src.relativeTo(this)))
         true
     }.onFile { src ->
         copyFunction(src, target.resolve(src.relativeTo(this)))
     }.onFail { _, ioException ->
         suppressedExceptions.add(ioException)
-    }
-    this.walk(visitor, followLinks)
+    }.walk(this, followLinks)
 
     if (suppressedExceptions.isNotEmpty()) {
-        // rethrow if there is only in exception
-        // discuss the master exception thrown
+        // TODO: rethrow if there is only one exception ?
+        // TODO: discuss the master exception thrown
         throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
             suppressedExceptions.forEach { addSuppressed(it) }
         }
-    }
-}
-
-private fun copyThrowOnError(src: Path, dst: Path, followLinks: Boolean) {
-    val dstOption = LinkOption.NOFOLLOW_LINKS
-    val srcOption = LinkFollowing.toOptions(followLinks)
-    if (dst.exists(dstOption) && !(src.isDirectory(*srcOption) && dst.isDirectory(dstOption))) {
-        throw FileAlreadyExistsException(src.toString(), dst.toString(), "The destination file already exists.")
-    }
-    if (src.isDirectory(*srcOption)) {
-        if (!dst.exists(dstOption)) {
-            dst.createDirectory()
-        }
-    } else if (src.copyTo(dst, *srcOption).fileSize() != src.fileSize()) {
-//            TODO: The size of files that are not {@link #isRegularFile regular} files is implementation specific and therefore unspecified.
-        throw IOException("Source file wasn't copied completely, length of destination file differs.")
-    }
-}
-
-private fun copySkipOnError(src: Path, dst: Path, followLinks: Boolean) {
-    val dstOption = LinkOption.NOFOLLOW_LINKS
-    val srcOption = LinkFollowing.toOptions(followLinks)
-    if (dst.exists(dstOption) && !(src.isDirectory(*srcOption) && dst.isDirectory(dstOption))) {
-        return
-    }
-    if (src.isDirectory(*srcOption)) {
-        if (!dst.exists(dstOption)) {
-            dst.createDirectory()
-        }
-    } else {
-        // Silence exceptions thrown from copyTo
-        src.copyTo(dst, *srcOption)
-    }
-}
-
-private fun copyOverwrite(src: Path, dst: Path, followLinks: Boolean) {
-    val dstOption = LinkOption.NOFOLLOW_LINKS
-    val srcOption = LinkFollowing.toOptions(followLinks)
-    if (dst.exists(dstOption) && !(src.isDirectory(*srcOption) && dst.isDirectory(dstOption))) {
-        throw FileAlreadyExistsException(src.toString(), dst.toString(), "The destination file already exists.")
-    }
-    if (src.isDirectory(*srcOption)) {
-        if (!dst.exists(dstOption)) {
-            dst.createDirectory()
-        }
-    } else if (src.copyTo(dst, StandardCopyOption.REPLACE_EXISTING, *srcOption).fileSize() != src.fileSize()) {
-//            TODO: The size of files that are not {@link #isRegularFile regular} files is implementation specific and therefore unspecified.
-        throw IOException("Source file wasn't copied completely, length of destination file differs.")
     }
 }
 
@@ -386,15 +331,18 @@ private fun copyOverwrite(src: Path, dst: Path, followLinks: Boolean) {
  * Delete this file with all its children.
  * Note that if this operation fails then partial deletion may have taken place.
  *
+ * If an I/O exception occurs attempting to read, open or delete any file under the given directory,
+ * this method skips that file and continues. All such exceptions are collected and, after attempting to delete all files,
+ * an [IOException] is thrown containing those exceptions as suppressed exceptions.
+ *
  * @param followLinks `true` to recursively delete the file/directory a symbolic link points to,
  * `false` (default) to delete only the symbolic link itself.
- * @return `false` if this file with all its children were successfully deleted, `true` otherwise.
- * @throws IOException if an I/O error occurs
+ * @throws IOException if any file in the tree can't be deleted for any reason.
  */
 public fun Path.deleteRecursively(followLinks: Boolean = false): Unit {
     val suppressedExceptions = mutableListOf<IOException>()
 
-    val visitor = PathTreeVisitor().onFile { file ->
+    SecurePathTreeWalker().onFile { file ->
         try {
             file.deleteIfExists()
         } catch (e: IOException) { // Should we catch SecurityException as well?
@@ -409,12 +357,11 @@ public fun Path.deleteRecursively(followLinks: Boolean = false): Unit {
         }
     }.onFail { _, ioException ->
         suppressedExceptions.add(ioException)
-    }
-    this.walk(visitor, followLinks)
+    }.walk(this, followLinks)
 
     if (suppressedExceptions.isNotEmpty()) {
-        // rethrow if there is only in exception
-        // discuss the master exception thrown
+        // TODO: rethrow if there is only one exception ?
+        // TODO: discuss the master exception thrown
         throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
             suppressedExceptions.forEach { addSuppressed(it) }
         }
