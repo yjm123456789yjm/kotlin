@@ -288,7 +288,7 @@ internal object LinkFollowing {
  *
  * @param target the destination path to copy recursively this file to.
  * @param followLinks `true` to traverse for copying content of the directory a symbolic link points to, `false` by default.
- * @param copyFunction the function to call for copying source files/directories to their destination path rooted in [target].
+ * @param copyAction the function to call for copying source files/directories to their destination path rooted in [target].
  * By default, it throws if the destination file already exists,
  * it doesn't preserve copied file attributes such as creation/modification date, permissions, etc.,
  * and it copies symbolic links met, not the files they point to.
@@ -301,7 +301,7 @@ public fun Path.copyRecursively(
     // TODO: Test when the destination directory already exists.
     // TODO: Should followLinks value be used in copyTo ?
     // TODO: Should exceptions thrown from copyFunction be suppressed ? It can throw any exception in contrast to deleteRecursively
-    copyFunction: (source: Path, destination: Path) -> Unit = { src, dst -> src.copyTo(dst, LinkOption.NOFOLLOW_LINKS) }
+    copyAction: (source: Path, target: Path) -> Unit = { src, dst -> src.copyTo(dst, LinkOption.NOFOLLOW_LINKS) }
 ): Unit {
     if (!exists(LinkOption.NOFOLLOW_LINKS)) {
         throw NoSuchFileException(this.toString(), target.toString(), "The source file doesn't exist.")
@@ -310,10 +310,10 @@ public fun Path.copyRecursively(
     val suppressedExceptions = mutableListOf<IOException>()
 
     SecurePathTreeWalker().onEnterDirectory { src ->
-        copyFunction(src, target.resolve(src.relativeTo(this)))
+        copyAction(src, target.resolve(src.relativeTo(this)))
         true
     }.onFile { src ->
-        copyFunction(src, target.resolve(src.relativeTo(this)))
+        copyAction(src, target.resolve(src.relativeTo(this)))
     }.onFail { _, ioException ->
         suppressedExceptions.add(ioException)
     }.walk(this, followLinks)
