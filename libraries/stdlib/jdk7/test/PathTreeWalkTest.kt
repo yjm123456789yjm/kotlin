@@ -638,17 +638,17 @@ class PathTreeWalkTest : AbstractPathTest() {
         val walk = basedir.walk()
         testVisitedFiles(listOf("1/3/4.txt", "1/3/5.txt", "7.txt", "8/9.txt"), walk, basedir)
 
-        val visitedFiles = mutableListOf<Path>()
-        PathTreeVisitor().maxDepth(2).onFile { visitedFiles.add(it) }.let {
-            basedir.walk(visitor = it)
-        }
-        testVisitedFiles(listOf("7.txt", "8/9.txt"), visitedFiles.asSequence(), basedir)
+//        val visitedFiles = mutableListOf<Path>()
+//        SecurePathTreeWalker().maxDepth(2).onFile { visitedFiles.add(it) }.let {
+//            basedir.walk(visitor = it)
+//        }
+//        testVisitedFiles(listOf("7.txt", "8/9.txt"), visitedFiles.asSequence(), basedir)
     }
 
     @Test
     fun bfs() {
         val basedir = createTestFiles().cleanupRecursively()
-        val walk = basedir.walk(PathWalkOption.BFS, PathWalkOption.INCLUDE_DIRECTORIES_BEFORE)
+        val walk = basedir.walk(PathWalkOption.BFS, PathWalkOption.INCLUDE_DIRECTORIES)
         val depth0 = mutableListOf("")
         val depth1 = mutableListOf("1", "6", "7.txt", "8")
         val depth2 = mutableListOf("1/2", "1/3", "8/9.txt")
