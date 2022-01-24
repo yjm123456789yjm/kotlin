@@ -206,8 +206,28 @@ private class PathTreeWalk(
  */
 public fun Path.walk(vararg options: PathWalkOption): Sequence<Path> = PathTreeWalk(this, options)
 
-public fun Path.walk(visitor: PathTreeVisitor, followLinks: Boolean = false): Unit = visitor.walk(this, followLinks)
+/**
+ * Visits this directory and all its content with the specified [visitor].
+ *
+ * @param visitor the [FileVisitor] that receives callbacks.
+ * @param maxDepth the maximum depth of a directory tree to traverse. By default, there is no limit.
+ * @param followLinks specifies whether to follow symbolic links, `false` by default.
+ */
+public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int = Int.MAX_VALUE, followLinks: Boolean = false): Unit {
+    val options = if (followLinks) setOf(FileVisitOption.FOLLOW_LINKS) else setOf()
+    visitFileTree(visitor, maxDepth, options)
+}
 
+/**
+ * Visits this directory and all its content with the specified [visitor].
+ *
+ * @param visitor the [FileVisitor] that receives callbacks.
+ * @param maxDepth the maximum depth of a directory tree to traverse.
+ * @param options the behavior to comply during directory tree traversal. See [FileVisitOption].
+ */
+public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int, options: Set<FileVisitOption>): Unit {
+    Files.walkFileTree(this, options, maxDepth, visitor)
+}
 
 public class PathTreeVisitor private constructor(
     private val onFile: ((Path) -> Unit)?,
