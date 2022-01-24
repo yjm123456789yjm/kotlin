@@ -16,14 +16,16 @@ import java.nio.file.attribute.BasicFileAttributeView
 /**
  * An enumeration to describe possible walk options.
  * The options can be combined to get the walk order and behavior needed.
+ *
+ * Note that this enumeration is not exhaustive and new cases can be added in the future.
  */
 public enum class PathWalkOption {
     /** Depth-first search, directory is visited BEFORE its entries */
-    INCLUDE_DIRECTORIES_BEFORE,
-    /** Depth-first search, directory is visited AFTER its entries */
-    INCLUDE_DIRECTORIES_AFTER,
-    /** Breadth-first search, if combined with [INCLUDE_DIRECTORIES_BEFORE], directory and its siblings are visited BEFORE the directory entries */
+    INCLUDE_DIRECTORIES,
+
+    /** Breadth-first search, if combined with [INCLUDE_DIRECTORIES], directory and its siblings are visited BEFORE the directory entries */
     BFS,
+
     /** Symlinks are followed to the directories they point to */
     FOLLOW_LINKS
 }
@@ -33,8 +35,6 @@ public enum class PathWalkOption {
  * It allows to iterate through all files inside a given directory.
  * Iteration order of sibling files is unspecified.
  *
- * Use [Path.walk] extension function to instantiate a `PathTreeWalk` instance.
- *
  * If the file path given is just a file, walker iterates only it.
  * If the file path given does not exist, walker iterates nothing, i.e. it's equivalent to an empty sequence.
  */
@@ -43,19 +43,11 @@ private class PathTreeWalk(
     private val options: Array<out PathWalkOption>
 ) : Sequence<Path> {
 
-    init {
-        val isBFS = options.contains(PathWalkOption.BFS)
-        val isDirectoryAfter = options.contains(PathWalkOption.INCLUDE_DIRECTORIES_AFTER)
-        require(!isBFS || !isDirectoryAfter) {
-            "INCLUDE_DIRECTORIES_AFTER option is not applicable when BFS option is selected."
-        }
-    }
-
     private val linkOptions: Array<LinkOption>
         get() = LinkFollowing.toOptions(followLinks = options.contains(PathWalkOption.FOLLOW_LINKS))
 
     private val excludeDirectories: Boolean
-        get() = !(options.contains(PathWalkOption.INCLUDE_DIRECTORIES_BEFORE) || options.contains(PathWalkOption.INCLUDE_DIRECTORIES_AFTER))
+        get() = !options.contains(PathWalkOption.INCLUDE_DIRECTORIES)
 
     private val isBFS: Boolean
         get() = options.contains(PathWalkOption.BFS)
@@ -109,8 +101,7 @@ private class PathTreeWalk(
         /** Visiting in bottom-up order */
         private inner class DirectoryState(rootDir: Path) : WalkState(rootDir) {
 
-            private var visitRootBefore = options.contains(PathWalkOption.INCLUDE_DIRECTORIES_BEFORE)
-            private var visitRootAfter = options.contains(PathWalkOption.INCLUDE_DIRECTORIES_AFTER)
+            private var visitRoot = options.contains(PathWalkOption.INCLUDE_DIRECTORIES)
 
             private var fileList: List<Path>? = null
 
@@ -119,8 +110,8 @@ private class PathTreeWalk(
             private var failed = false
 
             override fun step(): Path? {
-                if (visitRootBefore) {
-                    visitRootBefore = false
+                if (visitRoot) {
+                    visitRoot = false
                     // visit the root dir before entries
                     return root
                 }
@@ -136,11 +127,6 @@ private class PathTreeWalk(
                 if (fileList != null && fileIndex < fileList!!.size) {
                     // visit all entries
                     return fileList!![fileIndex++]
-                }
-                if (visitRootAfter) {
-                    visitRootAfter = false
-                    // visit the root dir after entries
-                    return root
                 }
 
                 // That's all
@@ -210,10 +196,13 @@ private class PathTreeWalk(
 }
 
 /**
- * Gets a sequence for visiting this directory and all its content.
+ * Returns a sequence for visiting this directory and all its content.
  *
- * By default only files are visited, in depth-first search order, and symbolic links are not followed.
- * The combination of [options] (see [PathWalkOption]) overrides the default behavior.
+ * By default, only files are visited, in depth-first search order, and symbolic links are not followed.
+ * The combination of [options] overrides the default behavior. See [PathWalkOption].
+ *
+ * If the file located by this path does not exist, an empty sequence is returned.
+ * if the file located by this path is not a directory, a sequence containing only this path is returned.
  */
 public fun Path.walk(vararg options: PathWalkOption): Sequence<Path> = PathTreeWalk(this, options)
 
