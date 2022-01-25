@@ -291,7 +291,7 @@ internal object LinkFollowing {
  * @param copyAction the function to call for copying source files/directories to their destination path rooted in [target].
  * By default, it throws if the destination file already exists,
  * it doesn't preserve copied file attributes such as creation/modification date, permissions, etc.,
- * and it copies symbolic links met, not the files they point to.
+ * and it copies symbolic links met, not the files they point to. -- Update after discussion.
  * @throws NoSuchFileException if the file located by this path does not exist.
  * @throws IOException if any file in the tree can't be copied for any reason.
  */
@@ -301,7 +301,7 @@ public fun Path.copyRecursively(
     // TODO: Test when the destination directory already exists.
     // TODO: Should followLinks value be used in copyTo ?
     // TODO: Should exceptions thrown from copyFunction be suppressed ? It can throw any exception in contrast to deleteRecursively
-    copyAction: (source: Path, target: Path) -> Unit = { src, dst -> src.copyTo(dst, LinkOption.NOFOLLOW_LINKS) }
+    copyAction: (source: Path, target: Path) -> Unit = { src, dst -> src.copyTo(dst, *LinkFollowing.toOptions(followLinks)) }
 ): Unit {
     if (!exists(LinkOption.NOFOLLOW_LINKS)) {
         throw NoSuchFileException(this.toString(), target.toString(), "The source file doesn't exist.")
