@@ -50,30 +50,40 @@ constexpr U saturating_cast(T value) noexcept {
         }
         // T is a bigger type, but its value fits in U.
         return static_cast<U>(value);
-    }
-    if constexpr (std::is_signed_v<U>) {
+    } else if constexpr (std::is_signed_v<U>) {
+        static_assert(!std::is_signed_v<T>);
+
+        if constexpr (sizeof(U) > sizeof(T)) {
+            // U is signed but strictly bigger than T, it's safe to convert.
+            return static_cast<U>(value);
+        }
+
         if (value > static_cast<T>(std::numeric_limits<U>::max())) {
-            // T is a bigger type and holds a bigger value than U can hold.
+            // T is a bigger type or is the same size but unsigned vs signed, and holds a bigger value than U can hold.
             return std::numeric_limits<U>::max();
         }
         // T is unsigned, and U is signed, so T's min cannot be less than U's min.
         // T is bigger, but its value fits in U.
         return static_cast<U>(value);
-    }
-    if (value < 0) {
-        // U is unsigned, its min is 0.
-        return 0;
-    }
-    if constexpr (sizeof(U) >= sizeof(T)) {
-        // T is signed, U - unsigned, and U is not less than T. So, max of T is less than max of U.
+    } else {
+        static_assert(std::is_signed_v<T>);
+        static_assert(!std::is_signed_v<U>);
+
+        if (value < 0) {
+            // U is unsigned, its min is 0.
+            return 0;
+        }
+        if constexpr (sizeof(U) >= sizeof(T)) {
+            // T is signed, U - unsigned, and U is not less than T. So, max of T is less than max of U.
+            return static_cast<U>(value);
+        }
+        if (value > static_cast<T>(std::numeric_limits<U>::max())) {
+            // T is a bigger type and holds a bigger value than U can hold.
+            return std::numeric_limits<U>::max();
+        }
+        // T is a bigger type but its value fits in U.
         return static_cast<U>(value);
     }
-    if (value > static_cast<T>(std::numeric_limits<U>::max())) {
-        // T is a bigger type and holds a bigger value than U can hold.
-        return std::numeric_limits<U>::max();
-    }
-    // T is a bigger type but its value fits in U.
-    return static_cast<U>(value);
 }
 
 template <typename T, typename U>
