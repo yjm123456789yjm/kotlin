@@ -54,62 +54,42 @@ private class PathTreeWalk(
     /** Returns an iterator walking through files. */
     override fun iterator(): Iterator<Path> = if (isBFS) bfsIterator() else dfsIterator()
 
-    private fun dfsIterator() = iterator<Path> {
-        if (!start.isDirectory(*linkOptions)) {
-            if (start.exists(LinkOption.NOFOLLOW_LINKS)) yield(start)
-            return@iterator
+    private suspend inline fun SequenceScope<Path>.yieldIfNeeded(path: Path, entriesAction: (List<Path>) -> Unit) {
+        if (path.isDirectory(*linkOptions)) {
+            entriesAction(path.listDirectoryEntries())
+            if (includeDirectories)
+                yield(path)
+        } else if (path.exists(LinkOption.NOFOLLOW_LINKS)) {
+            yield(path)
         }
+    }
 
+    private fun dfsIterator() = iterator<Path> {
         // Stack of directory iterators, beginning from the start directory
         val iterators = ArrayList<Iterator<Path>>()
 
-        if (includeDirectories) yield(start)
-        iterators.add(start.directoryEntriesIterator())
+        yieldIfNeeded(start) { iterators.add(it.iterator()) }
 
         while (iterators.isNotEmpty()) {
             val topIterator = iterators.last()
-            if (!topIterator.hasNext()) {
+            if (topIterator.hasNext()) {
+                val path = topIterator.next()
+                yieldIfNeeded(path) { iterators.add(it.iterator()) }
+            } else {
                 // There is nothing more on the top of the stack, go back
                 iterators.removeLast()
-                continue
-            }
-
-            val path = topIterator.next()
-
-            // Check that file/directory matches the filter
-            if (!path.isDirectory(*linkOptions)) {
-                // Proceed to a simple file
-                yield(path)
-            } else {
-                if (includeDirectories) yield(path)
-                // Proceed to a subdirectory
-                iterators.add(path.directoryEntriesIterator())
             }
         }
     }
 
-    private fun Path.directoryEntriesIterator() = listDirectoryEntries().iterator()
-
     private fun bfsIterator() = iterator<Path> {
-        if (!start.isDirectory(*linkOptions)) {
-            if (start.exists(LinkOption.NOFOLLOW_LINKS)) yield(start)
-            return@iterator
-        }
-
         // Queue of entries to be visited.
         val queue = ArrayDeque<Path>()
         queue.addLast(start)
 
         while (queue.isNotEmpty()) {
-            // TODO: the path may have been deleted using deleteRecursively applied to the parent path
             val path = queue.removeFirst()
-
-            if (!path.isDirectory(*linkOptions)) {
-                yield(path)
-            } else {
-                if (includeDirectories) yield(path)
-                queue.addAll(path.listDirectoryEntries()) // Don't catch IOExceptions
-            }
+            yieldIfNeeded(path) { queue.addAll(it) }
         }
     }
 }
