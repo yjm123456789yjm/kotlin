@@ -39,8 +39,6 @@ class DiagnosticMessagesTextHandler(
 
     @OptIn(ExperimentalStdlibApi::class)
     override fun processModule(module: TestModule, info: ClassicFrontendOutputArtifact) {
-        if (DiagnosticsDirectives.RENDER_DIAGNOSTICS_FULL_TEXT !in module.directives) return
-
         val diagnosticsFullTextByteArrayStream = ByteArrayOutputStream()
         val diagnosticsFullTextPrintStream = PrintStream(diagnosticsFullTextByteArrayStream)
         val diagnosticsFullTextCollector =
