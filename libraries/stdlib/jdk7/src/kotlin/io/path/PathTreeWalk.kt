@@ -36,7 +36,7 @@ public enum class PathWalkOption {
  * If the file path given is just a file, walker iterates only it.
  * If the file path given does not exist, walker iterates nothing, i.e. it's equivalent to an empty sequence.
  */
-private class PathTreeWalk(
+internal class PathTreeWalk(
     private val start: Path,
     private val options: Array<out PathWalkOption>
 ) : Sequence<Path> {
@@ -94,36 +94,9 @@ private class PathTreeWalk(
     }
 }
 
-/**
- * Returns a sequence for visiting this directory and all its content.
- *
- * By default, only files are visited, in depth-first search order, and symbolic links are not followed.
- * The combination of [options] overrides the default behavior. See [PathWalkOption].
- *
- * If the file located by this path does not exist, an empty sequence is returned.
- * if the file located by this path is not a directory, a sequence containing only this path is returned.
- */
-public fun Path.walk(vararg options: PathWalkOption): Sequence<Path> = PathTreeWalk(this, options)
+internal object LinkFollowing {
+    private val nofollow = arrayOf(LinkOption.NOFOLLOW_LINKS)
+    private val follow = emptyArray<LinkOption>()
 
-/**
- * Visits this directory and all its content with the specified [visitor].
- *
- * @param visitor the [FileVisitor] that receives callbacks.
- * @param maxDepth the maximum depth of a directory tree to traverse. By default, there is no limit.
- * @param followLinks specifies whether to follow symbolic links, `false` by default.
- */
-public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int = Int.MAX_VALUE, followLinks: Boolean = false): Unit {
-    val options = if (followLinks) setOf(FileVisitOption.FOLLOW_LINKS) else setOf()
-    visitFileTree(visitor, maxDepth, options)
-}
-
-/**
- * Visits this directory and all its content with the specified [visitor].
- *
- * @param visitor the [FileVisitor] that receives callbacks.
- * @param maxDepth the maximum depth of a directory tree to traverse.
- * @param options the behavior to comply during directory tree traversal. See [FileVisitOption].
- */
-public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int, options: Set<FileVisitOption>): Unit {
-    Files.walkFileTree(this, options, maxDepth, visitor)
+    fun toOptions(followLinks: Boolean): Array<LinkOption> = if (followLinks) follow else nofollow
 }

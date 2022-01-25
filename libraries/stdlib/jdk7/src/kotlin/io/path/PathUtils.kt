@@ -259,115 +259,6 @@ public inline fun Path.copyTo(target: Path, vararg options: CopyOption): Path {
     return Files.copy(this, target, *options)
 }
 
-/** Private exception class, used to terminate recursive copying. */
-private class TerminateException(path: Path) : FileSystemException(path.toString()) {}
-
-internal object LinkFollowing {
-    private val nofollow = arrayOf(LinkOption.NOFOLLOW_LINKS)
-    private val follow = emptyArray<LinkOption>()
-
-    fun toOptions(followLinks: Boolean): Array<LinkOption> = if (followLinks) follow else nofollow
-}
-
-/**
- * Copies this file with all its children to the specified destination [target] path.
- * Note that if this function fails, then partial copying may have taken place.
- *
- * Unlike `File.copyRecursively`, if some directories on the way to the [target] are missing, then they won't be created automatically.
- * You can use the following approach to ensure that required intermediate directories are created:
- * ```
- * sourcePath.copyRecursively(destinationPath.apply { parent?.createDirectories() })
- * ```
- *
- * If this file path points to a single file, then it will be copied to a file with the path [target].
- * If this file path points to a directory, then its children will be copied to a directory with the path [target].
- *
- * If an I/O exception occurs attempting to read, open or copy any file under the given directory,
- * this method skips that file and continues. All such exceptions are collected and, after attempting to copy all files,
- * an [IOException] is thrown containing those exceptions as suppressed exceptions.
- *
- * @param target the destination path to copy recursively this file to.
- * @param followLinks `true` to traverse for copying content of the directory a symbolic link points to, `false` by default.
- * @param copyAction the function to call for copying source files/directories to their destination path rooted in [target].
- * By default, it throws if the destination file already exists,
- * it doesn't preserve copied file attributes such as creation/modification date, permissions, etc.,
- * and it copies symbolic links met, not the files they point to. -- Update after discussion.
- * @throws NoSuchFileException if the file located by this path does not exist.
- * @throws IOException if any file in the tree can't be copied for any reason.
- */
-public fun Path.copyRecursively(
-    target: Path,
-    followLinks: Boolean = false,
-    // TODO: Test when the destination directory already exists.
-    // TODO: Should followLinks value be used in copyTo ?
-    // TODO: Should exceptions thrown from copyFunction be suppressed ? It can throw any exception in contrast to deleteRecursively
-    copyAction: (source: Path, target: Path) -> Unit = { src, dst -> src.copyTo(dst, *LinkFollowing.toOptions(followLinks)) }
-): Unit {
-    if (!exists(LinkOption.NOFOLLOW_LINKS)) {
-        throw NoSuchFileException(this.toString(), target.toString(), "The source file doesn't exist.")
-    }
-
-    val suppressedExceptions = mutableListOf<IOException>()
-
-    SecurePathTreeWalker().onEnterDirectory { src ->
-        copyAction(src, target.resolve(src.relativeTo(this)))
-        true
-    }.onFile { src ->
-        copyAction(src, target.resolve(src.relativeTo(this)))
-    }.onFail { _, ioException ->
-        suppressedExceptions.add(ioException)
-    }.walk(this, followLinks)
-
-    if (suppressedExceptions.isNotEmpty()) {
-        // TODO: rethrow if there is only one exception ?
-        // TODO: discuss the master exception thrown
-        throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
-            suppressedExceptions.forEach { addSuppressed(it) }
-        }
-    }
-}
-
-/**
- * Delete this file with all its children.
- * Note that if this operation fails then partial deletion may have taken place.
- *
- * If an I/O exception occurs attempting to read, open or delete any file under the given directory,
- * this method skips that file and continues. All such exceptions are collected and, after attempting to delete all files,
- * an [IOException] is thrown containing those exceptions as suppressed exceptions.
- *
- * @param followLinks `true` to recursively delete the file/directory a symbolic link points to,
- * `false` (default) to delete only the symbolic link itself.
- * @throws IOException if any file in the tree can't be deleted for any reason.
- */
-public fun Path.deleteRecursively(followLinks: Boolean = false): Unit {
-    val suppressedExceptions = mutableListOf<IOException>()
-
-    SecurePathTreeWalker().onFile { file ->
-        try {
-            file.deleteIfExists()
-        } catch (e: IOException) { // Should we catch SecurityException as well?
-            suppressedExceptions.add(e)
-        }
-    }.onLeaveDirectory { dir ->
-        // TODO: See if the directory is not empty, skip deletion as we already have suppressed failure for its children
-        try {
-            dir.deleteIfExists()
-        } catch (e: IOException) { // Should we catch SecurityException as well?
-            suppressedExceptions.add(e)
-        }
-    }.onFail { _, ioException ->
-        suppressedExceptions.add(ioException)
-    }.walk(this, followLinks)
-
-    if (suppressedExceptions.isNotEmpty()) {
-        // TODO: rethrow if there is only one exception ?
-        // TODO: discuss the master exception thrown
-        throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
-            suppressedExceptions.forEach { addSuppressed(it) }
-        }
-    }
-}
-
 /**
  * Checks if the file located by this path exists.
  *
@@ -1105,3 +996,138 @@ public inline fun Path(base: String, vararg subpaths: String): Path =
 @kotlin.internal.InlineOnly
 public inline fun URI.toPath(): Path =
     Paths.get(this)
+
+
+/**
+ * Returns a sequence for visiting this directory and all its content.
+ *
+ * By default, only files are visited, in depth-first search order, and symbolic links are not followed.
+ * The combination of [options] overrides the default behavior. See [PathWalkOption].
+ *
+ * If the file located by this path does not exist, an empty sequence is returned.
+ * if the file located by this path is not a directory, a sequence containing only this path is returned.
+ */
+public fun Path.walk(vararg options: PathWalkOption): Sequence<Path> = PathTreeWalk(this, options)
+
+/**
+ * Visits this directory and all its content with the specified [visitor].
+ *
+ * @param visitor the [FileVisitor] that receives callbacks.
+ * @param maxDepth the maximum depth of a directory tree to traverse. By default, there is no limit.
+ * @param followLinks specifies whether to follow symbolic links, `false` by default.
+ */
+public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int = Int.MAX_VALUE, followLinks: Boolean = false): Unit {
+    val options = if (followLinks) setOf(FileVisitOption.FOLLOW_LINKS) else setOf()
+    visitFileTree(visitor, maxDepth, options)
+}
+
+/**
+ * Visits this directory and all its content with the specified [visitor].
+ *
+ * @param visitor the [FileVisitor] that receives callbacks.
+ * @param maxDepth the maximum depth of a directory tree to traverse.
+ * @param options the behavior to comply during directory tree traversal. See [FileVisitOption].
+ */
+public fun Path.visitFileTree(visitor: FileVisitor<Path>, maxDepth: Int, options: Set<FileVisitOption>): Unit {
+    Files.walkFileTree(this, options, maxDepth, visitor)
+}
+
+
+/**
+ * Copies this file with all its children to the specified destination [target] path.
+ * Note that if this function fails, then partial copying may have taken place.
+ *
+ * Unlike `File.copyRecursively`, if some directories on the way to the [target] are missing, then they won't be created automatically.
+ * You can use the following approach to ensure that required intermediate directories are created:
+ * ```
+ * sourcePath.copyRecursively(destinationPath.apply { parent?.createDirectories() })
+ * ```
+ *
+ * If this file path points to a single file, then it will be copied to a file with the path [target].
+ * If this file path points to a directory, then its children will be copied to a directory with the path [target].
+ *
+ * If an I/O exception occurs attempting to read, open or copy any file under the given directory,
+ * this method skips that file and continues. All such exceptions are collected and, after attempting to copy all files,
+ * an [IOException] is thrown containing those exceptions as suppressed exceptions.
+ *
+ * @param target the destination path to copy recursively this file to.
+ * @param followLinks `true` to traverse for copying content of the directory a symbolic link points to, `false` by default.
+ * @param copyAction the function to call for copying source files/directories to their destination path rooted in [target].
+ * By default, it throws if the destination file already exists,
+ * it doesn't preserve copied file attributes such as creation/modification date, permissions, etc.,
+ * and it copies symbolic links met, not the files they point to. -- Update after discussion.
+ * @throws NoSuchFileException if the file located by this path does not exist.
+ * @throws IOException if any file in the tree can't be copied for any reason.
+ */
+public fun Path.copyRecursively(
+    target: Path,
+    followLinks: Boolean = false,
+    // TODO: Test when the destination directory already exists.
+    // TODO: Should followLinks value be used in copyTo ?
+    // TODO: Should exceptions thrown from copyFunction be suppressed ? It can throw any exception in contrast to deleteRecursively
+    copyAction: (source: Path, target: Path) -> Unit = { src, dst -> src.copyTo(dst, *LinkFollowing.toOptions(followLinks)) }
+): Unit {
+    if (!exists(LinkOption.NOFOLLOW_LINKS)) {
+        throw NoSuchFileException(this.toString(), target.toString(), "The source file doesn't exist.")
+    }
+
+    val suppressedExceptions = mutableListOf<IOException>()
+
+    SecurePathTreeWalker().onEnterDirectory { src ->
+        copyAction(src, target.resolve(src.relativeTo(this)))
+        true
+    }.onFile { src ->
+        copyAction(src, target.resolve(src.relativeTo(this)))
+    }.onFail { _, ioException ->
+        suppressedExceptions.add(ioException)
+    }.walk(this, followLinks)
+
+    if (suppressedExceptions.isNotEmpty()) {
+        // TODO: rethrow if there is only one exception ?
+        // TODO: discuss the master exception thrown
+        throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
+            suppressedExceptions.forEach { addSuppressed(it) }
+        }
+    }
+}
+
+/**
+ * Delete this file with all its children.
+ * Note that if this operation fails then partial deletion may have taken place.
+ *
+ * If an I/O exception occurs attempting to read, open or delete any file under the given directory,
+ * this method skips that file and continues. All such exceptions are collected and, after attempting to delete all files,
+ * an [IOException] is thrown containing those exceptions as suppressed exceptions.
+ *
+ * @param followLinks `true` to recursively delete the file/directory a symbolic link points to,
+ * `false` (default) to delete only the symbolic link itself.
+ * @throws IOException if any file in the tree can't be deleted for any reason.
+ */
+public fun Path.deleteRecursively(followLinks: Boolean = false): Unit {
+    val suppressedExceptions = mutableListOf<IOException>()
+
+    SecurePathTreeWalker().onFile { file ->
+        try {
+            file.deleteIfExists()
+        } catch (e: IOException) { // Should we catch SecurityException as well?
+            suppressedExceptions.add(e)
+        }
+    }.onLeaveDirectory { dir ->
+        // TODO: See if the directory is not empty, skip deletion as we already have suppressed failure for its children
+        try {
+            dir.deleteIfExists()
+        } catch (e: IOException) { // Should we catch SecurityException as well?
+            suppressedExceptions.add(e)
+        }
+    }.onFail { _, ioException ->
+        suppressedExceptions.add(ioException)
+    }.walk(this, followLinks)
+
+    if (suppressedExceptions.isNotEmpty()) {
+        // TODO: rethrow if there is only one exception ?
+        // TODO: discuss the master exception thrown
+        throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
+            suppressedExceptions.forEach { addSuppressed(it) }
+        }
+    }
+}
