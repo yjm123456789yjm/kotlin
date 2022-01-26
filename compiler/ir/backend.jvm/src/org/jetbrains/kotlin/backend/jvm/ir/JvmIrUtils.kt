@@ -299,6 +299,7 @@ val IrClass.isSyntheticSingleton: Boolean
             && primaryConstructor!!.valueParameters.isEmpty()
 
 fun IrSimpleFunction.suspendFunctionOriginal(): IrSimpleFunction =
+    //
     if (isSuspend &&
         !isStaticInlineClassReplacement &&
         !isOrOverridesDefaultParameterStub() &&

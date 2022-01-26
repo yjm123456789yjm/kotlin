@@ -120,40 +120,46 @@ internal val IrClass.isGeneratedLambdaClass: Boolean
             origin == JvmLoweredDeclarationOrigin.FUNCTION_REFERENCE_IMPL ||
             origin == JvmLoweredDeclarationOrigin.GENERATED_PROPERTY_REFERENCE
 
+private class JvmLocalNameProvider : LocalNameProvider {
+    override fun localName(declaration: IrDeclarationWithName): String =
+        NameUtils.sanitizeAsJavaIdentifier(super.localName(declaration))
+}
+
+private class JvmVisibilityPolicy : VisibilityPolicy {
+    // Note: any condition that results in non-`LOCAL` visibility here should be duplicated in `JvmLocalClassPopupLowering`,
+    // else it won't detect the class as local.
+    override fun forClass(declaration: IrClass, inInlineFunctionScope: Boolean): DescriptorVisibility =
+        if (declaration.isGeneratedLambdaClass) {
+            scopedVisibility(inInlineFunctionScope)
+        } else {
+            declaration.visibility
+        }
+
+    override fun forConstructor(declaration: IrConstructor, inInlineFunctionScope: Boolean): DescriptorVisibility =
+        if (declaration.parentAsClass.isAnonymousObject)
+            scopedVisibility(inInlineFunctionScope)
+        else
+            declaration.visibility
+
+    override fun forCapturedField(value: IrValueSymbol): DescriptorVisibility =
+        JavaDescriptorVisibilities.PACKAGE_VISIBILITY // avoid requiring a synthetic accessor for it
+
+    private fun scopedVisibility(inInlineFunctionScope: Boolean): DescriptorVisibility =
+        if (inInlineFunctionScope) DescriptorVisibilities.PUBLIC else JavaDescriptorVisibilities.PACKAGE_VISIBILITY
+}
+
+
 internal val localDeclarationsPhase = makeIrFilePhase(
 //internal val localDeclarationsPhase = makeIrModulePhase(
     { context ->
-        LocalDeclarationsLowering(
+        val localDeclarationsLowering = LocalDeclarationsLowering(
             context,
-            object : LocalNameProvider {
-                override fun localName(declaration: IrDeclarationWithName): String =
-                    NameUtils.sanitizeAsJavaIdentifier(super.localName(declaration))
-            },
-            object : VisibilityPolicy {
-                // Note: any condition that results in non-`LOCAL` visibility here should be duplicated in `JvmLocalClassPopupLowering`,
-                // else it won't detect the class as local.
-                override fun forClass(declaration: IrClass, inInlineFunctionScope: Boolean): DescriptorVisibility =
-                    if (declaration.isGeneratedLambdaClass) {
-                        scopedVisibility(inInlineFunctionScope)
-                    } else {
-                        declaration.visibility
-                    }
-
-                override fun forConstructor(declaration: IrConstructor, inInlineFunctionScope: Boolean): DescriptorVisibility =
-                    if (declaration.parentAsClass.isAnonymousObject)
-                        scopedVisibility(inInlineFunctionScope)
-                    else
-                        declaration.visibility
-
-                override fun forCapturedField(value: IrValueSymbol): DescriptorVisibility =
-                    JavaDescriptorVisibilities.PACKAGE_VISIBILITY // avoid requiring a synthetic accessor for it
-
-                private fun scopedVisibility(inInlineFunctionScope: Boolean): DescriptorVisibility =
-                    if (inInlineFunctionScope) DescriptorVisibilities.PUBLIC else JavaDescriptorVisibilities.PACKAGE_VISIBILITY
-            },
+            JvmLocalNameProvider(),
+            JvmVisibilityPolicy(),
             forceFieldsForInlineCaptures = true,
 //            suggestUniqueNames = false
         )
+        localDeclarationsLowering
     },
     name = "JvmLocalDeclarations",
     description = "Move local declarations to classes",
@@ -287,25 +293,33 @@ private val kotlinNothingValueExceptionPhase = makeIrFilePhase<CommonBackendCont
     description = "Throw proper exception for calls returning value of type 'kotlin.Nothing'"
 )
 
-private val localClassesInInlineLambdasPhase = makeIrModulePhase(
+private val localClassesInInlineLambdasPhase = makeIrModulePhase<JvmBackendContext>(
 //private val localClassesInInlineLambdasPhase = makeIrFilePhase(
-    ::LocalClassesInInlineLambdasLowering,
+    { context ->
+        LocalClassesInInlineLambdasLowering(
+            context, JvmLocalNameProvider(), JvmVisibilityPolicy(), forceFieldsForInlineCaptures = true
+        )
+    },
     name = "LocalClassesInInlineLambdasPhase",
     description = "Extract local classes from inline lambdas",
 //    prerequisite = setOf(inventNamesForLocalClassesPhase)
 )
 
-private val localClassesInInlineFunctionsPhase = makeIrModulePhase(
+private val localClassesInInlineFunctionsPhase = makeIrModulePhase<JvmBackendContext>(
 //private val localClassesInInlineFunctionsPhase = makeIrFilePhase(
-    ::LocalClassesInInlineFunctionsLowering,
+    { context ->
+        LocalClassesInInlineFunctionsLowering(
+            context, JvmLocalNameProvider(), JvmVisibilityPolicy(), forceFieldsForInlineCaptures = true
+        )
+    },
     name = "LocalClassesInInlineFunctionsPhase",
     description = "Extract local classes from inline functions",
 //    prerequisite = setOf(inventNamesForLocalClassesPhase)
 )
 
-private val localClassesExtractionFromInlineFunctionsPhase = makeIrModulePhase(
+private val localClassesExtractionFromInlineFunctionsPhase = makeIrModulePhase<JvmBackendContext>(
 //private val localClassesExtractionFromInlineFunctionsPhase = makeIrFilePhase(
-    ::LocalClassesExtractionFromInlineFunctionsLowering,
+    { LocalClassesExtractionFromInlineFunctionsLowering(it) },
     name = "localClassesExtractionFromInlineFunctionsPhase",
     description = "Move local classes from inline functions into nearest declaration container",
 //    prerequisite = setOf(localClassesInInlineFunctionsPhase)
@@ -359,7 +373,6 @@ private val jvmFilePhases = listOf(
     propertiesPhase,
     remapObjectFieldAccesses,
 
-    anonymousObjectSuperConstructorPhase,
     jvmBuiltInsPhase,
 
     rangeContainsLoweringPhase,
@@ -375,7 +388,7 @@ private val jvmFilePhases = listOf(
 
     assertionPhase,
     returnableBlocksPhase,
-    sharedVariablesPhase,
+//    sharedVariablesPhase,
     localDeclarationsPhase,
     makePatchParentsPhase(2),
 
@@ -456,20 +469,22 @@ val jvmLoweringPhases = NamedCompilerPhase(
             stripTypeAliasDeclarationsPhase then
             jvmOverloadsAnnotationPhase then
             mainMethodGenerationPhase then
-            inventNamesForLocalClassesPhase then
 
             lateinitNullableFieldsPhase then
             lateinitDeclarationLoweringPhase then
             lateinitUsageLoweringPhase then
-//            sharedVariablesPhase then
+            sharedVariablesPhase then
+//            inventNamesForLocalClassesPhase then
 
-//            localClassesInInlineLambdasPhase then
-//            localClassesInInlineFunctionsPhase then
-//            localClassesExtractionFromInlineFunctionsPhase then
+            anonymousObjectSuperConstructorPhase then
+            localClassesInInlineLambdasPhase then
+            localClassesInInlineFunctionsPhase then
+            localClassesExtractionFromInlineFunctionsPhase then
 
             functionInliningPhase then
             provisionalFunctionExpressionPhase then
-            inventNamesForLocalClassesPhase2 then
+//            inventNamesForLocalClassesPhase2 then
+            inventNamesForNewLocalClassesPhase then
 //            sharedVariablesPhase then
 
 
