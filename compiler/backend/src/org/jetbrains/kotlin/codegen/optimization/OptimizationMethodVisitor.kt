@@ -42,7 +42,8 @@ class OptimizationMethodVisitor(
     val normalizationMethodTransformer = CompositeMethodTransformer(
         InplaceArgumentsMethodTransformer(),
         FixStackWithLabelNormalizationMethodTransformer(),
-        MethodVerifier("AFTER mandatory stack transformations", generationState)
+        // TODO is this check really necessary?
+//        MethodVerifier("AFTER mandatory stack transformations", generationState)
     )
 
     val optimizationTransformer = CompositeMethodTransformer(
