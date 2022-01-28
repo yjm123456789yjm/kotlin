@@ -48,7 +48,7 @@ internal class DeepCopyIrTreeWithSymbolsForInliner(
         private val map = mutableMapOf<IrSymbol, Name>()
 
         override fun getClassName(symbol: IrClassSymbol) = map.getOrPut(symbol) { generateCopyName(symbol.owner.name) }
-        override fun getFunctionName(symbol: IrSimpleFunctionSymbol) = map.getOrPut(symbol) { generateCopyName(symbol.owner.name) }
+        override fun getFunctionName(symbol: IrSimpleFunctionSymbol) = map.getOrPut(symbol) { symbol.owner.name } // TODO check for all backends
         override fun getFieldName(symbol: IrFieldSymbol) = symbol.owner.name
         override fun getFileName(symbol: IrFileSymbol) = symbol.owner.fqName
         override fun getExternalPackageFragmentName(symbol: IrExternalPackageFragmentSymbol) = symbol.owner.fqName
