@@ -474,7 +474,7 @@ val jvmLoweringPhases = NamedCompilerPhase(
             lateinitDeclarationLoweringPhase then
             lateinitUsageLoweringPhase then
             sharedVariablesPhase then
-//            inventNamesForLocalClassesPhase then
+            inventNamesForLocalClassesPhase then
 
             anonymousObjectSuperConstructorPhase then
             localClassesInInlineLambdasPhase then
