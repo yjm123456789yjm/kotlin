@@ -1004,6 +1004,9 @@ public inline fun URI.toPath(): Path =
  * By default, only files are visited, in depth-first search order, and symbolic links are not followed.
  * The combination of [options] overrides the default behavior. See [PathWalkOption].
  *
+ * If after calling this function new files get added or deleted from the subtree rooted in this directory,
+ * the changes may or may not appear in the returned sequence.
+ *
  * If the file located by this path does not exist, an empty sequence is returned.
  * if the file located by this path is not a directory, a sequence containing only this path is returned.
  */
