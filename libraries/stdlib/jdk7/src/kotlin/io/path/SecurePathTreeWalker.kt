@@ -5,16 +5,17 @@
 
 package kotlin.io.path
 
-import java.io.IOException
 import java.nio.file.*
 import java.nio.file.attribute.BasicFileAttributeView
 
-// TODO: What to do when the callbacks throw? rethrow or pass to onFail
+// TODO: should SecurityException be caught and passed to onFail?
+//  Or maybe IOException is enough?
+//  Currently all exceptions are caught.
 internal class SecurePathTreeWalker private constructor(
     private var onFile: ((Path) -> Unit)?,
     private var onEnter: ((Path) -> Boolean)?,
     private var onLeave: ((Path) -> Unit)?,
-    private var onFail: ((f: Path, e: IOException) -> Unit)?,
+    private var onFail: ((f: Path, e: Throwable) -> Unit)?,
 ) {
     constructor() : this(
         onFile = null,
@@ -35,20 +36,37 @@ internal class SecurePathTreeWalker private constructor(
         return this.apply { onLeave = function }
     }
 
-    fun onFail(function: (Path, IOException) -> Unit): SecurePathTreeWalker {
+    fun onFail(function: (Path, Throwable) -> Unit): SecurePathTreeWalker {
         return this.apply { onFail = function }
+    }
+
+    private fun skipDirectory(path: Path): Boolean {
+        try {
+            if (onEnter?.invoke(path) == false) return true
+        } catch (exception: Throwable) {
+            onFail?.invoke(path, exception) ?: throw exception
+        }
+        return false
+    }
+
+    private fun tryInvoke(function: ((Path) -> Unit)?, path: Path) {
+        try {
+            function?.invoke(path)
+        } catch (exception: Throwable) {
+            onFail?.invoke(path, exception) ?: throw exception
+        }
     }
 
     fun walk(path: Path, followLinks: Boolean): Unit {
         val linkOptions = LinkFollowing.toOptions(followLinks)
 
         if (path.isDirectory(*linkOptions)) {
-            if (onEnter?.invoke(path) == false) {
+            if (skipDirectory(path)) {
                 return
             }
         } else {
             if (path.exists(LinkOption.NOFOLLOW_LINKS)) {
-                onFile?.invoke(path)
+                tryInvoke(onFile, path)
             }
             return
         }
@@ -63,12 +81,11 @@ internal class SecurePathTreeWalker private constructor(
                     directoryStream.walkEntries(linkOptions)
                 }
             }
-        } catch (e: IOException) {
-            // should SecurityException be also caught and passed to onFail?
-            onFail?.invoke(path, e)
+        } catch (exception: Throwable) {
+            onFail?.invoke(path, exception)
         }
 
-        onLeave?.invoke(path)
+        tryInvoke(onLeave, path)
 
         /* catch (_: NotDirectoryException) {
             // test a file with limited read access
@@ -87,24 +104,23 @@ internal class SecurePathTreeWalker private constructor(
             if (isDirectory(entry, linkOptions)) {
                 enterDirectory(entry, linkOptions)
             } else {
-                onFile?.invoke(entry)
+                tryInvoke(onFile, entry)
             }
         }
     }
 
     private fun SecureDirectoryStream<Path>.enterDirectory(path: Path, linkOptions: Array<LinkOption>) {
-        if (onEnter?.invoke(path) == false) {
+        if (skipDirectory(path)) {
             return
         }
 
         try {
             this.newDirectoryStream(path).use { it.walkEntries(linkOptions) }
-        } catch (e: IOException) {
-            // should SecurityException be also caught and passed to onFail?
-            onFail?.invoke(path, e)
+        } catch (exception: Throwable) {
+            onFail?.invoke(path, exception)
         }
 
-        onLeave?.invoke(path)
+        tryInvoke(onLeave, path)
     }
 
     private fun SecureDirectoryStream<Path>.isDirectory(path: Path, linkOptions: Array<LinkOption>): Boolean {
@@ -118,23 +134,22 @@ internal class SecurePathTreeWalker private constructor(
             if (entry.isDirectory(*linkOptions)) {
                 enterDirectory(entry, linkOptions)
             } else {
-                onFile?.invoke(entry)
+                tryInvoke(onFile, entry)
             }
         }
     }
 
     private fun enterDirectory(path: Path, linkOptions: Array<LinkOption>) {
-        if (onEnter?.invoke(path) == false) {
+        if (skipDirectory(path)) {
             return
         }
 
         try {
             Files.newDirectoryStream(path).use { it.walkEntries(linkOptions) }
-        } catch (e: IOException) {
-            // should SecurityException be also caught and passed to onFail?
-            onFail?.invoke(path, e)
+        } catch (exception: Throwable) {
+            onFail?.invoke(path, exception)
         }
 
-        onLeave?.invoke(path)
+        tryInvoke(onLeave, path)
     }
 }

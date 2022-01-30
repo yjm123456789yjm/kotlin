@@ -1055,28 +1055,24 @@ public fun Path.copyRecursively(
     target: Path,
     followLinks: Boolean = false,
     // TODO: Test when the destination directory already exists.
-    // TODO: Should followLinks value be used in copyTo ?
-    // TODO: Should exceptions thrown from copyFunction be suppressed ? It can throw any exception in contrast to deleteRecursively
     copyAction: (source: Path, target: Path) -> Unit = { src, dst -> src.copyTo(dst, *LinkFollowing.toOptions(followLinks)) }
 ): Unit {
     if (!exists(LinkOption.NOFOLLOW_LINKS)) {
         throw NoSuchFileException(this.toString(), target.toString(), "The source file doesn't exist.")
     }
 
-    val suppressedExceptions = mutableListOf<IOException>()
+    val suppressedExceptions = mutableListOf<Throwable>()
 
     SecurePathTreeWalker().onEnterDirectory { src ->
         copyAction(src, target.resolve(src.relativeTo(this)))
         true
     }.onFile { src ->
         copyAction(src, target.resolve(src.relativeTo(this)))
-    }.onFail { _, ioException ->
-        suppressedExceptions.add(ioException)
+    }.onFail { _, exception ->
+        suppressedExceptions.add(exception)
     }.walk(this, followLinks)
 
     if (suppressedExceptions.isNotEmpty()) {
-        // TODO: rethrow if there is only one exception ?
-        // TODO: discuss the master exception thrown
         throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
             suppressedExceptions.forEach { addSuppressed(it) }
         }
@@ -1096,28 +1092,18 @@ public fun Path.copyRecursively(
  * @throws IOException if any file in the tree can't be deleted for any reason.
  */
 public fun Path.deleteRecursively(followLinks: Boolean = false): Unit {
-    val suppressedExceptions = mutableListOf<IOException>()
+    val suppressedExceptions = mutableListOf<Throwable>()
 
     SecurePathTreeWalker().onFile { file ->
-        try {
-            file.deleteIfExists()
-        } catch (e: IOException) { // Should we catch SecurityException as well?
-            suppressedExceptions.add(e)
-        }
+        file.deleteIfExists()
     }.onLeaveDirectory { dir ->
         // TODO: See if the directory is not empty, skip deletion as we already have suppressed failure for its children
-        try {
-            dir.deleteIfExists()
-        } catch (e: IOException) { // Should we catch SecurityException as well?
-            suppressedExceptions.add(e)
-        }
-    }.onFail { _, ioException ->
-        suppressedExceptions.add(ioException)
+        dir.deleteIfExists()
+    }.onFail { _, exception ->
+        suppressedExceptions.add(exception)
     }.walk(this, followLinks)
 
     if (suppressedExceptions.isNotEmpty()) {
-        // TODO: rethrow if there is only one exception ?
-        // TODO: discuss the master exception thrown
         throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
             suppressedExceptions.forEach { addSuppressed(it) }
         }
