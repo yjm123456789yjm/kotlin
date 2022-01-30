@@ -1065,7 +1065,6 @@ public fun Path.copyRecursively(
 
     SecurePathTreeWalker().onEnterDirectory { src ->
         copyAction(src, target.resolve(src.relativeTo(this)))
-        true
     }.onFile { src ->
         copyAction(src, target.resolve(src.relativeTo(this)))
     }.onFail { _, exception ->
@@ -1104,7 +1103,7 @@ public fun Path.deleteRecursively(followLinks: Boolean = false): Unit {
     }.walk(this, followLinks)
 
     if (suppressedExceptions.isNotEmpty()) {
-        throw FileSystemException("Failed to copy one or more files. See suppressed exceptions for details.").apply {
+        throw FileSystemException("Failed to delete one or more files. See suppressed exceptions for details.").apply {
             suppressedExceptions.forEach { addSuppressed(it) }
         }
     }

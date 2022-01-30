@@ -13,7 +13,7 @@ import java.nio.file.attribute.BasicFileAttributeView
 //  Currently all exceptions are caught.
 internal class SecurePathTreeWalker private constructor(
     private var onFile: ((Path) -> Unit)?,
-    private var onEnter: ((Path) -> Boolean)?,
+    private var onEnter: ((Path) -> Unit)?,
     private var onLeave: ((Path) -> Unit)?,
     private var onFail: ((f: Path, e: Throwable) -> Unit)?,
 ) {
@@ -28,7 +28,7 @@ internal class SecurePathTreeWalker private constructor(
         return this.apply { onFile = function }
     }
 
-    fun onEnterDirectory(function: (Path) -> Boolean): SecurePathTreeWalker {
+    fun onEnterDirectory(function: (Path) -> Unit): SecurePathTreeWalker {
         return this.apply { onEnter = function }
     }
 
@@ -40,15 +40,6 @@ internal class SecurePathTreeWalker private constructor(
         return this.apply { onFail = function }
     }
 
-    private fun skipDirectory(path: Path): Boolean {
-        try {
-            if (onEnter?.invoke(path) == false) return true
-        } catch (exception: Throwable) {
-            onFail?.invoke(path, exception) ?: throw exception
-        }
-        return false
-    }
-
     private fun tryInvoke(function: ((Path) -> Unit)?, path: Path) {
         try {
             function?.invoke(path)
@@ -57,19 +48,18 @@ internal class SecurePathTreeWalker private constructor(
         }
     }
 
+    // TODO: Guava opens parent directory stream to make sure all checks are done in a secure environment.
     fun walk(path: Path, followLinks: Boolean): Unit {
         val linkOptions = LinkFollowing.toOptions(followLinks)
 
-        if (path.isDirectory(*linkOptions)) {
-            if (skipDirectory(path)) {
-                return
-            }
-        } else {
+        if (!path.isDirectory(*linkOptions)) {
             if (path.exists(LinkOption.NOFOLLOW_LINKS)) {
                 tryInvoke(onFile, path)
             }
             return
         }
+
+        tryInvoke(onEnter, path)
 
         try {
             // test start symlink to a directory
@@ -110,9 +100,7 @@ internal class SecurePathTreeWalker private constructor(
     }
 
     private fun SecureDirectoryStream<Path>.enterDirectory(path: Path, linkOptions: Array<LinkOption>) {
-        if (skipDirectory(path)) {
-            return
-        }
+        tryInvoke(onEnter, path)
 
         try {
             this.newDirectoryStream(path).use { it.walkEntries(linkOptions) }
@@ -140,9 +128,7 @@ internal class SecurePathTreeWalker private constructor(
     }
 
     private fun enterDirectory(path: Path, linkOptions: Array<LinkOption>) {
-        if (skipDirectory(path)) {
-            return
-        }
+        tryInvoke(onEnter, path)
 
         try {
             Files.newDirectoryStream(path).use { it.walkEntries(linkOptions) }
