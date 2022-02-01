@@ -108,7 +108,7 @@ class FirScopeDumpHandler(testServices: TestServices) : FirAnalysisHandler(testS
 
     private fun SmartPrinter.processFunction(symbol: FirNamedFunctionSymbol, scope: FirTypeScope, counter: SymbolCounter) {
         printInfo(symbol.fir, scope, counter)
-        scope.processDirectOverriddenFunctionsWithBaseScope(symbol) { overridden, baseScope ->
+        scope.processDirectOverriddenFunctionsWithBaseScope(symbol, backendCompatibilityMode = false) { overridden, baseScope ->
             withIndent {
                 processFunction(overridden, baseScope, counter)
             }
@@ -127,7 +127,7 @@ class FirScopeDumpHandler(testServices: TestServices) : FirAnalysisHandler(testS
         printInfo(symbol.fir, scope, counter)
         if (symbol !is FirPropertySymbol) return
         withIndent {
-            scope.processDirectOverriddenPropertiesWithBaseScope(symbol) { overriden, baseScope ->
+            scope.processDirectOverriddenPropertiesWithBaseScope(symbol, backendCompatibilityMode = false) { overriden, baseScope ->
                 processProperty(overriden, baseScope, counter)
                 ProcessorAction.NEXT
             }

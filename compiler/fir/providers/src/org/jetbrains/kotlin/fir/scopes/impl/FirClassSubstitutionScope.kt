@@ -59,28 +59,31 @@ class FirClassSubstitutionScope(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction =
         processDirectOverriddenWithBaseScope(
             functionSymbol,
+            backendCompatibilityMode,
             processor,
             FirTypeScope::processDirectOverriddenFunctionsWithBaseScope,
         ) { it in substitutionOverrideCache.overridesForFunctions }
 
     private inline fun <reified D : FirCallableSymbol<*>> processDirectOverriddenWithBaseScope(
         callableSymbol: D,
+        backendCompatibilityMode: Boolean,
         noinline processor: (D, FirTypeScope) -> ProcessorAction,
-        processDirectOverriddenCallablesWithBaseScope: FirTypeScope.(D, ((D, FirTypeScope) -> ProcessorAction)) -> ProcessorAction,
+        processDirectOverriddenCallablesWithBaseScope: FirTypeScope.(D, Boolean, ((D, FirTypeScope) -> ProcessorAction)) -> ProcessorAction,
         originalInCache: (D) -> Boolean
     ): ProcessorAction {
         val original = callableSymbol.originalForSubstitutionOverride?.takeIf { originalInCache(it) }
-            ?: return useSiteMemberScope.processDirectOverriddenCallablesWithBaseScope(callableSymbol, processor)
+            ?: return useSiteMemberScope.processDirectOverriddenCallablesWithBaseScope(callableSymbol, backendCompatibilityMode, processor)
 
         if (original != callableSymbol) {
             if (!processor(original, useSiteMemberScope)) return ProcessorAction.STOP
         }
 
-        return useSiteMemberScope.processDirectOverriddenCallablesWithBaseScope(original, processor)
+        return useSiteMemberScope.processDirectOverriddenCallablesWithBaseScope(original, backendCompatibilityMode, processor)
     }
 
     override fun processPropertiesByName(name: Name, processor: (FirVariableSymbol<*>) -> Unit) {
@@ -96,10 +99,11 @@ class FirClassSubstitutionScope(
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction =
         processDirectOverriddenWithBaseScope(
-            propertySymbol, processor, FirTypeScope::processDirectOverriddenPropertiesWithBaseScope,
+            propertySymbol, backendCompatibilityMode, processor, FirTypeScope::processDirectOverriddenPropertiesWithBaseScope,
         ) { it in substitutionOverrideCache.overridesForVariables }
 
     override fun processClassifiersByNameWithSubstitution(name: Name, processor: (FirClassifierSymbol<*>, ConeSubstitutor) -> Unit) {

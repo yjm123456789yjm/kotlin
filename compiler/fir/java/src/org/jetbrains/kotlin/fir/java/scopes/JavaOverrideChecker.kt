@@ -121,7 +121,7 @@ class JavaOverrideChecker internal constructor(
 
         var foundNonPrimitiveOverridden = false
 
-        baseScopes?.processOverriddenFunctions(symbol) {
+        baseScopes?.processOverriddenFunctions(symbol, backendCompatibilityMode = false) {
             val type = it.fir.returnTypeRef.toConeKotlinTypeProbablyFlexible(session, javaTypeParameterStack)
             if (!type.isPrimitiveInJava(isReturnType = true)) {
                 foundNonPrimitiveOverridden = true

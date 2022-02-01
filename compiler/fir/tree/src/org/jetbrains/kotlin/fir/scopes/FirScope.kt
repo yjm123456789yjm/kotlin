@@ -77,7 +77,7 @@ fun List<FirTypeScope>.processOverriddenPropertiesAndSelf(
     processor: (FirPropertySymbol) -> ProcessorAction
 ) {
     if (!processor(propertySymbol)) return
-    processOverriddenProperties(propertySymbol, processor)
+    processOverriddenProperties(propertySymbol, processor = processor)
 }
 
 enum class ProcessorAction {

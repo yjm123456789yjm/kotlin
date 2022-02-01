@@ -48,9 +48,10 @@ class FirScopeWithFakeOverrideTypeCalculator(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        return delegate.processDirectOverriddenFunctionsWithBaseScope(functionSymbol) { symbol, scope ->
+        return delegate.processDirectOverriddenFunctionsWithBaseScope(functionSymbol, backendCompatibilityMode) { symbol, scope ->
             updateReturnType(symbol.fir)
             processor(symbol, scope)
         }
@@ -58,9 +59,10 @@ class FirScopeWithFakeOverrideTypeCalculator(
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        return delegate.processDirectOverriddenPropertiesWithBaseScope(propertySymbol) { symbol, scope ->
+        return delegate.processDirectOverriddenPropertiesWithBaseScope(propertySymbol, backendCompatibilityMode) { symbol, scope ->
             updateReturnType(symbol.fir)
             processor(symbol, scope)
         }

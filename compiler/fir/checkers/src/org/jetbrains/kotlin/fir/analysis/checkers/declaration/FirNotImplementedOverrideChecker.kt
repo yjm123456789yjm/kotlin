@@ -57,7 +57,7 @@ object FirNotImplementedOverrideChecker : FirClassChecker() {
             val delegatedWrapperData = symbol.delegatedWrapperData
             if (delegatedWrapperData != null) {
                 val directOverriddenMembersWithBaseScope = classScope.getDirectOverriddenMembersWithBaseScope(
-                    symbol
+                    symbol, backendCompatibilityMode = false
                 )
 
                 @Suppress("UNCHECKED_CAST")

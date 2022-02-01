@@ -60,17 +60,18 @@ class FirUnstableSmartcastTypeScope(
     }
 
     private inline fun <N, T : FirCallableSymbol<*>> processTypedComposite(
-        process: FirTypeScope.(N, (T, FirTypeScope) -> ProcessorAction) -> ProcessorAction,
+        backendCompatibilityMode: Boolean,
+        process: FirTypeScope.(N, Boolean, (T, FirTypeScope) -> ProcessorAction) -> ProcessorAction,
         name: N,
         noinline processor: (T, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
         val unique = mutableSetOf<T>()
-        originalScope.process(name) { symbol, firTypeScope ->
+        originalScope.process(name, backendCompatibilityMode) { symbol, firTypeScope ->
             unique += symbol
             processor(symbol, firTypeScope)
         }.let { if (it == ProcessorAction.STOP) return ProcessorAction.STOP }
 
-        smartcastScope.process(name) { symbol, firTypeScope ->
+        smartcastScope.process(name, backendCompatibilityMode) { symbol, firTypeScope ->
             if (symbol !in unique) {
                 markSymbolFromUnstableSmartcast(symbol)
                 processor(symbol, firTypeScope)
@@ -89,16 +90,22 @@ class FirUnstableSmartcastTypeScope(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        return processTypedComposite(FirTypeScope::processDirectOverriddenFunctionsWithBaseScope, functionSymbol, processor)
+        return processTypedComposite(
+            backendCompatibilityMode, FirTypeScope::processDirectOverriddenFunctionsWithBaseScope, functionSymbol, processor
+        )
     }
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
-        return processTypedComposite(FirTypeScope::processDirectOverriddenPropertiesWithBaseScope, propertySymbol, processor)
+        return processTypedComposite(
+            backendCompatibilityMode, FirTypeScope::processDirectOverriddenPropertiesWithBaseScope, propertySymbol, processor
+        )
     }
 
     override fun getCallableNames(): Set<Name> {

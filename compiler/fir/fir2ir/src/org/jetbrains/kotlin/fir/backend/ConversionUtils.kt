@@ -406,25 +406,28 @@ fun FirTypeScope.processOverriddenFunctionsFromSuperClasses(
     functionSymbol: FirNamedFunctionSymbol,
     containingClass: FirClass,
     processor: (FirNamedFunctionSymbol) -> ProcessorAction
-): ProcessorAction = processDirectOverriddenFunctionsWithBaseScope(functionSymbol) { overridden, baseScope ->
-    if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
-        baseScope.processOverriddenFunctionsFromSuperClasses(overridden, containingClass, processor)
-    } else {
-        processor(overridden)
+): ProcessorAction =
+    processDirectOverriddenFunctionsWithBaseScope(functionSymbol, backendCompatibilityMode = true)
+    { overridden, baseScope ->
+        if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
+            baseScope.processOverriddenFunctionsFromSuperClasses(overridden, containingClass, processor)
+        } else {
+            processor(overridden)
+        }
     }
-}
 
 fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
     propertySymbol: FirPropertySymbol,
     containingClass: FirClass,
     processor: (FirPropertySymbol) -> ProcessorAction
-): ProcessorAction = processDirectOverriddenPropertiesWithBaseScope(propertySymbol) { overridden, baseScope ->
-    if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
-        baseScope.processOverriddenPropertiesFromSuperClasses(overridden, containingClass, processor)
-    } else {
-        processor(overridden)
+): ProcessorAction =
+    processDirectOverriddenPropertiesWithBaseScope(propertySymbol, backendCompatibilityMode = true) { overridden, baseScope ->
+        if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
+            baseScope.processOverriddenPropertiesFromSuperClasses(overridden, containingClass, processor)
+        } else {
+            processor(overridden)
+        }
     }
-}
 
 private fun FirClass.getSuperTypesAsIrClasses(
     declarationStorage: Fir2IrDeclarationStorage

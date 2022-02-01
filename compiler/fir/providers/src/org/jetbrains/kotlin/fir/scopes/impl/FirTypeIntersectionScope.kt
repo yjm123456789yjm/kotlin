@@ -77,30 +77,35 @@ class FirTypeIntersectionScope private constructor(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction =
         processDirectOverriddenCallablesWithBaseScope(
-            functionSymbol, processor,
+            functionSymbol, backendCompatibilityMode, processor,
             FirTypeScope::processDirectOverriddenFunctionsWithBaseScope
         )
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction =
         processDirectOverriddenCallablesWithBaseScope(
-            propertySymbol, processor,
+            propertySymbol, backendCompatibilityMode, processor,
             FirTypeScope::processDirectOverriddenPropertiesWithBaseScope
         )
 
     private fun <D : FirCallableSymbol<*>> processDirectOverriddenCallablesWithBaseScope(
         callableSymbol: D,
+        backendCompatibilityMode: Boolean,
         processor: (D, FirTypeScope) -> ProcessorAction,
-        processDirectOverriddenInBaseScope: FirTypeScope.(D, ((D, FirTypeScope) -> ProcessorAction)) -> ProcessorAction
+        processDirectOverriddenInBaseScope: FirTypeScope.(D, Boolean, ((D, FirTypeScope) -> ProcessorAction)) -> ProcessorAction
     ): ProcessorAction {
         for ((overridden, baseScope) in getDirectOverriddenSymbols(callableSymbol)) {
             if (overridden === callableSymbol) {
-                if (!baseScope.processDirectOverriddenInBaseScope(callableSymbol, processor)) return ProcessorAction.STOP
+                if (!baseScope.processDirectOverriddenInBaseScope(callableSymbol, backendCompatibilityMode, processor)) {
+                    return ProcessorAction.STOP
+                }
             } else {
                 if (!processor(overridden, baseScope)) return ProcessorAction.STOP
             }

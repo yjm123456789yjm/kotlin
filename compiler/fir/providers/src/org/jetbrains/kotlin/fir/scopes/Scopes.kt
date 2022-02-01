@@ -39,11 +39,13 @@ fun debugCollectOverrides(symbol: FirCallableSymbol<*>, scope: FirTypeScope): Ma
         val result = mutableMapOf<Any, Any>()
         val resultList = mutableListOf<Any>()
         when (symbol) {
-            is FirNamedFunctionSymbol -> scope.processDirectOverriddenFunctionsWithBaseScope(symbol) { baseSymbol, baseScope ->
+            is FirNamedFunctionSymbol -> scope.processDirectOverriddenFunctionsWithBaseScope(symbol, backendCompatibilityMode = false)
+            { baseSymbol, baseScope ->
                 resultList.add(process(baseScope, baseSymbol))
                 ProcessorAction.NEXT
             }
-            is FirPropertySymbol -> scope.processDirectOverriddenPropertiesWithBaseScope(symbol) { baseSymbol, baseScope ->
+            is FirPropertySymbol -> scope.processDirectOverriddenPropertiesWithBaseScope(symbol, backendCompatibilityMode = false)
+            { baseSymbol, baseScope ->
                 resultList.add(process(baseScope, baseSymbol))
                 ProcessorAction.NEXT
             }
