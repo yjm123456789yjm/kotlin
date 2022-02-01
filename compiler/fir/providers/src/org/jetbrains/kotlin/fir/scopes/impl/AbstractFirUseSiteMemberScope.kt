@@ -138,12 +138,14 @@ abstract class AbstractFirUseSiteMemberScope(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
         return processDirectOverriddenMembersWithBaseScopeImpl(
             directOverriddenFunctions,
             functionsFromSupertypes,
             functionSymbol,
+            backendCompatibilityMode,
             processor,
             FirTypeScope::processDirectOverriddenFunctionsWithBaseScope
         )
@@ -151,12 +153,14 @@ abstract class AbstractFirUseSiteMemberScope(
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
         return processDirectOverriddenMembersWithBaseScopeImpl(
             directOverriddenProperties,
             propertiesFromSupertypes,
             propertySymbol,
+            backendCompatibilityMode,
             processor,
             FirTypeScope::processDirectOverriddenPropertiesWithBaseScope
         )
@@ -166,22 +170,23 @@ abstract class AbstractFirUseSiteMemberScope(
         directOverriddenMap: Map<D, List<ResultOfIntersection<D>>>,
         callablesFromSupertypes: Map<Name, List<ResultOfIntersection<D>>>,
         callableSymbol: D,
+        backendCompatibilityMode: Boolean,
         processor: (D, FirTypeScope) -> ProcessorAction,
-        processDirectOverriddenCallables: FirTypeScope.(D, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction
+        processDirectOverriddenCallables: FirTypeScope.(D, Boolean, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction
     ): ProcessorAction {
         when (val directOverridden = directOverriddenMap[callableSymbol]) {
             null -> {
                 val resultOfIntersection = callablesFromSupertypes[callableSymbol.name]
                     ?.firstOrNull { it.chosenSymbol == callableSymbol }
                     ?: return ProcessorAction.NONE
-                if (resultOfIntersection.isIntersectionOverride()) {
+                if (backendCompatibilityMode || resultOfIntersection.isIntersectionOverride()) {
                     for ((overridden, baseScope) in resultOfIntersection.overriddenMembers) {
                         if (!processor(overridden, baseScope)) return ProcessorAction.STOP
                     }
                     return ProcessorAction.NONE
                 } else {
                     return resultOfIntersection.containingScope
-                        ?.processDirectOverriddenCallables(callableSymbol, processor)
+                        ?.processDirectOverriddenCallables(callableSymbol, backendCompatibilityMode, processor)
                         ?: ProcessorAction.NONE
                 }
             }

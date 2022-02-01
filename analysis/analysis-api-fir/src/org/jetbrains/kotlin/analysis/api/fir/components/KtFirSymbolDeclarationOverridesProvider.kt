@@ -82,11 +82,15 @@ internal class KtFirSymbolDeclarationOverridesProvider(
         declaration: FirDeclaration,
         processor: (FirCallableDeclaration) -> Unit
     ) = when (declaration) {
-        is FirSimpleFunction -> processDirectOverriddenFunctionsWithBaseScope(declaration.symbol) { symbol, _ ->
+        is FirSimpleFunction -> processDirectOverriddenFunctionsWithBaseScope(
+            declaration.symbol, backendCompatibilityMode = false
+        ) { symbol, _ ->
             processor.invoke(symbol.fir)
             ProcessorAction.NEXT
         }
-        is FirProperty -> processDirectOverriddenPropertiesWithBaseScope(declaration.symbol) { symbol, _ ->
+        is FirProperty -> processDirectOverriddenPropertiesWithBaseScope(
+            declaration.symbol, backendCompatibilityMode = false
+        ) { symbol, _ ->
             processor.invoke(symbol.fir)
             ProcessorAction.NEXT
         }

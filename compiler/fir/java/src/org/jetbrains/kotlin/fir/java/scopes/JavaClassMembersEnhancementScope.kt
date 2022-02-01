@@ -80,24 +80,29 @@ class JavaClassMembersEnhancementScope(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction =
         doProcessDirectOverriddenCallables(
-            functionSymbol, processor, enhancedToOriginalFunctions, FirTypeScope::processDirectOverriddenFunctionsWithBaseScope
+            functionSymbol, backendCompatibilityMode, processor, enhancedToOriginalFunctions,
+            FirTypeScope::processDirectOverriddenFunctionsWithBaseScope
         )
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction = doProcessDirectOverriddenCallables(
-        propertySymbol, processor, enhancedToOriginalProperties, FirTypeScope::processDirectOverriddenPropertiesWithBaseScope
+        propertySymbol, backendCompatibilityMode, processor, enhancedToOriginalProperties,
+        FirTypeScope::processDirectOverriddenPropertiesWithBaseScope
     )
 
     private fun <S : FirCallableSymbol<*>> doProcessDirectOverriddenCallables(
         callableSymbol: S,
+        backendCompatibilityMode: Boolean,
         processor: (S, FirTypeScope) -> ProcessorAction,
         enhancedToOriginalMap: Map<S, S>,
-        processDirectOverriddenCallables: FirTypeScope.(S, (S, FirTypeScope) -> ProcessorAction) -> ProcessorAction
+        processDirectOverriddenCallables: FirTypeScope.(S, Boolean, (S, FirTypeScope) -> ProcessorAction) -> ProcessorAction
     ): ProcessorAction {
         val unwrappedSymbol = if (callableSymbol.origin == FirDeclarationOrigin.RenamedForOverride) {
             @Suppress("UNCHECKED_CAST")
@@ -106,7 +111,7 @@ class JavaClassMembersEnhancementScope(
             callableSymbol
         }
         val original = enhancedToOriginalMap[unwrappedSymbol] ?: return ProcessorAction.NONE
-        return useSiteMemberScope.processDirectOverriddenCallables(original, processor)
+        return useSiteMemberScope.processDirectOverriddenCallables(original, backendCompatibilityMode, processor)
     }
 
     override fun getCallableNames(): Set<Name> {

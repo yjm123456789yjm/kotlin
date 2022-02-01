@@ -199,7 +199,7 @@ class FirTypeIntersectionScopeContext(
         mostSpecific: D,
         scopeForMostSpecific: FirTypeScope
     ): MemberWithBaseScope<FirCallableSymbol<*>> {
-        val newModality = chooseIntersectionOverrideModality(extractedOverrides)
+        val newModality = chooseIntersectionOverrideModality(backendCompatibilityMode = false, extractedOverrides)
         val newVisibility = chooseIntersectionVisibility(extractedOverrides)
         val extractedOverridesSymbols = extractedOverrides.map { it.member }
         return when (mostSpecific) {
@@ -361,6 +361,7 @@ class FirTypeIntersectionScopeContext(
     }
 
     private fun <D : FirCallableSymbol<*>> chooseIntersectionOverrideModality(
+        backendCompatibilityMode: Boolean,
         extractedOverridden: Collection<MemberWithBaseScope<D>>
     ): Modality? {
         var hasOpen = false
@@ -395,7 +396,7 @@ class FirTypeIntersectionScopeContext(
             else -> error("Unexpected callable kind: ${extractedOverridden.first().member}")
         }
 
-        val realOverridden = extractedOverridden.flatMap { realOverridden(it.member, it.baseScope, processDirectOverridden) }
+        val realOverridden = extractedOverridden.flatMap { realOverridden(it.member, it.baseScope, backendCompatibilityMode, processDirectOverridden) }
         val filteredOverridden = filterOutOverridden(realOverridden, processDirectOverridden)
 
         return filteredOverridden.minOf { (it.member.fir as FirMemberDeclaration).modality ?: Modality.ABSTRACT }
@@ -404,11 +405,12 @@ class FirTypeIntersectionScopeContext(
     private fun <D : FirCallableSymbol<*>> realOverridden(
         symbol: D,
         scope: FirTypeScope,
+        backendCompatibilityMode: Boolean,
         processDirectOverridden: ProcessOverriddenWithBaseScope<D>,
     ): Collection<MemberWithBaseScope<D>> {
         val result = mutableSetOf<MemberWithBaseScope<D>>()
 
-        collectRealOverridden(symbol, scope, result, mutableSetOf(), processDirectOverridden)
+        collectRealOverridden(symbol, scope, result, mutableSetOf(), backendCompatibilityMode, processDirectOverridden)
 
         return result
     }
@@ -427,7 +429,8 @@ class FirTypeIntersectionScopeContext(
         scope: FirTypeScope,
         result: MutableCollection<MemberWithBaseScope<D>>,
         visited: MutableSet<D>,
-        processDirectOverridden: FirTypeScope.(D, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction,
+        backendCompatibilityMode: Boolean,
+        processDirectOverridden: FirTypeScope.(D, Boolean, (D, FirTypeScope) -> ProcessorAction) -> ProcessorAction,
     ) {
         if (!visited.add(symbol)) return
         if (!symbol.fir.origin.fromSupertypes) {
@@ -435,8 +438,8 @@ class FirTypeIntersectionScopeContext(
             return
         }
 
-        scope.processDirectOverridden(symbol) { overridden, baseScope ->
-            collectRealOverridden(overridden, baseScope, result, visited, processDirectOverridden)
+        scope.processDirectOverridden(symbol, backendCompatibilityMode) { overridden, baseScope ->
+            collectRealOverridden(overridden, baseScope, result, visited, backendCompatibilityMode, processDirectOverridden)
             ProcessorAction.NEXT
         }
     }

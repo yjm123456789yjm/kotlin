@@ -262,7 +262,7 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
 
         return findBiggestVisibility {
             scope.processPropertiesByName(property.symbol.name) {}
-            scope.processOverriddenProperties(property.symbol, it)
+            scope.processOverriddenProperties(property.symbol, processor = it)
         }
     }
 
@@ -277,7 +277,7 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
 
         return findBiggestVisibility {
             scope.processFunctionsByName(function.symbol.name) {}
-            scope.processOverriddenFunctions(function.symbol, it)
+            scope.processOverriddenFunctions(function.symbol, processor = it)
         }
     }
 

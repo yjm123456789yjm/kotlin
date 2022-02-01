@@ -68,6 +68,7 @@ class JavaAnnotationSyntheticPropertiesScope(
 
     override fun processDirectOverriddenFunctionsWithBaseScope(
         functionSymbol: FirNamedFunctionSymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirNamedFunctionSymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
         return ProcessorAction.NONE
@@ -75,6 +76,7 @@ class JavaAnnotationSyntheticPropertiesScope(
 
     override fun processDirectOverriddenPropertiesWithBaseScope(
         propertySymbol: FirPropertySymbol,
+        backendCompatibilityMode: Boolean,
         processor: (FirPropertySymbol, FirTypeScope) -> ProcessorAction
     ): ProcessorAction {
         return ProcessorAction.NONE

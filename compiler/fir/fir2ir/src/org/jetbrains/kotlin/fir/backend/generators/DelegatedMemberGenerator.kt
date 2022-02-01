@@ -113,9 +113,14 @@ class DelegatedMemberGenerator(
 
             val delegateToSymbol = findDelegateToSymbol(
                 unwrapped.symbol,
-                delegateToScope::processFunctionsByName,
-                delegateToScope::processOverriddenFunctions
-            ) ?: return@processAllFunctions
+                delegateToScope::processFunctionsByName
+            ) { baseSymbol, processor ->
+                delegateToScope.processOverriddenFunctions(
+                    baseSymbol,
+                    backendCompatibilityMode = true,
+                    processor
+                )
+            } ?: return@processAllFunctions
 
             val irSubFunction = generateDelegatedFunction(
                 subClass, firSubClass, functionSymbol.fir
@@ -139,9 +144,14 @@ class DelegatedMemberGenerator(
                         if (it !is FirPropertySymbol) return@processPropertiesByName
                         processor(it)
                     }
-                },
-                delegateToScope::processOverriddenProperties
-            ) ?: return@processAllProperties
+                }
+            ) { baseSymbol, processor ->
+                delegateToScope.processOverriddenProperties(
+                    baseSymbol,
+                    backendCompatibilityMode = true,
+                    processor
+                )
+            } ?: return@processAllProperties
 
             val irSubProperty = generateDelegatedProperty(
                 subClass, firSubClass, propertySymbol.fir

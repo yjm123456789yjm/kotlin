@@ -138,11 +138,15 @@ object ClassicBuiltinSpecialProperties {
         }
 
         when (this) {
-            is FirNamedFunctionSymbol -> containingScope.processDirectOverriddenFunctionsWithBaseScope(this) { overridden, scope ->
+            is FirNamedFunctionSymbol -> containingScope.processDirectOverriddenFunctionsWithBaseScope(
+                this, backendCompatibilityMode = false
+            ) { overridden, scope ->
                 process(overridden, scope)
             }
 
-            is FirPropertySymbol -> containingScope.processDirectOverriddenPropertiesWithBaseScope(this) { overridden, scope ->
+            is FirPropertySymbol -> containingScope.processDirectOverriddenPropertiesWithBaseScope(
+                this, backendCompatibilityMode = false
+            ) { overridden, scope ->
                 process(overridden, scope)
             }
         }
