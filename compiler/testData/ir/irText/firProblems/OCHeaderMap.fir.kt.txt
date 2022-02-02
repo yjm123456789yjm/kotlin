@@ -12,6 +12,6 @@ abstract class OCMutableHeaderMap : OCHeaderMap, MutableMap<String, String>, Abs
 }
 
 fun foo(map: OCMutableHeaderMap) {
-  map.put(p0 = "Alpha", p1 = "Omega") /*~> Unit */
+  map.put(key = "Alpha", value = "Omega") /*~> Unit */
 }
 
