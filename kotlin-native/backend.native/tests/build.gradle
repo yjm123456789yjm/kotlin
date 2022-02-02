@@ -6039,6 +6039,14 @@ fileCheckTest("filecheck_smoke0") {
     annotatedSource = project.file('filecheck/smoke0.kt')
 }
 
+// TODO: Replace with `-thumb-mode` test
+if (HostManager.@Companion.hostIsMac) {
+    fileCheckTest("filecheck_smoke0_cross") {
+        annotatedSource = project.file('filecheck/smoke0.kt')
+        targetName = "watchos_arm32"
+    }
+}
+
 fileCheckTest("filecheck_replace_invoke_with_call") {
     annotatedSource = project.file('filecheck/replace_invoke_with_call.kt')
 }
