@@ -346,6 +346,9 @@ val coreLibProjects = listOfNotNull(
     ":kotlin-test:kotlin-test-js".takeIf { !kotlinBuildProperties.isInJpsBuildIdeaSync },
     ":kotlin-reflect"
 )
+val mppProjects = listOf(
+    ":kotlin-stdlib-mpp",
+)
 
 val projectsWithDisabledFirBootstrap = coreLibProjects + listOf(
     ":kotlin-gradle-plugin",
@@ -586,7 +589,9 @@ allprojects {
                 ?.exclude("org.jetbrains.kotlin", "kotlin-scripting-compiler-embeddable")
         }
 
-        apply(from = "$rootDir/gradle/testRetry.gradle.kts")
+        if (path !in mppProjects) {
+            apply(from = "$rootDir/gradle/testRetry.gradle.kts")
+        }
     }
 }
 
