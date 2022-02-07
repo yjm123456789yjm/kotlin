@@ -13909,6 +13909,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
         public void testNotFoundClasses() throws Exception {
             runTest("compiler/testData/codegen/box/fir/notFoundClasses.kt");
         }
+
+        @TestMetadata("putCopyableUserData.kt")
+        public void testPutCopyableUserData() throws Exception {
+            runTest("compiler/testData/codegen/box/fir/putCopyableUserData.kt");
+        }
     }
 
     @TestMetadata("compiler/testData/codegen/box/fullJdk")
