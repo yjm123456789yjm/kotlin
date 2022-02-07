@@ -1,0 +1,29 @@
+FILE: 12.arrayAccessAndSafeCall.kt
+    public? final? fun test_1(): R|kotlin/Unit| {
+        a#?.{ $subj$.f#() }
+        a#?.{ +=($subj$.x#, f#()) }
+        a#?.{ $subj$.f#.get#(i#) }
+        a#?.{ $subj$.f#.set#(i#, g#()) }
+        a#?.{ ArraySet:[$subj$.f#.get#(i#) += g#()] }
+        a#?.{  {
+            lval <receiver>: <implicit> = $subj$
+            lval <unary>: <implicit> = R|<local>/<receiver>|.i#
+            R|<local>/<receiver>|.i# = R|<local>/<unary>|.inc#()
+            R|<local>/<unary>|
+        }
+         }
+    }
+    public? final? fun test_2(): R|kotlin/Unit| {
+        a#?.{ $subj$.f#() }
+        a#?.{ +=($subj$.x#, f#()) }
+        a#?.{ $subj$.f#.get#(i#) }
+        a#?.{ $subj$.f#.set#(i#, g#()) }
+        a#?.{ ArraySet:[$subj$.f#.get#(i#) += g#()] }
+        a#?.{  {
+            lval <receiver>: <implicit> = $subj$
+            lval <unary>: <implicit> = R|<local>/<receiver>|.i#
+            R|<local>/<receiver>|.i# = R|<local>/<unary>|.inc#()
+            R|<local>/<unary>|
+        }
+         }
+    }
