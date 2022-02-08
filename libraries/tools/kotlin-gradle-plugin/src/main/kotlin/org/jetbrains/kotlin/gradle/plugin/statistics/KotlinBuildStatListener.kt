@@ -82,11 +82,16 @@ class KotlinBuildStatListener(
                 else -> emptyList<String>()
 
             }
+            val nonIncrementalAttributes = taskExecutionResult?.buildMetrics?.buildAttributes?.asMap() ?: emptyMap()
+            val tags = (taskExecutionResult?.taskInfo?.properties?.map { it.name }?.toMutableList() ?: ArrayList())
+                .also { list ->
+                    val incrementalTag = if (nonIncrementalAttributes.isEmpty()) "Incremental" else "Non-Incremental"
+                    list.add(incrementalTag)
+                }
             return CompileStatData(
                 durationMs = durationMs, taskResult = taskResult.name, label = label,
                 buildTimesMs = buildTimesMs, perfData = perfData, projectName = projectName, taskName = taskPath, changes = changes,
-                tags = taskExecutionResult?.taskInfo?.properties?.map { it.name } ?: emptyList(),
-                nonIncrementalAttributes = taskExecutionResult?.buildMetrics?.buildAttributes?.asMap() ?: emptyMap(),
+                tags = tags, nonIncrementalAttributes = nonIncrementalAttributes,
                 hostName = hostName, kotlinVersion = "1.6", buildUuid = uuid, timeInMillis = System.currentTimeMillis()
             )
         }
