@@ -171,12 +171,7 @@ class FakeOverrideGenerator(
         val classLookupTag = klass.symbol.toLookupTag()
         val baseFirSymbolsForFakeOverride =
             if (originalSymbol.shouldHaveComputedBaseSymbolsForClass(classLookupTag)) {
-                computeBaseSymbols(originalSymbol, scope, classLookupTag) { function ->
-                    getDirectOverriddenFunctions(
-                        function,
-                        backendCompatibilityMode = true
-                    )
-                }
+                unwrapBaseSymbolsForOverride(scope.getDirectOverriddenFunctions(originalSymbol, backendCompatibilityMode = true), classLookupTag)
             } else {
                 listOf(originalSymbol)
             }
@@ -223,13 +218,7 @@ class FakeOverrideGenerator(
                 // Substitution or intersection case
                 // We have already a FIR declaration for such fake override
                 val overriddenSymbols = scope.computeDirectOverridden(originalSymbol)
-                val baseSymbols = overriddenSymbols.map {
-                    // Unwrapping should happen only for fake overrides members from the same class, not from supertypes
-                    if (it.fir.isSubstitutionOverride && it.dispatchReceiverClassOrNull() == classLookupTag)
-                        it.originalForSubstitutionOverride!!
-                    else
-                        it
-                }
+                val baseSymbols = unwrapBaseSymbolsForOverride(overriddenSymbols, classLookupTag)
                 val firstOverride = overriddenSymbols.firstOrNull()?.fir
                 if (firstOverride == null ||
                     overriddenSymbols.size == 1 ||
@@ -280,22 +269,6 @@ class FakeOverrideGenerator(
         }
         baseSymbolsMap[irDeclaration] = baseFirSymbolsForFakeOverride
         result += irDeclaration
-    }
-
-    private inline fun <reified S : FirCallableSymbol<*>> computeBaseSymbols(
-        symbol: S,
-        scope: FirTypeScope,
-        containingClass: ConeClassLikeLookupTag,
-        directOverridden: FirTypeScope.(S) -> List<S>,
-    ): List<S> {
-        val baseSymbols = scope.directOverridden(symbol)
-        return baseSymbols.map {
-            // Unwrapping should happen only for fake overrides members from the same class, not from supertypes
-            if (it.fir.isSubstitutionOverride && it.dispatchReceiverClassOrNull() == containingClass)
-                it.originalForSubstitutionOverride!!
-            else
-                it
-        }
     }
 
     internal fun getOverriddenSymbolsForFakeOverride(function: IrSimpleFunction): List<IrSimpleFunctionSymbol>? {
@@ -423,3 +396,15 @@ class FakeOverrideGenerator(
     }
 }
 
+internal inline fun <reified S : FirCallableSymbol<*>> unwrapBaseSymbolsForOverride(
+    overriddenSymbols: List<S>,
+    containingClassLookupTag: ConeClassLikeLookupTag,
+): List<S> {
+    return overriddenSymbols.map {
+        // Unwrapping should happen only for fake overrides members from the same class, not from supertypes
+        if (it.fir.isSubstitutionOverride && it.dispatchReceiverClassOrNull() == containingClassLookupTag)
+            it.originalForSubstitutionOverride!!
+        else
+            it
+    }
+}

@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.generators.FakeOverrideGenerator
+import org.jetbrains.kotlin.fir.backend.generators.unwrapBaseSymbolsForOverride
 import org.jetbrains.kotlin.fir.builder.buildPackageDirective
 import org.jetbrains.kotlin.fir.caches.getValue
 import org.jetbrains.kotlin.fir.declarations.*
@@ -406,28 +407,31 @@ fun FirTypeScope.processOverriddenFunctionsFromSuperClasses(
     functionSymbol: FirNamedFunctionSymbol,
     containingClass: FirClass,
     processor: (FirNamedFunctionSymbol) -> ProcessorAction
-): ProcessorAction =
-    processDirectOverriddenFunctionsWithBaseScope(functionSymbol, backendCompatibilityMode = true)
-    { overridden, baseScope ->
-        if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
-            baseScope.processOverriddenFunctionsFromSuperClasses(overridden, containingClass, processor)
-        } else {
-            processor(overridden)
-        }
+) {
+    val overriddenSymbols = mutableListOf<FirNamedFunctionSymbol>()
+    processDirectOverriddenFunctionsWithBaseScope(functionSymbol, backendCompatibilityMode = true) { overridden, _ ->
+        overriddenSymbols += overridden
+        ProcessorAction.NEXT
     }
+    unwrapBaseSymbolsForOverride(overriddenSymbols, containingClass.symbol.toLookupTag()).forEach {
+        processor(it)
+    }
+}
 
 fun FirTypeScope.processOverriddenPropertiesFromSuperClasses(
     propertySymbol: FirPropertySymbol,
     containingClass: FirClass,
     processor: (FirPropertySymbol) -> ProcessorAction
-): ProcessorAction =
-    processDirectOverriddenPropertiesWithBaseScope(propertySymbol, backendCompatibilityMode = true) { overridden, baseScope ->
-        if (overridden.containingClass() == containingClass.symbol.toLookupTag()) {
-            baseScope.processOverriddenPropertiesFromSuperClasses(overridden, containingClass, processor)
-        } else {
-            processor(overridden)
-        }
+) {
+    val overriddenSymbols = mutableListOf<FirPropertySymbol>()
+    processDirectOverriddenPropertiesWithBaseScope(propertySymbol, backendCompatibilityMode = true) { overridden, _ ->
+        overriddenSymbols += overridden
+        ProcessorAction.NEXT
     }
+    unwrapBaseSymbolsForOverride(overriddenSymbols, containingClass.symbol.toLookupTag()).forEach {
+        processor(it)
+    }
+}
 
 private fun FirClass.getSuperTypesAsIrClasses(
     declarationStorage: Fir2IrDeclarationStorage
