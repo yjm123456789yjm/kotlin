@@ -50,8 +50,8 @@ fun create(project: Project): ExecutorService {
     val configurables = project.testTargetConfigurables
 
     return when {
-        project.hasProperty("remote") -> sshExecutor(project, testTarget)
         project.compileOnlyTests -> noopExecutor(project)
+        project.hasProperty("remote") -> sshExecutor(project, testTarget)
         configurables is WasmConfigurables -> wasmExecutor(project)
         configurables is ConfigurablesWithEmulator && testTarget != HostManager.host -> emulatorExecutor(project, testTarget)
         configurables.targetTriple.isSimulator -> simulator(project)
