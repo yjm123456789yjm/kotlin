@@ -22,6 +22,7 @@ import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.js.backend.ast.*
 import org.jetbrains.kotlin.js.common.isValidES5Identifier
+import org.jetbrains.kotlin.js.inline.clean.FunctionPostProcessor
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addIfNotNull
 
@@ -87,6 +88,8 @@ fun translateFunction(declaration: IrFunction, name: JsName?, context: JsGenerat
     declaration.extensionReceiverParameter?.let { function.addParameter(functionContext.getNameForValueDeclaration(it)) }
     functionParams.forEach { function.addParameter(it) }
     check(!declaration.isSuspend) { "All Suspend functions should be lowered" }
+
+    FunctionPostProcessor(function, isIrBackend = true).apply()
 
     return function
 }
