@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.initialSignatureAttr
 import org.jetbrains.kotlin.fir.java.enhancement.FirSignatureEnhancement
+import org.jetbrains.kotlin.fir.originalForSubstitutionOverride
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.scopes.FirTypeScope
 import org.jetbrains.kotlin.fir.scopes.ProcessorAction
@@ -110,7 +111,9 @@ class JavaClassMembersEnhancementScope(
         } else {
             callableSymbol
         }
-        val original = enhancedToOriginalMap[unwrappedSymbol] ?: return ProcessorAction.NONE
+        val original = enhancedToOriginalMap[unwrappedSymbol]
+            ?: enhancedToOriginalMap[unwrappedSymbol.fir.originalForSubstitutionOverride?.symbol]
+            ?: return ProcessorAction.NONE
         return useSiteMemberScope.processDirectOverriddenCallables(original, backendCompatibilityMode, processor)
     }
 
