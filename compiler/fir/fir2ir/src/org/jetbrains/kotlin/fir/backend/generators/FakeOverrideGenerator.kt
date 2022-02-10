@@ -171,7 +171,15 @@ class FakeOverrideGenerator(
         val classLookupTag = klass.symbol.toLookupTag()
         val baseFirSymbolsForFakeOverride =
             if (originalSymbol.shouldHaveComputedBaseSymbolsForClass(classLookupTag)) {
-                unwrapBaseSymbolsForOverride(scope.getDirectOverriddenFunctions(originalSymbol, backendCompatibilityMode = true), classLookupTag)
+                val directOverriddenFunctions = scope.getDirectOverriddenFunctions(
+                    originalSymbol, backendCompatibilityMode = true
+                ).takeIf {
+                    it.isNotEmpty()
+                } ?: scope.getDirectOverriddenFunctions(
+                    originalSymbol.fir.originalForSubstitutionOverride!!.symbol,
+                    backendCompatibilityMode = true
+                )
+                unwrapBaseSymbolsForOverride(directOverriddenFunctions, classLookupTag)
             } else {
                 listOf(originalSymbol)
             }
