@@ -446,23 +446,6 @@ abstract class BaseIncrementalCompilationMultiProjectIT : IncrementalCompilation
     }
 
     @Test
-    fun testAbiChangeInLib_addNewMethod_withAbiSnapshot() {
-        doTest(
-            options = defaultBuildOptions().copy(abiSnapshot = true),
-            modifyProject = {
-                File(projectDir, "lib").getFileByName("A.kt").modify {
-                    it.replace("fun a() {}", "fun a() {}\nfun newA() {}")
-                }
-            },
-            expectedCompiledFileNames = listOf(
-                "A.kt", "B.kt", // In lib
-                // TODO(valtman): for abi-snapshot "BB.kt" should not be recompiled
-                "AA.kt", "AAA.kt", "BB.kt" // In app
-            )
-        )
-    }
-
-    @Test
     open fun testAbiChangeInLib_afterLibClean_withAbiSnapshot() {
         doTest(
             options = defaultBuildOptions().copy(abiSnapshot = true),

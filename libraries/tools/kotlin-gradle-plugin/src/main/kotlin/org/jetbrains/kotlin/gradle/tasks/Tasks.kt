@@ -202,7 +202,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> : AbstractKotl
             task.taskBuildCacheableOutputDirectory.value(getKotlinBuildDir(task).map { it.dir("cacheable") }).disallowChanges()
             task.taskBuildLocalStateDirectory.value(getKotlinBuildDir(task).map { it.dir("localstate") }).disallowChanges()
 
-            task.localStateDirectories.from(task.taskBuildLocalStateDirectory, task.taskBuildCacheableOutputDirectory).disallowChanges()
+            task.localStateDirectories.from(task.taskBuildLocalStateDirectory).disallowChanges()
 
             PropertiesProvider(task.project).mapKotlinDaemonProperties(task)
         }
@@ -646,6 +646,9 @@ abstract class KotlinCompile @Inject constructor(
         return super.getClasspath()
     }
 
+    @get:Input
+    abstract val useKotlinAbiSnapshot: Property<Boolean>
+
     @get:Nested
     abstract val classpathSnapshotProperties: ClasspathSnapshotProperties
 
@@ -768,7 +771,8 @@ abstract class KotlinCompile @Inject constructor(
                 workingDir = taskBuildCacheableOutputDirectory.get().asFile,
                 usePreciseJavaTracking = usePreciseJavaTracking,
                 disableMultiModuleIC = disableMultiModuleIC,
-                multiModuleICSettings = multiModuleICSettings
+                multiModuleICSettings = multiModuleICSettings,
+                withAbiSnapshot = useKotlinAbiSnapshot.get()
             )
         } else null
 
