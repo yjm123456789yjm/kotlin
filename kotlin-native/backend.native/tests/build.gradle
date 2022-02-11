@@ -6169,7 +6169,7 @@ project.tasks.register("debugger_test", Test.class) {
 }
 
 // Configure build for iOS device targets.
-if (UtilsKt.supportsRunningTestsOnDevice(target)) {
+if (!UtilsKt.getCompileOnlyTests(project) && UtilsKt.supportsRunningTestsOnDevice(target)) {
     project.tasks
             .withType(KonanTestExecutable.class)
             .configureEach {
