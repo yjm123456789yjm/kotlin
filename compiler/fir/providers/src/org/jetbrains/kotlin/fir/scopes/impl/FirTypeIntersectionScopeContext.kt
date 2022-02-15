@@ -245,7 +245,9 @@ class FirTypeIntersectionScopeContext(
             }
         }
         val result = this.toMutableList()
-        result.removeIf { (member, _) -> member.fir.unwrapSubstitutionOverrides().symbol in baseMembers }
+        result.removeIf { (member, _) ->
+            member.fir.modality != Modality.ABSTRACT && member.fir.unwrapSubstitutionOverrides().symbol in baseMembers
+        }
         return result
     }
 

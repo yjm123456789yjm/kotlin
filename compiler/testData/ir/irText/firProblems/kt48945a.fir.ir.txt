@@ -101,21 +101,24 @@ FILE fqName:<root> fileName:/kt48945a.kt
           RETURN type=kotlin.Nothing from='public final fun <get-entries> (): kotlin.collections.MutableSet<kotlin.collections.MutableMap.MutableEntry<kotlin.String, kotlin.String>> declared in <root>.Test'
             THROW type=kotlin.Nothing
               CONSTRUCTOR_CALL 'public constructor <init> () declared in java.lang.Exception' type=java.lang.Exception origin=null
-    FUN FAKE_OVERRIDE name:containsKey visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>, p0:@[FlexibleNullability] kotlin.String?) returnType:kotlin.Boolean [fake_override]
+    FUN FAKE_OVERRIDE name:containsKey visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>, key:kotlin.String) returnType:kotlin.Boolean [fake_override]
       overridden:
+        public abstract fun containsKey (key: kotlin.String): kotlin.Boolean [fake_override] declared in <root>.MSS
         public open fun containsKey (p0: @[FlexibleNullability] K of java.util.AbstractMap?): kotlin.Boolean declared in java.util.AbstractMap
-      $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
-      VALUE_PARAMETER name:p0 index:0 type:@[FlexibleNullability] kotlin.String?
-    FUN FAKE_OVERRIDE name:containsValue visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>, p0:@[FlexibleNullability] kotlin.String?) returnType:kotlin.Boolean [fake_override]
+      $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
+      VALUE_PARAMETER name:key index:0 type:kotlin.String
+    FUN FAKE_OVERRIDE name:containsValue visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>, value:kotlin.String) returnType:kotlin.Boolean [fake_override]
       overridden:
+        public abstract fun containsValue (value: kotlin.String): kotlin.Boolean [fake_override] declared in <root>.MSS
         public open fun containsValue (p0: @[FlexibleNullability] V of java.util.AbstractMap?): kotlin.Boolean declared in java.util.AbstractMap
-      $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
-      VALUE_PARAMETER name:p0 index:0 type:@[FlexibleNullability] kotlin.String?
-    FUN FAKE_OVERRIDE name:get visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>, p0:@[FlexibleNullability] kotlin.String?) returnType:kotlin.String? [fake_override,operator]
+      $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
+      VALUE_PARAMETER name:value index:0 type:kotlin.String
+    FUN FAKE_OVERRIDE name:get visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>, key:kotlin.String) returnType:kotlin.String? [fake_override,operator]
       overridden:
+        public abstract fun get (key: kotlin.String): kotlin.String? [fake_override,operator] declared in <root>.MSS
         public open fun get (p0: @[FlexibleNullability] K of java.util.AbstractMap?): V of java.util.AbstractMap? [operator] declared in java.util.AbstractMap
-      $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
-      VALUE_PARAMETER name:p0 index:0 type:@[FlexibleNullability] kotlin.String?
+      $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
+      VALUE_PARAMETER name:key index:0 type:kotlin.String
     FUN FAKE_OVERRIDE name:getOrDefault visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>, key:kotlin.String, defaultValue:kotlin.String) returnType:kotlin.String [fake_override]
       annotations:
         SinceKotlin(version = '1.1')
@@ -125,34 +128,41 @@ FILE fqName:<root> fileName:/kt48945a.kt
       $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
       VALUE_PARAMETER name:key index:0 type:kotlin.String
       VALUE_PARAMETER name:defaultValue index:1 type:kotlin.String
-    FUN FAKE_OVERRIDE name:isEmpty visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>) returnType:kotlin.Boolean [fake_override]
+    FUN FAKE_OVERRIDE name:isEmpty visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>) returnType:kotlin.Boolean [fake_override]
       overridden:
+        public abstract fun isEmpty (): kotlin.Boolean [fake_override] declared in <root>.MSS
         public open fun isEmpty (): kotlin.Boolean declared in java.util.AbstractMap
-      $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
+      $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
     PROPERTY FAKE_OVERRIDE name:keys visibility:public modality:OPEN [fake_override,val]
       overridden:
+        public abstract keys: kotlin.collections.Set<kotlin.String> [fake_override,val]
         public open keys: @[FlexibleNullability] kotlin.collections.Set<@[FlexibleNullability] K of java.util.AbstractMap?>? [val]
-      FUN FAKE_OVERRIDE name:<get-keys> visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>) returnType:@[FlexibleNullability] kotlin.collections.Set<@[FlexibleNullability] kotlin.String?>? [fake_override]
+      FUN FAKE_OVERRIDE name:<get-keys> visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>) returnType:kotlin.collections.Set<kotlin.String> [fake_override]
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:keys visibility:public modality:OPEN [fake_override,val]
         overridden:
+          public abstract fun <get-keys> (): kotlin.collections.Set<kotlin.String> [fake_override] declared in <root>.MSS
           public open fun <get-keys> (): @[FlexibleNullability] kotlin.collections.Set<@[FlexibleNullability] K of java.util.AbstractMap?>? declared in java.util.AbstractMap
-        $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
+        $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
     PROPERTY FAKE_OVERRIDE name:size visibility:public modality:OPEN [fake_override,val]
       overridden:
+        public abstract size: kotlin.Int [fake_override,val]
         public open size: kotlin.Int [val]
-      FUN FAKE_OVERRIDE name:<get-size> visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>) returnType:kotlin.Int [fake_override]
+      FUN FAKE_OVERRIDE name:<get-size> visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>) returnType:kotlin.Int [fake_override]
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:size visibility:public modality:OPEN [fake_override,val]
         overridden:
+          public abstract fun <get-size> (): kotlin.Int [fake_override] declared in <root>.MSS
           public open fun <get-size> (): kotlin.Int declared in java.util.AbstractMap
-        $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
+        $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
     PROPERTY FAKE_OVERRIDE name:values visibility:public modality:OPEN [fake_override,val]
       overridden:
+        public abstract values: kotlin.collections.Collection<kotlin.String> [fake_override,val]
         public open values: @[FlexibleNullability] kotlin.collections.Collection<@[FlexibleNullability] V of java.util.AbstractMap?>? [val]
-      FUN FAKE_OVERRIDE name:<get-values> visibility:public modality:OPEN <> ($this:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>) returnType:@[FlexibleNullability] kotlin.collections.Collection<@[FlexibleNullability] kotlin.String?>? [fake_override]
+      FUN FAKE_OVERRIDE name:<get-values> visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>) returnType:kotlin.collections.Collection<kotlin.String> [fake_override]
         correspondingProperty: PROPERTY FAKE_OVERRIDE name:values visibility:public modality:OPEN [fake_override,val]
         overridden:
+          public abstract fun <get-values> (): kotlin.collections.Collection<kotlin.String> [fake_override] declared in <root>.MSS
           public open fun <get-values> (): @[FlexibleNullability] kotlin.collections.Collection<@[FlexibleNullability] V of java.util.AbstractMap?>? declared in java.util.AbstractMap
-        $this: VALUE_PARAMETER name:<this> type:java.util.AbstractMap<K of java.util.AbstractMap, V of java.util.AbstractMap>
+        $this: VALUE_PARAMETER name:<this> type:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>
     FUN FAKE_OVERRIDE name:forEach visibility:public modality:OPEN <> ($this:kotlin.collections.Map<K of kotlin.collections.Map, V of kotlin.collections.Map>, p0:@[EnhancedNullability] java.util.function.BiConsumer<in @[EnhancedNullability] kotlin.String, in @[EnhancedNullability] kotlin.String>) returnType:kotlin.Unit [fake_override]
       overridden:
         public open fun forEach (p0: @[EnhancedNullability] java.util.function.BiConsumer<in @[EnhancedNullability] kotlin.String, in @[EnhancedNullability] kotlin.String>): kotlin.Unit [fake_override] declared in <root>.MSS
