@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.fir.session
 
 import org.jetbrains.annotations.TestOnly
+import org.jetbrains.kotlin.config.AnalysisFlags
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.*
@@ -39,6 +40,7 @@ import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
+import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
 object FirSessionFactory {
@@ -98,6 +100,7 @@ object FirSessionFactory {
             librariesScope,
             projectEnvironment,
             projectEnvironment.getPackagePartProvider(librariesScope),
+            needRegisterJavaElementFinder,
             languageVersionSettings
         )
 
@@ -207,6 +210,7 @@ object FirSessionFactory {
         scope: AbstractProjectFileSearchScope,
         projectEnvironment: AbstractProjectEnvironment,
         packagePartProvider: PackagePartProvider,
+        needRegisterJavaElementFinder: Boolean,
         languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
     ): FirSession {
         return FirCliSession(sessionProvider, FirSession.Kind.Library).apply session@{
@@ -231,18 +235,20 @@ object FirSessionFactory {
                 projectEnvironment.getFirJavaFacade(this, moduleDataProvider.allModuleData.last(), scope)
             )
 
-            val builtinsModuleData = createModuleDataForBuiltins(
-                mainModuleName,
-                moduleDataProvider.platform,
-                moduleDataProvider.analyzerServices
-            ).also { it.bindSession(this@session) }
+            val builtinsModuleData = runUnless(needRegisterJavaElementFinder && languageVersionSettings.getFlag(AnalysisFlags.builtInsFromSources)) {
+                createModuleDataForBuiltins(
+                    mainModuleName,
+                    moduleDataProvider.platform,
+                    moduleDataProvider.analyzerServices
+                ).also { it.bindSession(this@session) }
+            }
 
             val symbolProvider = FirCompositeSymbolProvider(
                 this,
-                listOf(
+                listOfNotNull(
                     classFileBasedSymbolProvider,
-                    FirBuiltinSymbolProvider(this, builtinsModuleData, kotlinScopeProvider),
-                    FirCloneableSymbolProvider(this, builtinsModuleData, kotlinScopeProvider),
+                    builtinsModuleData?.let { FirBuiltinSymbolProvider(this, it, kotlinScopeProvider) },
+                    builtinsModuleData?.let { FirCloneableSymbolProvider(this, it, kotlinScopeProvider) },
                     FirDependenciesSymbolProviderImpl(this)
                 )
             )
