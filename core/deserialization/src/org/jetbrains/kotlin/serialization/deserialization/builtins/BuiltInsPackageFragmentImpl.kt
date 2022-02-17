@@ -27,6 +27,8 @@ class BuiltInsPackageFragmentImpl private constructor(
     fqName, storageManager, module, proto, metadataVersion, containerSource = null
 ) {
     companion object {
+        fun fake() {}
+
         fun create(
             fqName: FqName,
             storageManager: StorageManager,
