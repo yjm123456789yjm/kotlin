@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isStatic
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.providers.dependenciesSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCompositeSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
@@ -90,7 +91,7 @@ open class FirJvmMangleComputer(
         }
         if (parentClassId != null && !parentClassId.isLocal) {
             val symbolProvider = if (isRealExpect) {
-                session.dependenciesSymbolProvider
+                FirCompositeSymbolProvider(session, listOf(session.dependenciesSymbolProvider, session.symbolProvider))
             } else {
                 session.symbolProvider
             }
