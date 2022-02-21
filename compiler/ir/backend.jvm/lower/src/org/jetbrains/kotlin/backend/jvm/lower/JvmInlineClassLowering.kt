@@ -122,13 +122,13 @@ private class JvmInlineClassLowering(private val context: JvmBackendContext) : F
             return null
         }
 
-        // If fun interface methods are already mangled, do not mangle them twice.
-        val suffix = function.hashSuffix()
-        if (function is IrSimpleFunction && function.overriddenSymbols.any { it.owner.parentAsClass.isFun } &&
-            suffix != null && function.name.asString().endsWith(suffix)
-        ) {
-            function.transformChildrenVoid()
-            return null
+        if (function is IrSimpleFunction && function.overriddenSymbols.any { it.owner.parentAsClass.isFun }) {
+            // If fun interface methods are already mangled, do not mangle them twice.
+            val suffix = function.hashSuffix()
+            if (suffix != null && function.name.asString().endsWith(suffix)) {
+                function.transformChildrenVoid()
+                return null
+            }
         }
 
         addBindingsFor(function, replacement)
