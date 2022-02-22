@@ -209,7 +209,7 @@ class ConeSubstitutorByMap(
 
         if (hashCode != other.hashCode) return false
         if (substitution != other.substitution) return false
-        if (useSiteSession != other.useSiteSession) return false
+//        if (useSiteSession != other.useSiteSession) return false
 
         return true
     }

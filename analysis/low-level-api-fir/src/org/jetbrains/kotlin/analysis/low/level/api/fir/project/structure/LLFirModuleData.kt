@@ -47,6 +47,9 @@ class LLFirBuiltinsModuleData(val useSiteKtModule: KtModule) : LLFirModuleData()
     override val platform: TargetPlatform get() = useSiteKtModule.platform
     override val analyzerServices: PlatformDependentAnalyzerServices get() = useSiteKtModule.analyzerServices
 
+    override val kind: FirSession.Kind
+        get() = FirSession.Kind.Library
+
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (javaClass != other?.javaClass) return false
@@ -83,6 +86,9 @@ class LLFirKtModuleBasedModuleData(
     override val platform: TargetPlatform get() = ktModule.platform
 
     override val analyzerServices: PlatformDependentAnalyzerServices get() = ktModule.analyzerServices
+
+    override val kind: FirSession.Kind?
+        get() = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

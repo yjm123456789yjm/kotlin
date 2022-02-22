@@ -46,6 +46,9 @@ object FirFakeOverrideGenerator {
             symbolForSubstitutionOverride, session, baseFunction, newDispatchReceiverType, newReceiverType, newReturnType,
             newParameterTypes, newTypeParameters, isExpect, fakeOverrideSubstitution
         )
+        if (symbolForSubstitutionOverride.toString() == "FirNamedFunctionSymbol /<anonymous>.done"){ // && (symbolForSubstitutionOverride.fir.source?.let { it.startOffset == 1818 && it.endOffset == 1953 } == true)) {
+            println()
+        }
         return symbolForSubstitutionOverride
     }
 

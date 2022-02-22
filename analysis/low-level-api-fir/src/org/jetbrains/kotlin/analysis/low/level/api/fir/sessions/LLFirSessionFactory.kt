@@ -469,7 +469,8 @@ fun createEmptySession(): FirSession {
             dependsOnDependencies = emptyList(),
             friendDependencies = emptyList(),
             platform = JvmPlatforms.unspecifiedJvmPlatform,
-            analyzerServices = JvmPlatformAnalyzerServices
+            analyzerServices = JvmPlatformAnalyzerServices,
+            kind = FirSession.Kind.Source
         )
         registerModuleData(moduleData)
         moduleData.bindSession(this)

@@ -40,6 +40,7 @@ import org.jetbrains.kotlin.fir.scopes.FirPlatformClassMapper
 import org.jetbrains.kotlin.fir.scopes.impl.FirDeclaredMemberScopeProvider
 import org.jetbrains.kotlin.fir.scopes.impl.FirIntersectionOverrideStorage
 import org.jetbrains.kotlin.fir.scopes.impl.FirSubstitutionOverrideStorage
+import org.jetbrains.kotlin.fir.scopes.impl.substitutionOverrideStorage
 import org.jetbrains.kotlin.fir.symbols.FirPhaseManager
 import org.jetbrains.kotlin.fir.types.FirCorrespondingSupertypesCache
 import org.jetbrains.kotlin.fir.types.TypeComponents
@@ -61,7 +62,14 @@ fun FirSession.registerCommonComponents(languageVersionSettings: LanguageVersion
     register(FirExtensionService::class, FirExtensionService(this))
     register(GeneratedClassIndex::class, GeneratedClassIndex.create())
 
-    register(FirSubstitutionOverrideStorage::class, FirSubstitutionOverrideStorage(this))
+
+    val substitutionOverrideStorage = nullableModuleData?.dependsOnDependencies
+        ?.singleOrNull { it.kind == FirSession.Kind.Source }
+        ?.session
+        ?.substitutionOverrideStorage
+        ?: FirSubstitutionOverrideStorage(this)
+
+    register(FirSubstitutionOverrideStorage::class, substitutionOverrideStorage)
     register(FirIntersectionOverrideStorage::class, FirIntersectionOverrideStorage(this))
     register(FirSamConstructorStorage::class, FirSamConstructorStorage(this))
     register(FirOverrideService::class, FirOverrideService(this))
