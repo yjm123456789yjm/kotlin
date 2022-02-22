@@ -90,6 +90,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("annotationWithVarargAsDefaultValue.kt")
+        public void testAnnotationWithVarargAsDefaultValue() throws Exception {
+            runTest("compiler/testData/codegen/box/annotations/annotationWithVarargAsDefaultValue.kt");
+        }
+
+        @Test
         @TestMetadata("annotationsOnDefault.kt")
         public void testAnnotationsOnDefault() throws Exception {
             runTest("compiler/testData/codegen/box/annotations/annotationsOnDefault.kt");
@@ -31014,6 +31020,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @Test
             public void testAllFilesPresentInMultiModule() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/multiModule"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("expectClassActualTypealias.kt")
+            public void testExpectClassActualTypealias() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/expectClassActualTypealias.kt");
+            }
+
+            @Test
+            @TestMetadata("fakeOverrideInCommon.kt")
+            public void testFakeOverrideInCommon() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/multiModule/fakeOverrideInCommon.kt");
             }
         }
     }
