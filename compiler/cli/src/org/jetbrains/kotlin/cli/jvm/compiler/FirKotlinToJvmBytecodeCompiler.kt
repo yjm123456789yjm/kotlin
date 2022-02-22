@@ -323,7 +323,7 @@ object FirKotlinToJvmBytecodeCompiler {
 
         ProgressIndicatorAndCompilationCanceledStatus.checkCanceled()
 
-        performanceManager?.notifyIRLoweringStarted()
+        performanceManager?.notifyIRLoweringStarted() // UNASSIGNED
         generationState.beforeCompile()
         generationState.oldBEInitTrace(ktFiles)
         codegenFactory.generateModuleInFrontendIRMode(
