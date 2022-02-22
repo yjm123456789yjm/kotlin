@@ -110,7 +110,8 @@ object FirSessionFactory {
             dependencyList.dependsOnDependencies,
             dependencyList.friendsDependencies,
             dependencyList.platform,
-            dependencyList.analyzerServices
+            dependencyList.analyzerServices,
+            FirSession.Kind.Source
         )
         return createJavaModuleBasedSession(
             mainModuleData,
@@ -266,7 +267,8 @@ object FirSessionFactory {
                 dependsOnDependencies = emptyList(),
                 friendDependencies = emptyList(),
                 platform = JvmPlatforms.unspecifiedJvmPlatform,
-                analyzerServices = JvmPlatformAnalyzerServices
+                analyzerServices = JvmPlatformAnalyzerServices,
+                kind = FirSession.Kind.Source
             )
             registerModuleData(moduleData)
             moduleData.bindSession(this)

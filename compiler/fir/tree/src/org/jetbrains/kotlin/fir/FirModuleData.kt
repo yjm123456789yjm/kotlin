@@ -45,6 +45,7 @@ abstract class FirModuleData : FirSessionComponent {
     abstract val dependsOnDependencies: List<FirModuleData>
     abstract val friendDependencies: List<FirModuleData>
     abstract val platform: TargetPlatform
+    abstract val kind: FirSession.Kind?
 
     // TODO: analyzerServices are needed only as default imports providers
     //   refactor them to make API clearer
@@ -72,7 +73,8 @@ class FirModuleDataImpl(
     override val dependsOnDependencies: List<FirModuleData>,
     override val friendDependencies: List<FirModuleData>,
     override val platform: TargetPlatform,
-    override val analyzerServices: PlatformDependentAnalyzerServices
+    override val analyzerServices: PlatformDependentAnalyzerServices,
+    override val kind: FirSession.Kind
 ) : FirModuleData()
 
 val FirSession.nullableModuleData: FirModuleData? by FirSession.nullableSessionComponentAccessor()

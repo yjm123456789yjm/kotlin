@@ -379,4 +379,4 @@ class FirSubstitutionOverrideStorage(val session: FirSession) : FirSessionCompon
     }
 }
 
-private val FirSession.substitutionOverrideStorage: FirSubstitutionOverrideStorage by FirSession.sessionComponentAccessor()
+val FirSession.substitutionOverrideStorage: FirSubstitutionOverrideStorage by FirSession.sessionComponentAccessor()

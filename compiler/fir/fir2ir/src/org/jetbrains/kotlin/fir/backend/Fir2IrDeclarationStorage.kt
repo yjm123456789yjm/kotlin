@@ -533,6 +533,9 @@ class Fir2IrDeclarationStorage(
                 created.overriddenSymbols += getIrFunctionSymbol(it) as IrSimpleFunctionSymbol
             }
         }
+        if (name.asString() == "done") {// && (((irParent as? IrClass)?.parent as? IrFunction)?.parent as? IrClass)?.name?.asString() == "RingBuffer") {
+            println()
+        }
         functionCache[function.getKey()] = created
         return created
     }

@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.analysis.low.level.api.fir.sessions
 
 import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.fir.FirModuleData
+import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
@@ -31,6 +32,9 @@ internal class KtModuleBasedModuleData(
     override val platform: TargetPlatform get() = module.platform
 
     override val analyzerServices: PlatformDependentAnalyzerServices get() = module.analyzerServices
+
+    override val kind: FirSession.Kind?
+        get() = null
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true

@@ -36,6 +36,7 @@ class DependencyListForCliModule(
                 friendDependencies = emptyList(),
                 platform,
                 analyzerServices,
+                FirSession.Kind.Library
             )
         }
 

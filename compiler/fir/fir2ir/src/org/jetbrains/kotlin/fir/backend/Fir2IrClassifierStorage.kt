@@ -54,7 +54,7 @@ class Fir2IrClassifierStorage(
 
     private val typeParameterCacheForSetter = mutableMapOf<FirTypeParameter, IrTypeParameter>()
 
-    private val enumEntryCache = mutableMapOf<CallableId, IrEnumEntry>()
+    private val enumEntryCache = mutableMapOf<Pair<CallableId, Boolean>, IrEnumEntry>()
 
     private val localStorage = Fir2IrLocalStorage()
 
@@ -408,7 +408,7 @@ class Fir2IrClassifierStorage(
         localStorage.putLocalClass((enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject, correspondingClass)
     }
 
-    internal fun getCachedIrEnumEntry(enumEntry: FirEnumEntry): IrEnumEntry? = enumEntryCache[enumEntry.symbol.callableId]
+    internal fun getCachedIrEnumEntry(enumEntry: FirEnumEntry): IrEnumEntry? = enumEntryCache[enumEntry.symbol.callableId to enumEntry.isExpect]
 
     private fun declareIrEnumEntry(signature: IdSignature?, factory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry =
         if (signature == null)
@@ -455,7 +455,7 @@ class Fir2IrClassifierStorage(
                     declarationStorage.leaveScope(this)
                 }
             }
-            enumEntryCache[enumEntry.symbol.callableId] = result
+            enumEntryCache[enumEntry.symbol.callableId to enumEntry.isExpect] = result
             result
         }
     }

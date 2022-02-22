@@ -241,7 +241,8 @@ internal object LLFirSessionFactory {
                 emptyList(),
                 emptyList(),
                 JvmPlatforms.unspecifiedJvmPlatform,
-                JvmPlatformAnalyzerServices
+                JvmPlatformAnalyzerServices,
+                FirSession.Kind.Library
             ).apply {
                 bindSession(this@session)
             }
@@ -398,7 +399,8 @@ fun createEmptySession(): FirSession {
             dependsOnDependencies = emptyList(),
             friendDependencies = emptyList(),
             platform = JvmPlatforms.unspecifiedJvmPlatform,
-            analyzerServices = JvmPlatformAnalyzerServices
+            analyzerServices = JvmPlatformAnalyzerServices,
+            kind = FirSession.Kind.Source
         )
         registerModuleData(moduleData)
         moduleData.bindSession(this)
