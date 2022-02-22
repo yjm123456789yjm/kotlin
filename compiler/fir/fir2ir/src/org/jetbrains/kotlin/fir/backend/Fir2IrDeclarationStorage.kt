@@ -28,9 +28,11 @@ import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyConstructor
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazyProperty
 import org.jetbrains.kotlin.fir.lazy.Fir2IrLazySimpleFunction
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isLocalClassOrAnonymousObject
+import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.isSuspendFunctionType
 import org.jetbrains.kotlin.fir.resolve.isKFunctionInvoke
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
+import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.scopes.unsubstitutedScope
 import org.jetbrains.kotlin.fir.symbols.*
@@ -73,13 +75,17 @@ class Fir2IrDeclarationStorage(
 
     private val fileCache = ConcurrentHashMap<FirFile, IrFile>()
 
-    private val functionCache = ConcurrentHashMap<FirFunction, IrSimpleFunction>()
+    private val functionCache = ConcurrentHashMap<DeclarationStorageKey, IrSimpleFunction>()
 
-    private val constructorCache = ConcurrentHashMap<FirConstructor, IrConstructor>()
+    private val constructorCache = ConcurrentHashMap<DeclarationStorageKey, IrConstructor>()
 
-    private val initializerCache = ConcurrentHashMap<FirAnonymousInitializer, IrAnonymousInitializer>()
+    private val initializerCache = ConcurrentHashMap<DeclarationStorageKey, IrAnonymousInitializer>()
 
-    private val propertyCache = ConcurrentHashMap<FirProperty, IrProperty>()
+    private val propertyCache = ConcurrentHashMap<DeclarationStorageKey, IrProperty>()
+
+    private fun FirDeclaration.getKey(): DeclarationStorageKey {
+        return DeclarationStorageKey(this, components)
+    }
 
     // interface A { /* $1 */ fun foo() }
     // interface B : A {
@@ -140,7 +146,7 @@ class Fir2IrDeclarationStorage(
                 is FirProperty -> {
                     val irProperty = irClass.properties.find { it.name == declaration.name }
                     if (irProperty != null) {
-                        propertyCache[declaration] = irProperty
+                        propertyCache[declaration.getKey()] = irProperty
                     }
                 }
                 is FirSimpleFunction -> {
@@ -148,7 +154,7 @@ class Fir2IrDeclarationStorage(
                         areCompatible(declaration, it)
                     }
                     if (irFunction != null) {
-                        functionCache[declaration] = irFunction
+                        functionCache[declaration.getKey()] = irFunction
                     }
                 }
                 is FirConstructor -> {
@@ -156,7 +162,7 @@ class Fir2IrDeclarationStorage(
                         areCompatible(declaration, it)
                     }
                     if (irConstructor != null) {
-                        constructorCache[declaration] = irConstructor
+                        constructorCache[declaration.getKey()] = irConstructor
                     }
                 }
                 else -> {}
@@ -269,7 +275,7 @@ class Fir2IrDeclarationStorage(
     internal fun findIrParent(callableDeclaration: FirCallableDeclaration): IrDeclarationParent? {
         val firBasedSymbol = callableDeclaration.symbol
         val callableId = firBasedSymbol.callableId
-        return findIrParent(callableId.packageName, callableDeclaration.containingClass(), firBasedSymbol)
+        return findIrParent(callableId.packageName, callableDeclaration.containingClass()?.unwrapActualAlias(), firBasedSymbol)
     }
 
     private fun IrDeclaration.setAndModifyParent(irParent: IrDeclarationParent?) {
@@ -410,7 +416,7 @@ class Fir2IrDeclarationStorage(
         return if (function.visibility == Visibilities.Local) {
             localStorage.getLocalFunction(function)
         } else {
-            functionCache[function]
+            functionCache[function.getKey()]
         }
     }
 
@@ -428,7 +434,7 @@ class Fir2IrDeclarationStorage(
     }
 
     internal fun cacheDelegationFunction(function: FirSimpleFunction, irFunction: IrSimpleFunction) {
-        functionCache[function] = irFunction
+        functionCache[function.getKey()] = irFunction
         delegatedReverseCache[irFunction] = function
     }
 
@@ -527,12 +533,12 @@ class Fir2IrDeclarationStorage(
                 created.overriddenSymbols += getIrFunctionSymbol(it) as IrSimpleFunctionSymbol
             }
         }
-        functionCache[function] = created
+        functionCache[function.getKey()] = created
         return created
     }
 
     fun getCachedIrAnonymousInitializer(anonymousInitializer: FirAnonymousInitializer): IrAnonymousInitializer? =
-        initializerCache[anonymousInitializer]
+        initializerCache[anonymousInitializer.getKey()]
 
     fun createIrAnonymousInitializer(
         anonymousInitializer: FirAnonymousInitializer,
@@ -541,7 +547,7 @@ class Fir2IrDeclarationStorage(
         return anonymousInitializer.convertWithOffsets { startOffset, endOffset ->
             symbolTable.declareAnonymousInitializer(startOffset, endOffset, IrDeclarationOrigin.DEFINED, irParent.descriptor).apply {
                 this.parent = irParent
-                initializerCache[anonymousInitializer] = this
+                initializerCache[anonymousInitializer.getKey()] = this
             }
         }
     }
@@ -550,10 +556,10 @@ class Fir2IrDeclarationStorage(
         constructor: FirConstructor,
         signatureCalculator: () -> IdSignature? = { null }
     ): IrConstructor? {
-        return constructorCache[constructor] ?: signatureCalculator()?.let { signature ->
+        return constructorCache[constructor.getKey()] ?: signatureCalculator()?.let { signature ->
             symbolTable.referenceConstructorIfAny(signature)?.let { irConstructorSymbol ->
                 val irConstructor = irConstructorSymbol.owner
-                constructorCache[constructor] = irConstructor
+                constructorCache[constructor.getKey()] = irConstructor
                 irConstructor
             }
         }
@@ -591,7 +597,7 @@ class Fir2IrDeclarationStorage(
                 }
             }
         }
-        constructorCache[constructor] = created
+        constructorCache[constructor.getKey()] = created
         return created
     }
 
@@ -888,12 +894,12 @@ class Fir2IrDeclarationStorage(
                     leaveScope(this)
                 }
             }
-            propertyCache[property] = result
+            propertyCache[property.getKey()] = result
             result
         }
     }
 
-    fun getCachedIrProperty(property: FirProperty): IrProperty? = propertyCache[property]
+    fun getCachedIrProperty(property: FirProperty): IrProperty? = propertyCache[property.getKey()]
 
     fun getCachedIrProperty(
         property: FirProperty,
@@ -905,21 +911,30 @@ class Fir2IrDeclarationStorage(
         }
     }
 
-    private inline fun <reified FC : FirCallableDeclaration, reified IC : IrDeclaration> getCachedIrCallable(
+    private fun ConeClassLikeLookupTag.unwrapActualAlias(): ConeClassLikeLookupTag {
+        val symbol = this.toSymbol(session) ?: return this
+        return when (symbol) {
+            is FirAnonymousObjectSymbol -> this
+            is FirRegularClassSymbol -> this
+            is FirTypeAliasSymbol -> (symbol.resolvedExpandedTypeRef.type.fullyExpandedType(session) as? ConeClassLikeType)?.lookupTag ?: this
+        }
+    }
+
+    private fun <FC : FirCallableDeclaration, IC : IrDeclaration> getCachedIrCallable(
         declaration: FC,
         dispatchReceiverLookupTag: ConeClassLikeLookupTag?,
-        cache: MutableMap<FC, IC>,
+        cache: MutableMap<DeclarationStorageKey, IC>,
         signatureCalculator: () -> IdSignature?,
         referenceIfAny: (IdSignature) -> IC?
     ): IC? {
-        val isFakeOverride = dispatchReceiverLookupTag != null && dispatchReceiverLookupTag != declaration.containingClass()
+        val isFakeOverride = dispatchReceiverLookupTag != null && dispatchReceiverLookupTag != declaration.containingClass()?.unwrapActualAlias()
         if (!isFakeOverride) {
-            cache[declaration]?.let { return it }
+            cache[declaration.getKey()]?.let { return it }
         }
         return signatureCalculator()?.let { signature ->
             referenceIfAny(signature)?.let { irDeclaration ->
                 if (!isFakeOverride) {
-                    cache[declaration] = irDeclaration
+                    cache[declaration.getKey()] = irDeclaration
                 }
                 irDeclaration
             }
@@ -927,7 +942,7 @@ class Fir2IrDeclarationStorage(
     }
 
     internal fun cacheDelegatedProperty(property: FirProperty, irProperty: IrProperty) {
-        propertyCache[property] = irProperty
+        propertyCache[property.getKey()] = irProperty
         delegatedReverseCache[irProperty] = property
     }
 
@@ -1160,7 +1175,7 @@ class Fir2IrDeclarationStorage(
                         }
                     }
                 }
-                constructorCache[fir] = irConstructor
+                constructorCache[fir.getKey()] = irConstructor
                 // NB: this is needed to prevent recursions in case of self bounds
                 (irConstructor as Fir2IrLazyConstructor).prepareTypeParameters()
                 irConstructor
@@ -1231,7 +1246,7 @@ class Fir2IrDeclarationStorage(
                 }
             }
         }
-        functionCache[fir] = irFunction
+        functionCache[fir.getKey()] = irFunction
         // NB: this is needed to prevent recursions in case of self bounds
         (irFunction as Fir2IrLazySimpleFunction).prepareTypeParameters()
         return irFunction
@@ -1309,7 +1324,7 @@ class Fir2IrDeclarationStorage(
                 }
             }
         }
-        propertyCache[fir] = irProperty
+        propertyCache[fir.getKey()] = irProperty
         // NB: this is needed to prevent recursions in case of self bounds
         (irProperty as Fir2IrLazyProperty).prepareTypeParameters()
         return irProperty
@@ -1426,7 +1441,7 @@ class Fir2IrDeclarationStorage(
                 if (fir.isLocal) {
                     return localStorage.getDelegatedProperty(fir)?.delegate?.symbol ?: getIrVariableSymbol(fir)
                 }
-                propertyCache[fir]?.let { return it.backingField!!.symbol }
+                propertyCache[fir.getKey()]?.let { return it.backingField!!.symbol }
                 val irParent = findIrParent(fir)
                 val parentOrigin = (irParent as? IrDeclaration)?.origin ?: IrDeclarationOrigin.DEFINED
                 createIrProperty(fir, irParent, predefinedOrigin = parentOrigin).apply {
@@ -1451,7 +1466,7 @@ class Fir2IrDeclarationStorage(
             is FirEnumEntry -> {
                 classifierStorage.getCachedIrEnumEntry(firDeclaration)?.let { return it.symbol }
                 val containingFile = firProvider.getFirCallableContainerFile(firVariableSymbol)
-                val irParentClass = firDeclaration.containingClass()?.let { findIrClass(it) }
+                val irParentClass = firDeclaration.containingClass()?.unwrapActualAlias()?.let { findIrClass(it) }
                 classifierStorage.createIrEnumEntry(
                     firDeclaration,
                     irParent = irParentClass,

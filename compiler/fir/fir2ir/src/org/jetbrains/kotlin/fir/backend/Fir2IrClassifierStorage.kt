@@ -35,28 +35,26 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.util.IdSignature
 import org.jetbrains.kotlin.ir.util.constructors
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.Name
-import org.jetbrains.kotlin.name.StandardClassIds
+import org.jetbrains.kotlin.name.*
 
 class Fir2IrClassifierStorage(
     private val components: Fir2IrComponents
 ) : Fir2IrComponents by components {
     private val firProvider = session.firProvider
 
-    private val classCache = mutableMapOf<FirRegularClass, IrClass>()
+    private val classCache = mutableMapOf<Pair<ClassId, Boolean>, IrClass>()
 
     private val localClassesCreatedOnTheFly = mutableMapOf<FirClass, IrClass>()
 
     private var processMembersOfClassesOnTheFlyImmediately = false
 
-    private val typeAliasCache = mutableMapOf<FirTypeAlias, IrTypeAlias>()
+    private val typeAliasCache = mutableMapOf<Pair<ClassId, Boolean>, IrTypeAlias>()
 
     private val typeParameterCache = mutableMapOf<FirTypeParameter, IrTypeParameter>()
 
     private val typeParameterCacheForSetter = mutableMapOf<FirTypeParameter, IrTypeParameter>()
 
-    private val enumEntryCache = mutableMapOf<FirEnumEntry, IrEnumEntry>()
+    private val enumEntryCache = mutableMapOf<CallableId, IrEnumEntry>()
 
     private val localStorage = Fir2IrLocalStorage()
 
@@ -67,7 +65,7 @@ class Fir2IrClassifierStorage(
         for ((classId, irBuiltinSymbol) in typeConverter.classIdToSymbolMap) {
             val firClass = ConeClassLikeLookupTagImpl(classId).toSymbol(session)!!.fir as FirRegularClass
             val irClass = irBuiltinSymbol.owner
-            classCache[firClass] = irClass
+            classCache[firClass.classId to firClass.isExpect] = irClass
             processClassHeader(firClass, irClass)
             declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
         }
@@ -75,7 +73,7 @@ class Fir2IrClassifierStorage(
             val firClass = ConeClassLikeLookupTagImpl(primitiveArrayId).toSymbol(session)!!.fir as FirRegularClass
             val irType = typeConverter.classIdToTypeMap[primitiveClassId]
             val irClass = irBuiltIns.primitiveArrayForType[irType]!!.owner
-            classCache[firClass] = irClass
+            classCache[firClass.classId to firClass.isExpect] = irClass
             processClassHeader(firClass, irClass)
             declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
         }
@@ -149,7 +147,7 @@ class Fir2IrClassifierStorage(
         return if (klass is FirAnonymousObject || klass is FirRegularClass && klass.visibility == Visibilities.Local) {
             localStorage.getLocalClass(klass)
         } else {
-            classCache[klass]
+            classCache[klass.classId to klass.isExpect]
         }
     }
 
@@ -244,13 +242,13 @@ class Fir2IrClassifierStorage(
                     setTypeParameters(typeAlias)
                     parent.declarations += this
                 }
-                typeAliasCache[typeAlias] = irTypeAlias
+                typeAliasCache[typeAlias.classId to typeAlias.isExpect] = irTypeAlias
                 irTypeAlias
             }
         }
     }
 
-    internal fun getCachedTypeAlias(firTypeAlias: FirTypeAlias): IrTypeAlias? = typeAliasCache[firTypeAlias]
+    internal fun getCachedTypeAlias(firTypeAlias: FirTypeAlias): IrTypeAlias? = typeAliasCache[firTypeAlias.classId to firTypeAlias.isExpect]
 
     private fun declareIrClass(signature: IdSignature?, factory: (IrClassSymbol) -> IrClass): IrClass =
         if (signature == null)
@@ -301,7 +299,7 @@ class Fir2IrClassifierStorage(
         if (regularClass.visibility == Visibilities.Local) {
             localStorage.putLocalClass(regularClass, irClass)
         } else {
-            classCache[regularClass] = irClass
+            classCache[regularClass.classId to regularClass.isExpect] = irClass
         }
         return irClass
     }
@@ -410,7 +408,7 @@ class Fir2IrClassifierStorage(
         localStorage.putLocalClass((enumEntry.initializer as FirAnonymousObjectExpression).anonymousObject, correspondingClass)
     }
 
-    internal fun getCachedIrEnumEntry(enumEntry: FirEnumEntry): IrEnumEntry? = enumEntryCache[enumEntry]
+    internal fun getCachedIrEnumEntry(enumEntry: FirEnumEntry): IrEnumEntry? = enumEntryCache[enumEntry.symbol.callableId]
 
     private fun declareIrEnumEntry(signature: IdSignature?, factory: (IrEnumEntrySymbol) -> IrEnumEntry): IrEnumEntry =
         if (signature == null)
@@ -457,7 +455,7 @@ class Fir2IrClassifierStorage(
                     declarationStorage.leaveScope(this)
                 }
             }
-            enumEntryCache[enumEntry] = result
+            enumEntryCache[enumEntry.symbol.callableId] = result
             result
         }
     }
@@ -471,12 +469,12 @@ class Fir2IrClassifierStorage(
         val signature = signatureComposer.composeSignature(firClass)!!
         symbolTable.referenceClassIfAny(signature)?.let { irClassSymbol ->
             val irClass = irClassSymbol.owner
-            classCache[firClass as FirRegularClass] = irClass
+            classCache[firClass.classId to firClass.isExpect] = irClass
             val mappedTypeParameters = firClass.typeParameters.filterIsInstance<FirTypeParameter>().zip(irClass.typeParameters)
             for ((firTypeParameter, irTypeParameter) in mappedTypeParameters) {
                 typeParameterCache[firTypeParameter] = irTypeParameter
             }
-            declarationStorage.preCacheBuiltinClassMembers(firClass, irClass)
+            declarationStorage.preCacheBuiltinClassMembers(firClass as FirRegularClass, irClass)
             return irClassSymbol
         }
         firClass as FirRegularClass
@@ -492,7 +490,7 @@ class Fir2IrClassifierStorage(
                 }
             }
         }
-        classCache[firClass] = irClass
+        classCache[firClass.classId to firClass.isExpect] = irClass
         // NB: this is needed to prevent recursions in case of self bounds
         (irClass as Fir2IrLazyClass).prepareTypeParameters()
 
