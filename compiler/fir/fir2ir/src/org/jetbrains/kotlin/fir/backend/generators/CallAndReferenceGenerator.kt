@@ -38,6 +38,7 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.dump
+import org.jetbrains.kotlin.ir.util.isAnnotation
 import org.jetbrains.kotlin.ir.util.isFunctionTypeOrSubtype
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.psi2ir.generators.hasNoSideEffects
@@ -285,14 +286,19 @@ class CallAndReferenceGenerator(
                 declarationStorage,
                 conversionScope
             )
-            return qualifiedAccess.convertWithOffsets { startOffset, endOffset ->
+            var isAnnotationCall = false
+            val irCall = qualifiedAccess.convertWithOffsets { startOffset, endOffset ->
                 if (calleeReference is FirSuperReference) {
                     if (dispatchReceiver !is FirNoReceiverExpression) {
                         return@convertWithOffsets visitor.convertToIrExpression(dispatchReceiver)
                     }
                 }
                 when (symbol) {
-                    is IrConstructorSymbol -> IrConstructorCallImpl.fromSymbolOwner(startOffset, endOffset, type, symbol)
+                    is IrConstructorSymbol -> IrConstructorCallImpl.fromSymbolOwner(startOffset, endOffset, type, symbol).also {
+                        if (type.isAnnotation()) {
+                            isAnnotationCall = true
+                        }
+                    }
                     is IrSimpleFunctionSymbol -> {
                         IrCallImpl(
                             startOffset, endOffset, type, symbol,
@@ -345,8 +351,9 @@ class CallAndReferenceGenerator(
                     is IrEnumEntrySymbol -> IrGetEnumValueImpl(startOffset, endOffset, type, symbol)
                     else -> generateErrorCallExpression(startOffset, endOffset, calleeReference, type)
                 }
-            }.applyTypeArguments(qualifiedAccess).applyReceivers(qualifiedAccess, explicitReceiverExpression)
-                .applyCallArguments(qualifiedAccess as? FirCall, annotationMode)
+            }
+            return irCall.applyTypeArguments(qualifiedAccess).applyReceivers(qualifiedAccess, explicitReceiverExpression)
+                .applyCallArguments(qualifiedAccess as? FirCall, annotationMode || isAnnotationCall)
         } catch (e: Throwable) {
             throw IllegalStateException(
                 "Error while translating ${qualifiedAccess.render()} " +
@@ -587,6 +594,7 @@ class CallAndReferenceGenerator(
                             putValueArgument(valueParameters?.indexOf(valueParameter)?.takeIf { it >= 0 } ?: index, argumentExpression)
                         }
                     }
+                    this
                 } else {
                     val name = if (this is IrCallImpl) symbol.owner.name else "???"
                     IrErrorCallExpressionImpl(
