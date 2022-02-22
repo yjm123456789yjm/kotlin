@@ -9,14 +9,15 @@ import org.jetbrains.kotlin.backend.common.serialization.mangle.KotlinMangleComp
 import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleConstant
 import org.jetbrains.kotlin.backend.common.serialization.mangle.MangleMode
 import org.jetbrains.kotlin.backend.common.serialization.mangle.collectForMangler
-import org.jetbrains.kotlin.fir.*
+import org.jetbrains.kotlin.fir.FirElement
+import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.containingClass
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isExpect
 import org.jetbrains.kotlin.fir.declarations.utils.isStatic
+import org.jetbrains.kotlin.fir.render
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
-import org.jetbrains.kotlin.fir.resolve.providers.dependenciesSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.firProvider
-import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCompositeSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.symbolProvider
 import org.jetbrains.kotlin.fir.resolve.toSymbol
 import org.jetbrains.kotlin.fir.symbols.ConeClassLikeLookupTag
@@ -90,12 +91,7 @@ open class FirJvmMangleComputer(
             else -> return
         }
         if (parentClassId != null && !parentClassId.isLocal) {
-            val symbolProvider = if (isRealExpect) {
-                FirCompositeSymbolProvider(session, listOf(session.dependenciesSymbolProvider, session.symbolProvider))
-            } else {
-                session.symbolProvider
-            }
-            val parentClassLike = symbolProvider.getClassLikeSymbolByClassId(parentClassId)?.fir
+            val parentClassLike = session.symbolProvider.getClassLikeSymbolByClassId(parentClassId)?.fir
                 ?: error("Attempt to find parent ($parentClassId) for probably-local declaration!")
             if (parentClassLike is FirRegularClass || parentClassLike is FirTypeAlias) {
                 parentClassLike.accept(this@FirJvmMangleComputer, false)
@@ -174,18 +170,8 @@ open class FirJvmMangleComputer(
     }
 
     private fun FirTypeParameter.effectiveParent(): FirMemberDeclaration {
-        for (parent in typeParameterContainer) {
-            if (this in parent.typeParameters) {
-                return parent
-            }
-            if (parent is FirCallableDeclaration) {
-                val overriddenFir = parent.originalForSubstitutionOverride
-                if (overriddenFir is FirTypeParametersOwner && this in overriddenFir.typeParameters) {
-                    return parent
-                }
-            }
-        }
-        throw IllegalStateException("Should not be here!")
+        return containingDeclarationSymbol.fir as? FirMemberDeclaration
+            ?: error("Should not be here")
     }
 
     private fun mangleValueParameter(vpBuilder: StringBuilder, param: FirValueParameter) {
@@ -206,13 +192,20 @@ open class FirJvmMangleComputer(
     }
 
     private fun StringBuilder.mangleTypeParameterReference(typeParameter: FirTypeParameter) {
-        val parent = typeParameter.effectiveParent()
-        val ci = typeParameterContainer.indexOf(parent)
+        val parent = typeParameter.containingDeclarationSymbol.fir as FirMemberDeclaration
+        val parentId = parent.id
+        val ci = typeParameterContainer.indexOfFirst { it.id == parentId }
         require(ci >= 0) { "No type container found for ${typeParameter.render()}" }
         appendSignature(ci)
         appendSignature(MangleConstant.INDEX_SEPARATOR)
         appendSignature(parent.typeParameters.indexOf(typeParameter))
     }
+
+    private val FirMemberDeclaration.id: Any
+        get() = when (this) {
+            is FirClassLikeDeclaration -> symbol.classId
+            is FirCallableDeclaration -> symbol.callableId
+        }
 
     private fun mangleType(tBuilder: StringBuilder, type: ConeKotlinType) {
         when (type) {
@@ -312,8 +305,10 @@ open class FirJvmMangleComputer(
         enumEntry.mangleSimpleDeclaration(enumEntry.name.asString())
     }
 
-    override fun visitTypeAlias(typeAlias: FirTypeAlias, data: Boolean) =
+    override fun visitTypeAlias(typeAlias: FirTypeAlias, data: Boolean) {
         typeAlias.mangleSimpleDeclaration(typeAlias.name.asString())
+        typeParameterContainer.add(typeAlias)
+    }
 
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: Boolean) {
         isRealExpect = isRealExpect || simpleFunction.isExpect
