@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.gradle.targets.native.internal
 import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
 import org.gradle.api.artifacts.component.ProjectComponentIdentifier
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.*
@@ -22,8 +23,8 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.MetadataDependencyResolution.Choos
 import org.jetbrains.kotlin.gradle.plugin.mpp.MetadataDependencyResolution.ChooseVisibleSourceSets.MetadataProvider.ProjectMetadataProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.toModuleIdentifiers
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultKotlinSourceSet
-import org.jetbrains.kotlin.gradle.plugin.sources.SourceSetMetadataStorageForIde
 import org.jetbrains.kotlin.gradle.plugin.sources.resolveAllDependsOnSourceSets
+import org.jetbrains.kotlin.gradle.plugin.sources.withTemporaryDirectory
 import org.jetbrains.kotlin.gradle.tasks.dependsOn
 import org.jetbrains.kotlin.gradle.tasks.locateOrRegisterTask
 import org.jetbrains.kotlin.gradle.tasks.withType
@@ -43,11 +44,7 @@ internal fun Project.locateOrRegisterCInteropMetadataDependencyTransformationTas
 
     return locateOrRegisterTask(
         lowerCamelCaseName("transform", sourceSet.name, "CInteropDependenciesMetadata"),
-        args = listOf(
-            sourceSet,
-            /* outputDirectory = */
-            project.buildDir.resolve("kotlinSourceSetMetadata").resolve(sourceSet.name + "-cinterop")
-        ),
+        args = listOf(sourceSet),
         configureTask = { configureTaskOrder(); onlyIfSourceSetIsSharedNative() }
     )
 }
@@ -67,11 +64,7 @@ internal fun Project.locateOrRegisterCInteropMetadataDependencyTransformationTas
             @Suppress("deprecation")
             runCommonizerTask.dependsOn(this)
         },
-        args = listOf(
-            sourceSet,
-            /* outputDirectory = */
-            SourceSetMetadataStorageForIde.sourceSetStorage(project, sourceSet.name).resolve("cinterop")
-        ),
+        args = listOf(sourceSet),
         configureTask = { configureTaskOrder(); onlyIfSourceSetIsSharedNative() }
     )
 }
@@ -99,7 +92,6 @@ private fun CInteropMetadataDependencyTransformationTask.onlyIfSourceSetIsShared
 
 internal open class CInteropMetadataDependencyTransformationTask @Inject constructor(
     @get:Internal val sourceSet: DefaultKotlinSourceSet,
-    @get:OutputDirectory val outputDirectory: File
 ) : DefaultTask() {
 
     @Suppress("unused")
@@ -133,9 +125,12 @@ internal open class CInteropMetadataDependencyTransformationTask @Inject constru
     protected val chooseVisibleSourceSetsProjection
         get() = chooseVisibleSourceSets.map(::ChooseVisibleSourceSetProjection).toSet()
 
+    @get:OutputDirectory
+    protected val outputDirectory = project.rootDir.resolve(".gradle").resolve("kotlin").resolve("kotlinTransformedCInteropMetadata")
+
     @get:Internal
     val outputLibraryFiles = outputFilesProvider {
-        outputDirectory.walkTopDown().maxDepth(2).filter { it.isFile && it.extension == KLIB_FILE_EXTENSION }.toList()
+        outputDirectory.walkTopDown().maxDepth(10).filter { it.isFile && it.extension == KLIB_FILE_EXTENSION }.toList()
     }
 
     @TaskAction
@@ -155,12 +150,24 @@ internal open class CInteropMetadataDependencyTransformationTask @Inject constru
         is ProjectMetadataProvider -> emptySet()
 
         /* Extract/Materialize all cinterop files from composite jar file */
-        is JarMetadataProvider ->
+        is JarMetadataProvider -> {
+            val moduleIdentifier = chooseVisibleSourceSets.dependency.id as ModuleComponentIdentifier
             chooseVisibleSourceSets.visibleSourceSetsProvidingCInterops.flatMap { visibleSourceSetName ->
-                chooseVisibleSourceSets.metadataProvider.getSourceSetCInteropMetadata(
-                    visibleSourceSetName, outputDirectory, materializeFiles = true
-                )
+                withTemporaryDirectory("kotlinCInteropGranularMetadataTransformation") { directory ->
+                    chooseVisibleSourceSets.metadataProvider.getSourceSetCInteropMetadata(
+                        visibleSourceSetName, directory, materializeFiles = true
+                    ).map { file ->
+                        val destinationFile = outputDirectory
+                            .resolve(moduleIdentifier.group)
+                            .resolve(moduleIdentifier.module)
+                            .resolve(moduleIdentifier.version)
+                            .resolve(visibleSourceSetName)
+                        if (!destinationFile.exists()) file.copyTo(destinationFile)
+                        destinationFile
+                    }
+                }
             }.toSet()
+        }
     }
 
     private fun Configuration.withoutProjectDependencies(): FileCollection {
