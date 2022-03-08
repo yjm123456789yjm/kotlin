@@ -1,0 +1,28 @@
+FILE: 07_diamondInheritance.kt
+    public abstract interface A : R|kotlin/Any| {
+        public abstract fun test_1(): R|kotlin/Unit|
+
+        public abstract fun test_2(): R|kotlin/Unit|
+
+        public abstract fun test_3(): R|kotlin/Unit|
+
+    }
+    public abstract interface B : R|A| {
+        public abstract override fun test_1(): R|kotlin/Unit|
+
+        public abstract override fun test_2(): R|kotlin/Unit|
+
+    }
+    public abstract interface C : R|A| {
+        public abstract override fun test_1(): R|kotlin/Unit|
+
+    }
+    public abstract interface D : R|B|, R|C| {
+        public abstract override fun test_1(): R|kotlin/Unit|
+
+    }
+    public final fun test_1(d: R|D|): R|kotlin/Unit| {
+        R|<local>/d|.R|/D.test_1|()
+        R|<local>/d|.R|/B.test_2|()
+        R|<local>/d|.R|/A.test_3|()
+    }

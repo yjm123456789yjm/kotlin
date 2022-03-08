@@ -1172,6 +1172,58 @@ public class FirDiagnosticTestGenerated extends AbstractFirDiagnosticTest {
             }
 
             @Nested
+            @TestMetadata("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides")
+            @TestDataPath("$PROJECT_ROOT")
+            public class Overrides {
+                @Test
+                @TestMetadata("01_statusInheritance.kt")
+                public void test01_statusInheritance() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/01_statusInheritance.kt");
+                }
+
+                @Test
+                @TestMetadata("02_simpleOverrides.kt")
+                public void test02_simpleOverrides() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/02_simpleOverrides.kt");
+                }
+
+                @Test
+                @TestMetadata("03_substitutionOverrides.kt")
+                public void test03_substitutionOverrides() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/03_substitutionOverrides.kt");
+                }
+
+                @Test
+                @TestMetadata("04_intersectionOverrides.kt")
+                public void test04_intersectionOverrides() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/04_intersectionOverrides.kt");
+                }
+
+                @Test
+                @TestMetadata("05_substitutionAndIntersection.kt")
+                public void test05_substitutionAndIntersection() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/05_substitutionAndIntersection.kt");
+                }
+
+                @Test
+                @TestMetadata("06_duplicatedSupertype.kt")
+                public void test06_duplicatedSupertype() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/06_duplicatedSupertype.kt");
+                }
+
+                @Test
+                @TestMetadata("07_diamondInheritance.kt")
+                public void test07_diamondInheritance() throws Exception {
+                    runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/07_diamondInheritance.kt");
+                }
+
+                @Test
+                public void testAllFilesPresentInOverrides() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+                }
+            }
+
+            @Nested
             @TestMetadata("compiler/fir/analysis-tests/testData/resolve/compilerCourse/supertypes")
             @TestDataPath("$PROJECT_ROOT")
             public class Supertypes {

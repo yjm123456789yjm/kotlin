@@ -1,0 +1,44 @@
+FILE: 01_statusInheritance.kt
+    public abstract class A : R|kotlin/Any| {
+        public constructor(): R|A| {
+            super<R|kotlin/Any|>()
+        }
+
+        private final fun privateFun(): R|kotlin/Unit| {
+        }
+
+        protected open fun protectedFun(): R|kotlin/Unit| {
+        }
+
+        public open operator fun plus(other: R|A|): R|A| {
+            ^plus this@R|/A|
+        }
+
+        public open infix fun infixFun(other: R|A|): R|kotlin/Unit| {
+        }
+
+        public abstract suspend fun suspendFun(): R|kotlin/Unit|
+
+    }
+    public final class B : R|A| {
+        public constructor(): R|B| {
+            super<R|A|>()
+        }
+
+        public final override fun privateFun(): R|kotlin/Unit| {
+        }
+
+        protected final override fun protectedFun(): R|kotlin/Unit| {
+        }
+
+        public final override operator fun plus(other: R|A|): R|A| {
+            ^plus this@R|/B|
+        }
+
+        public final override infix fun infixFun(other: R|A|): R|kotlin/Unit| {
+        }
+
+        public final override suspend fun suspendFun(): R|kotlin/Unit| {
+        }
+
+    }

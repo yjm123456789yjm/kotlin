@@ -1011,6 +1011,54 @@ public class LazyBodyIsNotTouchedTilContractsPhaseTestGenerated extends Abstract
             KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/compilerCourse"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
         }
 
+        @TestMetadata("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class Overrides extends AbstractLazyBodyIsNotTouchedTilContractsPhaseTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, this, testDataFilePath);
+            }
+
+            @TestMetadata("01_statusInheritance.kt")
+            public void test01_statusInheritance() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/01_statusInheritance.kt");
+            }
+
+            @TestMetadata("02_simpleOverrides.kt")
+            public void test02_simpleOverrides() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/02_simpleOverrides.kt");
+            }
+
+            @TestMetadata("03_substitutionOverrides.kt")
+            public void test03_substitutionOverrides() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/03_substitutionOverrides.kt");
+            }
+
+            @TestMetadata("04_intersectionOverrides.kt")
+            public void test04_intersectionOverrides() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/04_intersectionOverrides.kt");
+            }
+
+            @TestMetadata("05_substitutionAndIntersection.kt")
+            public void test05_substitutionAndIntersection() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/05_substitutionAndIntersection.kt");
+            }
+
+            @TestMetadata("06_duplicatedSupertype.kt")
+            public void test06_duplicatedSupertype() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/06_duplicatedSupertype.kt");
+            }
+
+            @TestMetadata("07_diamondInheritance.kt")
+            public void test07_diamondInheritance() throws Exception {
+                runTest("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides/07_diamondInheritance.kt");
+            }
+
+            public void testAllFilesPresentInOverrides() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/fir/analysis-tests/testData/resolve/compilerCourse/overrides"), Pattern.compile("^([^.]+)\\.kt$"), null, true);
+            }
+        }
+
         @TestMetadata("compiler/fir/analysis-tests/testData/resolve/compilerCourse/supertypes")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)

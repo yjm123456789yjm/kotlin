@@ -1,0 +1,46 @@
+FILE: 02_simpleOverrides.kt
+    public abstract class A : R|kotlin/Any| {
+        public constructor(): R|A| {
+            super<R|kotlin/Any|>()
+        }
+
+        public open fun test_1(): R|kotlin/String| {
+            ^test_1 String(hello)
+        }
+
+        public abstract fun test_2(): R|kotlin/Unit|
+
+    }
+    public final class B : R|A| {
+        public constructor(): R|B| {
+            super<R|A|>()
+        }
+
+        public final override fun test_2(): R|kotlin/Unit| {
+        }
+
+    }
+    public final fun test_1(a: R|A|, b: R|B|): R|kotlin/Unit| {
+        R|<local>/a|.R|/A.test_1|()
+        R|<local>/a|.R|/A.test_2|()
+        R|<local>/b|.R|/A.test_1|()
+        R|<local>/b|.R|/B.test_2|()
+    }
+    public abstract interface C : R|kotlin/Any| {
+        public abstract fun test_1(): R|kotlin/Number|
+
+        public abstract fun test_2(x: R|kotlin/Int|): R|kotlin/Unit|
+
+        public abstract fun test_2(y: R|kotlin/Double|): R|kotlin/Unit|
+
+        public abstract fun test_3(x: R|kotlin/Number|, y: R|kotlin/Int|): R|kotlin/Unit|
+
+    }
+    public abstract interface D : R|C| {
+        public abstract override fun test_1(): R|kotlin/Int|
+
+        public abstract override fun test_2(x: R|kotlin/Number|): R|kotlin/Unit|
+
+        public abstract override fun test_3(x: R|kotlin/Int|, y: R|kotlin/Number|): R|kotlin/Unit|
+
+    }
