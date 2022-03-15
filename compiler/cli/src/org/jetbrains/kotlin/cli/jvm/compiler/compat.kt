@@ -20,7 +20,7 @@ object IdeaStandaloneExecutionSetup {
         System.getProperties().setProperty("ide.hide.excluded.files", "false")
         System.getProperties().setProperty("ast.loading.filter", "false")
         System.getProperties().setProperty("idea.ignore.disabled.plugins", "true")
-        System.getProperties().setProperty("idea.home.path", System.getProperty("java.io.tmpdir"))
+        // System.getProperties().setProperty("idea.home.path", System.getProperty("java.io.tmpdir"))
     }
 
     private fun checkInHeadlessMode() {
