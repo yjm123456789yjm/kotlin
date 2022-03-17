@@ -25548,6 +25548,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
                 }
 
                 @Test
+                @TestMetadata("inlineClass.kt")
+                public void testInlineClass() throws Exception {
+                    runTest("compiler/testData/codegen/box/inlineClasses/sealed/casts/inlineClass.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
+                }
+
+                @Test
                 @TestMetadata("interface.kt")
                 public void testInterface() throws Exception {
                     runTest("compiler/testData/codegen/box/inlineClasses/sealed/casts/interface.kt", TransformersFunctions.getReplaceOptionalJvmInlineAnnotationWithReal());
