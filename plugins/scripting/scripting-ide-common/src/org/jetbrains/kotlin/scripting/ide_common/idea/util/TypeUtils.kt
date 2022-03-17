@@ -10,6 +10,7 @@ package org.jetbrains.kotlin.scripting.ide_common.idea.util
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMapper
 import org.jetbrains.kotlin.descriptors.ClassDescriptor
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.error.ErrorType
 import org.jetbrains.kotlin.types.typeUtil.TypeNullability
 import org.jetbrains.kotlin.types.typeUtil.nullability
 import org.jetbrains.kotlin.types.typeUtil.substitute
