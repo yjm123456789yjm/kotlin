@@ -37,7 +37,10 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     )
     var jdkHome: String? by NullableStringFreezableVar(null)
 
-    @GradleOption(DefaultValues.BooleanFalseDefault::class)
+    @GradleOption(
+        value = DefaultValues.BooleanFalseDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(value = "-no-jdk", description = "Don't automatically include the Java runtime into the classpath")
     var noJdk: Boolean by FreezableVar(false)
 
@@ -64,7 +67,10 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     )
     var scriptTemplates: Array<String>? by FreezableVar(null)
 
-    @GradleOption(DefaultValues.StringNullDefault::class)
+    @GradleOption(
+        value = DefaultValues.StringNullDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(value = "-module-name", valueDescription = "<name>", description = "Name of the generated .kotlin_module file")
     var moduleName: String? by NullableStringFreezableVar(null)
 
@@ -79,7 +85,10 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     )
     var jvmTarget: String? by NullableStringFreezableVar(null)
 
-    @GradleOption(DefaultValues.BooleanFalseDefault::class)
+    @GradleOption(
+        value = DefaultValues.BooleanFalseDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(value = "-java-parameters", description = "Generate metadata for Java 1.8 reflection on method parameters")
     var javaParameters: Boolean by FreezableVar(false)
 
@@ -91,7 +100,10 @@ class K2JVMCompilerArguments : CommonCompilerArguments() {
     )
     var useIR: Boolean by FreezableVar(false)
 
-    @GradleOption(DefaultValues.BooleanFalseDefault::class)
+    @GradleOption(
+        value = DefaultValues.BooleanFalseDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(value = "-Xuse-old-backend", description = "Use the old JVM backend")
     var useOldBackend: Boolean by FreezableVar(false)
 

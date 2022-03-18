@@ -14,31 +14,37 @@ class K2JSDceArguments : CommonToolArguments() {
     }
 
     @Argument(
-            value = "-output-dir",
-            valueDescription = "<path>",
-            description = "Output directory"
+        value = "-output-dir",
+        valueDescription = "<path>",
+        description = "Output directory"
     )
-    @GradleOption(DefaultValues.StringNullDefault::class)
+    @GradleOption(
+        value = DefaultValues.StringNullDefault::class,
+        gradleInputType = GradleInputTypes.INTERNAL // handled by destinationDiretory
+    )
     var outputDirectory: String? by NullableStringFreezableVar(null)
 
     @Argument(
-            value = "-keep",
-            valueDescription = "<fully.qualified.name[,]>",
-            description = "List of fully-qualified names of declarations that shouldn't be eliminated"
+        value = "-keep",
+        valueDescription = "<fully.qualified.name[,]>",
+        description = "List of fully-qualified names of declarations that shouldn't be eliminated"
     )
     var declarationsToKeep: Array<String>? by FreezableVar(null)
 
     @Argument(
-            value = "-Xprint-reachability-info",
-            description = "Print declarations marked as reachable"
+        value = "-Xprint-reachability-info",
+        description = "Print declarations marked as reachable"
     )
     var printReachabilityInfo: Boolean by FreezableVar(false)
 
     @Argument(
-            value = "-dev-mode",
-            description = "Development mode: don't strip out any code, just copy dependencies"
+        value = "-dev-mode",
+        description = "Development mode: don't strip out any code, just copy dependencies"
     )
-    @GradleOption(DefaultValues.BooleanFalseDefault::class)
+    @GradleOption(
+        value = DefaultValues.BooleanFalseDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     var devMode: Boolean by FreezableVar(false)
 
     @Argument(

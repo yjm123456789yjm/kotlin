@@ -22,149 +22,88 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.Printer
 import java.io.File
 import java.io.PrintStream
-import java.util.*
 import kotlin.reflect.KAnnotatedElement
+import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
-import kotlin.reflect.KVisibility
 import kotlin.reflect.full.declaredMemberProperties
 import kotlin.reflect.full.withNullability
 
 // Additional properties that should be included in interface
 @Suppress("unused")
 interface AdditionalGradleProperties {
-    @GradleOption(EmptyList::class)
+    @GradleOption(
+        value = EmptyList::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(value = "", description = "A list of additional compiler arguments")
     var freeCompilerArgs: List<String>
 
     object EmptyList : DefaultValues("emptyList()")
 }
 
+private const val GRADLE_API_SRC_DIR = "libraries/tools/kotlin-gradle-plugin-api/src/main/kotlin"
+private const val GRADLE_PLUGIN_SRC_DIR = "libraries/tools/kotlin-gradle-plugin/src/main/kotlin"
+private const val OPTIONS_PACKAGE_PREFIX = "org.jetbrains.kotlin.gradle.dsl"
+private const val IMPLEMENTATION_SUFFIX = "Base"
+
 fun generateKotlinGradleOptions(withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit) {
-    val apiSrcDir = File("libraries/tools/kotlin-gradle-plugin-api/src/main/kotlin")
-    val srcDir = File("libraries/tools/kotlin-gradle-plugin/src/main/kotlin")
+    val apiSrcDir = File(GRADLE_API_SRC_DIR)
+    val srcDir = File(GRADLE_PLUGIN_SRC_DIR)
 
-    // common interface
-    val commonInterfaceFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions")
-    val commonOptions = gradleOptions<CommonToolArguments>()
-    val additionalOptions = gradleOptions<AdditionalGradleProperties>()
-    withPrinterToFile(file(apiSrcDir, commonInterfaceFqName)) {
-        generateInterface(
-            commonInterfaceFqName,
-            commonOptions + additionalOptions
-        )
-    }
+    val (commonToolInterfaceFqName, commonToolOptions) = generateKotlinCommonToolOptions(apiSrcDir, withPrinterToFile)
+    val (commonCompilerInterfaceFqName, commonCompilerOptions) = generateKotlinCommonOptions(
+        apiSrcDir,
+        commonToolInterfaceFqName,
+        withPrinterToFile
+    )
 
-    println("### Attributes common for JVM, JS, and JS DCE\n")
-    generateMarkdown(commonOptions + additionalOptions)
+    val (jvmInterfaceFqName, jvmOptions) = generateKotlinJvmOptions(
+        apiSrcDir,
+        commonCompilerInterfaceFqName,
+        withPrinterToFile
+    )
+    generateKotlinJvmOptionsImpl(
+        srcDir,
+        jvmInterfaceFqName,
+        commonToolOptions + commonCompilerOptions + jvmOptions,
+        withPrinterToFile
+    )
 
-    val commonCompilerInterfaceFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions")
-    val commonCompilerOptions = gradleOptions<CommonCompilerArguments>()
-    withPrinterToFile(file(apiSrcDir, commonCompilerInterfaceFqName)) {
-        generateInterface(
-            commonCompilerInterfaceFqName,
-            commonCompilerOptions,
-            parentType = commonInterfaceFqName
-        )
-    }
+    val (jsInterfaceFqName, jsOptions) = generateKotlinJsOptions(
+        apiSrcDir,
+        commonCompilerInterfaceFqName,
+        withPrinterToFile
+    )
+    generateKotlinJsOptionsImpl(
+        srcDir,
+        jsInterfaceFqName,
+        commonToolOptions + commonCompilerOptions + jsOptions,
+        withPrinterToFile
+    )
 
-    println("\n### Attributes common for JVM and JS\n")
-    generateMarkdown(commonCompilerOptions)
+    val (jsDceInterfaceName, jsDceOptions) = generateJsDceOptions(
+        apiSrcDir,
+        commonToolInterfaceFqName,
+        withPrinterToFile
+    )
+    generateJsDceOptionsImpl(
+        srcDir,
+        jsDceInterfaceName,
+        commonToolOptions + jsDceOptions,
+        withPrinterToFile
+    )
 
-    // generate jvm interface
-    val jvmInterfaceFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions")
-    val jvmOptions = gradleOptions<K2JVMCompilerArguments>()
-    withPrinterToFile(file(apiSrcDir, jvmInterfaceFqName)) {
-        generateInterface(
-            jvmInterfaceFqName,
-            jvmOptions,
-            parentType = commonCompilerInterfaceFqName
-        )
-    }
-
-    // generate jvm impl
-    val k2JvmCompilerArgumentsFqName = FqName(K2JVMCompilerArguments::class.qualifiedName!!)
-    val jvmImplFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsBase")
-    withPrinterToFile(file(srcDir, jvmImplFqName)) {
-        generateImpl(
-            jvmImplFqName,
-            jvmInterfaceFqName,
-            k2JvmCompilerArgumentsFqName,
-            commonOptions + commonCompilerOptions + jvmOptions
-        )
-    }
-
-    println("\n### Attributes specific for JVM\n")
-    generateMarkdown(jvmOptions)
-
-    // generate js interface
-    val jsInterfaceFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions")
-    val jsOptions = gradleOptions<K2JSCompilerArguments>()
-    withPrinterToFile(file(apiSrcDir, jsInterfaceFqName)) {
-        generateInterface(
-            jsInterfaceFqName,
-            jsOptions,
-            parentType = commonCompilerInterfaceFqName
-        )
-    }
-
-    val k2JsCompilerArgumentsFqName = FqName(K2JSCompilerArguments::class.qualifiedName!!)
-    val jsImplFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinJsOptionsBase")
-    withPrinterToFile(file(srcDir, jsImplFqName)) {
-        generateImpl(
-            jsImplFqName,
-            jsInterfaceFqName,
-            k2JsCompilerArgumentsFqName,
-            commonOptions + commonCompilerOptions + jsOptions
-        )
-    }
-
-    println("\n### Attributes specific for JS\n")
-    generateMarkdown(jsOptions)
-
-    // generate JS DCE interface and implementation
-    val jsDceInterfaceFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions")
-    val jsDceOptions = gradleOptions<K2JSDceArguments>()
-    withPrinterToFile(file(apiSrcDir, jsDceInterfaceFqName)) {
-        generateInterface(
-            jsDceInterfaceFqName,
-            jsDceOptions,
-            parentType = commonInterfaceFqName
-        )
-    }
-
-    val k2JsDceArgumentsFqName = FqName(K2JSDceArguments::class.qualifiedName!!)
-    val jsDceImplFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsBase")
-    withPrinterToFile(file(srcDir, jsDceImplFqName)) {
-        generateImpl(
-            jsDceImplFqName,
-            jsDceInterfaceFqName,
-            k2JsDceArgumentsFqName,
-            commonOptions + jsDceOptions
-        )
-    }
-
-    // generate multiplatform common interface and implementation
-    val multiplatformCommonInterfaceFqName = FqName("org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonOptions")
-    val multiplatformCommonOptions = gradleOptions<K2MetadataCompilerArguments>()
-    withPrinterToFile(file(srcDir, multiplatformCommonInterfaceFqName)) {
-        generateInterface(
-            multiplatformCommonInterfaceFqName,
-            multiplatformCommonOptions,
-            parentType = commonCompilerInterfaceFqName
-        )
-    }
-
-    val k2metadataCompilerArgumentsFqName = FqName(K2MetadataCompilerArguments::class.qualifiedName!!)
-    val multiplatformCommonImplFqName = FqName(multiplatformCommonInterfaceFqName.asString() + "Base")
-    withPrinterToFile(file(srcDir, multiplatformCommonImplFqName)) {
-        generateImpl(
-            multiplatformCommonImplFqName,
-            multiplatformCommonInterfaceFqName,
-            k2metadataCompilerArgumentsFqName,
-            commonOptions + commonCompilerOptions + multiplatformCommonOptions
-        )
-    }
-
+    val (multiplatformCommonInterfaceFqName, multiplatformCommonOptions) = generateMultiplatformCommonOptions(
+        apiSrcDir,
+        commonCompilerInterfaceFqName,
+        withPrinterToFile
+    )
+    generateMultiplatformCommonOptionsImpl(
+        srcDir,
+        multiplatformCommonInterfaceFqName,
+        commonToolOptions + commonCompilerOptions + multiplatformCommonOptions,
+        withPrinterToFile
+    )
 }
 
 fun main() {
@@ -182,6 +121,209 @@ fun main() {
     generateKotlinGradleOptions(::getPrinter)
 }
 
+//region Option Generators
+
+private fun generateKotlinCommonToolOptions(
+    apiSrcDir: File,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+): Pair<FqName, List<KProperty1<*, *>>> {
+    val commonInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinCommonToolOptions")
+    val commonOptions = gradleOptions<CommonToolArguments>()
+    val additionalOptions = gradleOptions<AdditionalGradleProperties>()
+    withPrinterToFile(fileFromFqName(apiSrcDir, commonInterfaceFqName)) {
+        generateInterface(
+            commonInterfaceFqName,
+            commonOptions + additionalOptions
+        )
+    }
+
+    println("### Attributes common for JVM, JS, and JS DCE\n")
+    generateMarkdown(commonOptions + additionalOptions)
+
+    return commonInterfaceFqName to (commonOptions + additionalOptions)
+}
+
+private fun generateKotlinCommonOptions(
+    apiSrcDir: File,
+    commonInterfaceFqName: FqName,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+): Pair<FqName, List<KProperty1<*, *>>> {
+    val commonCompilerInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinCommonOptions")
+    val commonCompilerOptions = gradleOptions<CommonCompilerArguments>()
+    withPrinterToFile(fileFromFqName(apiSrcDir, commonCompilerInterfaceFqName)) {
+        generateInterface(
+            commonCompilerInterfaceFqName,
+            commonCompilerOptions,
+            parentType = commonInterfaceFqName
+        )
+    }
+
+    println("\n### Attributes common for JVM and JS\n")
+    generateMarkdown(commonCompilerOptions)
+
+    return commonCompilerInterfaceFqName to commonCompilerOptions
+}
+
+private fun generateKotlinJvmOptions(
+    apiSrcDir: File,
+    commonCompilerInterfaceFqName: FqName,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+): Pair<FqName, List<KProperty1<*, *>>> {
+    val jvmInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinJvmOptions")
+    val jvmOptions = gradleOptions<K2JVMCompilerArguments>()
+    withPrinterToFile(fileFromFqName(apiSrcDir, jvmInterfaceFqName)) {
+        generateInterface(
+            jvmInterfaceFqName,
+            jvmOptions,
+            parentType = commonCompilerInterfaceFqName
+        )
+    }
+
+    println("\n### Attributes specific for JVM\n")
+    generateMarkdown(jvmOptions)
+
+    return jvmInterfaceFqName to jvmOptions
+}
+
+private fun generateKotlinJvmOptionsImpl(
+    srcDir: File,
+    jvmInterfaceFqName: FqName,
+    allJvmOptions: List<KProperty1<*, *>>,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+) {
+    val k2JvmCompilerArgumentsFqName = FqName(K2JVMCompilerArguments::class.qualifiedName!!)
+    val jvmImplFqName = FqName("${jvmInterfaceFqName.asString()}$IMPLEMENTATION_SUFFIX")
+    withPrinterToFile(fileFromFqName(srcDir, jvmImplFqName)) {
+        generateImpl(
+            jvmImplFqName,
+            jvmInterfaceFqName,
+            k2JvmCompilerArgumentsFqName,
+            allJvmOptions
+        )
+    }
+}
+
+private fun generateKotlinJsOptions(
+    apiSrcDir: File,
+    commonCompilerInterfaceFqName: FqName,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+): Pair<FqName, List<KProperty1<*, *>>> {
+    val jsInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinJsOptions")
+    val jsOptions = gradleOptions<K2JSCompilerArguments>()
+    withPrinterToFile(fileFromFqName(apiSrcDir, jsInterfaceFqName)) {
+        generateInterface(
+            jsInterfaceFqName,
+            jsOptions,
+            parentType = commonCompilerInterfaceFqName
+        )
+    }
+
+    println("\n### Attributes specific for JS\n")
+    generateMarkdown(jsOptions)
+
+    return jsInterfaceFqName to jsOptions
+}
+
+private fun generateKotlinJsOptionsImpl(
+    srcDir: File,
+    jsInterfaceFqName: FqName,
+    jsOptions: List<KProperty1<*, *>>,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+) {
+    val k2JsCompilerArgumentsFqName = FqName(K2JSCompilerArguments::class.qualifiedName!!)
+    val jsImplFqName = FqName("${jsInterfaceFqName.asString()}$IMPLEMENTATION_SUFFIX")
+    withPrinterToFile(fileFromFqName(srcDir, jsImplFqName)) {
+        generateImpl(
+            jsImplFqName,
+            jsInterfaceFqName,
+            k2JsCompilerArgumentsFqName,
+            jsOptions
+        )
+    }
+}
+
+private fun generateJsDceOptions(
+    apiSrcDir: File,
+    commonInterfaceFqName: FqName,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+): Pair<FqName, List<KProperty1<*, *>>> {
+    val jsDceInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinJsDceOptions")
+    val jsDceOptions = gradleOptions<K2JSDceArguments>()
+    withPrinterToFile(fileFromFqName(apiSrcDir, jsDceInterfaceFqName)) {
+        generateInterface(
+            jsDceInterfaceFqName,
+            jsDceOptions,
+            parentType = commonInterfaceFqName
+        )
+    }
+
+    println("\n### Attributes specific for JS/DCE\n")
+    generateMarkdown(jsDceOptions)
+
+    return jsDceInterfaceFqName to jsDceOptions
+}
+
+private fun generateJsDceOptionsImpl(
+    srcDir: File,
+    jsDceInterfaceFqName: FqName,
+    jsDceOptions: List<KProperty1<*, *>>,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+) {
+    val k2JsDceArgumentsFqName = FqName(K2JSDceArguments::class.qualifiedName!!)
+    val jsDceImplFqName = FqName("${jsDceInterfaceFqName.asString()}$IMPLEMENTATION_SUFFIX")
+    withPrinterToFile(fileFromFqName(srcDir, jsDceImplFqName)) {
+        generateImpl(
+            jsDceImplFqName,
+            jsDceInterfaceFqName,
+            k2JsDceArgumentsFqName,
+            jsDceOptions
+        )
+    }
+}
+
+private fun generateMultiplatformCommonOptions(
+    apiSrcDir: File,
+    commonCompilerInterfaceFqName: FqName,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+): Pair<FqName, List<KProperty1<*, *>>> {
+    val multiplatformCommonInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinMultiplatformCommonOptions")
+    val multiplatformCommonOptions = gradleOptions<K2MetadataCompilerArguments>()
+    withPrinterToFile(fileFromFqName(apiSrcDir, multiplatformCommonInterfaceFqName)) {
+        generateInterface(
+            multiplatformCommonInterfaceFqName,
+            multiplatformCommonOptions,
+            parentType = commonCompilerInterfaceFqName
+        )
+    }
+
+    println("\n### Attributes specific for Multiplatform/Common\n")
+    generateMarkdown(multiplatformCommonOptions)
+
+    return multiplatformCommonInterfaceFqName to multiplatformCommonOptions
+}
+
+private fun generateMultiplatformCommonOptionsImpl(
+    srcDir: File,
+    multiplatformCommonInterfaceFqName: FqName,
+    multiplatformCommonOptions: List<KProperty1<*, *>>,
+    withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
+) {
+    val k2metadataCompilerArgumentsFqName = FqName(K2MetadataCompilerArguments::class.qualifiedName!!)
+    val multiplatformCommonImplFqName = FqName("${multiplatformCommonInterfaceFqName.asString()}$IMPLEMENTATION_SUFFIX")
+    withPrinterToFile(fileFromFqName(srcDir, multiplatformCommonImplFqName)) {
+        generateImpl(
+            multiplatformCommonImplFqName,
+            multiplatformCommonInterfaceFqName,
+            k2metadataCompilerArgumentsFqName,
+            multiplatformCommonOptions
+        )
+    }
+}
+
+//endregion
+
+//region Helper functions
+
 private inline fun <reified T : Any> List<KProperty1<T, *>>.filterToBeDeleted() = filter { prop ->
     prop.findAnnotation<GradleDeprecatedOption>()
         ?.let { LanguageVersion.fromVersionString(it.removeAfter) }
@@ -190,96 +332,122 @@ private inline fun <reified T : Any> List<KProperty1<T, *>>.filterToBeDeleted() 
 }
 
 private inline fun <reified T : Any> gradleOptions(): List<KProperty1<T, *>> =
-    T::class.declaredMemberProperties.filter { it.findAnnotation<GradleOption>() != null }.filterToBeDeleted().sortedBy { it.name }
+    T::class
+        .declaredMemberProperties
+        .filter {
+            it.findAnnotation<GradleOption>() != null
+        }
+        .filterToBeDeleted()
+        .sortedBy { it.name }
 
-private fun file(baseDir: File, fqName: FqName): File {
+private fun fileFromFqName(baseDir: File, fqName: FqName): File {
     val fileRelativePath = fqName.asString().replace(".", "/") + ".kt"
     return File(baseDir, fileRelativePath)
 }
 
-private fun Printer.generateInterface(type: FqName, properties: List<KProperty1<*, *>>, parentType: FqName? = null) {
+private fun Printer.generateInterface(
+    type: FqName,
+    properties: List<KProperty1<*, *>>,
+    parentType: FqName? = null
+) {
     val afterType = parentType?.let { " : $it" }
     generateDeclaration("interface", type, afterType = afterType) {
         for (property in properties) {
             println()
             generateDoc(property)
             generateOptionDeprecation(property)
-            generatePropertyDeclaration(property)
+            generatePropertyProvider(property)
+
+            println()
+            generateDoc(property)
+            generateOptionDeprecation(property)
+            generatePropertyGetterAndSetter(property)
         }
     }
 }
 
+@Suppress("UNUSED_PARAMETER")
 private fun Printer.generateImpl(
     type: FqName,
     parentType: FqName,
     argsType: FqName,
     properties: List<KProperty1<*, *>>
 ) {
-    generateDeclaration("internal abstract class", type, afterType = ": $parentType") {
-        fun KProperty1<*, *>.backingField(): String = "${this.name}Field"
-
+    generateDeclaration(
+        "internal class",
+        type,
+        constructorDeclaration = "@javax.inject.Inject constructor(\n    objectFactory: org.gradle.api.model.ObjectFactory\n)",
+        afterType = ": $parentType"
+    ) {
         for (property in properties) {
             println()
-            val propertyType = property.gradleReturnType
-            if (propertyType.endsWith("?")) {
-                generateOptionDeprecation(property)
-                generatePropertyDeclaration(property, modifiers = "override", value = "null")
-            } else {
-                val backingField = property.backingField()
-                val visibilityModified = property.gradleBackingFieldVisibility.name.lowercase(Locale.US)
-                println("$visibilityModified var $backingField: $propertyType? = null")
-                generateOptionDeprecation(property)
-                generatePropertyDeclaration(property, modifiers = "override")
-                withIndent {
-                    println("get() = $backingField ?: ${property.gradleDefaultValue}")
-                    println("set(value) {")
-                    withIndent { println("$backingField = value") }
-                    println("}")
-                }
-            }
+            generatePropertyProviderImpl(property)
         }
 
         println()
-        println("internal open fun updateArguments(args: $argsType) {")
+        println("internal fun toCompilerArguments(args: $argsType) {")
         withIndent {
             for (property in properties) {
-                val backingField = if (property.gradleReturnType.endsWith("?")) property.name else property.backingField()
-                println("$backingField?.let { args.${property.name} = it }")
+                if (property.name != "freeCompilerArgs") {
+                    println("args.${property.name} = ${property.name}")
+                } else {
+                    println("args.freeArgs += ${property.name}")
+                }
             }
+
+            addAdditionalJvmArgs(type)
+        }
+        println("}")
+
+        println()
+        println("internal fun fillDefaultValues(args: $argsType) {")
+        withIndent {
+            properties
+                .filter { it.name != "freeCompilerArgs" }
+                .forEach {
+                    println("args.${it.name} = ${it.gradleDefaultValue}")
+                }
+
+            addAdditionalJvmArgs(type)
         }
         println("}")
     }
+}
 
-    println()
-    println("internal fun $argsType.fillDefaultValues() {")
-    withIndent {
-        for (property in properties) {
-            println("${property.name} = ${property.gradleDefaultValue}")
-        }
-        // Adding required 'noStdlib' and 'noReflect' compiler arguments for JVM compilation
-        // Otherwise compilation via build tools will fail
-        if (type.shortName().toString() == "KotlinJvmOptionsBase") {
-            println("noStdlib = true")
-            println("noReflect = true")
-        }
+private fun Printer.addAdditionalJvmArgs(implType: FqName) {
+    // Adding required 'noStdlib' and 'noReflect' compiler arguments for JVM compilation
+    // Otherwise compilation via build tools will fail
+    if (implType.shortName().toString() == "KotlinJvmOptionsBase") {
+        println()
+        println("// Arguments with always default values when used from build tools")
+        println("args.noStdlib = true")
+        println("args.noReflect = true")
     }
-    println("}")
 }
 
 private fun Printer.generateDeclaration(
     modifiers: String,
     type: FqName,
+    constructorDeclaration: String? = null,
     afterType: String? = null,
     generateBody: Printer.() -> Unit
 ) {
-    println("// DO NOT EDIT MANUALLY!")
-    println("// Generated by org/jetbrains/kotlin/generators/arguments/GenerateGradleOptions.kt")
+    println(
+        """
+        // DO NOT EDIT MANUALLY!
+        // Generated by org/jetbrains/kotlin/generators/arguments/GenerateGradleOptions.kt
+        // To regenerate run 'generateGradleOptions' task
+        @file:Suppress("RemoveRedundantQualifierName", "Deprecation", "DuplicatedCode")
+        
+        """.trimIndent()
+    )
+
     if (!type.parent().isRoot) {
         println("package ${type.parent()}")
         println()
     }
-    println("@Suppress(\"DEPRECATION\")")
-    print("$modifiers ${type.shortName()} ")
+    print("$modifiers ${type.shortName()}")
+    constructorDeclaration?.let { print(" $it ") }
     afterType?.let { print("$afterType ") }
     println("{")
     withIndent {
@@ -288,11 +456,55 @@ private fun Printer.generateDeclaration(
     println("}")
 }
 
-private fun Printer.generatePropertyDeclaration(property: KProperty1<*, *>, modifiers: String = "", value: String? = null) {
-    val returnType = property.gradleReturnType
-    val initialValue = if (value != null) " = $value" else ""
-    println("$modifiers var ${property.name}: $returnType$initialValue")
+private fun Printer.generatePropertyProvider(
+    property: KProperty1<*, *>,
+    modifiers: String = ""
+) {
+    if (property.gradleDefaultValue == "null" &&
+        property.gradleInputType == GradleInputTypes.INPUT
+    ) {
+        println("@get:org.gradle.api.tasks.Optional")
+    }
+    println("@get:${property.gradleInputType}")
+    println("${modifiers.appendWhitespaceIfNotBlank}val ${property.nameProp}: ${property.gradleLazyReturnType}")
 }
+
+private fun Printer.generatePropertyProviderImpl(
+    property: KProperty1<*, *>,
+    modifiers: String = ""
+) {
+    println(
+        "override ${modifiers.appendWhitespaceIfNotBlank}val ${property.nameProp}: ${property.gradleLazyReturnType} ="
+    )
+    withIndent {
+        val convention = if (property.gradleDefaultValue != "null") {
+            ".convention(${property.gradleDefaultValue})"
+        } else {
+            ""
+        }
+
+        println(
+            "objectFactory${property.gradleLazyReturnTypeInstantiator}$convention"
+        )
+    }
+}
+
+private fun Printer.generatePropertyGetterAndSetter(
+    property: KProperty1<*, *>,
+    modifiers: String = "",
+) {
+    val returnType = property.gradleReturnType
+
+    println("@get:org.gradle.api.tasks.Internal")
+    println("${modifiers.appendWhitespaceIfNotBlank}var ${property.name}: $returnType")
+    val getter = if (returnType.endsWith("?")) ".orNull" else ".get()"
+    withIndent {
+        println("get() = ${property.nameProp}$getter")
+        println("set(value) = ${property.nameProp}.set(value)")
+    }
+}
+
+private val String.appendWhitespaceIfNotBlank get() = if (isNotBlank()) "$this " else ""
 
 private fun Printer.generateOptionDeprecation(property: KProperty1<*, *>) {
     property.findAnnotation<GradleDeprecatedOption>()
@@ -346,15 +558,6 @@ private val KProperty1<*, *>.gradleValues: DefaultValues
 private val KProperty1<*, *>.gradleDefaultValue: String
     get() = gradleValues.defaultValue
 
-private val KProperty1<*, *>.gradleBackingFieldVisibility: KVisibility
-    get() {
-        val fieldVisibility = findAnnotation<GradleOption>()!!.backingFieldVisibility
-        require(fieldVisibility != KVisibility.PUBLIC) {
-            "Backing field should not have public visibility!"
-        }
-        return fieldVisibility
-    }
-
 private val KProperty1<*, *>.gradleReturnType: String
     get() {
         // Set nullability based on Gradle default value
@@ -364,6 +567,39 @@ private val KProperty1<*, *>.gradleReturnType: String
         }
         return type
     }
+
+private val KProperty1<*, *>.gradleLazyReturnType: String
+    get() {
+        val classifier = returnType.classifier
+        return when {
+            classifier is KClass<*> && classifier == List::class ->
+                "org.gradle.api.provider.ListProperty<${returnType.arguments.first().type!!.withNullability(false)}>"
+            classifier is KClass<*> && classifier == Set::class ->
+                "org.gradle.api.provider.SetProperty<${returnType.arguments.first().type!!.withNullability(false)}>"
+            classifier is KClass<*> && classifier == Map::class ->
+                "org.gradle.api.provider.MapProperty<${returnType.arguments[0]}, ${returnType.arguments[1]}"
+            else -> "org.gradle.api.provider.Property<${returnType.withNullability(false)}>"
+        }
+    }
+
+private val KProperty1<*, *>.gradleLazyReturnTypeInstantiator: String
+    get() {
+        val classifier = returnType.classifier
+        return when {
+            classifier is KClass<*> && classifier == List::class ->
+                ".listProperty(${returnType.arguments.first().type!!.withNullability(false)}::class.java)"
+            classifier is KClass<*> && classifier == Set::class ->
+                ".setProperty(${returnType.arguments.first().type!!.withNullability(false)}::class.java)"
+            classifier is KClass<*> && classifier == Map::class ->
+                ".mapProperty(${returnType.arguments[0]}::class.java, ${returnType.arguments[1]}::class.java)"
+            else -> ".property(${returnType.withNullability(false)}::class.java)"
+        }
+    }
+
+private val KProperty1<*, *>.nameProp: String get() = "${name}Prop"
+
+private val KProperty1<*, *>.gradleInputType: GradleInputTypes get() = 
+    findAnnotation<GradleOption>()!!.gradleInputType
 
 private inline fun <reified T> KAnnotatedElement.findAnnotation(): T? =
     annotations.filterIsInstance<T>().firstOrNull()
@@ -376,3 +612,4 @@ object DeprecatedOptionAnnotator {
         return "@Deprecated($arguments)"
     }
 }
+//endregion

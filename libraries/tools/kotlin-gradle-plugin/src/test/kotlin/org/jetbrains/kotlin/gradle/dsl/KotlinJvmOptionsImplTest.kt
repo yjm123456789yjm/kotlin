@@ -1,5 +1,6 @@
 package org.jetbrains.kotlin.gradle.dsl
 
+import org.gradle.testfixtures.ProjectBuilder
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.junit.Assert.assertEquals
 import org.junit.Test
@@ -7,7 +8,8 @@ import org.junit.Test
 class KotlinJvmOptionsTest {
     @Test
     fun testFreeArguments() {
-        val options = KotlinJvmOptionsImpl()
+        val project = ProjectBuilder.builder().build()
+        val options = KotlinJvmOptionsBase(project.objects)
         options.freeCompilerArgs = listOf(
             "-Xreport-perf",
             "-Xallow-kotlin-package",
@@ -17,7 +19,7 @@ class KotlinJvmOptionsTest {
         )
 
         val arguments = K2JVMCompilerArguments()
-        options.updateArguments(arguments)
+        options.toCompilerArguments(arguments)
         assertEquals(options.freeCompilerArgs, arguments.freeArgs)
     }
 }
