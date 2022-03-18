@@ -15,24 +15,12 @@ public final class User {
     }
 
     @org.jetbrains.annotations.NotNull()
-    public final java.lang.String getFirstName() {
-        return null;
-    }
-
-    @org.jetbrains.annotations.NotNull()
-    public final java.lang.String getSecondName() {
-        return null;
-    }
-
-    public final int getAge() {
-        return 0;
-    }
-
-    public final void procedure() {
-    }
-
-    @org.jetbrains.annotations.NotNull()
     public final java.lang.String component1() {
+        return null;
+    }
+
+    @org.jetbrains.annotations.NotNull()
+    public final java.lang.String getFirstName() {
         return null;
     }
 
@@ -41,8 +29,20 @@ public final class User {
         return null;
     }
 
+    @org.jetbrains.annotations.NotNull()
+    public final java.lang.String getSecondName() {
+        return null;
+    }
+
     public final int component3() {
         return 0;
+    }
+
+    public final int getAge() {
+        return 0;
+    }
+
+    public final void procedure() {
     }
 
     @org.jetbrains.annotations.NotNull()
