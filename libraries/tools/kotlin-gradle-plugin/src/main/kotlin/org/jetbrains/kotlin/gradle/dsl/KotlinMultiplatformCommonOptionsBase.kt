@@ -30,6 +30,9 @@ internal class KotlinMultiplatformCommonOptionsBase @javax.inject.Inject constru
     override val useFirProp: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
+    override val moduleNameProp: org.gradle.api.provider.Property<kotlin.String> =
+        objectFactory.property(kotlin.String::class.java)
+
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments) {
         args.allWarningsAsErrors = allWarningsAsErrors
         args.suppressWarnings = suppressWarnings
@@ -38,6 +41,7 @@ internal class KotlinMultiplatformCommonOptionsBase @javax.inject.Inject constru
         args.apiVersion = apiVersion
         args.languageVersion = languageVersion
         args.useFir = useFir
+        args.moduleName = moduleName
     }
 
     internal fun fillDefaultValues(args: org.jetbrains.kotlin.cli.common.arguments.K2MetadataCompilerArguments) {
@@ -47,5 +51,6 @@ internal class KotlinMultiplatformCommonOptionsBase @javax.inject.Inject constru
         args.apiVersion = null
         args.languageVersion = null
         args.useFir = false
+        args.moduleName = null
     }
 }

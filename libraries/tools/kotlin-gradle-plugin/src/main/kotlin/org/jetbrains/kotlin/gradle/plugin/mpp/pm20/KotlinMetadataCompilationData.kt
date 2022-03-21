@@ -11,7 +11,6 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.disambiguateName
@@ -126,7 +125,9 @@ internal open class KotlinCommonFragmentMetadataCompilationDataImpl(
                             mapTo(hashSetOf()) { it.platformType }.size > 1
                 }
 
-    override val kotlinOptions: KotlinMultiplatformCommonOptions = KotlinMultiplatformCommonOptionsImpl()
+    override val kotlinOptions: KotlinMultiplatformCommonOptions = KotlinMultiplatformCommonOptionsBase(
+        project.objects
+    )
 }
 
 interface KotlinNativeFragmentMetadataCompilationData :
@@ -163,7 +164,7 @@ internal open class KotlinNativeFragmentMetadataCompilationDataImpl(
     override val isActive: Boolean
         get() = fragment.isNativeShared() && fragment.containingVariants.count() > 1
 
-    override val kotlinOptions: NativeCompileOptions = NativeCompileOptions { languageSettings }
+    override val kotlinOptions: NativeCompileOptions = NativeCompileOptions(project.objects)
 
     override val konanTarget: KonanTarget
         get() {

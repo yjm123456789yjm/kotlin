@@ -32,6 +32,10 @@ class K2MetadataCompilerArguments : CommonCompilerArguments() {
     )
     var classpath: String? by NullableStringFreezableVar(null)
 
+    @GradleOption(
+        value = DefaultValues.StringNullDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(value = "-module-name", valueDescription = "<name>", description = "Name of the generated .kotlin_module file")
     var moduleName: String? by NullableStringFreezableVar(null)
 
