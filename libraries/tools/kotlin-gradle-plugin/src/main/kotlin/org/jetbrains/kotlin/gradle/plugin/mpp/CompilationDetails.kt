@@ -16,7 +16,6 @@ import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.gradle.kotlin.dsl.withType
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.internal.KotlinCompilationsModuleGroups
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
@@ -517,7 +516,7 @@ class AndroidCompilationDetails(
 ) : DefaultCompilationDetailsWithRuntime<KotlinJvmOptions>(
     target,
     compilationPurpose,
-    { KotlinJvmOptionsImpl() }
+    { KotlinJvmOptionsBase(target.project.objects) }
 ) {
     override val compilation: KotlinJvmAndroidCompilation get() = getCompilationInstance()
 
@@ -548,7 +547,7 @@ internal class MetadataCompilationDetails(target: KotlinTarget, name: String) :
     DefaultCompilationDetails<KotlinMultiplatformCommonOptions>(
         target,
         name,
-        { KotlinMultiplatformCommonOptionsImpl() }
+        { KotlinMultiplatformCommonOptionsBase(target.project.objects) }
     ) {
 
     override val friendArtifacts: FileCollection
@@ -562,7 +561,11 @@ internal class MetadataCompilationDetails(target: KotlinTarget, name: String) :
 internal open class JsCompilationDetails(
     target: KotlinTarget,
     compilationPurpose: String,
-) : DefaultCompilationDetailsWithRuntime<KotlinJsOptions>(target, compilationPurpose, { KotlinJsOptionsImpl() }) {
+) : DefaultCompilationDetailsWithRuntime<KotlinJsOptions>(
+    target,
+    compilationPurpose,
+    { KotlinJsOptionsBase(target.project.objects) }
+) {
 
     protected open class JsCompilationDependenciesHolder(
         val target: KotlinTarget,

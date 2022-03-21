@@ -653,7 +653,7 @@ internal open class KotlinPlugin(
                 project,
                 KotlinPlatformType.jvm,
                 targetName,
-                { KotlinJvmOptionsImpl() }
+                { KotlinJvmOptionsBase(project.objects) }
             ).apply {
                 disambiguationClassifier = null // don't add anything to the task names
             }
@@ -685,7 +685,7 @@ internal open class KotlinCommonPlugin(
             project,
             KotlinPlatformType.common,
             targetName,
-            { KotlinMultiplatformCommonOptionsImpl() }
+            { KotlinMultiplatformCommonOptionsBase(project.objects) }
         )
         (project.kotlinExtension as KotlinCommonProjectExtension).target = target
 
@@ -712,7 +712,12 @@ internal open class Kotlin2JsPlugin(
         if (!PropertiesProvider(project).noWarn2JsPlugin) {
             project.logger.warn(jsPluginDeprecationMessage("kotlin2js"))
         }
-        val target = KotlinWithJavaTarget<KotlinJsOptions>(project, KotlinPlatformType.js, targetName, { KotlinJsOptionsImpl() })
+        val target = KotlinWithJavaTarget<KotlinJsOptions>(
+            project,
+            KotlinPlatformType.js,
+            targetName,
+            { KotlinJsOptionsBase(project.objects) }
+        )
 
         (project.kotlinExtension as Kotlin2JsProjectExtension).target = target
         super.apply(project)
@@ -825,7 +830,9 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
         val project = kotlinAndroidTarget.project
         val ext = project.extensions.getByName("android") as BaseExtension
 
-        val kotlinOptions = KotlinJvmOptionsImpl()
+        //TODO: kotlinAndroidTarget.compilations.getByName(getVariantName(variantData))
+        val kotlinOptions = KotlinJvmOptionsBase(project.objects)
+
         project.whenEvaluated {
             // TODO don't require the flag once there is an Android Gradle plugin build that supports desugaring of Long.hashCode and
             //  Boolean.hashCode. Instead, run conditionally, only with the AGP versions that play well with Kotlin bytecode for
@@ -836,8 +843,8 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
             }
         }
 
-        kotlinOptions.noJdk = true
-        ext.addExtension(KOTLIN_OPTIONS_DSL_NAME, kotlinOptions)
+        kotlinOptions.noJdkProp.set(true)
+        ext.addExtension(KOTLIN_OPTIONS_DSL_NAME, kotlinOptions as KotlinJvmOptions)
 
         val plugin = androidPluginIds
             .asSequence()
@@ -977,7 +984,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
         val javaVersion =
             minOf(baseExtension.compileOptions.sourceCompatibility, baseExtension.compileOptions.targetCompatibility)
         if (javaVersion == JavaVersion.VERSION_1_6)
-            kotlinOptions.jvmTarget = "1.6"
+            kotlinOptions.jvmTargetProp.set("1.6")
     }
 
     private fun addAndroidUnitTestTasksAsDependenciesToAllTest(project: Project) {
@@ -1002,7 +1009,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
         variantData: BaseVariant,
         compilation: KotlinJvmAndroidCompilation,
         project: Project,
-        rootKotlinOptions: KotlinJvmOptionsImpl,
+        rootKotlinOptions: KotlinJvmOptions,
         tasksProvider: KotlinTasksProvider
     ) {
         // This function is called before the variantData is completely filled by the Android plugin.

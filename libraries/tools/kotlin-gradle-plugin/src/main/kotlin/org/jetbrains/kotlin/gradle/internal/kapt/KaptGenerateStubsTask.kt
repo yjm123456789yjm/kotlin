@@ -19,12 +19,11 @@ package org.jetbrains.kotlin.gradle.internal
 import org.gradle.api.file.*
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
-import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.work.Incremental
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsBase
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
 import org.jetbrains.kotlin.gradle.tasks.*
@@ -39,7 +38,7 @@ abstract class KaptGenerateStubsTask @Inject constructor(
     workerExecutor: WorkerExecutor,
     objectFactory: ObjectFactory
 ) : KotlinCompile(
-    KotlinJvmOptionsImpl(),
+    KotlinJvmOptionsBase(objectFactory),
     workerExecutor,
     objectFactory
 ) {

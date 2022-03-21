@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.logging
 
-import org.gradle.api.Task
 import org.gradle.api.logging.Logger
 import org.jetbrains.kotlin.compilerRunner.KotlinLogger
 

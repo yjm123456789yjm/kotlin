@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptionsImpl
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptionsBase
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
@@ -40,7 +40,7 @@ abstract class KotlinJsIrLink @Inject constructor(
     workerExecutor: WorkerExecutor,
     private val projectLayout: ProjectLayout
 ) : Kotlin2JsCompile(
-    KotlinJsOptionsImpl(),
+    KotlinJsOptionsBase(objectFactory),
     objectFactory,
     workerExecutor
 ) {

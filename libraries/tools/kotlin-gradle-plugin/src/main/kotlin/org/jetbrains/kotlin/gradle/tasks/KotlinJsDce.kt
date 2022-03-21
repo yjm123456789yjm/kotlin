@@ -29,7 +29,7 @@ import org.jetbrains.kotlin.cli.js.dce.K2JSDce
 import org.jetbrains.kotlin.compilerRunner.runToolInSeparateProcess
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDce
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsImpl
+import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsBase
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.utils.canonicalPathWithoutExtension
 import org.jetbrains.kotlin.gradle.utils.fileExtensionCasePermutations
@@ -51,19 +51,17 @@ abstract class KotlinJsDce @Inject constructor(
     override fun createCompilerArgs(): K2JSDceArguments = K2JSDceArguments()
 
     override fun setupCompilerArgs(args: K2JSDceArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        dceOptionsImpl.updateArguments(args)
+        dceOptionsBase.toCompilerArguments(args)
         args.declarationsToKeep = keep.toTypedArray()
     }
 
-    private val dceOptionsImpl = KotlinJsDceOptionsImpl()
 
     // DCE can be broken in case of non-kotlin js files or modules
     @Internal
     var kotlinFilesOnly: Boolean = false
 
-    @get:Internal
-    override val dceOptions: KotlinJsDceOptions
-        get() = dceOptionsImpl
+    private val dceOptionsBase = KotlinJsDceOptionsBase(objects)
+    override val dceOptions: KotlinJsDceOptions = dceOptionsBase
 
     @get:Input
     override val keep: MutableList<String> = mutableListOf()

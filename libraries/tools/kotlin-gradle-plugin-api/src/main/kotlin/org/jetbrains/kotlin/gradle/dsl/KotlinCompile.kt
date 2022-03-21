@@ -8,10 +8,10 @@ package org.jetbrains.kotlin.gradle.dsl
 import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.Task
-import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 
 interface KotlinCompile<out T : KotlinCommonOptions> : Task {
-    @get:Internal
+    @get:Nested
     val kotlinOptions: T
 
     fun kotlinOptions(fn: T.() -> Unit) {

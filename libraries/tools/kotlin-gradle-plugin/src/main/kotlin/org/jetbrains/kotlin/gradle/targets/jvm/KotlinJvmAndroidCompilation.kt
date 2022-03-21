@@ -12,10 +12,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
-import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.getJavaTaskProvider
-import org.jetbrains.kotlin.gradle.plugin.getTestedVariantData
 
 class KotlinJvmAndroidCompilation(
     compilationDetails: AndroidCompilationDetails

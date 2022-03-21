@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.gradle.plugin.mpp.pm20
 
 import org.gradle.api.artifacts.Configuration
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsBase
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.filterModuleName
@@ -40,7 +40,7 @@ class KotlinJvmVariantCompilationData(val variant: KotlinJvmVariant) : KotlinVar
     override val owner: KotlinJvmVariant get() = variant
 
     // TODO pull out to the variant
-    override val kotlinOptions: KotlinJvmOptions = KotlinJvmOptionsImpl()
+    override val kotlinOptions: KotlinJvmOptions = KotlinJvmOptionsBase(variant.project.objects)
 }
 
 internal fun KotlinGradleVariant.ownModuleName(): String {

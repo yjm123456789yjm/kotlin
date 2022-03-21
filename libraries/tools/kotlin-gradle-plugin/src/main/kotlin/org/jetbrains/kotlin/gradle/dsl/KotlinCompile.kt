@@ -19,7 +19,7 @@ package org.jetbrains.kotlin.gradle.dsl
 import groovy.lang.Closure
 import org.gradle.api.Task
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Internal
+import org.gradle.api.tasks.Nested
 
 interface KotlinJsCompile : KotlinCompile<KotlinJsOptions>
 
@@ -28,7 +28,7 @@ interface KotlinJvmCompile : KotlinCompile<KotlinJvmOptions>
 interface KotlinCommonCompile : KotlinCompile<KotlinMultiplatformCommonOptions>
 
 interface KotlinJsDce : Task {
-    @get:Internal
+    @get:Nested
     val dceOptions: KotlinJsDceOptions
 
     @get:Input

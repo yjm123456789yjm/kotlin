@@ -82,7 +82,7 @@ abstract class AbstractKotlinCompileTool<T : CommonToolArguments> @Inject constr
     objectFactory: ObjectFactory
 ) : DefaultTask(),
     PatternFilterable,
-    CompilerArgumentAwareWithInput<T>,
+    CompilerArgumentAware<T>,
     TaskWithLocalState {
 
     private val patternFilterable = PatternSet()
@@ -378,8 +378,8 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     @get:PathSensitive(PathSensitivity.RELATIVE)
     internal val commonSourceSet: ConfigurableFileCollection = objectFactory.fileCollection()
 
-    @get:Input
-    internal val moduleName: Property<String> = objectFactory.property(String::class.java)
+    @get:Internal
+    internal abstract val moduleName: Property<String>
 
     @get:Internal
     val abiSnapshotFile
@@ -580,10 +580,7 @@ class KotlinJvmCompilerArgumentsProvider
     val friendPaths: FileCollection = taskProvider.friendPaths
     val compileClasspath: Iterable<File> = taskProvider.libraries
     val destinationDir: File = taskProvider.destinationDirectory.get().asFile
-    internal val kotlinOptions: List<KotlinJvmOptionsImpl> = listOfNotNull(
-        taskProvider.parentKotlinOptionsImpl.orNull as? KotlinJvmOptionsImpl,
-        taskProvider.kotlinOptions as KotlinJvmOptionsImpl
-    )
+    internal val kotlinOptions: KotlinJvmOptionsBase = taskProvider.kotlinOptions as KotlinJvmOptionsBase
 }
 
 internal inline val <reified T : Task> T.thisTaskProvider: TaskProvider<out T>
@@ -672,9 +669,6 @@ abstract class KotlinCompile @Inject constructor(
                     compileJavaTaskProvider.map { it.name }
                 )
             }
-            task.moduleName.set(task.project.provider {
-                task.kotlinOptions.moduleName ?: task.parentKotlinOptionsImpl.orNull?.moduleName ?: compilation.moduleName
-            })
 
             if (properties.useClasspathSnapshot) {
                 val classpathSnapshot = task.project.configurations.getByName(classpathSnapshotConfigurationName(task.name))
@@ -691,8 +685,12 @@ abstract class KotlinCompile @Inject constructor(
         }
     }
 
+    // TODO: remove it
     @get:Internal
     internal val parentKotlinOptionsImpl: Property<KotlinJvmOptions> = objectFactory.property(KotlinJvmOptions::class.java)
+
+    override val moduleName: Property<String>
+        get() = kotlinOptions.moduleNameProp
 
     /** A package prefix that is used for locating Java sources in a directory structure with non-full-depth packages.
      *
@@ -1138,6 +1136,9 @@ abstract class Kotlin2JsCompile @Inject constructor(
     @get:Internal
     abstract val outputFileProperty: Property<File>
 
+    @get:Input
+    override val moduleName: Property<String> = objectFactory.property<String>().chainedFinalizeValueOnRead()
+
     @Deprecated("Please use outputFileProperty, this is kept for backwards compatibility.", replaceWith = ReplaceWith("outputFileProperty"))
     @get:Internal
     val outputFile: File
@@ -1165,7 +1166,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
         K2JSCompilerArguments()
 
     override fun setupCompilerArgs(args: K2JSCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        args.apply { fillDefaultValues() }
+        (kotlinOptions as KotlinJsOptionsBase).fillDefaultValues(args)
         super.setupCompilerArgs(args, defaultsOnly = defaultsOnly, ignoreClasspathResolutionErrors = ignoreClasspathResolutionErrors)
 
         try {
@@ -1176,10 +1177,11 @@ abstract class Kotlin2JsCompile @Inject constructor(
         }
 
         args.outputFile = outputFileProperty.get().absoluteFile.normalize().absolutePath
+        if (!sourceMapBaseDirs.isEmpty) args.sourceMapBaseDirs = sourceMapBaseDirs.asPath
 
         if (defaultsOnly) return
 
-        (kotlinOptions as KotlinJsOptionsImpl).updateArguments(args)
+        (kotlinOptions as KotlinJsOptionsBase).toCompilerArguments(args)
     }
 
     @get:InputFiles
@@ -1202,8 +1204,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
     @get:IgnoreEmptyDirectories
     @get:Optional
     @get:PathSensitive(PathSensitivity.RELATIVE)
-    internal val sourceMapBaseDirs: FileCollection?
-        get() = (kotlinOptions as KotlinJsOptionsImpl).sourceMapBaseDirs
+    internal val sourceMapBaseDirs: FileCollection = objectFactory.fileCollection()
 
     private fun isHybridKotlinJsLibrary(file: File): Boolean =
         JsLibraryUtils.isKotlinJavascriptLibrary(file) && isKotlinLibrary(file)

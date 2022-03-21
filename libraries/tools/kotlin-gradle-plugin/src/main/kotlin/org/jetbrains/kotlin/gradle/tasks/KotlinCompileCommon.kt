@@ -19,6 +19,7 @@ package org.jetbrains.kotlin.gradle.tasks
 import org.gradle.api.Project
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.*
 import org.gradle.work.InputChanges
@@ -103,7 +104,7 @@ abstract class KotlinCompileCommon @Inject constructor(
         K2MetadataCompilerArguments()
 
     override fun setupCompilerArgs(args: K2MetadataCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        args.apply { fillDefaultValues() }
+        (kotlinOptions as KotlinMultiplatformCommonOptionsBase).fillDefaultValues(args)
         super.setupCompilerArgs(args, defaultsOnly = defaultsOnly, ignoreClasspathResolutionErrors = ignoreClasspathResolutionErrors)
 
         args.moduleName = this@KotlinCompileCommon.moduleName.get()
@@ -124,8 +125,11 @@ abstract class KotlinCompileCommon @Inject constructor(
             refinesPaths = refinesMetadataPaths.map { it.absolutePath }.toTypedArray()
         }
 
-        (kotlinOptions as KotlinMultiplatformCommonOptionsImpl).updateArguments(args)
+        (kotlinOptions as KotlinMultiplatformCommonOptionsBase).toCompilerArguments(args)
     }
+
+    override val moduleName: Property<String>
+        get() = kotlinOptions.moduleNameProp
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:IgnoreEmptyDirectories
