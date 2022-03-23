@@ -54,6 +54,13 @@
             </array>
           </value>
         </entry>
+        <entry key="$PROJECT_DIR$/plugins/kapt3/kapt3-compiler/testData">
+          <value>
+            <array>
+              <option value="$PROJECT_DIR$/plugins/kapt3/kapt3-compiler/testData/$TEST_DATA_FILE$_ir.txt" />
+            </array>
+          </value>
+        </entry>
       </map>
     </option>
     <option name="testDataFiles">
@@ -65,6 +72,7 @@
         <option value="$PROJECT_DIR$/plugins/parcelize/parcelize-compiler/testData" />
         <option value="$PROJECT_DIR$/plugins/fir-plugin-prototype/testData" />
         <option value="$PROJECT_DIR$/compiler/fir/raw-fir/psi2fir/testData" />
+        <option value="$PROJECT_DIR$/plugins/kapt3/kapt3-compiler/testData" />
       </array>
     </option>
   </component>
