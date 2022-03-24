@@ -97,7 +97,8 @@ class FirFrontendFacade(
         val sourcesScope = when {
             module.targetPlatform.isJvm() -> TopDownAnalyzerFacadeForJVM.newModuleSearchScope(project, ktFiles)
             module.targetPlatform.isJs() -> AbstractTopDownAnalyzerFacadeForJS.newModuleSearchScope(project, ktFiles)
-            else -> throw Exception("Unsupported")
+            // FIXME
+            else -> TopDownAnalyzerFacadeForJVM.newModuleSearchScope(project, ktFiles)
         }
 
         val moduleName = Name.identifier(module.name)
@@ -107,7 +108,8 @@ class FirFrontendFacade(
             when {
                 module.targetPlatform.isJvm() -> configureJvmDependencies(configuration)
                 module.targetPlatform.isJs() -> configureJsDependencies(module, testServices)
-                else -> throw Exception("Unsupported")
+                // FIXME
+                else -> configureJvmDependencies(configuration)
             }
 
             sourceDependencies(moduleInfoProvider.getRegularDependentSourceModules(module))
@@ -227,7 +229,19 @@ private fun configureLibrarySession(
     compilerConfigurationProvider: CompilerConfigurationProvider,
     languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
 ): FirSession = when {
-    module.targetPlatform.isJvm() -> {
+    module.targetPlatform.isJs() -> {
+        FirJsSessionFactory.createJsLibrarySession(
+            moduleName,
+            module,
+            testServices,
+            configuration,
+            sessionProvider,
+            dependencyList.moduleDataProvider,
+            languageVersionSettings,
+        )
+    }
+    // FIXME
+    else /* module.targetPlatform.isJvm() */ -> {
         val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
         val localFileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL)
 
@@ -247,18 +261,6 @@ private fun configureLibrarySession(
             languageVersionSettings,
         )
     }
-    module.targetPlatform.isJs() -> {
-        FirJsSessionFactory.createJsLibrarySession(
-            moduleName,
-            module,
-            testServices,
-            configuration,
-            sessionProvider,
-            dependencyList.moduleDataProvider,
-            languageVersionSettings,
-        )
-    }
-    else -> throw Exception("Unsupported")
 }
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
@@ -282,7 +284,17 @@ private fun configureMainSession(
     val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
 
     return when {
-        module.targetPlatform.isJvm() -> {
+        module.targetPlatform.isJs() -> {
+            FirJsSessionFactory.createJsModuleBasedSession(
+                mainModuleData,
+                sessionProvider,
+                extensionRegistrars,
+                languageVersionSettings,
+                null,
+                sessionConfigurator,
+            )
+        }
+        else /* module.targetPlatform.isJvm() */ -> {
             val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
             val localFileSystem = VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL)
 
@@ -305,17 +317,6 @@ private fun configureMainSession(
                 sessionConfigurator,
             )
         }
-        module.targetPlatform.isJs() -> {
-            FirJsSessionFactory.createJsModuleBasedSession(
-                mainModuleData,
-                sessionProvider,
-                extensionRegistrars,
-                languageVersionSettings,
-                null,
-                sessionConfigurator,
-            )
-        }
-        else -> throw Exception("Unsupported")
     }
 }
 
