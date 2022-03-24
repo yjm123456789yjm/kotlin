@@ -185,20 +185,20 @@ private fun DependencyListForCliModule.Builder.configureJsDependencies(
 ) {
     val (runtimeKlibsNames, transitiveLibraries, friendLibraries) = getJsDependencies(module, testServices)
 
-    dependencies(runtimeKlibsNames.map { Paths.get(it).toAbsolutePath() })
+    dependencies(runtimeKlibsNames.filterNotNull().map { Paths.get(it).toAbsolutePath() })
     dependencies(transitiveLibraries.map { it.toPath().toAbsolutePath() })
 
     friendDependencies(friendLibraries.map { it.toPath().toAbsolutePath() })
 }
 
-private fun getJsDependencies(module: TestModule, testServices: TestServices): Triple<List<String>, List<File>, List<File>> {
+private fun getJsDependencies(module: TestModule, testServices: TestServices): Triple<List<String?>, List<File>, List<File>> {
     val runtimeKlibsNames = JsEnvironmentConfigurator.getRuntimePathsForModule(module, testServices)
     val transitiveLibraries = JsEnvironmentConfigurator.getKlibDependencies(module, testServices, DependencyRelation.RegularDependency)
     val friendLibraries = JsEnvironmentConfigurator.getKlibDependencies(module, testServices, DependencyRelation.FriendDependency)
     return Triple(runtimeKlibsNames, transitiveLibraries, friendLibraries)
 }
 
-private fun getAllJsDependenciesNames(module: TestModule, testServices: TestServices): List<String> {
+private fun getAllJsDependenciesNames(module: TestModule, testServices: TestServices): List<String?> {
     val (runtimeKlibsNames, transitiveLibraries, friendLibraries) = getJsDependencies(module, testServices)
     return runtimeKlibsNames + transitiveLibraries.map { it.name } + friendLibraries.map { it.name }
 }
@@ -211,7 +211,7 @@ fun resolveJsLibraries(
     val names = getAllJsDependenciesNames(module, testServices)
     val repositories = configuration[JSConfigurationKeys.REPOSITORIES] ?: emptyList()
     val logger = configuration[IrMessageLogger.IR_MESSAGE_LOGGER].toResolverLogger()
-    return jsResolveLibraries(names, repositories, logger).getFullResolvedList()
+    return jsResolveLibraries(names.filterNotNull(), repositories, logger).getFullResolvedList()
 }
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
