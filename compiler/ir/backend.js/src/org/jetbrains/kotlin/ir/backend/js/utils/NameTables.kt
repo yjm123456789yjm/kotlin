@@ -138,16 +138,16 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     nameBuilder.append(declarationName)
 
     declaration.extensionReceiverParameter?.let {
-        nameBuilder.append("_r$${it.type.eraseGenerics(context.irBuiltIns).asString()}")
+        nameBuilder.append("_r$${it.type.asString()}")
     }
     declaration.valueParameters.ifNotEmpty {
-        joinTo(nameBuilder, "") { "_${it.type.eraseGenerics(context.irBuiltIns).asString()}" }
+        joinTo(nameBuilder, "") { "_${it.type.asString()}" }
     }
     declaration.returnType.let {
         // Return type is only used in signature for inline class and Unit types because
         // they are binary incompatible with supertypes.
         if (context.inlineClassesUtils.isTypeInlined(it) || it.isUnit()) {
-            nameBuilder.append("_ret$${it.eraseGenerics(context.irBuiltIns).asString()}")
+            nameBuilder.append("_ret$${it.asString()}")
         }
     }
 
