@@ -9,12 +9,17 @@ import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrArithBuilder
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.varargParameterIndex
+import org.jetbrains.kotlin.ir.backend.js.utils.collectTypeArguments
 import org.jetbrains.kotlin.ir.backend.js.utils.eraseGenerics
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsNameOrKotlinName
 import org.jetbrains.kotlin.ir.backend.js.utils.hasStableJsName
 import org.jetbrains.kotlin.ir.builders.*
-import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
+import org.jetbrains.kotlin.ir.declarations.IrSimpleFunction
+import org.jetbrains.kotlin.ir.declarations.IrValueDeclaration
+import org.jetbrains.kotlin.ir.declarations.IrVariable
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.isUnit
@@ -43,13 +48,23 @@ class JsBridgesConstruction(context: JsIrBackendContext) : BridgesConstruction<J
         } else {
             JsNonStableSignature(
                 function.name,
-                function.extensionReceiverParameter?.type?.eraseGenerics(context.irBuiltIns),
-                function.valueParameters.map { it.type.eraseGenerics(context.irBuiltIns) },
+                function.extensionReceiverParameter?.type?.formatTypeArguments(),
+                function.valueParameters.map {
+                    it.type.formatTypeArguments()
+                },
                 function.returnType.takeIf {
                     it.getJsInlinedClass() != null || it.isUnit()
-                }?.eraseGenerics(context.irBuiltIns)
+                }?.formatTypeArguments()
             )
         }
+
+    private fun IrType.formatTypeArguments(): Pair<IrType, List<IrType>> {
+        return this.eraseGenerics(context.irBuiltIns) to
+                if (this is IrSimpleType)
+                    this.collectTypeArguments(context.irBuiltIns)
+                else
+                    emptyList()
+    }
 
     override fun getBridgeOrigin(bridge: IrSimpleFunction): IrDeclarationOrigin =
         when {
@@ -174,14 +189,14 @@ interface JsSignature {
 
 data class JsNonStableSignature(
     override val name: Name,
-    val extensionReceiverType: IrType?,
-    val valueParametersType: List<IrType>,
-    val returnType: IrType?,
+    val extensionReceiverType: Pair<IrType, List<IrType>>?,
+    val valueParametersType: List<Pair<IrType, List<IrType>>>,
+    val returnType: Pair<IrType, List<IrType>>?,
 ) : JsSignature {
     override fun toString(): String {
-        val er = extensionReceiverType?.let { "(er: ${it.render()}) " } ?: ""
-        val parameters = valueParametersType.joinToString(", ") { it.render() }
-        return "[$er$name($parameters) -> ${returnType?.let { " -> ${it.render()}" } ?: ""}]"
+        val er = extensionReceiverType?.let { "(er: ${it.first.render()}) " } ?: ""
+        val parameters = valueParametersType.joinToString(", ") { it.first.render() }
+        return "[$er$name($parameters) -> ${returnType?.let { " -> ${it.first.render()}" } ?: ""}]"
     }
 }
 
