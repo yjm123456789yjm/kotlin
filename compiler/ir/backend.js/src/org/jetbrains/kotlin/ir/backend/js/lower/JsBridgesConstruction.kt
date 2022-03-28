@@ -9,7 +9,7 @@ import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrArithBuilder
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.varargParameterIndex
-import org.jetbrains.kotlin.ir.backend.js.utils.collectTypeArguments
+import org.jetbrains.kotlin.ir.backend.js.utils.collectTypeConsiderGenerics
 import org.jetbrains.kotlin.ir.backend.js.utils.eraseGenerics
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsNameOrKotlinName
 import org.jetbrains.kotlin.ir.backend.js.utils.hasStableJsName
@@ -61,7 +61,7 @@ class JsBridgesConstruction(context: JsIrBackendContext) : BridgesConstruction<J
     private fun IrType.formatTypeArguments(): Pair<IrType, List<IrType>> {
         return this.eraseGenerics(context.irBuiltIns) to
                 if (this is IrSimpleType)
-                    this.collectTypeArguments(context.irBuiltIns)
+                    this.collectTypeConsiderGenerics(context.irBuiltIns)
                 else
                     emptyList()
     }

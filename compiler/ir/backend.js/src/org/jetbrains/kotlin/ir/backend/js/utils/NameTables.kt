@@ -13,11 +13,10 @@ import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.lower.serialization.ir.JsManglerIr
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrReturnableBlockSymbol
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrNull
+import org.jetbrains.kotlin.ir.types.IrTypeProjection
 import org.jetbrains.kotlin.ir.types.isUnit
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
@@ -143,21 +142,18 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     nameBuilder.append(declarationName)
 
     declaration.extensionReceiverParameter?.let {
-        nameBuilder.append("_r$${it.type.eraseGenerics(context.irBuiltIns).asString()}")
-        nameBuilder.append("_rgen$${it.type.typeArgumentsToString(context)}")
+        nameBuilder.append("_r$${it.type.typeToString(context)}")
     }
     declaration.valueParameters.ifNotEmpty {
-        joinTo(nameBuilder, "") { "_${it.type.eraseGenerics(context.irBuiltIns).asString()}" }
         joinTo(nameBuilder, "") {
-            it.type.typeArgumentsToString(context)
+            it.type.typeToString(context)
         }
     }
     declaration.returnType.let {
         // Return type is only used in signature for inline class and Unit types because
         // they are binary incompatible with supertypes.
         if (context.inlineClassesUtils.isTypeInlined(it) || it.isUnit()) {
-            nameBuilder.append("_ret$${it.eraseGenerics(context.irBuiltIns).asString()}")
-            nameBuilder.append("_retgen$${it.typeArgumentsToString(context)}")
+            nameBuilder.append("_ret$${it.typeToString(context)}")
         }
     }
 
@@ -170,23 +166,22 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     ) + "_" + abs(signature.hashCode()).toString(Character.MAX_RADIX) + RESERVED_MEMBER_NAME_SUFFIX
 }
 
-private fun IrType.typeArgumentsToString(context: JsIrBackendContext) = if (this is IrSimpleType) {
-    this.collectTypeArguments(context.irBuiltIns).joinToString {
-        "_${it.asString()}"
-    }
-} else ""
+private fun IrType.typeToString(context: JsIrBackendContext) =
+    this.collectTypeConsiderGenerics(context.irBuiltIns).joinToString { "_${it.asString()}" }
 
-fun IrSimpleType.collectTypeArguments(irBuiltIns: IrBuiltIns): List<IrType> {
-    val classifier = classifierOrNull
-    if (classifier !is IrClassSymbol) return emptyList()
+fun IrType.collectTypeConsiderGenerics(irBuiltIns: IrBuiltIns): List<IrType> {
     val result = mutableListOf<IrType>()
     result.add(this.eraseGenerics(irBuiltIns))
-    arguments.forEach {
-        if (it is IrSimpleType) {
-            it.collectTypeArguments(irBuiltIns).forEach {
-                result.add(it)
+    (this as? IrSimpleType)?.arguments?.forEach { argument ->
+        when (argument) {
+            is IrSimpleType -> {
+                argument.collectTypeConsiderGenerics(irBuiltIns)
             }
-        }
+            is IrTypeProjection -> {
+                (argument.type as? IrSimpleType)?.collectTypeConsiderGenerics(irBuiltIns)
+            }
+            else -> null
+        }?.forEach { result.add(it.eraseGenerics(irBuiltIns)) }
     }
 
     return result
