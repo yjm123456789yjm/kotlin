@@ -144,7 +144,7 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
 
     declaration.extensionReceiverParameter?.let {
         nameBuilder.append("_r$${it.type.eraseGenerics(context.irBuiltIns).asString()}")
-        nameBuilder.append("_r$${it.type.typeArgumentsToString(context)}")
+        nameBuilder.append("_rgen$${it.type.typeArgumentsToString(context)}")
     }
     declaration.valueParameters.ifNotEmpty {
         joinTo(nameBuilder, "") { "_${it.type.eraseGenerics(context.irBuiltIns).asString()}" }
@@ -157,7 +157,7 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
         // they are binary incompatible with supertypes.
         if (context.inlineClassesUtils.isTypeInlined(it) || it.isUnit()) {
             nameBuilder.append("_ret$${it.eraseGenerics(context.irBuiltIns).asString()}")
-            nameBuilder.append("_ret$${it.typeArgumentsToString(context)}")
+            nameBuilder.append("_retgen$${it.typeArgumentsToString(context)}")
         }
     }
 
@@ -180,6 +180,7 @@ fun IrSimpleType.collectTypeArguments(irBuiltIns: IrBuiltIns): List<IrType> {
     val classifier = classifierOrNull
     if (classifier !is IrClassSymbol) return emptyList()
     val result = mutableListOf<IrType>()
+    result.add(this.eraseGenerics(irBuiltIns))
     arguments.forEach {
         if (it is IrSimpleType) {
             it.collectTypeArguments(irBuiltIns).forEach {
@@ -188,7 +189,6 @@ fun IrSimpleType.collectTypeArguments(irBuiltIns: IrBuiltIns): List<IrType> {
         }
     }
 
-    result.add(0, this.eraseGenerics(irBuiltIns))
     return result
 }
 
