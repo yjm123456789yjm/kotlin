@@ -104,8 +104,8 @@ private class A {
     // CHECK_NOT_CALLED_IN_SCOPE: function=get_p12_s8ev3n$ scope=box TARGET_BACKENDS=JS
     // CHECK_FUNCTION_EXISTS: set_p12_dqglrj$ TARGET_BACKENDS=JS
     // CHECK_NOT_CALLED_IN_SCOPE: function=set_p12_dqglrj$ scope=box TARGET_BACKENDS=JS
-    // CHECK_NOT_CALLED_IN_SCOPE: function=get_p12_jvqn3p_k$ scope=box IGNORED_BACKENDS=JS
-    // CHECK_NOT_CALLED_IN_SCOPE: function=set_p12_na24b5_k$ scope=box IGNORED_BACKENDS=JS
+    // CHECK_NOT_CALLED_IN_SCOPE: function=get_p12_klbqa9_k$ scope=box IGNORED_BACKENDS=JS
+    // CHECK_NOT_CALLED_IN_SCOPE: function=set_p12_20x766_k$ scope=box IGNORED_BACKENDS=JS
     inline var Int.p12: Int
         get() = this * 100 + a + 120000
         set(v) {
@@ -115,9 +115,9 @@ private class A {
     // CHECK_FUNCTION_EXISTS: get_p13_s8ev3n$ TARGET_BACKENDS=JS
     // CHECK_NOT_CALLED_IN_SCOPE: function=get_p13_s8ev3n$ scope=box TARGET_BACKENDS=JS
     // CHECK_CALLED_IN_SCOPE: function=set_p13_dqglrj$ scope=box TARGET_BACKENDS=JS
-    // CHECK_FUNCTION_EXISTS: get_p13_s8qimu_k$ IGNORED_BACKENDS=JS
-    // CHECK_NOT_CALLED_IN_SCOPE: function=get_p13_s8qimu_k$ scope=box IGNORED_BACKENDS=JS
-    // CHECK_CALLED_IN_SCOPE: function=set_p13_8qdsq6_k$ scope=box IGNORED_BACKENDS=JS
+    // CHECK_FUNCTION_EXISTS: get_p13_esgvbk_k$ IGNORED_BACKENDS=JS
+    // CHECK_NOT_CALLED_IN_SCOPE: function=get_p13_esgvbk_k$ scope=box IGNORED_BACKENDS=JS
+    // CHECK_CALLED_IN_SCOPE: function=set_p13_8ecy31_k$ scope=box IGNORED_BACKENDS=JS
     var Int.p13: Int
         inline get() = this * 100 + a + 130000
         set(v) {
@@ -127,9 +127,9 @@ private class A {
     // CHECK_CALLED_IN_SCOPE: function=get_p14_s8ev3n$ scope=box TARGET_BACKENDS=JS
     // CHECK_FUNCTION_EXISTS: set_p14_dqglrj$ TARGET_BACKENDS=JS
     // CHECK_NOT_CALLED_IN_SCOPE: function=set_p14_dqglrj$ scope=box TARGET_BACKENDS=JS
-    // CHECK_CALLED_IN_SCOPE: function=get_p14_yfdnt5_k$ scope=box IGNORED_BACKENDS=JS
-    // CHECK_FUNCTION_EXISTS: set_p14_uaac7n_k$ IGNORED_BACKENDS=JS
-    // CHECK_NOT_CALLED_IN_SCOPE: function=set_p14_uaac7n_k$ scope=box IGNORED_BACKENDS=JS
+    // CHECK_CALLED_IN_SCOPE: function=get_p14_8zm0cv_k$ scope=box IGNORED_BACKENDS=JS
+    // CHECK_FUNCTION_EXISTS: set_p14_ersozw_k$ IGNORED_BACKENDS=JS
+    // CHECK_NOT_CALLED_IN_SCOPE: function=set_p14_ersozw_k$ scope=box IGNORED_BACKENDS=JS
     var Int.p14: Int
         get() = this * 100 + a + 140000
         inline set(v) {
