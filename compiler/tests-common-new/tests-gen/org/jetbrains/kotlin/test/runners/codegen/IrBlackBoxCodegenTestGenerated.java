@@ -31351,6 +31351,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
             }
 
             @Test
+            @TestMetadata("AtomicRef.kt")
+            public void testAtomicRef() throws Exception {
+                runTest("compiler/testData/codegen/box/multiplatform/firUserProjects/AtomicRef.kt");
+            }
+
+            @Test
             @TestMetadata("Atomics.kt")
             public void testAtomics() throws Exception {
                 runTest("compiler/testData/codegen/box/multiplatform/firUserProjects/Atomics.kt");
