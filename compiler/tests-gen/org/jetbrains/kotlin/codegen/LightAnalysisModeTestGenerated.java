@@ -26268,6 +26268,19 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             }
         }
 
+        @TestMetadata("compiler/testData/codegen/box/multiplatform/firUserProjects")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class FirUserProjects extends AbstractLightAnalysisModeTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInFirUserProjects() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/firUserProjects"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
+            }
+        }
+
         @TestMetadata("compiler/testData/codegen/box/multiplatform/hmpp")
         @TestDataPath("$PROJECT_ROOT")
         @RunWith(JUnit3RunnerWithInners.class)

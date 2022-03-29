@@ -22356,6 +22356,16 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         }
 
         @Nested
+        @TestMetadata("compiler/testData/codegen/box/multiplatform/firUserProjects")
+        @TestDataPath("$PROJECT_ROOT")
+        public class FirUserProjects {
+            @Test
+            public void testAllFilesPresentInFirUserProjects() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/multiplatform/firUserProjects"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+        }
+
+        @Nested
         @TestMetadata("compiler/testData/codegen/box/multiplatform/hmpp")
         @TestDataPath("$PROJECT_ROOT")
         public class Hmpp {
