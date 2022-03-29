@@ -831,7 +831,7 @@ class DeclarationsConverter(
         }
 
         val defaultVisibility = classWrapper.defaultConstructorVisibility()
-        val firDelegatedCall = buildDelegatedConstructorCall {
+        val firDelegatedCall = if (containingClassIsExpectClass) null else buildDelegatedConstructorCall {
             source = delegatedConstructorSource ?: selfTypeSource?.fakeElement(KtFakeSourceElementKind.DelegatingConstructorCall)
             constructedTypeRef = classWrapper.delegatedSuperTypeRef.copyWithNewSourceKind(KtFakeSourceElementKind.ImplicitTypeRef)
             isThis = false
