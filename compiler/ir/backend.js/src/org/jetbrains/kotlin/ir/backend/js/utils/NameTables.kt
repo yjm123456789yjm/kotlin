@@ -146,7 +146,7 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
     }
     declaration.valueParameters.ifNotEmpty {
         joinTo(nameBuilder, "") {
-            it.type.typeToString(context)
+            it.type.typeToString(context) + "$${it.isVararg}"
         }
     }
     declaration.returnType.let {

@@ -28,6 +28,8 @@ object B {
     fun baz(vararg v: B) = "[A]"
 
     fun baz(vararg v: String) = "[S]"
+
+    fun baz(v: Array<String>) = "Array<String>"
 }
 
 class C<in T> {
@@ -68,12 +70,13 @@ fun box(): String {
 
     if (B.baz(B) != "[A]") return "fail5"
     if (B.baz("a") != "[S]") return "fail6"
+    if (B.baz(arrayOf("b")) != "Array<String>") return "fail7"
 
-    if(C<String>().bac("a") != "T4") return "fail7"
-    if(C<String>().bac(5) != "Int5") return "fail8"
-    if(C<String>().bac(listOf("a", "b")) != "ListT4") return "fail9"
-    if(C<String>().bac(listOf(5, 6)) != "ListInt4") return "fail10"
-    if(C<String>().bac(listOf(Any(), Any())) != "ListStar4") return "fail11"
+    if(C<String>().bac("a") != "T4") return "fail8"
+    if(C<String>().bac(5) != "Int5") return "fail9"
+    if(C<String>().bac(listOf("a", "b")) != "ListT4") return "fail10"
+    if(C<String>().bac(listOf(5, 6)) != "ListInt4") return "fail11"
+    if(C<String>().bac(listOf(Any(), Any())) != "ListStar4") return "fail12"
 
     return "OK"
 }
