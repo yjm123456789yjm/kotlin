@@ -701,6 +701,7 @@ class DeclarationsConverter(
         }
 
         val enumEntryName = identifier.nameAsSafeName()
+        val containingClassIsExpectClass = classWrapper.hasExpect() || context.containerIsExpect
         return buildEnumEntry {
             source = enumEntry.toFirSourceElement()
             moduleData = baseModuleData
@@ -710,7 +711,7 @@ class DeclarationsConverter(
             symbol = FirEnumEntrySymbol(CallableId(context.currentClassId, enumEntryName))
             status = FirDeclarationStatusImpl(Visibilities.Public, Modality.FINAL).apply {
                 isStatic = true
-                isExpect = classWrapper.hasExpect() || context.containerIsExpect
+                isExpect = containingClassIsExpectClass
             }
             if (classWrapper.hasDefaultConstructor && enumEntry.getChildNodeByType(INITIALIZER_LIST) == null &&
                 modifiers.annotations.isEmpty() && classBodyNode == null
@@ -752,7 +753,7 @@ class DeclarationsConverter(
                             enumClassWrapper,
                             superTypeCallEntry?.toFirSourceElement(),
                             isEnumEntry = true,
-                            containingClassIsExpectClass = false
+                            containingClassIsExpectClass = containingClassIsExpectClass
                         )?.let { declarations += it.firConstructor }
                         classBodyNode?.also {
                             // Use ANONYMOUS_OBJECT_NAME for the owner class id of enum entry declarations
