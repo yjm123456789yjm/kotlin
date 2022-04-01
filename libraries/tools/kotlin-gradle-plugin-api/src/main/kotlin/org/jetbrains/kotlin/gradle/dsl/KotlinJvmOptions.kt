@@ -12,16 +12,7 @@ interface KotlinJvmOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val javaParametersProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Generate metadata for Java 1.8 reflection on method parameters
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var javaParameters: kotlin.Boolean
-        get() = javaParametersProp.get()
-        set(value) = javaParametersProp.set(value)
+    val javaParameters: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Target version of the generated JVM bytecode (1.6 (DEPRECATED), 1.8, 9, 10, ..., 18), default is 1.8
@@ -30,17 +21,7 @@ interface KotlinJvmOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val jvmTargetProp: org.gradle.api.provider.Property<kotlin.String>
-
-    /**
-     * Target version of the generated JVM bytecode (1.6 (DEPRECATED), 1.8, 9, 10, ..., 18), default is 1.8
-     * Possible values: "1.6", "1.8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"
-     * Default value: null
-     */
-    @get:org.gradle.api.tasks.Internal
-    var jvmTarget: kotlin.String?
-        get() = jvmTargetProp.orNull
-        set(value) = jvmTargetProp.set(value)
+    val jvmTarget: org.gradle.api.provider.Property<kotlin.String>
 
     /**
      * Name of the generated .kotlin_module file
@@ -48,46 +29,68 @@ interface KotlinJvmOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val moduleNameProp: org.gradle.api.provider.Property<kotlin.String>
-
-    /**
-     * Name of the generated .kotlin_module file
-     * Default value: null
-     */
-    @get:org.gradle.api.tasks.Internal
-    var moduleName: kotlin.String?
-        get() = moduleNameProp.orNull
-        set(value) = moduleNameProp.set(value)
+    val moduleName: org.gradle.api.provider.Property<kotlin.String>
 
     /**
      * Don't automatically include the Java runtime into the classpath
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val noJdkProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Don't automatically include the Java runtime into the classpath
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var noJdk: kotlin.Boolean
-        get() = noJdkProp.get()
-        set(value) = noJdkProp.set(value)
+    val noJdk: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Use the old JVM backend
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val useOldBackendProp: org.gradle.api.provider.Property<kotlin.Boolean>
+    val useOldBackend: org.gradle.api.provider.Property<kotlin.Boolean>
 
-    /**
-     * Use the old JVM backend
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var useOldBackend: kotlin.Boolean
-        get() = useOldBackendProp.get()
-        set(value) = useOldBackendProp.set(value)
+    interface KotlinJvmOptionsDsl : KotlinOptionsDsl<KotlinJvmOptions> {
+
+        /**
+         * Generate metadata for Java 1.8 reflection on method parameters
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var javaParameters: kotlin.Boolean
+            get() = options.javaParameters.get()
+            set(value) = options.javaParameters.set(value)
+
+        /**
+         * Target version of the generated JVM bytecode (1.6 (DEPRECATED), 1.8, 9, 10, ..., 18), default is 1.8
+         * Possible values: "1.6", "1.8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"
+         * Default value: null
+         */
+        @get:org.gradle.api.tasks.Internal
+        var jvmTarget: kotlin.String?
+            get() = options.jvmTarget.orNull
+            set(value) = options.jvmTarget.set(value)
+
+        /**
+         * Name of the generated .kotlin_module file
+         * Default value: null
+         */
+        @get:org.gradle.api.tasks.Internal
+        var moduleName: kotlin.String?
+            get() = options.moduleName.orNull
+            set(value) = options.moduleName.set(value)
+
+        /**
+         * Don't automatically include the Java runtime into the classpath
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var noJdk: kotlin.Boolean
+            get() = options.noJdk.get()
+            set(value) = options.noJdk.set(value)
+
+        /**
+         * Use the old JVM backend
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var useOldBackend: kotlin.Boolean
+            get() = options.useOldBackend.get()
+            set(value) = options.useOldBackend.set(value)
+    }
 }

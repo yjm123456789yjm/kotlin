@@ -13,14 +13,17 @@ interface KotlinMultiplatformCommonOptions : org.jetbrains.kotlin.gradle.dsl.Kot
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val moduleNameProp: org.gradle.api.provider.Property<kotlin.String>
+    val moduleName: org.gradle.api.provider.Property<kotlin.String>
 
-    /**
-     * Name of the generated .kotlin_module file
-     * Default value: null
-     */
-    @get:org.gradle.api.tasks.Internal
-    var moduleName: kotlin.String?
-        get() = moduleNameProp.orNull
-        set(value) = moduleNameProp.set(value)
+    interface KotlinMultiplatformCommonOptionsDsl : KotlinOptionsDsl<KotlinMultiplatformCommonOptions> {
+
+        /**
+         * Name of the generated .kotlin_module file
+         * Default value: null
+         */
+        @get:org.gradle.api.tasks.Internal
+        var moduleName: kotlin.String?
+            get() = options.moduleName.orNull
+            set(value) = options.moduleName.set(value)
+    }
 }

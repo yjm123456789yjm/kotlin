@@ -17,8 +17,10 @@
 package org.jetbrains.kotlin.gradle.dsl
 
 import groovy.lang.Closure
+import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Internal
 import org.gradle.api.tasks.Nested
 
 interface KotlinJsCompile : KotlinCompile<KotlinJsOptions>
@@ -31,16 +33,22 @@ interface KotlinJsDce : Task {
     @get:Nested
     val dceOptions: KotlinJsDceOptions
 
+    @get:Internal
+    val dceOptionsDsl: KotlinOptionsDsl<KotlinJsDceOptions>
+
     @get:Input
     val keep: MutableList<String>
 
-    fun dceOptions(fn: KotlinJsDceOptions.() -> Unit) {
-        dceOptions.fn()
+    fun dceOptions(fn: KotlinOptionsDsl<KotlinJsDceOptions>.() -> Unit) {
+        dceOptionsDsl.fn()
+    }
+
+    fun kotlinOptions(fn: Action<in KotlinOptionsDsl<KotlinJsDceOptions>>) {
+        fn.execute(dceOptionsDsl)
     }
 
     fun dceOptions(fn: Closure<*>) {
-        fn.delegate = dceOptions
-        fn.call()
+        project.configure(dceOptionsDsl, fn)
     }
 
     fun keep(vararg fqn: String)

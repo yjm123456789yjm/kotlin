@@ -175,7 +175,8 @@ private fun generateKotlinJvmOptions(
         generateInterface(
             jvmInterfaceFqName,
             jvmOptions,
-            parentType = commonCompilerInterfaceFqName
+            parentType = commonCompilerInterfaceFqName,
+            addDslInterface = true
         )
     }
 
@@ -214,7 +215,8 @@ private fun generateKotlinJsOptions(
         generateInterface(
             jsInterfaceFqName,
             jsOptions,
-            parentType = commonCompilerInterfaceFqName
+            parentType = commonCompilerInterfaceFqName,
+            addDslInterface = true
         )
     }
 
@@ -253,7 +255,8 @@ private fun generateJsDceOptions(
         generateInterface(
             jsDceInterfaceFqName,
             jsDceOptions,
-            parentType = commonInterfaceFqName
+            parentType = commonInterfaceFqName,
+            addDslInterface = true
         )
     }
 
@@ -292,7 +295,8 @@ private fun generateMultiplatformCommonOptions(
         generateInterface(
             multiplatformCommonInterfaceFqName,
             multiplatformCommonOptions,
-            parentType = commonCompilerInterfaceFqName
+            parentType = commonCompilerInterfaceFqName,
+            addDslInterface = true
         )
     }
 
@@ -348,7 +352,8 @@ private fun fileFromFqName(baseDir: File, fqName: FqName): File {
 private fun Printer.generateInterface(
     type: FqName,
     properties: List<KProperty1<*, *>>,
-    parentType: FqName? = null
+    parentType: FqName? = null,
+    addDslInterface: Boolean = false,
 ) {
     val afterType = parentType?.let { " : $it" }
     generateDeclaration("interface", type, afterType = afterType) {
@@ -357,11 +362,20 @@ private fun Printer.generateInterface(
             generateDoc(property)
             generateOptionDeprecation(property)
             generatePropertyProvider(property)
+        }
 
+        if (addDslInterface) {
             println()
-            generateDoc(property)
-            generateOptionDeprecation(property)
-            generatePropertyGetterAndSetter(property)
+            println("interface ${type.shortName()}Dsl : KotlinOptionsDsl<${type.shortName()}> {")
+            withIndent {
+                properties.forEach {
+                    println()
+                    generateDoc(it)
+                    generateOptionDeprecation(it)
+                    generatePropertyGetterAndSetter(it)
+                }
+            }
+            println("}")
         }
     }
 }
@@ -389,9 +403,10 @@ private fun Printer.generateImpl(
         withIndent {
             for (property in properties) {
                 if (property.name != "freeCompilerArgs") {
-                    println("args.${property.name} = ${property.name}")
+                    val getter = if (property.gradleReturnType.endsWith("?")) ".orNull" else ".get()"
+                    println("args.${property.name} = ${property.name}$getter")
                 } else {
-                    println("args.freeArgs += ${property.name}")
+                    println("args.freeArgs += ${property.name}.get()")
                 }
             }
 
@@ -466,7 +481,7 @@ private fun Printer.generatePropertyProvider(
         println("@get:org.gradle.api.tasks.Optional")
     }
     println("@get:${property.gradleInputType}")
-    println("${modifiers.appendWhitespaceIfNotBlank}val ${property.nameProp}: ${property.gradleLazyReturnType}")
+    println("${modifiers.appendWhitespaceIfNotBlank}val ${property.name}: ${property.gradleLazyReturnType}")
 }
 
 private fun Printer.generatePropertyProviderImpl(
@@ -474,7 +489,7 @@ private fun Printer.generatePropertyProviderImpl(
     modifiers: String = ""
 ) {
     println(
-        "override ${modifiers.appendWhitespaceIfNotBlank}val ${property.nameProp}: ${property.gradleLazyReturnType} ="
+        "override ${modifiers.appendWhitespaceIfNotBlank}val ${property.name}: ${property.gradleLazyReturnType} ="
     )
     withIndent {
         val convention = if (property.gradleDefaultValue != "null") {
@@ -499,8 +514,8 @@ private fun Printer.generatePropertyGetterAndSetter(
     println("${modifiers.appendWhitespaceIfNotBlank}var ${property.name}: $returnType")
     val getter = if (returnType.endsWith("?")) ".orNull" else ".get()"
     withIndent {
-        println("get() = ${property.nameProp}$getter")
-        println("set(value) = ${property.nameProp}.set(value)")
+        println("get() = options.${property.name}$getter")
+        println("set(value) = options.${property.name}.set(value)")
     }
 }
 
@@ -595,8 +610,6 @@ private val KProperty1<*, *>.gradleLazyReturnTypeInstantiator: String
             else -> ".property(${returnType.withNullability(false)}::class.java)"
         }
     }
-
-private val KProperty1<*, *>.nameProp: String get() = "${name}Prop"
 
 private val KProperty1<*, *>.gradleInputType: GradleInputTypes get() = 
     findAnnotation<GradleOption>()!!.gradleInputType

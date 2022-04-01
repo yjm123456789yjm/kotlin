@@ -9,31 +9,31 @@ internal class KotlinJsDceOptionsBase @javax.inject.Inject constructor(
     objectFactory: org.gradle.api.model.ObjectFactory
 ) : org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions {
 
-    override val allWarningsAsErrorsProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val allWarningsAsErrors: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val suppressWarningsProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val suppressWarnings: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val verboseProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val verbose: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val freeCompilerArgsProp: org.gradle.api.provider.ListProperty<kotlin.String> =
+    override val freeCompilerArgs: org.gradle.api.provider.ListProperty<kotlin.String> =
         objectFactory.listProperty(kotlin.String::class.java).convention(emptyList())
 
-    override val devModeProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val devMode: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val outputDirectoryProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val outputDirectory: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.K2JSDceArguments) {
-        args.allWarningsAsErrors = allWarningsAsErrors
-        args.suppressWarnings = suppressWarnings
-        args.verbose = verbose
-        args.freeArgs += freeCompilerArgs
-        args.devMode = devMode
-        args.outputDirectory = outputDirectory
+        args.allWarningsAsErrors = allWarningsAsErrors.get()
+        args.suppressWarnings = suppressWarnings.get()
+        args.verbose = verbose.get()
+        args.freeArgs += freeCompilerArgs.get()
+        args.devMode = devMode.get()
+        args.outputDirectory = outputDirectory.orNull
     }
 
     internal fun fillDefaultValues(args: org.jetbrains.kotlin.cli.common.arguments.K2JSDceArguments) {

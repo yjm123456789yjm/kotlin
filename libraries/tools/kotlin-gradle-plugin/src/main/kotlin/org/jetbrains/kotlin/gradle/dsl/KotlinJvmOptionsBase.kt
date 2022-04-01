@@ -9,55 +9,55 @@ internal class KotlinJvmOptionsBase @javax.inject.Inject constructor(
     objectFactory: org.gradle.api.model.ObjectFactory
 ) : org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions {
 
-    override val allWarningsAsErrorsProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val allWarningsAsErrors: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val suppressWarningsProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val suppressWarnings: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val verboseProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val verbose: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val freeCompilerArgsProp: org.gradle.api.provider.ListProperty<kotlin.String> =
+    override val freeCompilerArgs: org.gradle.api.provider.ListProperty<kotlin.String> =
         objectFactory.listProperty(kotlin.String::class.java).convention(emptyList())
 
-    override val apiVersionProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val apiVersion: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val languageVersionProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val languageVersion: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val useFirProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val useFir: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val javaParametersProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val javaParameters: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val jvmTargetProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val jvmTarget: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val moduleNameProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val moduleName: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val noJdkProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val noJdk: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val useOldBackendProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val useOldBackend: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments) {
-        args.allWarningsAsErrors = allWarningsAsErrors
-        args.suppressWarnings = suppressWarnings
-        args.verbose = verbose
-        args.freeArgs += freeCompilerArgs
-        args.apiVersion = apiVersion
-        args.languageVersion = languageVersion
-        args.useFir = useFir
-        args.javaParameters = javaParameters
-        args.jvmTarget = jvmTarget
-        args.moduleName = moduleName
-        args.noJdk = noJdk
-        args.useOldBackend = useOldBackend
+        args.allWarningsAsErrors = allWarningsAsErrors.get()
+        args.suppressWarnings = suppressWarnings.get()
+        args.verbose = verbose.get()
+        args.freeArgs += freeCompilerArgs.get()
+        args.apiVersion = apiVersion.orNull
+        args.languageVersion = languageVersion.orNull
+        args.useFir = useFir.get()
+        args.javaParameters = javaParameters.get()
+        args.jvmTarget = jvmTarget.orNull
+        args.moduleName = moduleName.orNull
+        args.noJdk = noJdk.get()
+        args.useOldBackend = useOldBackend.get()
 
         // Arguments with always default values when used from build tools
         args.noStdlib = true

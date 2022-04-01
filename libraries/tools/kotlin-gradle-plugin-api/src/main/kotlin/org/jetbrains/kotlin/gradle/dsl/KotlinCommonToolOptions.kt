@@ -12,62 +12,26 @@ interface KotlinCommonToolOptions{
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val allWarningsAsErrorsProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Report an error if there are any warnings
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var allWarningsAsErrors: kotlin.Boolean
-        get() = allWarningsAsErrorsProp.get()
-        set(value) = allWarningsAsErrorsProp.set(value)
+    val allWarningsAsErrors: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Generate no warnings
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val suppressWarningsProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Generate no warnings
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var suppressWarnings: kotlin.Boolean
-        get() = suppressWarningsProp.get()
-        set(value) = suppressWarningsProp.set(value)
+    val suppressWarnings: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Enable verbose logging output
      * Default value: false
      */
     @get:org.gradle.api.tasks.Internal
-    val verboseProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Enable verbose logging output
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var verbose: kotlin.Boolean
-        get() = verboseProp.get()
-        set(value) = verboseProp.set(value)
+    val verbose: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * A list of additional compiler arguments
      * Default value: emptyList()
      */
     @get:org.gradle.api.tasks.Input
-    val freeCompilerArgsProp: org.gradle.api.provider.ListProperty<kotlin.String>
-
-    /**
-     * A list of additional compiler arguments
-     * Default value: emptyList()
-     */
-    @get:org.gradle.api.tasks.Internal
-    var freeCompilerArgs: kotlin.collections.List<kotlin.String>
-        get() = freeCompilerArgsProp.get()
-        set(value) = freeCompilerArgsProp.set(value)
+    val freeCompilerArgs: org.gradle.api.provider.ListProperty<kotlin.String>
 }

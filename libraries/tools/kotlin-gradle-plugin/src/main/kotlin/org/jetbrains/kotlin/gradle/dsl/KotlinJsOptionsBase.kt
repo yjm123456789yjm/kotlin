@@ -9,79 +9,79 @@ internal class KotlinJsOptionsBase @javax.inject.Inject constructor(
     objectFactory: org.gradle.api.model.ObjectFactory
 ) : org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions {
 
-    override val allWarningsAsErrorsProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val allWarningsAsErrors: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val suppressWarningsProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val suppressWarnings: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val verboseProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val verbose: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val freeCompilerArgsProp: org.gradle.api.provider.ListProperty<kotlin.String> =
+    override val freeCompilerArgs: org.gradle.api.provider.ListProperty<kotlin.String> =
         objectFactory.listProperty(kotlin.String::class.java).convention(emptyList())
 
-    override val apiVersionProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val apiVersion: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val languageVersionProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val languageVersion: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val useFirProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val useFir: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val friendModulesDisabledProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val friendModulesDisabled: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val mainProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val main: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java).convention("call")
 
-    override val metaInfoProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val metaInfo: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(true)
 
-    override val moduleKindProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val moduleKind: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java).convention("plain")
 
-    override val noStdlibProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val noStdlib: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(true)
 
-    override val outputFileProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val outputFile: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val sourceMapProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val sourceMap: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val sourceMapEmbedSourcesProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val sourceMapEmbedSources: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val sourceMapPrefixProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val sourceMapPrefix: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
 
-    override val targetProp: org.gradle.api.provider.Property<kotlin.String> =
+    override val target: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java).convention("v5")
 
-    override val typedArraysProp: org.gradle.api.provider.Property<kotlin.Boolean> =
+    override val typedArrays: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(true)
 
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments) {
-        args.allWarningsAsErrors = allWarningsAsErrors
-        args.suppressWarnings = suppressWarnings
-        args.verbose = verbose
-        args.freeArgs += freeCompilerArgs
-        args.apiVersion = apiVersion
-        args.languageVersion = languageVersion
-        args.useFir = useFir
-        args.friendModulesDisabled = friendModulesDisabled
-        args.main = main
-        args.metaInfo = metaInfo
-        args.moduleKind = moduleKind
-        args.noStdlib = noStdlib
-        args.outputFile = outputFile
-        args.sourceMap = sourceMap
-        args.sourceMapEmbedSources = sourceMapEmbedSources
-        args.sourceMapPrefix = sourceMapPrefix
-        args.target = target
-        args.typedArrays = typedArrays
+        args.allWarningsAsErrors = allWarningsAsErrors.get()
+        args.suppressWarnings = suppressWarnings.get()
+        args.verbose = verbose.get()
+        args.freeArgs += freeCompilerArgs.get()
+        args.apiVersion = apiVersion.orNull
+        args.languageVersion = languageVersion.orNull
+        args.useFir = useFir.get()
+        args.friendModulesDisabled = friendModulesDisabled.get()
+        args.main = main.get()
+        args.metaInfo = metaInfo.get()
+        args.moduleKind = moduleKind.get()
+        args.noStdlib = noStdlib.get()
+        args.outputFile = outputFile.orNull
+        args.sourceMap = sourceMap.get()
+        args.sourceMapEmbedSources = sourceMapEmbedSources.orNull
+        args.sourceMapPrefix = sourceMapPrefix.orNull
+        args.target = target.get()
+        args.typedArrays = typedArrays.get()
     }
 
     internal fun fillDefaultValues(args: org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments) {

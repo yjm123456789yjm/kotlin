@@ -12,30 +12,33 @@ interface KotlinJsDceOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolO
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val devModeProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Development mode: don't strip out any code, just copy dependencies
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var devMode: kotlin.Boolean
-        get() = devModeProp.get()
-        set(value) = devModeProp.set(value)
+    val devMode: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Output directory
      * Default value: null
      */
     @get:org.gradle.api.tasks.Internal
-    val outputDirectoryProp: org.gradle.api.provider.Property<kotlin.String>
+    val outputDirectory: org.gradle.api.provider.Property<kotlin.String>
 
-    /**
-     * Output directory
-     * Default value: null
-     */
-    @get:org.gradle.api.tasks.Internal
-    var outputDirectory: kotlin.String?
-        get() = outputDirectoryProp.orNull
-        set(value) = outputDirectoryProp.set(value)
+    interface KotlinJsDceOptionsDsl : KotlinOptionsDsl<KotlinJsDceOptions> {
+
+        /**
+         * Development mode: don't strip out any code, just copy dependencies
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var devMode: kotlin.Boolean
+            get() = options.devMode.get()
+            set(value) = options.devMode.set(value)
+
+        /**
+         * Output directory
+         * Default value: null
+         */
+        @get:org.gradle.api.tasks.Internal
+        var outputDirectory: kotlin.String?
+            get() = options.outputDirectory.orNull
+            set(value) = options.outputDirectory.set(value)
+    }
 }

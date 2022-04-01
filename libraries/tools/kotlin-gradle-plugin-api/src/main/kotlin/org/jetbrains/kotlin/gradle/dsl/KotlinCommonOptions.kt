@@ -14,17 +14,7 @@ interface KotlinCommonOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonTool
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val apiVersionProp: org.gradle.api.provider.Property<kotlin.String>
-
-    /**
-     * Allow using declarations only from the specified version of bundled libraries
-     * Possible values: "1.3 (DEPRECATED)", "1.4 (DEPRECATED)", "1.5", "1.6", "1.7", "1.8 (EXPERIMENTAL)", "1.9 (EXPERIMENTAL)"
-     * Default value: null
-     */
-    @get:org.gradle.api.tasks.Internal
-    var apiVersion: kotlin.String?
-        get() = apiVersionProp.orNull
-        set(value) = apiVersionProp.set(value)
+    val apiVersion: org.gradle.api.provider.Property<kotlin.String>
 
     /**
      * Provide source compatibility with the specified version of Kotlin
@@ -33,31 +23,12 @@ interface KotlinCommonOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonTool
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val languageVersionProp: org.gradle.api.provider.Property<kotlin.String>
-
-    /**
-     * Provide source compatibility with the specified version of Kotlin
-     * Possible values: "1.3 (DEPRECATED)", "1.4 (DEPRECATED)", "1.5", "1.6", "1.7", "1.8 (EXPERIMENTAL)", "1.9 (EXPERIMENTAL)"
-     * Default value: null
-     */
-    @get:org.gradle.api.tasks.Internal
-    var languageVersion: kotlin.String?
-        get() = languageVersionProp.orNull
-        set(value) = languageVersionProp.set(value)
+    val languageVersion: org.gradle.api.provider.Property<kotlin.String>
 
     /**
      * Compile using Front-end IR. Warning: this feature is far from being production-ready
      * Default value: false
      */
     @get:org.gradle.api.tasks.Input
-    val useFirProp: org.gradle.api.provider.Property<kotlin.Boolean>
-
-    /**
-     * Compile using Front-end IR. Warning: this feature is far from being production-ready
-     * Default value: false
-     */
-    @get:org.gradle.api.tasks.Internal
-    var useFir: kotlin.Boolean
-        get() = useFirProp.get()
-        set(value) = useFirProp.set(value)
+    val useFir: org.gradle.api.provider.Property<kotlin.Boolean>
 }
