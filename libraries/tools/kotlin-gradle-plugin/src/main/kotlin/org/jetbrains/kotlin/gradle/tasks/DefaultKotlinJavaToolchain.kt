@@ -135,11 +135,9 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
         if (providedJvmExplicitlySet) {
             val jdkVersion = javaVersion.get()
 
-            // parentKotlinOptionsImpl is set from 'kotlin-android' plugin
-            val appliedJvmTargets = listOfNotNull(task.kotlinOptions, task.parentKotlinOptionsImpl.orNull)
-                .mapNotNull { it.jvmTarget }
+            val appliedJvmTargets = task.kotlinOptions.jvmTarget
 
-            if (appliedJvmTargets.isEmpty()) {
+            if (!appliedJvmTargets.isPresent) {
                 // For Java 9 and Java 10 JavaVersion returns "1.9" or "1.10" accordingly
                 // that is not accepted by Kotlin compiler
                 val toolchainJvmTarget = when (jdkVersion) {
@@ -147,7 +145,7 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
                     JavaVersion.VERSION_1_10 -> "10"
                     else -> jdkVersion.toString()
                 }
-                task.kotlinOptions.jvmTarget = toolchainJvmTarget
+                task.kotlinOptions.jvmTarget.set(toolchainJvmTarget)
                 args.jvmTarget = toolchainJvmTarget
             }
         }
@@ -161,17 +159,18 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
         ) {
             kotlinCompileTaskProvider()?.let { task ->
                 // parentKotlinOptionsImpl is set from 'kotlin-android' plugin
-                val appliedJvmTargets = listOfNotNull(task.kotlinOptions, task.parentKotlinOptionsImpl.orNull)
-                    .mapNotNull { it.jvmTarget }
+                val appliedJvmTargets = task.kotlinOptions.jvmTarget
 
-                if (appliedJvmTargets.isEmpty()) {
+                if (!appliedJvmTargets.isPresent) {
                     // For Java 9 and Java 10 JavaVersion returns "1.9" or "1.10" accordingly
                     // that is not accepted by Kotlin compiler
-                    task.kotlinOptions.jvmTarget = when (jdkVersion) {
-                        JavaVersion.VERSION_1_9 -> "9"
-                        JavaVersion.VERSION_1_10 -> "10"
-                        else -> jdkVersion.toString()
-                    }
+                    task.kotlinOptions.jvmTarget.set(
+                        when (jdkVersion) {
+                            JavaVersion.VERSION_1_9 -> "9"
+                            JavaVersion.VERSION_1_10 -> "10"
+                            else -> jdkVersion.toString()
+                        }
+                    )
                 }
             }
         }
