@@ -31,8 +31,8 @@ kotlin {
     val windows = mingwX64("mingw64")
 
     configure(listOf(macos, linux, windows)) {
-        compilations.all { kotlinOptions.verbose = true }
-        compilations["test"].kotlinOptions.freeCompilerArgs += "-nowarn"
+        compilations.all { kotlinOptions.verbose.set(true) }
+        compilations["test"].kotlinOptions.freeCompilerArgs.add("-nowarn")
         binaries {
 
             executable()                       // Executable with default name.

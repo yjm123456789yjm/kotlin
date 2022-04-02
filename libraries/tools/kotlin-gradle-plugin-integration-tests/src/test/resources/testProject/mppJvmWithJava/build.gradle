@@ -14,7 +14,7 @@ kotlin {
         withJava()
 
         compilations.configureEach {
-            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions.jvmTarget.set("1.8")
         }
     }
 

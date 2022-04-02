@@ -13,9 +13,13 @@ apply plugin: "kotlin2js"
 apply plugin: 'java'
 
 def outDir = "${buildDir}/kotlin2js/main/"
-compileKotlin2Js.kotlinOptions.moduleKind = "plain"
-compileKotlin2Js.kotlinOptions.outputFile = outDir + "lib.js"
-compileKotlin2Js.kotlinOptions.freeCompilerArgs += ["-Xir-produce-js", "-Xgenerate-dts"]
+compileKotlin2Js {
+    kotlinOptions {
+        moduleKind = "plain"
+        outputFile = outDir + "lib.js"
+        freeCompilerArgs += ["-Xir-produce-js", "-Xgenerate-dts"]
+    }
+}
 
 repositories {
     mavenLocal()

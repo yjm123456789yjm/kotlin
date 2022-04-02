@@ -17,7 +17,7 @@ kotlin {
     }
 	val jvm8 = jvm("jvm8") {
         attributes.attribute(TargetJvmVersion.TARGET_JVM_VERSION_ATTRIBUTE, 8)
-		compilations["main"].kotlinOptions.jvmTarget = "1.8"
+		compilations["main"].kotlinOptions.jvmTarget.set("1.8")
 	}
 	val nodeJs = js("nodeJs")
 	val linux64 = linuxX64("linux64")

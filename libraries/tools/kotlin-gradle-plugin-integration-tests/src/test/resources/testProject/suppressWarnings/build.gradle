@@ -16,5 +16,7 @@ repositories {
 }
 
 compileKotlin {
-    kotlinOptions.suppressWarnings = true
+    kotlinOptions {
+        suppressWarnings = true
+    }
 }

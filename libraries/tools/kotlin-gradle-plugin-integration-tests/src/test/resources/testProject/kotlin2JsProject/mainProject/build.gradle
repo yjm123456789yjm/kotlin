@@ -20,13 +20,17 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
 }
 
-compileKotlin2Js.kotlinOptions.sourceMap = true
-compileKotlin2Js.kotlinOptions.outputFile = "${projectDir}/web/js/app.js"
-compileKotlin2Js.kotlinOptions.suppressWarnings = true
-compileKotlin2Js.kotlinOptions.verbose = true
+compileKotlin2Js {
+    kotlinOptions {
+        sourceMap = true
+        outputFile = "${projectDir}/web/js/app.js"
+        suppressWarnings = true
+        verbose = true
 
-if (project.findProperty("kotlin.js.useIrBackend")?.toBoolean() == true) {
-    compileKotlin2Js.kotlinOptions.freeCompilerArgs += ["-Xir-produce-js"]
+        if (project.findProperty("kotlin.js.useIrBackend")?.toBoolean() == true) {
+            freeCompilerArgs += ["-Xir-produce-js"]
+        }
+    }
 }
 
 build.doLast {

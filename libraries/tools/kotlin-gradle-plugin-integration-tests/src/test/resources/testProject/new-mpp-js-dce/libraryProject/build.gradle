@@ -21,8 +21,12 @@ dependencies {
     nodeJsMainApi "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
 }
 
-compileKotlinNodeJs.kotlinOptions.outputFile = "${buildDir}/examplelib.js"
-compileKotlinNodeJs.kotlinOptions.sourceMap = true
+compileKotlinNodeJs {
+    kotlinOptions {
+        outputFile = "${buildDir}/examplelib.js"
+        sourceMap = true
+    }
+}
 
 nodeJsJar {
     from buildDir

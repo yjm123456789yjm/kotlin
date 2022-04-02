@@ -43,7 +43,7 @@ kotlin.targets.all {
             verbose = true
         }
         compileKotlinTask.doFirst {
-            if (!compileKotlinTask.kotlinOptions.verbose) {
+            if (!compileKotlinTask.kotlinOptions.verbose.get()) {
                 throw new AssertionError("kotlinOptions were not configured properly")
             }
             println "KT-29964 OK"

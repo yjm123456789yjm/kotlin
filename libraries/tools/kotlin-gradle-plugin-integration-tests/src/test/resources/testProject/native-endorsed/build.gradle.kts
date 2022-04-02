@@ -10,7 +10,7 @@ repositories {
 kotlin {
     <SingleNativeTarget>("host") {
         compilations.all {
-            kotlinOptions.verbose = true
+            kotlinOptions.verbose.set(true)
             enableEndorsedLibs = true
         }
     }

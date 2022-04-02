@@ -19,8 +19,12 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-js:$kotlin_version"
 }
 
-compileKotlin2Js.kotlinOptions.outputFile = "${buildDir}/examplelib.js"
-compileKotlin2Js.kotlinOptions.sourceMap = true
+compileKotlin2Js {
+    kotlinOptions {
+        outputFile = "${buildDir}/examplelib.js"
+        sourceMap = true
+    }
+}
 
 jar {
     from buildDir

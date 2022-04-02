@@ -12,14 +12,14 @@ kotlin {
         attributes { attribute(complexLibAttribute, 'jvmWithJava') }
 
         compilations.all {
-            kotlinOptions.jvmTarget = "1.8"
+            kotlinOptions.jvmTarget.set("1.8")
         }
     }
     jvm("jvm16") {
         attributes { attribute(complexLibAttribute, 'jvm16') }
 
         compilations.all {
-            kotlinOptions.jvmTarget = "1.6"
+            kotlinOptions.jvmTarget.set("1.6")
         }
     }
     // This is for iPhone emulator

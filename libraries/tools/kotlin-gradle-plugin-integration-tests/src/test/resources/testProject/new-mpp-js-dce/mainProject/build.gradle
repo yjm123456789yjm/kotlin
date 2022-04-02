@@ -24,10 +24,13 @@ dependencies {
     nodeJsImplementation "org.mozilla:rhino:1.7.7.1"
 }
 
-compileKotlinNodeJs.kotlinOptions.sourceMap = true
-compileKotlinNodeJs.kotlinOptions.outputFile = "${buildDir}/exampleapp.js"
-compileKotlinNodeJs.kotlinOptions.suppressWarnings = true
-compileKotlinNodeJs.kotlinOptions.verbose = true
+compileKotlinNodeJs {
+    sourceMap = true
+    outputFile = "${buildDir}/exampleapp.js"
+    suppressWarnings = true
+    verbose = true
+}
+
 runDceNodeJsKotlin.keep("exampleapp.exampleapp.status")
 
 task runRhino(type: JavaExec) {

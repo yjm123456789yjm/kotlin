@@ -16,5 +16,7 @@ repositories {
 }
 
 compileKotlin {
-    kotlinOptions.moduleName = "FLAG"
+    kotlinOptions {
+        moduleName = "FLAG"
+    }
 }

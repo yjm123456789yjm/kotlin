@@ -22,7 +22,7 @@ class ExecutionStrategyJsIT : ExecutionStrategyIT() {
                     |
                     |afterEvaluate {
                     |    tasks.named('compileKotlinJs') {
-                    |        kotlinOptions.outputFile = "${'$'}{project.projectDir}/web/js/out.js"
+                    |        kotlinOptions.outputFile.set("${'$'}{project.projectDir}/web/js/out.js")
                     |    }
                     |}
                     |
@@ -174,7 +174,9 @@ abstract class ExecutionStrategyIT : KGPDaemonsBaseTest() {
             |tasks
             |    .withType(org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile)
             |    .configureEach { 
-            |        kotlinOptions.allWarningsAsErrors = true 
+            |        kotlinOptions {
+            |            allWarningsAsErrors = true
+            |        } 
             |    }
             """.trimMargin()
         )

@@ -21,10 +21,12 @@ allprojects {
     }
 
     compileKotlin2Js {
-        kotlinOptions.freeCompilerArgs = [ "-Xskip-metadata-version-check" ]
-        kotlinOptions.sourceMap = true
-        kotlinOptions.sourceMapPrefix = "./"
-        kotlinOptions.sourceMapEmbedSources = "always"
+        kotlinOptions {
+            freeCompilerArgs = [ "-Xskip-metadata-version-check" ]
+            sourceMap = true
+            sourceMapPrefix = "./"
+            sourceMapEmbedSources = "always"
+        }
     }
 }
 
