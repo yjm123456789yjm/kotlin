@@ -80,9 +80,9 @@ sealed class NativeBinary(
 
     /** Additional arguments passed to the Kotlin/Native compiler. */
     var freeCompilerArgs: List<String>
-        get() = linkTask.kotlinOptions.freeCompilerArgs
+        get() = linkTask.kotlinOptions.freeCompilerArgs.get()
         set(value) {
-            linkTask.kotlinOptions.freeCompilerArgs = value
+            linkTask.kotlinOptions.freeCompilerArgs.set(value)
         }
 
     // Link task access.

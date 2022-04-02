@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeCompileOptions
 import org.jetbrains.kotlin.gradle.plugin.mpp.publishedConfigurationName
 import org.jetbrains.kotlin.konan.target.KonanTarget
-import javax.inject.Inject
 
 abstract class KotlinNativeVariantInternal(
     containingModule: KotlinGradleModule,
@@ -92,7 +91,7 @@ internal class KotlinNativeVariantCompilationData(
     override val owner: KotlinNativeVariant
         get() = variant
 
-    override val kotlinOptions: KotlinCommonOptions = NativeCompileOptions { variant.languageSettings }
+    override val kotlinOptions: KotlinCommonOptions = NativeCompileOptions(project.objects)
 }
 
 internal class KotlinMappedNativeCompilationFactory(

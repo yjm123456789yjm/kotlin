@@ -6,7 +6,6 @@
 @file:Suppress("PackageDirectoryMismatch") // Old package for compatibility
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
-import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
 open class KotlinNativeCompilationFactory(
@@ -24,7 +23,7 @@ open class KotlinNativeCompilationFactory(
 
         KotlinNativeCompilation(
             target.konanTarget,
-            NativeCompilationDetails(target, name) { NativeCompileOptions { defaultSourceSet.languageSettings } }
+            NativeCompilationDetails(target, name) { NativeCompileOptions(target.project.objects) }
         )
 }
 
@@ -38,6 +37,6 @@ class KotlinSharedNativeCompilationFactory(
     override fun create(name: String): KotlinSharedNativeCompilation =
         KotlinSharedNativeCompilation(
             konanTargets,
-            SharedNativeCompilationDetails(target, name) { NativeCompileOptions { defaultSourceSet.languageSettings } }
+            SharedNativeCompilationDetails(target, name) { NativeCompileOptions(target.project.objects) }
         )
 }

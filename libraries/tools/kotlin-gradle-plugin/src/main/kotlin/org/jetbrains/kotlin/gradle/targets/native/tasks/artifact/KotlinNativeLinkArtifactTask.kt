@@ -5,11 +5,13 @@
 
 package org.jetbrains.kotlin.gradle.targets.native.tasks.artifact
 
-import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
+import org.gradle.kotlin.dsl.listProperty
 import org.jetbrains.kotlin.compilerRunner.KotlinNativeCompilerRunner
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
@@ -17,6 +19,7 @@ import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 import org.jetbrains.kotlin.gradle.targets.native.tasks.buildKotlinNativeBinaryLinkerArgs
 import org.jetbrains.kotlin.gradle.utils.getValue
+import org.jetbrains.kotlin.gradle.utils.propertyWithConvention
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.util.visibleName
@@ -108,10 +111,12 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
 
     @get:Internal
     val kotlinOptions = object : KotlinCommonToolOptions {
-        override var allWarningsAsErrors: Boolean = false
-        override var suppressWarnings: Boolean = false
-        override var verbose: Boolean = false
-        override var freeCompilerArgs: List<String> = PropertiesProvider(project).nativeLinkArgs
+        override var allWarningsAsErrors: Property<Boolean> = project.objects.propertyWithConvention(false)
+        override var suppressWarnings: Property<Boolean> = project.objects.propertyWithConvention(false)
+        override var verbose: Property<Boolean> = project.objects.propertyWithConvention(false)
+        override var freeCompilerArgs: ListProperty<String> = project.objects.listProperty<String>().apply {
+            set(PropertiesProvider(project).nativeLinkArgs)
+        }
     }
 
     fun kotlinOptions(fn: KotlinCommonToolOptions.() -> Unit) {
@@ -124,19 +129,19 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
 
     @get:Input
     val allWarningsAsErrors: Boolean
-        get() = kotlinOptions.allWarningsAsErrors
+        get() = kotlinOptions.allWarningsAsErrors.get()
 
     @get:Input
     val suppressWarnings: Boolean
-        get() = kotlinOptions.suppressWarnings
+        get() = kotlinOptions.suppressWarnings.get()
 
     @get:Input
     val verbose: Boolean
-        get() = kotlinOptions.verbose
+        get() = kotlinOptions.verbose.get()
 
     @get:Input
     val freeCompilerArgs: List<String>
-        get() = kotlinOptions.freeCompilerArgs
+        get() = kotlinOptions.freeCompilerArgs.get()
 
     @get:Internal
     val outputFile: File

@@ -31,7 +31,7 @@ internal object CompilationFreeArgsValidator : AggregateReporter() {
     private fun String.withIndent(indent: Int) = prependIndent("    ".repeat(indent))
 
     fun validate(compilation: KotlinNativeCompilation) {
-        val incorrectArgs = compilation.kotlinOptions.freeCompilerArgs.filter { arg ->
+        val incorrectArgs = compilation.kotlinOptions.freeCompilerArgs.get().filter { arg ->
             arg.startsWithIncorrectPrefix() || arg.disablesDevirtualization()
         }
         if (incorrectArgs.isNotEmpty()) {

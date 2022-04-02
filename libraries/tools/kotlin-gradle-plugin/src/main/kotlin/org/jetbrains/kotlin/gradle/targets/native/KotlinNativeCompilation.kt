@@ -10,42 +10,42 @@ import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
+import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.ListProperty
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.TaskProvider
+import org.gradle.kotlin.dsl.listProperty
 import org.gradle.util.ConfigureUtil
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeFragmentMetadataCompilationData
 import org.jetbrains.kotlin.gradle.tasks.KotlinNativeCompile
+import org.jetbrains.kotlin.gradle.utils.chainedFinalizeValue
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
+import org.jetbrains.kotlin.gradle.utils.property
+import org.jetbrains.kotlin.gradle.utils.propertyWithConvention
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
 import java.util.concurrent.Callable
 
-internal class NativeCompileOptions(languageSettingsProvider: () -> LanguageSettingsBuilder) : KotlinCommonOptions {
-    private val languageSettings: LanguageSettingsBuilder by lazy(languageSettingsProvider)
+internal class NativeCompileOptions(
+    objectFactory: ObjectFactory,
+) : KotlinCommonOptions {
 
-    override var apiVersion: String?
-        get() = languageSettings.apiVersion
-        set(value) {
-            languageSettings.apiVersion = value
-        }
+    override var apiVersion: Property<String> = objectFactory.property()
 
-    override var languageVersion: String?
-        get() = languageSettings.languageVersion
-        set(value) {
-            languageSettings.languageVersion = value
-        }
+    override var languageVersion: Property<String> = objectFactory.property()
 
-    override var useFir: Boolean
-        get() = false
-        set(@Suppress("UNUSED_PARAMETER") value) {}
+    override var useFir: Property<Boolean> = objectFactory
+        .propertyWithConvention(false)
+        .chainedFinalizeValue()
 
-    override var allWarningsAsErrors: Boolean = false
-    override var suppressWarnings: Boolean = false
-    override var verbose: Boolean = false
+    override var allWarningsAsErrors: Property<Boolean> = objectFactory.propertyWithConvention(false)
+    override var suppressWarnings: Property<Boolean> = objectFactory.propertyWithConvention(false)
+    override var verbose: Property<Boolean> = objectFactory.propertyWithConvention(false)
 
-    override var freeCompilerArgs: List<String> = listOf()
+    override var freeCompilerArgs: ListProperty<String> = objectFactory.listProperty<String>().apply { set(emptyList()) }
 }
 
 abstract class AbstractKotlinNativeCompilation(

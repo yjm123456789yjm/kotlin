@@ -156,11 +156,11 @@ internal fun buildKotlinNativeCommonArgs(
         optInAnnotationsInUse.forEach { add("-opt-in=$it") }
     }
 
-    addKey("-Werror", kotlinOptions.allWarningsAsErrors)
-    addKey("-nowarn", kotlinOptions.suppressWarnings)
-    addKey("-verbose", kotlinOptions.verbose)
+    addKey("-Werror", kotlinOptions.allWarningsAsErrors.get())
+    addKey("-nowarn", kotlinOptions.suppressWarnings.get())
+    addKey("-verbose", kotlinOptions.verbose.get())
 
-    addAll(kotlinOptions.freeCompilerArgs)
+    addAll(kotlinOptions.freeCompilerArgs.get())
 }
 
 private fun MutableList<String>.addArg(parameter: String, value: String) {
