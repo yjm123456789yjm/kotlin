@@ -48,6 +48,71 @@ interface KotlinJvmOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
     interface KotlinJvmOptionsDsl : KotlinOptionsDsl<KotlinJvmOptions> {
 
         /**
+         * Report an error if there are any warnings
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var allWarningsAsErrors: kotlin.Boolean
+            get() = options.allWarningsAsErrors.get()
+            set(value) = options.allWarningsAsErrors.set(value)
+
+        /**
+         * Generate no warnings
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var suppressWarnings: kotlin.Boolean
+            get() = options.suppressWarnings.get()
+            set(value) = options.suppressWarnings.set(value)
+
+        /**
+         * Enable verbose logging output
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var verbose: kotlin.Boolean
+            get() = options.verbose.get()
+            set(value) = options.verbose.set(value)
+
+        /**
+         * A list of additional compiler arguments
+         * Default value: emptyList()
+         */
+        @get:org.gradle.api.tasks.Internal
+        var freeCompilerArgs: kotlin.collections.List<kotlin.String>
+            get() = options.freeCompilerArgs.get()
+            set(value) = options.freeCompilerArgs.set(value)
+
+        /**
+         * Allow using declarations only from the specified version of bundled libraries
+         * Possible values: "1.3 (deprecated)", "1.4 (deprecated)", "1.5", "1.6", "1.7", "1.8 (experimental)", "1.9 (experimental)"
+         * Default value: null
+         */
+        @get:org.gradle.api.tasks.Internal
+        var apiVersion: kotlin.String?
+            get() = options.apiVersion.orNull
+            set(value) = options.apiVersion.set(value)
+
+        /**
+         * Provide source compatibility with the specified version of Kotlin
+         * Possible values: "1.3 (deprecated)", "1.4 (deprecated)", "1.5", "1.6", "1.7", "1.8 (experimental)", "1.9 (experimental)"
+         * Default value: null
+         */
+        @get:org.gradle.api.tasks.Internal
+        var languageVersion: kotlin.String?
+            get() = options.languageVersion.orNull
+            set(value) = options.languageVersion.set(value)
+
+        /**
+         * Compile using Front-end IR. Warning: this feature is far from being production-ready
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var useFir: kotlin.Boolean
+            get() = options.useFir.get()
+            set(value) = options.useFir.set(value)
+
+        /**
          * Generate metadata for Java 1.8 reflection on method parameters
          * Default value: false
          */

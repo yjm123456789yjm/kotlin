@@ -54,12 +54,14 @@ fun generateKotlinGradleOptions(withPrinterToFile: (targetFile: File, Printer.()
     val (commonCompilerInterfaceFqName, commonCompilerOptions) = generateKotlinCommonOptions(
         apiSrcDir,
         commonToolInterfaceFqName,
+        commonToolOptions,
         withPrinterToFile
     )
 
     val (jvmInterfaceFqName, jvmOptions) = generateKotlinJvmOptions(
         apiSrcDir,
         commonCompilerInterfaceFqName,
+        commonToolOptions + commonCompilerOptions,
         withPrinterToFile
     )
     generateKotlinJvmOptionsImpl(
@@ -72,6 +74,7 @@ fun generateKotlinGradleOptions(withPrinterToFile: (targetFile: File, Printer.()
     val (jsInterfaceFqName, jsOptions) = generateKotlinJsOptions(
         apiSrcDir,
         commonCompilerInterfaceFqName,
+        commonToolOptions + commonCompilerOptions,
         withPrinterToFile
     )
     generateKotlinJsOptionsImpl(
@@ -84,6 +87,7 @@ fun generateKotlinGradleOptions(withPrinterToFile: (targetFile: File, Printer.()
     val (jsDceInterfaceName, jsDceOptions) = generateJsDceOptions(
         apiSrcDir,
         commonToolInterfaceFqName,
+        commonToolOptions,
         withPrinterToFile
     )
     generateJsDceOptionsImpl(
@@ -96,6 +100,7 @@ fun generateKotlinGradleOptions(withPrinterToFile: (targetFile: File, Printer.()
     val (multiplatformCommonInterfaceFqName, multiplatformCommonOptions) = generateMultiplatformCommonOptions(
         apiSrcDir,
         commonCompilerInterfaceFqName,
+        commonToolOptions + commonCompilerOptions,
         withPrinterToFile
     )
     generateMultiplatformCommonOptionsImpl(
@@ -146,6 +151,7 @@ private fun generateKotlinCommonToolOptions(
 private fun generateKotlinCommonOptions(
     apiSrcDir: File,
     commonInterfaceFqName: FqName,
+    parentProperties: List<KProperty1<*, *>>,
     withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
 ): Pair<FqName, List<KProperty1<*, *>>> {
     val commonCompilerInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinCommonOptions")
@@ -154,7 +160,9 @@ private fun generateKotlinCommonOptions(
         generateInterface(
             commonCompilerInterfaceFqName,
             commonCompilerOptions,
-            parentType = commonInterfaceFqName
+            parentType = commonInterfaceFqName,
+            addDslInterface = true,
+            parentProperties = parentProperties
         )
     }
 
@@ -167,6 +175,7 @@ private fun generateKotlinCommonOptions(
 private fun generateKotlinJvmOptions(
     apiSrcDir: File,
     commonCompilerInterfaceFqName: FqName,
+    parentProperties: List<KProperty1<*, *>>,
     withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
 ): Pair<FqName, List<KProperty1<*, *>>> {
     val jvmInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinJvmOptions")
@@ -176,7 +185,8 @@ private fun generateKotlinJvmOptions(
             jvmInterfaceFqName,
             jvmOptions,
             parentType = commonCompilerInterfaceFqName,
-            addDslInterface = true
+            addDslInterface = true,
+            parentProperties = parentProperties
         )
     }
 
@@ -207,6 +217,7 @@ private fun generateKotlinJvmOptionsImpl(
 private fun generateKotlinJsOptions(
     apiSrcDir: File,
     commonCompilerInterfaceFqName: FqName,
+    parentProperties: List<KProperty1<*, *>>,
     withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
 ): Pair<FqName, List<KProperty1<*, *>>> {
     val jsInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinJsOptions")
@@ -216,7 +227,8 @@ private fun generateKotlinJsOptions(
             jsInterfaceFqName,
             jsOptions,
             parentType = commonCompilerInterfaceFqName,
-            addDslInterface = true
+            addDslInterface = true,
+            parentProperties = parentProperties
         )
     }
 
@@ -247,6 +259,7 @@ private fun generateKotlinJsOptionsImpl(
 private fun generateJsDceOptions(
     apiSrcDir: File,
     commonInterfaceFqName: FqName,
+    parentProperties: List<KProperty1<*, *>>,
     withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
 ): Pair<FqName, List<KProperty1<*, *>>> {
     val jsDceInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinJsDceOptions")
@@ -256,7 +269,8 @@ private fun generateJsDceOptions(
             jsDceInterfaceFqName,
             jsDceOptions,
             parentType = commonInterfaceFqName,
-            addDslInterface = true
+            addDslInterface = true,
+            parentProperties = parentProperties
         )
     }
 
@@ -287,6 +301,7 @@ private fun generateJsDceOptionsImpl(
 private fun generateMultiplatformCommonOptions(
     apiSrcDir: File,
     commonCompilerInterfaceFqName: FqName,
+    parentProperties: List<KProperty1<*, *>>,
     withPrinterToFile: (targetFile: File, Printer.() -> Unit) -> Unit
 ): Pair<FqName, List<KProperty1<*, *>>> {
     val multiplatformCommonInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.KotlinMultiplatformCommonOptions")
@@ -296,7 +311,8 @@ private fun generateMultiplatformCommonOptions(
             multiplatformCommonInterfaceFqName,
             multiplatformCommonOptions,
             parentType = commonCompilerInterfaceFqName,
-            addDslInterface = true
+            addDslInterface = true,
+            parentProperties = parentProperties
         )
     }
 
@@ -354,6 +370,7 @@ private fun Printer.generateInterface(
     properties: List<KProperty1<*, *>>,
     parentType: FqName? = null,
     addDslInterface: Boolean = false,
+    parentProperties: List<KProperty1<*, *>> = emptyList(),
 ) {
     val afterType = parentType?.let { " : $it" }
     generateDeclaration("interface", type, afterType = afterType) {
@@ -368,7 +385,7 @@ private fun Printer.generateInterface(
             println()
             println("interface ${type.shortName()}Dsl : KotlinOptionsDsl<${type.shortName()}> {")
             withIndent {
-                properties.forEach {
+                (parentProperties + properties).forEach {
                     println()
                     generateDoc(it)
                     generateOptionDeprecation(it)

@@ -24,6 +24,42 @@ interface KotlinJsDceOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolO
     interface KotlinJsDceOptionsDsl : KotlinOptionsDsl<KotlinJsDceOptions> {
 
         /**
+         * Report an error if there are any warnings
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var allWarningsAsErrors: kotlin.Boolean
+            get() = options.allWarningsAsErrors.get()
+            set(value) = options.allWarningsAsErrors.set(value)
+
+        /**
+         * Generate no warnings
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var suppressWarnings: kotlin.Boolean
+            get() = options.suppressWarnings.get()
+            set(value) = options.suppressWarnings.set(value)
+
+        /**
+         * Enable verbose logging output
+         * Default value: false
+         */
+        @get:org.gradle.api.tasks.Internal
+        var verbose: kotlin.Boolean
+            get() = options.verbose.get()
+            set(value) = options.verbose.set(value)
+
+        /**
+         * A list of additional compiler arguments
+         * Default value: emptyList()
+         */
+        @get:org.gradle.api.tasks.Internal
+        var freeCompilerArgs: kotlin.collections.List<kotlin.String>
+            get() = options.freeCompilerArgs.get()
+            set(value) = options.freeCompilerArgs.set(value)
+
+        /**
          * Development mode: don't strip out any code, just copy dependencies
          * Default value: false
          */

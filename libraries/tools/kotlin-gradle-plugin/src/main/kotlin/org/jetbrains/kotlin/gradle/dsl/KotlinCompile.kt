@@ -16,40 +16,29 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-import groovy.lang.Closure
-import org.gradle.api.Action
-import org.gradle.api.Task
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
-import org.gradle.api.tasks.Nested
 
-interface KotlinJsCompile : KotlinCompile<KotlinJsOptions>
+interface AbstractKotlinCompile<T : KotlinCommonOptions> : KotlinCompile<T>
 
-interface KotlinJvmCompile : KotlinCompile<KotlinJvmOptions>
+interface KotlinJsCompile : AbstractKotlinCompile<KotlinJsOptions>
 
-interface KotlinCommonCompile : KotlinCompile<KotlinMultiplatformCommonOptions>
+interface KotlinJvmCompile : AbstractKotlinCompile<KotlinJvmOptions>
 
-interface KotlinJsDce : Task {
-    @get:Nested
-    val dceOptions: KotlinJsDceOptions
+interface KotlinCommonCompile : AbstractKotlinCompile<KotlinMultiplatformCommonOptions>
 
+interface KotlinNativeCompile : AbstractKotlinCompile<KotlinCommonOptions>
+
+interface AbstractKotlinTool<T : KotlinCommonToolOptions> : KotlinCompile<T>
+
+interface KotlinJsDce : AbstractKotlinTool<KotlinJsDceOptions> {
+    @get:Deprecated("Use 'kotlinOptions' input instead", replaceWith = ReplaceWith("kotlinOptions"))
     @get:Internal
-    val dceOptionsDsl: KotlinOptionsDsl<KotlinJsDceOptions>
+    val dceOptions: KotlinJsDceOptions
+        get() = kotlinOptions
 
     @get:Input
     val keep: MutableList<String>
-
-    fun dceOptions(fn: KotlinOptionsDsl<KotlinJsDceOptions>.() -> Unit) {
-        dceOptionsDsl.fn()
-    }
-
-    fun kotlinOptions(fn: Action<in KotlinOptionsDsl<KotlinJsDceOptions>>) {
-        fn.execute(dceOptionsDsl)
-    }
-
-    fun dceOptions(fn: Closure<*>) {
-        project.configure(dceOptionsDsl, fn)
-    }
 
     fun keep(vararg fqn: String)
 }
