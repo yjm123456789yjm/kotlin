@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.*
 import org.jetbrains.kotlin.gradle.targets.js.jsPluginDeprecationMessage
 import org.jetbrains.kotlin.gradle.targets.jvm.KotlinJvmTarget
 import org.jetbrains.kotlin.gradle.tasks.*
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.gradle.testing.internal.kotlinTestRegistry
 import org.jetbrains.kotlin.gradle.tooling.includeKotlinToolingMetadataInApk
@@ -85,7 +86,7 @@ abstract class KotlinCompilationProcessor<out T : AbstractKotlinCompileTool<*>>(
         }
 }
 
-internal abstract class KotlinSourceSetProcessor<T : AbstractKotlinCompile<*>>(
+internal abstract class KotlinSourceSetProcessor<T : AbstractKotlinCompile<*, *>>(
     val tasksProvider: KotlinTasksProvider,
     val taskDescription: String,
     kotlinCompilation: KotlinCompilationData<*>
@@ -260,11 +261,13 @@ internal class Kotlin2JsSourceSetProcessor(
                 val kotlinOptions = kotlinTaskInstance.kotlinOptions
                 val outputFile = kotlinTaskInstance.outputFileProperty.get()
                 val outputDir: File = outputFile.parentFile
-                kotlinOptions.outputFile = if (!kotlinOptions.isProduceUnzippedKlib()) {
-                    outputFile.absolutePath
-                } else {
-                    outputFile.parentFile.absolutePath
-                }
+                kotlinOptions.outputFile.set(
+                    if (!kotlinOptions.isProduceUnzippedKlib()) {
+                        outputFile.absolutePath
+                    } else {
+                        outputFile.parentFile.absolutePath
+                    }
+                )
                 if (outputDir.isParentOf(project.rootDir))
                     throw InvalidUserDataException(
                         "The output directory '$outputDir' (defined by outputFile of $kotlinTaskInstance) contains or " +
@@ -274,10 +277,11 @@ internal class Kotlin2JsSourceSetProcessor(
                     )
                 kotlinTaskInstance.destinationDirectory.set(outputDir)
 
+                val freeCompilerArgs = kotlinOptions.freeCompilerArgs.get()
                 if (
-                    kotlinOptions.freeCompilerArgs.contains(PRODUCE_JS) ||
-                    kotlinOptions.freeCompilerArgs.contains(PRODUCE_UNZIPPED_KLIB) ||
-                    kotlinOptions.freeCompilerArgs.contains(PRODUCE_ZIPPED_KLIB)
+                    freeCompilerArgs.contains(PRODUCE_JS) ||
+                    freeCompilerArgs.contains(PRODUCE_UNZIPPED_KLIB) ||
+                    freeCompilerArgs.contains(PRODUCE_ZIPPED_KLIB)
                 ) {
                     // Configure FQ module name to avoid cyclic dependencies in klib manifests (see KT-36721).
                     val baseName = if (kotlinCompilation.isMainCompilationData()) {
@@ -285,7 +289,7 @@ internal class Kotlin2JsSourceSetProcessor(
                     } else {
                         "${project.name}_${kotlinCompilation.compilationPurpose}"
                     }
-                    kotlinTaskInstance.kotlinOptions.freeCompilerArgs += "$MODULE_NAME=${project.klibModuleName(baseName)}"
+                    kotlinTaskInstance.kotlinOptions.freeCompilerArgs.add("$MODULE_NAME=${project.klibModuleName(baseName)}")
                 }
             }
 
@@ -843,7 +847,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
             }
         }
 
-        kotlinOptions.noJdkProp.set(true)
+        kotlinOptions.noJdk.set(true)
         ext.addExtension(KOTLIN_OPTIONS_DSL_NAME, kotlinOptions as KotlinJvmOptions)
 
         val plugin = androidPluginIds
@@ -984,7 +988,7 @@ abstract class AbstractAndroidProjectHandler(private val kotlinConfigurationTool
         val javaVersion =
             minOf(baseExtension.compileOptions.sourceCompatibility, baseExtension.compileOptions.targetCompatibility)
         if (javaVersion == JavaVersion.VERSION_1_6)
-            kotlinOptions.jvmTargetProp.set("1.6")
+            kotlinOptions.jvmTarget.set("1.6")
     }
 
     private fun addAndroidUnitTestTasksAsDependenciesToAllTest(project: Project) {

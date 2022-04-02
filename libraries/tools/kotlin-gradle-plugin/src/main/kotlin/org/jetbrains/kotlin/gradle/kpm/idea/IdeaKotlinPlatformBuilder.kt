@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.konan.target.HostManager
 /* Receiver acts as scope, or key to that function */
 internal fun IdeaKotlinProjectModelBuildingContext.IdeaKotlinPlatform(variant: KotlinGradleVariant): IdeaKotlinPlatform {
     when (variant) {
-        is KotlinJvmVariant -> return IdeaKotlinPlatform.jvm(variant.compilationData.kotlinOptions.jvmTarget ?: JvmTarget.DEFAULT.name)
+        is KotlinJvmVariant -> return IdeaKotlinPlatform.jvm(variant.compilationData.kotlinOptions.jvmTarget.orNull ?: JvmTarget.DEFAULT.name)
         is KotlinNativeVariantInternal -> return IdeaKotlinPlatform.native(variant.konanTarget.name)
         is LegacyMappedVariant -> when (val compilation = variant.compilation) {
-            is KotlinJvmCompilation -> return IdeaKotlinPlatform.jvm(compilation.kotlinOptions.jvmTarget ?: JvmTarget.DEFAULT.name)
-            is KotlinJvmAndroidCompilation -> return IdeaKotlinPlatform.jvm(compilation.kotlinOptions.jvmTarget ?: JvmTarget.DEFAULT.name)
+            is KotlinJvmCompilation -> return IdeaKotlinPlatform.jvm(compilation.kotlinOptions.jvmTarget.orNull ?: JvmTarget.DEFAULT.name)
+            is KotlinJvmAndroidCompilation -> return IdeaKotlinPlatform.jvm(compilation.kotlinOptions.jvmTarget.orNull ?: JvmTarget.DEFAULT.name)
             is KotlinNativeCompilation -> return IdeaKotlinPlatform.native(compilation.konanTarget.name)
             is KotlinJsIrCompilation -> return IdeaKotlinPlatform.js(isIr = true)
             is KotlinJsCompilation -> return IdeaKotlinPlatform.js(isIr = false)

@@ -102,7 +102,7 @@ class KpmCompilerPluginTest {
         project.evaluate()
 
         // Getting task shouldn't trigger plugin initialization as well (lazy all the way)
-        val task = project.tasks.getByName("compileKotlinJvm") as AbstractKotlinCompile<*>
+        val task = project.tasks.getByName("compileKotlinJvm") as AbstractKotlinCompile<*, *>
 
         var pluginInitialized = false
         var pluginDataObtainCount = 0
@@ -130,7 +130,7 @@ class KpmCompilerPluginTest {
             }
 
             // Getting task shouldn't fail due to laziness
-            val task = tasks.getByName("compileKotlinJvm") as AbstractKotlinCompile<*>
+            val task = tasks.getByName("compileKotlinJvm") as AbstractKotlinCompile<*, *>
             // But trying to get pluginData during "configuration" should fail
             assertFailsWith<IllegalStateException> { task.kotlinPluginData!!.get() }
         }
@@ -143,7 +143,7 @@ class KpmCompilerPluginTest {
         .getByName(taskName)
         .let {
             when (it) {
-                is AbstractKotlinCompile<*> -> it.kotlinPluginData
+                is AbstractKotlinCompile<*, *> -> it.kotlinPluginData
                 is AbstractKotlinNativeCompile<*, *, *> -> it.kotlinPluginData
                 else -> error("Unknown task type: $it")
             }

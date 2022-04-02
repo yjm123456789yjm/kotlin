@@ -60,9 +60,7 @@ abstract class KotlinJsIrSubTarget(
 
         target.compilations.all {
             val npmProject = it.npmProject
-            it.kotlinOptions {
-                freeCompilerArgs += "$PER_MODULE_OUTPUT_NAME=${npmProject.name}"
-            }
+            it.kotlinOptions.freeCompilerArgs.add("$PER_MODULE_OUTPUT_NAME=${npmProject.name}")
         }
 
         configureTests()

@@ -78,7 +78,7 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
 
         private fun Project.pathOrName() = if (path == ":") name else path
 
-        private fun AbstractKotlinCompile<*>.createSourceSet(project: Project, projectType: KotlinProject.ProjectType): SourceSet? {
+        private fun AbstractKotlinCompile<*, *>.createSourceSet(project: Project, projectType: KotlinProject.ProjectType): SourceSet? {
             val javaSourceSet =
                 project.convention.findPlugin(JavaPluginConvention::class.java)?.sourceSets?.find { it.name == sourceSetName.get() }
             val kotlinSourceSet =
@@ -100,7 +100,7 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
         /**
          * Constructs the Android [SourceSet] that should be returned to the IDE for each compile task/variant.
          */
-        private fun AbstractKotlinCompile<*>.createAndroidSourceSet(androidTarget: KotlinAndroidTarget): SourceSet {
+        private fun AbstractKotlinCompile<*, *>.createAndroidSourceSet(androidTarget: KotlinAndroidTarget): SourceSet {
             val variantName = sourceSetName.get()
             val compilation = androidTarget.compilations.getByName(variantName)
             // Merge all sources and resource dirs from the different Source Sets that make up this variant.
@@ -122,7 +122,7 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
             )
         }
 
-        private fun AbstractKotlinCompile<*>.createCompilerArguments(): CompilerArguments {
+        private fun AbstractKotlinCompile<*, *>.createCompilerArguments(): CompilerArguments {
             return CompilerArgumentsImpl(
                 serializedCompilerArguments,
                 defaultSerializedCompilerArguments,
@@ -130,7 +130,7 @@ class KotlinModelBuilder(private val kotlinPluginVersion: String, private val an
             )
         }
 
-        private fun AbstractKotlinCompile<*>.createExperimentalFeatures(): ExperimentalFeatures {
+        private fun AbstractKotlinCompile<*, *>.createExperimentalFeatures(): ExperimentalFeatures {
             return ExperimentalFeaturesImpl(coroutines.get().name)
         }
     }

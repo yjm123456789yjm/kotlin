@@ -77,7 +77,7 @@ class KotlinJsDcePlugin : Plugin<Project> {
 
             dceTask.configure {
                 it.libraries.from(configuration)
-                it.destinationDirectory.set(it.dceOptions.outputDirectory?.let { File(it) } ?: outputDir)
+                it.destinationDirectory.set(it.kotlinOptions.outputDirectory.orNull?.let { File(it) } ?: outputDir)
                 it.setSource(kotlinTask.map { task -> (task as Kotlin2JsCompile).outputFileProperty })
             }
         }

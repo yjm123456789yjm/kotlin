@@ -10,16 +10,18 @@ class KotlinJvmOptionsTest {
     fun testFreeArguments() {
         val project = ProjectBuilder.builder().build()
         val options = KotlinJvmOptionsBase(project.objects)
-        options.freeCompilerArgs = listOf(
-            "-Xreport-perf",
-            "-Xallow-kotlin-package",
-            "-Xmultifile-parts-inherit",
-            "-Xdump-declarations-to", "declarationsPath",
-            "-script-templates", "a,b,c"
+        options.freeCompilerArgs.addAll(
+            listOf(
+                "-Xreport-perf",
+                "-Xallow-kotlin-package",
+                "-Xmultifile-parts-inherit",
+                "-Xdump-declarations-to", "declarationsPath",
+                "-script-templates", "a,b,c"
+            )
         )
 
         val arguments = K2JVMCompilerArguments()
         options.toCompilerArguments(arguments)
-        assertEquals(options.freeCompilerArgs, arguments.freeArgs)
+        assertEquals(options.freeCompilerArgs.get(), arguments.freeArgs)
     }
 }

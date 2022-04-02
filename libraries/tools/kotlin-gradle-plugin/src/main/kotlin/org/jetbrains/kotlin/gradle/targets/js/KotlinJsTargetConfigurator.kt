@@ -98,9 +98,9 @@ open class KotlinJsTargetConfigurator :
 
         target.compilations.all {
             it.kotlinOptions {
-                moduleKind = "umd"
-                sourceMap = true
-                sourceMapEmbedSources = null
+                moduleKind.set("umd")
+                sourceMap.set(true)
+                sourceMapEmbedSources.set(null as String?)
             }
         }
     }

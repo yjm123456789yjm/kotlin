@@ -14,7 +14,6 @@ import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.provider.Provider
 import org.gradle.api.provider.SetProperty
-import org.gradle.api.tasks.TaskProvider
 import org.gradle.kotlin.dsl.setProperty
 import java.io.File
 import kotlin.properties.ReadOnlyProperty
@@ -84,6 +83,11 @@ internal inline fun <reified T : Any> ObjectFactory.propertyWithNewInstance() =
 internal fun <PropType : Any?, T : Property<PropType>> T.chainedFinalizeValueOnRead(): T =
     apply {
         finalizeValueOnRead()
+    }
+
+internal fun <PropType : Any?, T : Property<PropType>> T.chainedFinalizeValue(): T =
+    apply {
+        finalizeValue()
     }
 
 // Before 5.0 fileProperty is created via ProjectLayout

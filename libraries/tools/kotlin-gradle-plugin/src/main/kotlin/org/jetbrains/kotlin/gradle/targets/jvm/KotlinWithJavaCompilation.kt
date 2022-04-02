@@ -43,7 +43,7 @@ class KotlinWithJavaCompilation<KotlinOptionsType : KotlinCommonOptions>(
     fun source(javaSourceSet: SourceSet) {
         with(target.project) {
             afterEvaluate {
-                tasks.named<AbstractKotlinCompile<*>>(compileKotlinTaskName).configure {
+                tasks.named<AbstractKotlinCompile<*, *>>(compileKotlinTaskName).configure {
                     it.setSource(javaSourceSet.java)
                 }
             }

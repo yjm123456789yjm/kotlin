@@ -177,21 +177,23 @@ abstract class KotlinJsIrLink @Inject constructor(
                 kotlinOptions.configureOptions(GENERATE_D_TS)
             }
         }
-        val alreadyDefinedOutputMode = kotlinOptions.freeCompilerArgs
+        val alreadyDefinedOutputMode = kotlinOptions.freeCompilerArgs.get()
             .any { it.startsWith(PER_MODULE) }
         if (!alreadyDefinedOutputMode) {
-            kotlinOptions.freeCompilerArgs += outputGranularity.toCompilerArgument()
+            kotlinOptions.freeCompilerArgs.add(outputGranularity.toCompilerArgument())
         }
         super.setupCompilerArgs(args, defaultsOnly, ignoreClasspathResolutionErrors)
     }
 
     private fun KotlinJsOptions.configureOptions(vararg additionalCompilerArgs: String) {
-        freeCompilerArgs += additionalCompilerArgs.toList() +
-                PRODUCE_JS +
-                "$ENTRY_IR_MODULE=${entryModule.get().asFile.canonicalPath}"
+        freeCompilerArgs.addAll(
+            additionalCompilerArgs.toList() +
+                    PRODUCE_JS +
+                    "$ENTRY_IR_MODULE=${entryModule.get().asFile.canonicalPath}"
+        )
 
         if (platformType == KotlinPlatformType.wasm) {
-            freeCompilerArgs += WASM_BACKEND
+            freeCompilerArgs.add(WASM_BACKEND)
         }
     }
 }

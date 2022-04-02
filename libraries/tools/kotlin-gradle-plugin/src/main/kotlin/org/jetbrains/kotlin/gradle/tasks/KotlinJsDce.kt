@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.compilerRunner.runToolInSeparateProcess
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDce
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsBase
+import org.jetbrains.kotlin.gradle.dsl.KotlinOptionsDsl
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.utils.canonicalPathWithoutExtension
 import org.jetbrains.kotlin.gradle.utils.fileExtensionCasePermutations
@@ -60,8 +61,14 @@ abstract class KotlinJsDce @Inject constructor(
     @Internal
     var kotlinFilesOnly: Boolean = false
 
-    private val dceOptionsBase = KotlinJsDceOptionsBase(objects)
-    override val dceOptions: KotlinJsDceOptions = dceOptionsBase
+    private val dceOptionsBase = KotlinJsDceOptionsBase(objectFactory)
+    override val kotlinOptions: KotlinJsDceOptions get() = dceOptionsBase
+
+    override val kotlinOptionsDsl: KotlinOptionsDsl<KotlinJsDceOptions>
+        get() = object : KotlinJsDceOptions.KotlinJsDceOptionsDsl {
+            override val options: KotlinJsDceOptions
+                get() = kotlinOptions
+        }
 
     @get:Input
     override val keep: MutableList<String> = mutableListOf()
@@ -87,11 +94,11 @@ abstract class KotlinJsDce @Inject constructor(
     private val buildDir = project.layout.buildDirectory
 
     private val isDevMode
-        get() = dceOptions.devMode || "-dev-mode" in dceOptions.freeCompilerArgs
+        get() = kotlinOptions.devMode.get() || "-dev-mode" in kotlinOptions.freeCompilerArgs.get()
 
     private val isExplicitDevModeAllStrategy
-        get() = strategyAllArg in dceOptions.freeCompilerArgs ||
-                strategyOlderArg !in dceOptions.freeCompilerArgs &&
+        get() = strategyAllArg in kotlinOptions.freeCompilerArgs.get() ||
+                strategyOlderArg !in kotlinOptions.freeCompilerArgs.get() &&
                 System.getProperty("kotlin.js.dce.devmode.overwriting.strategy") == DevModeOverwritingStrategies.ALL
 
     @TaskAction

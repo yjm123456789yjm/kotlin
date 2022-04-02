@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile
 import org.jetbrains.kotlin.project.model.LanguageSettings
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
-import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
 internal class DefaultLanguageSettingsBuilder : LanguageSettingsBuilder {
     private var languageVersionImpl: LanguageVersion? = null
@@ -76,7 +75,7 @@ internal class DefaultLanguageSettingsBuilder : LanguageSettingsBuilder {
         get() {
             val pluginOptionsTask = compilerPluginOptionsTask.value ?: return null
             return when (pluginOptionsTask) {
-                is AbstractKotlinCompile<*> -> pluginOptionsTask.pluginOptions
+                is AbstractKotlinCompile<*, *> -> pluginOptionsTask.pluginOptions
                 is AbstractKotlinNativeCompile<*, *, *> -> pluginOptionsTask.compilerPluginOptions
                 else -> error("Unexpected task: $pluginOptionsTask")
             }.arguments
@@ -86,7 +85,7 @@ internal class DefaultLanguageSettingsBuilder : LanguageSettingsBuilder {
         get() {
             val pluginClasspathTask = compilerPluginOptionsTask.value ?: return null
             return when (pluginClasspathTask) {
-                is AbstractKotlinCompile<*> -> pluginClasspathTask.pluginClasspath
+                is AbstractKotlinCompile<*, *> -> pluginClasspathTask.pluginClasspath
                 is AbstractKotlinNativeCompile<*, *, *> -> pluginClasspathTask.compilerPluginClasspath ?: pluginClasspathTask.project.files()
                 else -> error("Unexpected task: $pluginClasspathTask")
             }
@@ -102,9 +101,9 @@ internal fun applyLanguageSettingsToKotlinOptions(
     languageSettingsBuilder: LanguageSettings,
     kotlinOptions: KotlinCommonOptions
 ) = with(kotlinOptions) {
-    languageVersion = languageVersion ?: languageSettingsBuilder.languageVersion
-    apiVersion = apiVersion ?: languageSettingsBuilder.apiVersion
-    
+    if (!languageVersion.isPresent) languageVersion.set(languageSettingsBuilder.languageVersion)
+    if (!apiVersion.isPresent) apiVersion.set(languageSettingsBuilder.apiVersion)
+
     val freeArgs = mutableListOf<String>().apply {
         if (languageSettingsBuilder.progressiveMode) {
             add("-progressive")
@@ -123,12 +122,10 @@ internal fun applyLanguageSettingsToKotlinOptions(
         }
     }
 
-    freeCompilerArgs = freeCompilerArgs + freeArgs
+    freeCompilerArgs.addAll(freeArgs)
 
     KotlinBuildStatsService.getInstance()?.apply {
         report(BooleanMetrics.KOTLIN_PROGRESSIVE_MODE, languageSettingsBuilder.progressiveMode)
-        apiVersion?.also { v -> report(StringMetrics.KOTLIN_API_VERSION, v) }
-        languageVersion?.also { v -> report(StringMetrics.KOTLIN_LANGUAGE_VERSION, v) }
     }
 }
 

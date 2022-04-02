@@ -76,7 +76,7 @@ class SubpluginEnvironment(
     }
 
     private fun KotlinCompile<*>.getPluginOptions(): CompilerPluginOptions = when (this) {
-        is AbstractKotlinCompile<*> -> pluginOptions
+        is AbstractKotlinCompile<*, *> -> pluginOptions
         is KotlinNativeCompile -> compilerPluginOptions
         else -> error("Unexpected task ${this.name}, class: ${this.javaClass}")
     }

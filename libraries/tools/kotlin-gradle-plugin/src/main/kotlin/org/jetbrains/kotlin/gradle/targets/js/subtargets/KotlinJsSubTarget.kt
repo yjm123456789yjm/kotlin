@@ -58,9 +58,7 @@ abstract class KotlinJsSubTarget(
 
         target.compilations.all {
             val npmProject = it.npmProject
-            it.kotlinOptions {
-                outputFile = npmProject.dir.resolve(npmProject.main).canonicalPath
-            }
+            it.kotlinOptions.outputFile.set(npmProject.dir.resolve(npmProject.main).canonicalPath)
         }
     }
 

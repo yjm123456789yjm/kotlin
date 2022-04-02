@@ -111,7 +111,7 @@ open class KotlinNodeJsIr @Inject constructor(target: KotlinJsIrTarget) :
             .withType(JsIrBinary::class.java)
             .all {
                 it.linkTask.configure { linkTask ->
-                    linkTask.kotlinOptions.freeCompilerArgs += "-Xwasm-launcher=nodejs"
+                    linkTask.kotlinOptions.freeCompilerArgs.add("-Xwasm-launcher=nodejs")
                 }
             }
     }

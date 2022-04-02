@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 import java.io.File
 import java.util.*
 
-internal fun PropertiesProvider.mapKotlinTaskProperties(task: AbstractKotlinCompile<*>) {
+internal fun PropertiesProvider.mapKotlinTaskProperties(task: AbstractKotlinCompile<*, *>) {
     if (task is KotlinCompile) {
         incrementalJvm?.let { task.incremental = it }
         usePreciseJavaTracking?.let {
@@ -47,7 +47,7 @@ internal fun PropertiesProvider.mapKotlinTaskProperties(task: AbstractKotlinComp
         task.classpathSnapshotProperties.useClasspathSnapshot.value(useClasspathSnapshot).disallowChanges()
         useFir?.let {
             if (it == true) {
-                task.kotlinOptions.useFir = true
+                task.kotlinOptions.useFir.set(true)
             }
         }
         task.jvmTargetValidationMode.set(jvmTargetValidationMode)

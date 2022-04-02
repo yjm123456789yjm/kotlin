@@ -174,7 +174,7 @@ internal open class KotlinTasksProvider {
     }
 
     open fun configure(
-        kotlinTaskHolder: TaskProvider<out AbstractKotlinCompile<*>>,
+        kotlinTaskHolder: TaskProvider<out AbstractKotlinCompile<*, *>>,
         project: Project,
         propertiesProvider: PropertiesProvider,
         compilation: KotlinCompilationData<*>
@@ -184,7 +184,7 @@ internal open class KotlinTasksProvider {
 
             applyLanguageSettingsToKotlinOptions(
                 compilation.languageSettings,
-                (kotlinTaskHolder.get() as org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>).kotlinOptions
+                (kotlinTaskHolder.get() as org.jetbrains.kotlin.gradle.dsl.AbstractKotlinCompile<*>).kotlinOptions
             )
         }
     }
@@ -192,7 +192,7 @@ internal open class KotlinTasksProvider {
 
 internal class AndroidTasksProvider : KotlinTasksProvider() {
     override fun configure(
-        kotlinTaskHolder: TaskProvider<out AbstractKotlinCompile<*>>,
+        kotlinTaskHolder: TaskProvider<out AbstractKotlinCompile<*, *>>,
         project: Project,
         propertiesProvider: PropertiesProvider,
         compilation: KotlinCompilationData<*>

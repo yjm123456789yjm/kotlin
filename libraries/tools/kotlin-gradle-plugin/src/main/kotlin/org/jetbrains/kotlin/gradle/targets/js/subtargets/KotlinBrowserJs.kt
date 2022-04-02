@@ -299,7 +299,7 @@ open class KotlinBrowserJs @Inject constructor(target: KotlinJsTarget) :
 
         return project.registerTask(dceTaskName) {
             if (dev) {
-                it.dceOptions.devMode = true
+                it.kotlinOptions.devMode.set(true)
             } else {
                 dceConfigurations.forEach { configure ->
                     it.configure()
@@ -310,7 +310,7 @@ open class KotlinBrowserJs @Inject constructor(target: KotlinJsTarget) :
 
             it.libraries.from(project.configurations.getByName(compilation.runtimeDependencyConfigurationName))
             it.destinationDirectory.set(
-                it.dceOptions.outputDirectory?.let { File(it) }
+                it.kotlinOptions.outputDirectory.orNull?.let { File(it) }
                     ?: compilation.npmProject.dir.resolve(if (dev) DCE_DEV_DIR else DCE_DIR)
             )
             it.defaultCompilerClasspath.setFrom(project.configurations.named(COMPILER_CLASSPATH_CONFIGURATION_NAME))

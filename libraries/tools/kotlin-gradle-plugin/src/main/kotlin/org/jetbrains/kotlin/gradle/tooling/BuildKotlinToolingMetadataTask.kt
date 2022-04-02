@@ -10,7 +10,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.internal.GeneratedSubclass
-import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.compilerRunner.konanVersion
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
@@ -184,7 +183,7 @@ private fun KotlinGradleModule.buildProjectTargets(): List<KotlinToolingMetadata
 private fun KotlinGradleVariant.jvmExtrasOrNull() =
     when (this) {
         is KotlinJvmVariant -> KotlinToolingMetadata.ProjectTargetMetadata.JvmExtras(
-            jvmTarget = compilationData.kotlinOptions.jvmTarget,
+            jvmTarget = compilationData.kotlinOptions.jvmTarget.orNull,
             withJavaEnabled = false
         )
         is LegacyMappedVariant -> buildJvmExtrasOrNull(compilation.target)
@@ -271,7 +270,7 @@ private fun buildJvmExtrasOrNull(target: KotlinTarget): KotlinToolingMetadata.Pr
     if (target !is KotlinJvmTarget) return null
     return KotlinToolingMetadata.ProjectTargetMetadata.JvmExtras(
         withJavaEnabled = target.withJavaEnabled,
-        jvmTarget = target.compilations.findByName(KotlinCompilation.MAIN_COMPILATION_NAME)?.kotlinOptions?.jvmTarget
+        jvmTarget = target.compilations.findByName(KotlinCompilation.MAIN_COMPILATION_NAME)?.kotlinOptions?.jvmTarget?.orNull
     )
 }
 

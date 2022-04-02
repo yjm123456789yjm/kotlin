@@ -292,7 +292,7 @@ internal open class GradleCompilerRunner(
                     multiplatformProjectTasks[project] = tasksInProject
                 }
 
-                if (task is AbstractKotlinCompile<*>) {
+                if (task is AbstractKotlinCompile<*, *>) {
                     val module = IncrementalModuleEntry(
                         project.path,
                         task.moduleName.get(),
@@ -324,7 +324,7 @@ internal open class GradleCompilerRunner(
                             continue
                         }
 
-                        val kotlinTask = mainCompilation.compileKotlinTask as? AbstractKotlinCompile<*> ?: continue
+                        val kotlinTask = mainCompilation.compileKotlinTask as? AbstractKotlinCompile<*, *> ?: continue
                         val module = IncrementalModuleEntry(
                             project.path,
                             kotlinTask.moduleName.get(),

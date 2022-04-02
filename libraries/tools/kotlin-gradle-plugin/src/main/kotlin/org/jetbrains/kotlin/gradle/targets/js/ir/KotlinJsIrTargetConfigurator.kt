@@ -73,18 +73,18 @@ open class KotlinJsIrTargetConfigurator() :
                 configureOptions()
                 
                 if (target.platformType == KotlinPlatformType.wasm) {
-                    freeCompilerArgs = freeCompilerArgs + WASM_BACKEND
+                    freeCompilerArgs.add(WASM_BACKEND)
                 }
 
                 var produceUnzippedKlib = isProduceUnzippedKlib()
                 val produceZippedKlib = isProduceZippedKlib()
 
-                freeCompilerArgs = freeCompilerArgs + DISABLE_PRE_IR
+                freeCompilerArgs.add(DISABLE_PRE_IR)
 
                 val isMainCompilation = compilation.isMain()
 
                 if (!produceUnzippedKlib && !produceZippedKlib) {
-                    freeCompilerArgs = freeCompilerArgs + PRODUCE_UNZIPPED_KLIB
+                    freeCompilerArgs.add(PRODUCE_UNZIPPED_KLIB)
                     produceUnzippedKlib = true
                 }
 
@@ -96,12 +96,12 @@ open class KotlinJsIrTargetConfigurator() :
                 }
 
                 compilation.compileKotlinTaskProvider.configure { task ->
-                    val outputFilePath = outputFile ?: if (produceUnzippedKlib) {
+                    val outputFilePath = outputFile.orNull ?: if (produceUnzippedKlib) {
                         task.destinationDirectory.get().asFile.absoluteFile.normalize().absolutePath
                     } else {
                         File(task.destinationDirectory.get().asFile, "$baseName.$KLIB_TYPE").absoluteFile.normalize().absolutePath
                     }
-                    outputFile = outputFilePath
+                    outputFile.set(outputFilePath)
 
                     val taskOutputDir = if (produceUnzippedKlib) File(outputFilePath) else File(outputFilePath).parentFile
                     if (taskOutputDir.isParentOf(task.project.rootDir))
@@ -116,7 +116,7 @@ open class KotlinJsIrTargetConfigurator() :
                 }
 
                 val klibModuleName = target.project.klibModuleName(baseName)
-                freeCompilerArgs = freeCompilerArgs + "$MODULE_NAME=$klibModuleName"
+                freeCompilerArgs.add("$MODULE_NAME=$klibModuleName")
             }
 
             compilation.binaries
@@ -126,14 +126,18 @@ open class KotlinJsIrTargetConfigurator() :
                         linkTask.kotlinOptions.configureOptions()
 
                         val rootDir = binary.project.rootDir
-                        linkTask.kotlinOptions.freeCompilerArgs += listOf(
-                            "-source-map-base-dirs",
-                            rootDir.absolutePath
+                        linkTask.kotlinOptions.freeCompilerArgs.addAll(
+                            listOf(
+                                "-source-map-base-dirs",
+                                rootDir.absolutePath
+                            )
                         )
 
-                        linkTask.kotlinOptions.freeCompilerArgs += listOf(
-                            "-source-map-prefix",
-                            rootDir.toRelativeString(binary.compilation.npmProject.dist) + File.separator
+                        linkTask.kotlinOptions.freeCompilerArgs.addAll(
+                            listOf(
+                                "-source-map-prefix",
+                                rootDir.toRelativeString(binary.compilation.npmProject.dist) + File.separator
+                            )
                         )
                     }
                 }
@@ -141,9 +145,9 @@ open class KotlinJsIrTargetConfigurator() :
     }
 
     private fun KotlinJsOptions.configureOptions() {
-        moduleKind = "umd"
-        sourceMap = true
-        sourceMapEmbedSources = "never"
+        moduleKind.set("umd")
+        sourceMap.set(true)
+        sourceMapEmbedSources.set("never")
     }
 
     override fun defineConfigurationsForTarget(target: KotlinJsIrTarget) {

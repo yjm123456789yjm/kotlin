@@ -290,7 +290,7 @@ internal class CompilationSpecificPluginPath {
         .let {
             when (it) {
                 is AbstractKotlinNativeCompile<*, *, *> -> it.compilerPluginClasspath
-                is AbstractKotlinCompile<*> -> it.pluginClasspath.from.single()
+                is AbstractKotlinCompile<*, *> -> it.pluginClasspath.from.single()
                 else -> error("Unexpected task type with name $taskName. Is it kotlin compile task?")
             }
         }

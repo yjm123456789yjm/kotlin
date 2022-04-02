@@ -116,12 +116,14 @@ constructor(
                     val syncTask = registerCompileSync(binary)
 
                     binary.linkTask.configure {
-                        it.kotlinOptions.outputFile = project.buildDir
-                            .resolve(COMPILE_SYNC)
-                            .resolve(compilation.name)
-                            .resolve(binary.name)
-                            .resolve(npmProject.main)
-                            .canonicalPath
+                        it.kotlinOptions.outputFile.set(
+                            project.buildDir
+                                .resolve(COMPILE_SYNC)
+                                .resolve(compilation.name)
+                                .resolve(binary.name)
+                                .resolve(npmProject.main)
+                                .canonicalPath
+                        )
 
                         it.finalizedBy(syncTask)
                     }
@@ -232,8 +234,8 @@ constructor(
     }
 
     private fun KotlinJsOptions.configureCommonJsOptions() {
-        moduleKind = "commonjs"
-        sourceMap = true
-        sourceMapEmbedSources = "never"
+        moduleKind.set("commonjs")
+        sourceMap.set(true)
+        sourceMapEmbedSources.set("never")
     }
 }

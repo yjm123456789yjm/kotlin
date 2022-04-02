@@ -48,7 +48,7 @@ abstract class KotlinCompileCommon @Inject constructor(
     override val kotlinOptions: KotlinMultiplatformCommonOptions,
     workerExecutor: WorkerExecutor,
     objectFactory: ObjectFactory
-) : AbstractKotlinCompile<K2MetadataCompilerArguments>(objectFactory),
+) : AbstractKotlinCompile<K2MetadataCompilerArguments, KotlinMultiplatformCommonOptions>(objectFactory),
     KotlinCommonCompile {
 
     class Configurator(compilation: KotlinCompilationData<*>) : AbstractKotlinCompile.Configurator<KotlinCompileCommon>(compilation) {
@@ -129,7 +129,13 @@ abstract class KotlinCompileCommon @Inject constructor(
     }
 
     override val moduleName: Property<String>
-        get() = kotlinOptions.moduleNameProp
+        get() = kotlinOptions.moduleName
+
+    override val kotlinOptionsDsl: KotlinOptionsDsl<KotlinMultiplatformCommonOptions> =
+        object : KotlinMultiplatformCommonOptions.KotlinMultiplatformCommonOptionsDsl {
+            override val options: KotlinMultiplatformCommonOptions
+                get() = kotlinOptions
+        }
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
     @get:IgnoreEmptyDirectories

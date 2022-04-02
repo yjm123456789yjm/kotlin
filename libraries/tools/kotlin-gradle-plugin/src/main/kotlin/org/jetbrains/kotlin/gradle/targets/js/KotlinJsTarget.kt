@@ -29,7 +29,6 @@ import org.jetbrains.kotlin.gradle.tasks.locateTask
 import org.jetbrains.kotlin.gradle.testing.internal.KotlinTestReport
 import org.jetbrains.kotlin.gradle.testing.testTaskName
 import org.jetbrains.kotlin.gradle.utils.dashSeparatedName
-import org.jetbrains.kotlin.gradle.utils.listProperty
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
 import org.jetbrains.kotlin.gradle.utils.setProperty
 import javax.inject.Inject
@@ -217,9 +216,9 @@ constructor(
     override fun useCommonJs() {
         compilations.all {
             it.kotlinOptions {
-                moduleKind = "commonjs"
-                sourceMap = true
-                sourceMapEmbedSources = null
+                moduleKind.set("commonjs")
+                sourceMap.set(true)
+                sourceMapEmbedSources.set(null as String?)
             }
         }
         irTarget?.useCommonJs()

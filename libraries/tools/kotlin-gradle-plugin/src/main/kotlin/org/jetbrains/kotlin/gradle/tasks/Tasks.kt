@@ -67,6 +67,7 @@ import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotEnable
 import org.jetbrains.kotlin.incremental.ClasspathChanges.ClasspathSnapshotEnabled.IncrementalRun.*
 import org.jetbrains.kotlin.library.impl.isKotlinLibrary
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
+import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 import org.jetbrains.kotlin.utils.JsLibraryUtils
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 import java.io.File
@@ -252,12 +253,13 @@ abstract class GradleCompileTaskProvider @Inject constructor(
     )
 }
 
-abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constructor(
+abstract class AbstractKotlinCompile<T : CommonCompilerArguments, O : KotlinCommonOptions> @Inject constructor(
     objectFactory: ObjectFactory
 ) : AbstractKotlinCompileTool<T>(objectFactory),
+    org.jetbrains.kotlin.gradle.dsl.AbstractKotlinCompile<O>,
     CompileUsingKotlinDaemonWithNormalization {
 
-    open class Configurator<T : AbstractKotlinCompile<*>>(protected val compilation: KotlinCompilationData<*>) : TaskConfigurator<T> {
+    open class Configurator<T : AbstractKotlinCompile<*, *>>(protected val compilation: KotlinCompilationData<*>) : TaskConfigurator<T> {
         override fun configure(task: T) {
             val project = task.project
             task.friendPaths.from(project.provider { compilation.friendPaths })
@@ -353,7 +355,6 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     @get:Internal
     internal val pluginOptions = CompilerPluginOptions()
 
-
     /**
      * Plugin Data provided by [KpmCompilerPlugin]
      */
@@ -436,6 +437,8 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
                     it.report(BooleanMetrics.TESTS_EXECUTED, true)
                 else
                     it.report(BooleanMetrics.COMPILATION_STARTED, true)
+                kotlinOptions.apiVersion.orNull?.let { v -> it.report(StringMetrics.KOTLIN_API_VERSION, v) }
+                kotlinOptions.languageVersion.orNull?.let { v -> it.report(StringMetrics.KOTLIN_LANGUAGE_VERSION, v) }
             }
             validateCompilerClasspath()
             systemPropertiesService.get().startIntercept()
@@ -563,7 +566,7 @@ abstract class AbstractKotlinCompile<T : CommonCompilerArguments> @Inject constr
     }
 }
 
-open class KotlinCompileArgumentsProvider<T : AbstractKotlinCompile<out CommonCompilerArguments>>(taskProvider: T) {
+open class KotlinCompileArgumentsProvider<T : AbstractKotlinCompile<out CommonCompilerArguments, *>>(taskProvider: T) {
 
     val coroutines: Provider<Coroutines> = taskProvider.coroutines
     val logger: Logger = taskProvider.logger
@@ -591,7 +594,7 @@ abstract class KotlinCompile @Inject constructor(
     override val kotlinOptions: KotlinJvmOptions,
     workerExecutor: WorkerExecutor,
     private val objectFactory: ObjectFactory
-) : AbstractKotlinCompile<K2JVMCompilerArguments>(objectFactory),
+) : AbstractKotlinCompile<K2JVMCompilerArguments, KotlinJvmOptions>(objectFactory),
     KotlinJvmCompile,
     UsesKotlinJavaToolchain {
 
@@ -690,7 +693,13 @@ abstract class KotlinCompile @Inject constructor(
     internal val parentKotlinOptionsImpl: Property<KotlinJvmOptions> = objectFactory.property(KotlinJvmOptions::class.java)
 
     override val moduleName: Property<String>
-        get() = kotlinOptions.moduleNameProp
+        get() = kotlinOptions.moduleName
+
+    override val kotlinOptionsDsl: KotlinOptionsDsl<KotlinJvmOptions> =
+        object : KotlinJvmOptions.KotlinJvmOptionsDsl {
+            override val options: KotlinJvmOptions
+                get() = kotlinOptions
+        }
 
     /** A package prefix that is used for locating Java sources in a directory structure with non-full-depth packages.
      *
@@ -964,7 +973,7 @@ abstract class KotlinCompile @Inject constructor(
             project.tasks.configureEach {
                 if (it is AbstractCompile &&
                     it !is JavaCompile &&
-                    it !is AbstractKotlinCompile<*> &&
+                    it !is AbstractKotlinCompile<*, *> &&
                     javaOutputDir.get().asFile.isParentOf(it.destinationDirectory.get().asFile)
                 ) {
                     illegalTaskOrNull = illegalTaskOrNull ?: it
@@ -1061,7 +1070,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
     override val kotlinOptions: KotlinJsOptions,
     objectFactory: ObjectFactory,
     workerExecutor: WorkerExecutor
-) : AbstractKotlinCompile<K2JSCompilerArguments>(objectFactory),
+) : AbstractKotlinCompile<K2JSCompilerArguments, KotlinJsOptions>(objectFactory),
     KotlinJsCompile {
 
     init {
@@ -1076,7 +1085,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
 
             task.outputFileProperty.value(
                 task.project.provider {
-                    task.kotlinOptions.outputFile?.let(::File)
+                    task.kotlinOptions.outputFile.orNull?.let(::File)
                         ?: task.destinationDirectory.locationOnly.get().asFile.resolve("${compilation.ownModuleName}.js")
                 }
             ).disallowChanges()
@@ -1112,24 +1121,32 @@ abstract class Kotlin2JsCompile @Inject constructor(
     @get:Input
     internal var incrementalJsKlib: Boolean = true
 
-    override fun isIncrementalCompilationEnabled(): Boolean =
-        when {
-            "-Xir-produce-js" in kotlinOptions.freeCompilerArgs -> {
+    override fun isIncrementalCompilationEnabled(): Boolean {
+        val freeCompilerArgs = kotlinOptions.freeCompilerArgs.get()
+        return when {
+            "-Xir-produce-js" in freeCompilerArgs -> {
                 false
             }
-            "-Xir-produce-klib-dir" in kotlinOptions.freeCompilerArgs -> {
+            "-Xir-produce-klib-dir" in freeCompilerArgs -> {
                 KotlinBuildStatsService.applyIfInitialised {
                     it.report(BooleanMetrics.JS_KLIB_INCREMENTAL, incrementalJsKlib)
                 }
                 incrementalJsKlib
             }
-            "-Xir-produce-klib-file" in kotlinOptions.freeCompilerArgs -> {
+            "-Xir-produce-klib-file" in freeCompilerArgs -> {
                 KotlinBuildStatsService.applyIfInitialised {
                     it.report(BooleanMetrics.JS_KLIB_INCREMENTAL, incrementalJsKlib)
                 }
                 incrementalJsKlib
             }
             else -> incremental
+        }
+    }
+
+    override val kotlinOptionsDsl: KotlinOptionsDsl<KotlinJsOptions> =
+        object : KotlinJsOptions.KotlinJsOptionsDsl {
+            override val options: KotlinJsOptions
+                get() = kotlinOptions
         }
 
     // This can be file or directory
@@ -1214,7 +1231,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
             "-Xir-only",
             "-Xir-produce-js",
             "-Xir-produce-klib-file"
-        ).any(freeCompilerArgs::contains)
+        ).any(freeCompilerArgs.get()::contains)
 
     // see also isIncrementalCompilationEnabled
     private fun KotlinJsOptions.isIrBackendEnabled(): Boolean =
@@ -1222,7 +1239,7 @@ abstract class Kotlin2JsCompile @Inject constructor(
             "-Xir-produce-klib-dir",
             "-Xir-produce-js",
             "-Xir-produce-klib-file"
-        ).any(freeCompilerArgs::contains)
+        ).any(freeCompilerArgs.get()::contains)
 
     private val File.asLibraryFilterCacheKey: LibraryFilterCachingService.LibraryFilterCacheKey
         get() = LibraryFilterCachingService.LibraryFilterCacheKey(

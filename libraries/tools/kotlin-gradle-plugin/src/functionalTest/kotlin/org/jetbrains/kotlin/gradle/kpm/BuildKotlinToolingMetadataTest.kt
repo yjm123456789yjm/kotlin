@@ -167,8 +167,8 @@ class KotlinToolingMetadataWithModelMappingTest {
         project.plugins.apply("kotlin-multiplatform")
         val kotlin = multiplatformExtension
         val jvm = kotlin.jvm()
-        jvm.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME).kotlinOptions.jvmTarget = "12"
-        jvm.compilations.getByName(KotlinCompilation.TEST_COMPILATION_NAME).kotlinOptions.jvmTarget = "10"
+        jvm.compilations.getByName(KotlinCompilation.MAIN_COMPILATION_NAME).kotlinOptions.jvmTarget.set("12")
+        jvm.compilations.getByName(KotlinCompilation.TEST_COMPILATION_NAME).kotlinOptions.jvmTarget.set("10")
 
         assertEquals(
             "12", getKotlinToolingMetadata().projectTargets

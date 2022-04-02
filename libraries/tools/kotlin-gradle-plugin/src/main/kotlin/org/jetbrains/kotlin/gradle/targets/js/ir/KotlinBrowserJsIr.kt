@@ -280,7 +280,7 @@ open class KotlinBrowserJsIr @Inject constructor(target: KotlinJsIrTarget) :
             .withType(JsIrBinary::class.java)
             .all {
                 it.linkTask.configure { linkTask ->
-                    linkTask.kotlinOptions.freeCompilerArgs += "-Xwasm-launcher=esm"
+                    linkTask.kotlinOptions.freeCompilerArgs.add("-Xwasm-launcher=esm")
                 }
             }
     }

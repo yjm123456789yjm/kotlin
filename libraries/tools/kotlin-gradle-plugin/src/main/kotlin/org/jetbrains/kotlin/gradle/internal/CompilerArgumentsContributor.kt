@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.gradle.internal
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
+import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileArgumentsProvider
@@ -36,9 +38,9 @@ internal fun compilerArgumentsConfigurationFlags(defaultsOnly: Boolean, ignoreCl
 
 /** The primary purpose of this class is to encapsulate compiler arguments setup done by the AbstractKotlinCompiler tasks,
  * but outside the tasks, so that this state & logic can be reused without referencing the task directly. */
-internal open class AbstractKotlinCompileArgumentsContributor<T : CommonCompilerArguments>(
+internal open class AbstractKotlinCompileArgumentsContributor<T : CommonCompilerArguments, O : KotlinCommonOptions>(
     // Don't save this reference into a property! That would be hostile to Gradle instant execution
-    taskProvider: KotlinCompileArgumentsProvider<out AbstractKotlinCompile<T>>
+    taskProvider: KotlinCompileArgumentsProvider<out AbstractKotlinCompile<T, O>>
 ) : CompilerArgumentsContributor<T> {
 
     private val coroutines = taskProvider.coroutines
@@ -69,7 +71,7 @@ internal open class AbstractKotlinCompileArgumentsContributor<T : CommonCompiler
 internal open class KotlinJvmCompilerArgumentsContributor(
     // Don't save this reference into a property! That would be hostile to Gradle instant execution. Only map it to the task properties.
     taskProvider: KotlinJvmCompilerArgumentsProvider
-) : AbstractKotlinCompileArgumentsContributor<K2JVMCompilerArguments>(taskProvider) {
+) : AbstractKotlinCompileArgumentsContributor<K2JVMCompilerArguments, KotlinJvmOptions>(taskProvider) {
 
     private val moduleName = taskProvider.moduleName
     private val friendPaths = taskProvider.friendPaths
