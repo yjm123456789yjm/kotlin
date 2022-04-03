@@ -15,7 +15,6 @@ import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.Internal
 import org.gradle.internal.jvm.Jvm
 import org.gradle.jvm.toolchain.*
-import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
 import org.jetbrains.kotlin.gradle.utils.chainedFinalizeValueOnRead
 import org.jetbrains.kotlin.gradle.utils.property
 import org.jetbrains.kotlin.gradle.utils.propertyWithConvention
@@ -116,59 +115,23 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
     final override val toolchain: KotlinJavaToolchain.JavaToolchainSetter =
         DefaultJavaToolchainSetter(providedJvm, kotlinCompileTaskProvider)
 
-    /**
-     * Updates [task] 'jvmTarget' if user has configured toolchain and not 'jvmTarget'.
-     *
-     *  Should be called on execution state to ensure 'jvmTarget' is set to correct value even on
-     *  reusing configuration cache.
-     *
-     * Should be called on task execution phase!
-     */
-    internal fun updateJvmTarget(
-        task: KotlinCompile,
-        args: K2JVMCompilerArguments
-    ) {
-        check(task.state.executing) {
-            "\"updateJvmTarget()\" method should be called only on task execution!"
-        }
-
-        if (providedJvmExplicitlySet) {
-            val jdkVersion = javaVersion.get()
-
-            val appliedJvmTargets = task.kotlinOptions.jvmTarget
-
-            if (!appliedJvmTargets.isPresent) {
-                // For Java 9 and Java 10 JavaVersion returns "1.9" or "1.10" accordingly
-                // that is not accepted by Kotlin compiler
-                val toolchainJvmTarget = when (jdkVersion) {
-                    JavaVersion.VERSION_1_9 -> "9"
-                    JavaVersion.VERSION_1_10 -> "10"
-                    else -> jdkVersion.toString()
-                }
-                task.kotlinOptions.jvmTarget.set(toolchainJvmTarget)
-                args.jvmTarget = toolchainJvmTarget
-            }
-        }
-    }
-
     private abstract class JvmTargetUpdater(
         private val kotlinCompileTaskProvider: () -> KotlinCompile?
     ) {
         fun updateJvmTarget(
-            jdkVersion: JavaVersion
+            providedJvm: Property<Jvm>
         ) {
             kotlinCompileTaskProvider()?.let { task ->
-                // parentKotlinOptionsImpl is set from 'kotlin-android' plugin
-                val appliedJvmTargets = task.kotlinOptions.jvmTarget
-
-                if (!appliedJvmTargets.isPresent) {
+                if (!task.kotlinOptions.jvmTarget.isPresent) {
                     // For Java 9 and Java 10 JavaVersion returns "1.9" or "1.10" accordingly
                     // that is not accepted by Kotlin compiler
                     task.kotlinOptions.jvmTarget.set(
-                        when (jdkVersion) {
-                            JavaVersion.VERSION_1_9 -> "9"
-                            JavaVersion.VERSION_1_10 -> "10"
-                            else -> jdkVersion.toString()
+                        providedJvm.map { jvm ->
+                            when (jvm.javaVersion) {
+                                JavaVersion.VERSION_1_9 -> "9"
+                                JavaVersion.VERSION_1_10 -> "10"
+                                else -> jvm.javaVersion.toString()
+                            }
                         }
                     )
                 }
@@ -198,10 +161,10 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
             updateProvidedJdkCallback.invoke()
             providedJvm.set(
                 objects.providerWithLazyConvention {
-                    updateJvmTarget(jdkVersion)
                     Jvm.discovered(jdkHomeLocation, null, jdkVersion)
                 }
             )
+            updateJvmTarget(providedJvm)
         }
     }
 
@@ -218,7 +181,6 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
                 javaLauncher.map {
                     val metadata = javaLauncher.get().metadata
                     val javaVersion = JavaVersion.toVersion(metadata.languageVersion.asInt())
-                    updateJvmTarget(javaVersion)
                     Jvm.discovered(
                         metadata.installationPath.asFile,
                         null,
@@ -226,6 +188,7 @@ internal abstract class DefaultKotlinJavaToolchain @Inject constructor(
                     )
                 }
             )
+            updateJvmTarget(providedJvm)
         }
     }
 }
