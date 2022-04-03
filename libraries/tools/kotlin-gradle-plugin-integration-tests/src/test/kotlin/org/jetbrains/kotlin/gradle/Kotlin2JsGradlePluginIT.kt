@@ -284,7 +284,7 @@ class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
                         |
                         |afterEvaluate {
                         |    tasks.named('compileKotlinJs') {
-                        |        kotlinOptions.outputFile = "${'$'}{project.projectDir}/out/out.js"
+                        |        kotlinOptions.outputFile.set("${'$'}{project.projectDir}/out/out.js")
                         |    }
                         |}
                         |
@@ -326,7 +326,7 @@ class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
                     append(
                         """
                         |
-                        |runDceKotlinJs.dceOptions.outputDirectory = "${'$'}{buildDir}/min"
+                        |runDceKotlinJs.kotlinOptions.outputDirectory.set("${'$'}{buildDir}/min")
                         |runRhino.args = ["-f", "min/kotlin.js", "-f", "min/examplelib.js", "-f", "min/exampleapp.js", "-f", "../check.js"]
                         """.trimMargin()
                     )
@@ -352,7 +352,7 @@ class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
             subProject("mainProject").buildGradle.appendText(
                 """
                 |
-                |runDceKotlinJs.dceOptions.devMode = true
+                |runDceKotlinJs.kotlinOptions.devMode.set(true)
                 |    
                 """.trimMargin()
             )
@@ -451,7 +451,7 @@ class Kotlin2JsGradlePluginIT : AbstractKotlin2JsGradlePluginIT(false) {
                 """
                 kotlin.js().browser {
                     dceTask {
-                        dceOptions.devMode = true
+                        kotlinOptions.devMode.set(true)
                     }
                 }
                 """.trimMargin()
@@ -633,9 +633,13 @@ abstract class AbstractKotlin2JsGradlePluginIT(protected val irBackend: Boolean)
             buildGradle.appendText(
                 """
                 |
-                |compileKotlin2Js.kotlinOptions.sourceMap = true
-                |compileKotlin2Js.kotlinOptions.sourceMapPrefix = "prefixprefix/"
-                |compileKotlin2Js.kotlinOptions.outputFile = "${'$'}{buildDir}/kotlin2js/main/app.js"
+                |compileKotlin2Js {
+                |    kotlinOptions {
+                |        sourceMap = true
+                |        sourceMapPrefix = "prefixprefix/"
+                |        outputFile = "${'$'}{buildDir}/kotlin2js/main/app.js"
+                |    }
+                |}
                 """.trimMargin()
             )
 

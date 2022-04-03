@@ -204,7 +204,7 @@ class KotlinGradleIT : KGPBaseTest() {
                 """
                 
                 compileKotlin {
-                    kotlinOptions.freeCompilerArgs = [ "-module-name", "$customModuleName" ]
+                    kotlinOptions.freeCompilerArgs.addAll([ "-module-name", "$customModuleName" ])
                 }
                 """.trimIndent()
             )

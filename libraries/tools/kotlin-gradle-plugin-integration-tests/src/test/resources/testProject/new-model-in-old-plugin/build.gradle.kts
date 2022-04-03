@@ -13,10 +13,8 @@ repositories {
 
 kotlin.target.compilations {
     all {
-        kotlinOptions {
-            allWarningsAsErrors = true
-            jvmTarget = "1.8"
-        }
+        kotlinOptions.allWarningsAsErrors.set(true)
+        kotlinOptions.jvmTarget.set("1.8")
     }
 
     val main by getting {
