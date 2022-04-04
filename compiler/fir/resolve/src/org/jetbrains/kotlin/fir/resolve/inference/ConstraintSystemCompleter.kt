@@ -247,7 +247,7 @@ class ConstraintSystemCompleter(components: BodyResolveComponents, private val c
         ) ?: return false
 
         val variableWithConstraints = notFixedTypeVariables.getValue(variableForFixation.variable)
-        if (!variableForFixation.hasProperConstraint) {
+        if (!variableForFixation.hasProperConstraint || variableForFixation.hasOnlyTrivialProperConstraint) {
             if (context.inferenceSession.isSyntheticTypeVariable(variableWithConstraints.typeVariable)) {
                 context.inferenceSession.fixSyntheticTypeVariableWithNotEnoughInformation(
                     variableWithConstraints.typeVariable as ConeTypeVariable,
@@ -256,7 +256,9 @@ class ConstraintSystemCompleter(components: BodyResolveComponents, private val c
                 return true
             }
 
-            return false
+            if (!variableForFixation.hasProperConstraint) {
+                return false
+            }
         }
 
         fixVariable(this, topLevelType, variableWithConstraints, postponedArguments)

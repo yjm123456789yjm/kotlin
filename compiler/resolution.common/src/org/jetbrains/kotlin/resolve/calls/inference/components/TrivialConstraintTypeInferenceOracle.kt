@@ -21,7 +21,8 @@ class TrivialConstraintTypeInferenceOracle private constructor(context: TypeSyst
     // it's totally fine to go and resolve postponed argument without fixation T to Nothing(?).
     // In other words, constraint `Nothing(?) <: T` is *not* proper
     fun isNotInterestingConstraint(constraint: Constraint): Boolean {
-        return constraint.kind == ConstraintKind.LOWER && constraint.type.typeConstructor().isNothingConstructor()
+        return constraint.kind == ConstraintKind.LOWER && constraint.type.typeConstructor().isNothingConstructor() ||
+                constraint.kind == ConstraintKind.UPPER && constraint.type.isNullableAny()
     }
 
     // This function controls the choice between sub and super result type

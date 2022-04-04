@@ -6541,6 +6541,12 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
+            @TestMetadata("coroutineFlowInference.kt")
+            public void testCoroutineFlowInference() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/coroutines/coroutineFlowInference.kt");
+            }
+
+            @Test
             @TestMetadata("modifierFormBuiltinSuspendFun.kt")
             public void testModifierFormBuiltinSuspendFun() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/coroutines/modifierFormBuiltinSuspendFun.kt");
