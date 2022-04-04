@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinJsDce
 import org.jetbrains.kotlin.gradle.tasks.dependsOn
 import org.jetbrains.kotlin.gradle.tasks.registerTask
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
+import org.jetbrains.kotlin.gradle.utils.propertyWithConvention
 import java.io.File
 
 class KotlinJsDcePlugin : Plugin<Project> {
@@ -77,8 +78,20 @@ class KotlinJsDcePlugin : Plugin<Project> {
 
             dceTask.configure {
                 it.libraries.from(configuration)
-                it.destinationDirectory.set(it.kotlinOptions.outputDirectory.orNull?.let { File(it) } ?: outputDir)
-                it.setSource(kotlinTask.map { task -> (task as Kotlin2JsCompile).outputFileProperty })
+                it.destinationDirectory.set(
+                    it.kotlinOptions.outputDirectory.flatMap { outputDirectory ->
+                        if (outputDirectory != null) {
+                            it.project.layout.dir(it.project.objects.propertyWithConvention(File(outputDirectory)))
+                        } else {
+                            it.project.layout.dir(it.project.objects.propertyWithConvention(outputDir))
+                        }
+                    }
+                )
+                it.setSource(
+                    kotlinTask.flatMap { task ->
+                        (task as Kotlin2JsCompile).outputFileProperty
+                    }
+                )
             }
         }
     }

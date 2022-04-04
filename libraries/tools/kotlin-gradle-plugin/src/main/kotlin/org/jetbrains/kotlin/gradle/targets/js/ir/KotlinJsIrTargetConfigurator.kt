@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.gradle.targets.js.ir
 
-import org.gradle.api.InvalidUserDataException
 import org.gradle.api.attributes.Usage
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.Zip
@@ -18,7 +17,6 @@ import org.jetbrains.kotlin.gradle.targets.js.npm.npmProject
 import org.jetbrains.kotlin.gradle.tasks.KotlinTasksProvider
 import org.jetbrains.kotlin.gradle.testing.internal.kotlinTestRegistry
 import org.jetbrains.kotlin.gradle.testing.testTaskName
-import org.jetbrains.kotlin.gradle.utils.isParentOf
 import org.jetbrains.kotlin.gradle.utils.klibModuleName
 import java.io.File
 
@@ -71,12 +69,12 @@ open class KotlinJsIrTargetConfigurator() :
         target.compilations.all { compilation ->
             compilation.kotlinOptions {
                 configureOptions()
-                
+
                 if (target.platformType == KotlinPlatformType.wasm) {
                     freeCompilerArgs.add(WASM_BACKEND)
                 }
 
-                var produceUnzippedKlib = isProduceUnzippedKlib()
+                val produceUnzippedKlib = isProduceUnzippedKlib()
                 val produceZippedKlib = isProduceZippedKlib()
 
                 freeCompilerArgs.add(DISABLE_PRE_IR)
@@ -85,7 +83,6 @@ open class KotlinJsIrTargetConfigurator() :
 
                 if (!produceUnzippedKlib && !produceZippedKlib) {
                     freeCompilerArgs.add(PRODUCE_UNZIPPED_KLIB)
-                    produceUnzippedKlib = true
                 }
 
                 // Configure FQ module name to avoid cyclic dependencies in klib manifests (see KT-36721).
@@ -93,26 +90,6 @@ open class KotlinJsIrTargetConfigurator() :
                     target.project.name
                 } else {
                     "${target.project.name}_${compilation.name}"
-                }
-
-                compilation.compileKotlinTaskProvider.configure { task ->
-                    val outputFilePath = outputFile.orNull ?: if (produceUnzippedKlib) {
-                        task.destinationDirectory.get().asFile.absoluteFile.normalize().absolutePath
-                    } else {
-                        File(task.destinationDirectory.get().asFile, "$baseName.$KLIB_TYPE").absoluteFile.normalize().absolutePath
-                    }
-                    outputFile.set(outputFilePath)
-
-                    val taskOutputDir = if (produceUnzippedKlib) File(outputFilePath) else File(outputFilePath).parentFile
-                    if (taskOutputDir.isParentOf(task.project.rootDir))
-                        throw InvalidUserDataException(
-                            "The output directory '$taskOutputDir' (defined by outputFile of $task) contains or " +
-                                    "matches the project root directory '${task.project.rootDir}'.\n" +
-                                    "Gradle will not be able to build the project because of the root directory lock.\n" +
-                                    "To fix this, consider using the default outputFile location instead of providing it explicitly."
-                        )
-
-                    task.destinationDirectory.set(taskOutputDir)
                 }
 
                 val klibModuleName = target.project.klibModuleName(baseName)

@@ -107,7 +107,7 @@ abstract class KotlinJsSubTarget(
             testJs.dependsOn(nodeJs.npmInstallTaskProvider, compileTask, nodeJs.nodeJsSetupTaskProvider)
 
             testJs.onlyIf {
-                compileOutputFile.get().exists()
+                (it as KotlinJsTest).inputFileProperty.get().asFile.exists()
             }
 
             testJs.targetName = listOfNotNull(target.disambiguationClassifier, disambiguationClassifier)

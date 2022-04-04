@@ -82,7 +82,9 @@ constructor(
 
     @get:PathSensitive(PathSensitivity.ABSOLUTE)
     @get:InputFile
-    val entryProperty: RegularFileProperty = objects.fileProperty().fileProvider(compilation.compileKotlinTask.outputFileProperty)
+    val entryProperty: RegularFileProperty = objects.fileProperty().fileProvider(
+        this.compilation.compileKotlinTaskProvider.flatMap { it.outputFileProperty }
+    )
 
     init {
         onlyIf {

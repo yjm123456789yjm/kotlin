@@ -6,10 +6,7 @@
 package org.jetbrains.kotlin.gradle.tasks
 
 import groovy.lang.Closure
-import org.gradle.api.DefaultTask
-import org.gradle.api.GradleException
-import org.gradle.api.Project
-import org.gradle.api.Task
+import org.gradle.api.*
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.file.*
 import org.gradle.api.invocation.Gradle
@@ -27,6 +24,7 @@ import org.gradle.api.tasks.compile.AbstractCompile
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.api.tasks.util.PatternSet
+import org.gradle.kotlin.dsl.property
 import org.gradle.work.ChangeType
 import org.gradle.work.Incremental
 import org.gradle.work.InputChanges
@@ -59,6 +57,8 @@ import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.report.BuildMetricsReporterService
 import org.jetbrains.kotlin.gradle.report.BuildReportMode
 import org.jetbrains.kotlin.gradle.report.ReportingSettings
+import org.jetbrains.kotlin.gradle.targets.js.ir.KLIB_TYPE
+import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 import org.jetbrains.kotlin.gradle.targets.js.ir.isProduceUnzippedKlib
 import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.incremental.*
@@ -1078,16 +1078,45 @@ abstract class Kotlin2JsCompile @Inject constructor(
         override fun configure(task: T) {
             super.configure(task)
 
+            // 'kotlinOptions.outputFile' should be used to override default values
             task.outputFileProperty.value(
-                task.project.provider {
-                    task.kotlinOptions.outputFile.orNull?.let(::File)
-                        ?: task.destinationDirectory.locationOnly.get().asFile.resolve("${compilation.ownModuleName}.js")
+                task.kotlinOptions.outputFile.orElse("").flatMap { outputFilePath ->
+                    task.kotlinOptions.freeCompilerArgs.flatMap { freeArgs ->
+                        if (outputFilePath.isNotBlank()) {
+                            val outputFile = if (freeArgs.isProduceUnzippedKlib()) {
+                                File(outputFilePath).parentFile
+                            } else {
+                                File(outputFilePath)
+                            }
+                            task.project.objects.propertyWithConvention(outputFile)
+                        } else {
+                            task.destinationDirectory.flatMap { destinationDir ->
+                                if (freeArgs.isProduceUnzippedKlib()) {
+                                    task.project.objects.propertyWithConvention(destinationDir.asFile)
+                                } else if (compilation is KotlinJsIrCompilation) {
+                                    // Configure FQ module name to avoid cyclic dependencies in klib manifests (see KT-36721).
+                                    val baseName = if (compilation.isMain()) {
+                                        task.project.name
+                                    } else {
+                                        "${task.project.name}_${compilation.name}"
+                                    }
+                                    task.project.objects.propertyWithConvention(
+                                        destinationDir.file("$baseName.$KLIB_TYPE").asFile
+                                    )
+                                } else {
+                                    task.project.objects.propertyWithConvention(
+                                        destinationDir.file("${compilation.ownModuleName}.js").asFile
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             ).disallowChanges()
             task.optionalOutputFile.fileProvider(
-                task.outputFileProperty.flatMap { outputFile ->
-                    task.project.provider {
-                        outputFile.takeUnless { task.kotlinOptions.isProduceUnzippedKlib() }
+                task.outputFileProperty.flatMap {
+                    task.project.objects.property<File>().apply {
+                        if (!it.isDirectory) set(it)
                     }
                 }
             ).disallowChanges()
@@ -1194,6 +1223,8 @@ abstract class Kotlin2JsCompile @Inject constructor(
         if (defaultsOnly) return
 
         (kotlinOptions as KotlinJsOptionsBase).toCompilerArguments(args)
+        // restore outputFile from outputFileProperty if has own value
+        args.outputFile = outputFileProperty.get().absoluteFile.normalize().absolutePath
     }
 
     @get:InputFiles
@@ -1275,10 +1306,25 @@ abstract class Kotlin2JsCompile @Inject constructor(
     override val incrementalProps: List<FileCollection>
         get() = super.incrementalProps + listOf(friendDependencies)
 
+    abstract override val destinationDirectory: DirectoryProperty
+
     open fun processArgs(
         args: K2JSCompilerArguments
     ) {
 
+    }
+
+    private val projectRootDir = project.rootDir
+
+    private fun validateOutputDirectory() {
+        val outputDir = outputFileProperty.get()
+        if (outputDir.isParentOf(projectRootDir))
+            throw InvalidUserDataException(
+                "The output directory '$outputDir' (defined by outputFile of $name) contains or " +
+                        "matches the project root directory '${project.rootDir}'.\n" +
+                        "Gradle will not be able to build the project because of the root directory lock.\n" +
+                        "To fix this, consider using the default outputFile location instead of providing it explicitly."
+            )
     }
 
     override fun callCompilerAsync(
@@ -1288,6 +1334,8 @@ abstract class Kotlin2JsCompile @Inject constructor(
         taskOutputsBackup: TaskOutputsBackup?
     ) {
         logger.debug("Calling compiler")
+
+        validateOutputDirectory()
 
         if (kotlinOptions.isIrBackendEnabled()) {
             logger.info(USING_JS_IR_BACKEND_MESSAGE)
@@ -1303,13 +1351,16 @@ abstract class Kotlin2JsCompile @Inject constructor(
                 null
         }
 
+        // ensuring output directories is created
+        File(args.outputFile!!).parentFile.mkdirs()
+
         args.friendModules = friendDependencies.files.joinToString(File.pathSeparator) { it.absolutePath }
 
         if (args.sourceMapBaseDirs == null && !args.sourceMapPrefix.isNullOrEmpty()) {
             args.sourceMapBaseDirs = absolutePathProvider
         }
 
-        logger.kotlinDebug("compiling with args ${ArgumentUtils.convertArgumentsToStringList(args)}")
+        logger.warn("compiling with args ${ArgumentUtils.convertArgumentsToStringList(args)}")
 
         val messageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
         val outputItemCollector = OutputItemsCollectorImpl()

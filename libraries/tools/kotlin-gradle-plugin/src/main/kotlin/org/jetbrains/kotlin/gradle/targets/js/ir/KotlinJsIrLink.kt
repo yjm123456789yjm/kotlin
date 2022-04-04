@@ -10,12 +10,12 @@ import org.gradle.api.file.DirectoryProperty
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
+import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptionsBase
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
@@ -26,6 +26,8 @@ import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode.DEVELOPMENT
 import org.jetbrains.kotlin.gradle.targets.js.dsl.KotlinJsBinaryMode.PRODUCTION
 import org.jetbrains.kotlin.gradle.tasks.Kotlin2JsCompile
 import org.jetbrains.kotlin.gradle.utils.getValue
+import org.jetbrains.kotlin.gradle.utils.property
+import org.jetbrains.kotlin.gradle.utils.propertyWithConvention
 import org.jetbrains.kotlin.gradle.utils.toHexString
 import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
 import org.jetbrains.kotlin.statistics.metrics.StringMetrics
@@ -53,7 +55,7 @@ abstract class KotlinJsIrLink @Inject constructor(
             task.entryModule.fileProvider(
                 (compilation as KotlinJsIrCompilation).output.classesDirs.elements.map { it.single().asFile }
             ).disallowChanges()
-            task.destinationDirectory.fileProvider(task.outputFileProperty.map { it.parentFile }).disallowChanges()
+//            task.destinationDirectory.fileProvider(task.outputFileProperty.map { it.parentFile }).disallowChanges()
         }
     }
 
@@ -90,8 +92,31 @@ abstract class KotlinJsIrLink @Inject constructor(
     // Link tasks are not affected by compiler plugin
     override val pluginClasspath: ConfigurableFileCollection = project.objects.fileCollection()
 
-    @Input
-    lateinit var mode: KotlinJsBinaryMode
+    @get:Input
+    internal val binaryMode: Property<KotlinJsBinaryMode> = objectFactory.property()
+
+    @get:Internal
+    var mode: KotlinJsBinaryMode
+        get() = binaryMode.get()
+        set(value) {
+            when (value) {
+                PRODUCTION -> {
+                    kotlinOptions.freeCompilerArgs.addAll(ENABLE_DCE, GENERATE_D_TS, MINIMIZED_MEMBER_NAMES)
+                }
+                DEVELOPMENT -> {
+                    kotlinOptions.freeCompilerArgs.addAll(GENERATE_D_TS)
+                }
+            }
+            kotlinOptions.freeCompilerArgs.add(PRODUCE_JS)
+            kotlinOptions.freeCompilerArgs.add(
+                entryModule.map {
+                    val entryModulePath = it.asFile.canonicalPath
+                    "$ENTRY_IR_MODULE=$entryModulePath"
+                }
+            )
+            binaryMode.set(value)
+            binaryMode.finalizeValue()
+        }
 
     private val buildDir = project.buildDir
 
@@ -168,32 +193,20 @@ abstract class KotlinJsIrLink @Inject constructor(
             .filterNot { it.isEmpty() }
     }
 
-    override fun setupCompilerArgs(args: K2JSCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        when (mode) {
-            PRODUCTION -> {
-                kotlinOptions.configureOptions(ENABLE_DCE, GENERATE_D_TS, MINIMIZED_MEMBER_NAMES)
-            }
-            DEVELOPMENT -> {
-                kotlinOptions.configureOptions(GENERATE_D_TS)
-            }
-        }
+    override fun setupCompilerArgs(
+        args: K2JSCompilerArguments,
+        defaultsOnly: Boolean,
+        ignoreClasspathResolutionErrors: Boolean
+    ) {
         val alreadyDefinedOutputMode = kotlinOptions.freeCompilerArgs.get()
             .any { it.startsWith(PER_MODULE) }
         if (!alreadyDefinedOutputMode) {
-            kotlinOptions.freeCompilerArgs.add(outputGranularity.toCompilerArgument())
+            args.freeArgs += outputGranularity.toCompilerArgument()
         }
-        super.setupCompilerArgs(args, defaultsOnly, ignoreClasspathResolutionErrors)
-    }
-
-    private fun KotlinJsOptions.configureOptions(vararg additionalCompilerArgs: String) {
-        freeCompilerArgs.addAll(
-            additionalCompilerArgs.toList() +
-                    PRODUCE_JS +
-                    "$ENTRY_IR_MODULE=${entryModule.get().asFile.canonicalPath}"
-        )
 
         if (platformType == KotlinPlatformType.wasm) {
-            freeCompilerArgs.add(WASM_BACKEND)
+            args.freeArgs += WASM_BACKEND
         }
+        super.setupCompilerArgs(args, defaultsOnly, ignoreClasspathResolutionErrors)
     }
 }

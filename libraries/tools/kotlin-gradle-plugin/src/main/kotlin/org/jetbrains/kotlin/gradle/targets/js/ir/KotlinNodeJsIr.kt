@@ -68,10 +68,14 @@ open class KotlinNodeJsIr @Inject constructor(target: KotlinJsIrTarget) :
                 group = taskGroupName
                 inputFileProperty.set(
                     project.layout.file(
-                        binary.linkSyncTask.map {
-                            it.destinationDir
-                                .resolve(binary.linkTask.get().outputFileProperty.get().name)
-                        }
+                        binary
+                            .linkTask
+                            .flatMap { it.outputFileProperty }
+                            .flatMap { outputFile ->
+                                binary.linkSyncTask.map {
+                                    it.destinationDir.resolve(outputFile.name)
+                                }
+                            }
                     )
                 )
             }

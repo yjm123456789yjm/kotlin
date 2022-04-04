@@ -259,23 +259,6 @@ internal class Kotlin2JsSourceSetProcessor(
         project.whenEvaluated {
             kotlinTask.configure { kotlinTaskInstance ->
                 val kotlinOptions = kotlinTaskInstance.kotlinOptions
-                val outputFile = kotlinTaskInstance.outputFileProperty.get()
-                val outputDir: File = outputFile.parentFile
-                kotlinOptions.outputFile.set(
-                    if (!kotlinOptions.isProduceUnzippedKlib()) {
-                        outputFile.absolutePath
-                    } else {
-                        outputFile.parentFile.absolutePath
-                    }
-                )
-                if (outputDir.isParentOf(project.rootDir))
-                    throw InvalidUserDataException(
-                        "The output directory '$outputDir' (defined by outputFile of $kotlinTaskInstance) contains or " +
-                                "matches the project root directory '${project.rootDir}'.\n" +
-                                "Gradle will not be able to build the project because of the root directory lock.\n" +
-                                "To fix this, consider using the default outputFile location instead of providing it explicitly."
-                    )
-                kotlinTaskInstance.destinationDirectory.set(outputDir)
 
                 val freeCompilerArgs = kotlinOptions.freeCompilerArgs.get()
                 if (
@@ -289,7 +272,7 @@ internal class Kotlin2JsSourceSetProcessor(
                     } else {
                         "${project.name}_${kotlinCompilation.compilationPurpose}"
                     }
-                    kotlinTaskInstance.kotlinOptions.freeCompilerArgs.add("$MODULE_NAME=${project.klibModuleName(baseName)}")
+                    kotlinOptions.freeCompilerArgs.add("$MODULE_NAME=${project.klibModuleName(baseName)}")
                 }
             }
 

@@ -31,5 +31,6 @@ internal const val PER_MODULE_OUTPUT_NAME = "-Xir-per-module-output-name"
 
 internal const val WASM_BACKEND = "-Xwasm"
 
-fun KotlinJsOptions.isProduceUnzippedKlib() = PRODUCE_UNZIPPED_KLIB in freeCompilerArgs.get()
+fun KotlinJsOptions.isProduceUnzippedKlib() = freeCompilerArgs.get().isProduceUnzippedKlib()
+fun List<String>.isProduceUnzippedKlib() = PRODUCE_UNZIPPED_KLIB in this
 fun KotlinJsOptions.isProduceZippedKlib() = PRODUCE_ZIPPED_KLIB in freeCompilerArgs.get()
