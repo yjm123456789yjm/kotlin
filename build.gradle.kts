@@ -364,6 +364,10 @@ val projectsWithDisabledFirBootstrap = coreLibProjects + listOf(
     ":wasm:wasm.ir"
 )
 
+val projectsWithEnabledContextReceivers = listOf(
+    ":compiler:fir:fir2ir"
+)
+
 val gradlePluginProjects = listOf(
     ":kotlin-gradle-plugin",
     ":kotlin-gradle-plugin-api",
@@ -518,7 +522,8 @@ allprojects {
         kotlinOptions {
             freeCompilerArgs = commonCompilerArgs + jvmCompilerArgs
 
-            if (useJvmFir && this@allprojects.path !in projectsWithDisabledFirBootstrap) {
+            val moduleName = this@allprojects.path
+            if (useJvmFir && moduleName !in projectsWithDisabledFirBootstrap) {
                 freeCompilerArgs += "-Xuse-fir"
                 freeCompilerArgs += "-Xabi-stability=stable"
                 if (useFirLT) {
@@ -530,6 +535,10 @@ allprojects {
             }
             if (renderDiagnosticNames) {
                 freeCompilerArgs += "-Xrender-internal-diagnostic-names"
+            }
+
+            if (moduleName in projectsWithEnabledContextReceivers) {
+                freeCompilerArgs += "-Xcontext-receivers"
             }
         }
     }
