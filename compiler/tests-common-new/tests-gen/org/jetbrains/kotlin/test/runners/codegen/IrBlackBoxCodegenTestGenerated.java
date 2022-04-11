@@ -31176,6 +31176,12 @@ public class IrBlackBoxCodegenTestGenerated extends AbstractIrBlackBoxCodegenTes
         }
 
         @Test
+        @TestMetadata("expectCallFromCommonCode.kt")
+        public void testExpectCallFromCommonCode() throws Exception {
+            runTest("compiler/testData/codegen/box/multiplatform/expectCallFromCommonCode.kt");
+        }
+
+        @Test
         @TestMetadata("expectClassInJvmMultifileFacade.kt")
         public void testExpectClassInJvmMultifileFacade() throws Exception {
             runTest("compiler/testData/codegen/box/multiplatform/expectClassInJvmMultifileFacade.kt");
