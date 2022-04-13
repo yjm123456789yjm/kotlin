@@ -320,7 +320,8 @@ class CallAndReferenceGenerator(
         explicitReceiverExpression: IrExpression?,
         annotationMode: Boolean = false,
         dynamicOperator: IrDynamicOperator? = null,
-        variableAsFunctionMode: Boolean = false
+        variableAsFunctionMode: Boolean = false,
+        noArguments: Boolean = false
     ): IrExpression {
         try {
             val type = typeRef.toIrType()
@@ -433,7 +434,7 @@ class CallAndReferenceGenerator(
                     else -> generateErrorCallExpression(startOffset, endOffset, calleeReference, type)
                 }
             }.applyTypeArguments(qualifiedAccess).applyReceivers(qualifiedAccess, theExplicitReceiver)
-                .applyCallArguments(qualifiedAccess as? FirCall, annotationMode)
+                .applyCallArguments((qualifiedAccess as? FirCall)?.takeIf { !noArguments }, annotationMode)
         } catch (e: Throwable) {
             throw IllegalStateException(
                 "Error while translating ${qualifiedAccess.render()} " +
