@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.psi.psiUtil.containingClassOrObject
 import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.resolve.descriptorUtil.isEffectivelyPublicApi
 import org.jetbrains.kotlin.resolve.descriptorUtil.isPublishedApi
+import org.jetbrains.kotlin.resolve.isValueClass
 
 class ExplicitApiDeclarationChecker : DeclarationChecker {
     override fun check(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
@@ -77,7 +78,7 @@ class ExplicitApiDeclarationChecker : DeclarationChecker {
         /**
          * Exclusion list:
          * 1. Primary constructors of public API classes
-         * 2. Properties of data classes in public API
+         * 2. Properties of data and value classes in public API
          * 3. Overrides of public API. Effectively, this means 'no report on overrides at all'
          * 4. Getters and setters (because getters can't change visibility and setter-only explicit visibility looks ugly)
          * 5. Properties of annotations in public API
@@ -86,7 +87,7 @@ class ExplicitApiDeclarationChecker : DeclarationChecker {
          */
         fun explicitVisibilityIsNotRequired(descriptor: DeclarationDescriptor): Boolean {
             /* 1. */ if ((descriptor as? ClassConstructorDescriptor)?.isPrimary == true) return true
-            /* 2. */ if (descriptor is PropertyDescriptor && (descriptor.containingDeclaration as? ClassDescriptor)?.isData == true) return true
+            /* 2. */ if (descriptor is PropertyDescriptor && (descriptor.containingDeclaration as? ClassDescriptor)?.let { it.isData || it.isValueClass() } == true) return true
             /* 3. */ if ((descriptor as? CallableDescriptor)?.overriddenDescriptors?.isNotEmpty() == true) return true
             /* 4. */ if (descriptor is PropertyAccessorDescriptor) return true
             /* 5. */ if (descriptor is PropertyDescriptor && (descriptor.containingDeclaration as? ClassDescriptor)?.kind == ClassKind.ANNOTATION_CLASS) return true

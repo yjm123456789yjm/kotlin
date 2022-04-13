@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isInlineOrValueClass
 import org.jetbrains.kotlin.fir.analysis.checkers.declaration.isLocalMember
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.fir.analysis.getChild
@@ -78,7 +79,7 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
     /**
      * Exclusion list:
      * 1. Primary constructors of public API classes
-     * 2. Properties of data classes in public API
+     * 2. Properties of data and value classes in public API
      * 3. Overrides of public API. Effectively, this means 'no report on overrides at all'
      * 4. Getters and setters (because getters can't change visibility and setter-only explicit visibility looks ugly)
      * 5. Properties of annotations in public API
@@ -99,7 +100,7 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
                 // 2, 5
                 if (declaration is FirProperty &&
                     containingClass != null &&
-                    (containingClass.isData || containingClass.classKind == ClassKind.ANNOTATION_CLASS)
+                    (containingClass.isData || containingClass.isInlineOrValueClass() || containingClass.classKind == ClassKind.ANNOTATION_CLASS)
                 ) {
                     return true
                 }
