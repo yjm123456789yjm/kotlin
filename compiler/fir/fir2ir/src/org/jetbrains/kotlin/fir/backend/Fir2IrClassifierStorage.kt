@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.fir.symbols.Fir2IrClassSymbol
 import org.jetbrains.kotlin.fir.symbols.Fir2IrEnumEntrySymbol
 import org.jetbrains.kotlin.fir.symbols.Fir2IrTypeAliasSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.ConeClassLikeLookupTagImpl
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassLikeSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.FirTypeRef
@@ -96,11 +97,11 @@ class Fir2IrClassifierStorage(
     internal fun preCacheTypeParameters(owner: FirTypeParameterRefsOwner) {
         for ((index, typeParameter) in owner.typeParameters.withIndex()) {
             val original = typeParameter.symbol.fir
-            getCachedIrTypeParameter(original, index)
+            getCachedIrTypeParameter(original, index, replaceExpectsWithActulas = false)
                 ?: createIrTypeParameterWithoutBounds(original, index)
             if (owner is FirProperty && owner.isVar) {
                 val context = ConversionTypeContext.DEFAULT.inSetter()
-                getCachedIrTypeParameter(original, index, context)
+                getCachedIrTypeParameter(original, index, context, replaceExpectsWithActulas = false)
                     ?: createIrTypeParameterWithoutBounds(original, index, context)
             }
         }
@@ -400,7 +401,8 @@ class Fir2IrClassifierStorage(
     internal fun getCachedIrTypeParameter(
         typeParameter: FirTypeParameter,
         index: Int = UNDEFINED_PARAMETER_INDEX,
-        typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT
+        typeContext: ConversionTypeContext = ConversionTypeContext.DEFAULT,
+        replaceExpectsWithActulas: Boolean = true
     ): IrTypeParameter? {
         // Here transformation is a bit difficult because one FIR property type parameter
         // can be transformed to two different type parameters: one for getter and another one for setter
@@ -419,6 +421,17 @@ class Fir2IrClassifierStorage(
         if (typeContext.origin == ConversionTypeOrigin.SETTER) {
             typeParameterCacheForSetter[typeParameter]?.let { return it }
         }
+
+        if (replaceExpectsWithActulas) {
+            val owner = typeParameter.containingDeclarationSymbol as? FirClassLikeSymbol<*> ?: return null
+            if (owner.isLocal) return null
+            val actualOwner = session.symbolProvider.getClassLikeSymbolByClassId(owner.classId) ?: return null
+            if (actualOwner != owner) {
+                val indexInOwner = owner.fir.typeParameters.indexOf(typeParameter)
+                return typeParameterCache[actualOwner.fir.typeParameters[indexInOwner]]
+            }
+        }
+
         return null
     }
 
