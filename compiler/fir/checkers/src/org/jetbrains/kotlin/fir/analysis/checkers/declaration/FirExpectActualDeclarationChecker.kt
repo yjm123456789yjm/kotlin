@@ -16,7 +16,6 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isActual
 import org.jetbrains.kotlin.fir.languageVersionSettings
-import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -47,7 +46,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
         checkActual: Boolean = true
     ) {
         val symbol = declaration.symbol
-        val compatibilityToMembersMap = declaration.expectForActual ?: return
+        val compatibilityToMembersMap = symbol.expectForActual ?: return
         val session = context.session
 
         checkAmbiguousExpects(symbol, compatibilityToMembersMap, symbol, context, reporter)
