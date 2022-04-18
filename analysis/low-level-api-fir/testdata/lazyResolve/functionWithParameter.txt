@@ -71,6 +71,14 @@ FILE: functionWithParameter.kt
         ^resolveMe Q|kotlin/Unit|
     }
 
+EXPECT_ACTUAL_MATCHING:
+FILE: functionWithParameter.kt
+    public? final? [COMPILER_REQUIRED_ANNOTATIONS] interface I : R|kotlin/Any| {
+    }
+    public final [BODY_RESOLVE] fun resolveMe([BODY_RESOLVE] param: R|I|): R|kotlin/Unit| {
+        ^resolveMe Q|kotlin/Unit|
+    }
+
 FILE RAW TO BODY:
 FILE: functionWithParameter.kt
     public abstract [BODY_RESOLVE] interface I : R|kotlin/Any| {

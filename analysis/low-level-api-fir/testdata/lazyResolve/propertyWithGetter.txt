@@ -82,6 +82,15 @@ FILE: propertyWithGetter.kt
     public final [STATUS] val withGetter: R|kotlin/Int|
         [STATUS] public get(): R|kotlin/Int| { LAZY_BLOCK }
 
+EXPECT_ACTUAL_MATCHING:
+FILE: propertyWithGetter.kt
+    public final [BODY_RESOLVE] fun resolveMe(): R|kotlin/Unit| {
+        R|/receive|(R|/withGetter|)
+    }
+    public final [STATUS] fun receive([RAW_FIR] value: R|kotlin/Int|): R|kotlin/Unit| { LAZY_BLOCK }
+    public final [STATUS] val withGetter: R|kotlin/Int|
+        [STATUS] public get(): R|kotlin/Int| { LAZY_BLOCK }
+
 FILE RAW TO BODY:
 FILE: propertyWithGetter.kt
     public final [BODY_RESOLVE] fun resolveMe(): R|kotlin/Unit| {

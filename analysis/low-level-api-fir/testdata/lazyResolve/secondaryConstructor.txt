@@ -137,6 +137,20 @@ FILE: secondaryConstructor.kt
 
     }
 
+EXPECT_ACTUAL_MATCHING:
+FILE: secondaryConstructor.kt
+    public final [BODY_RESOLVE] fun resolveMe(): R|kotlin/Unit| {
+        R|/receive|(R|/A.A|(Int(42)))
+    }
+    public final [STATUS] fun receive([RAW_FIR] value: R|A|): R|kotlin/Unit| { LAZY_BLOCK }
+    public final [STATUS] class A : R|kotlin/Any| {
+        public [STATUS] [ContainingClassKey=A] constructor([RAW_FIR] x: R|kotlin/Int|): R|A| {
+            super<R|kotlin/Any|>()
+            [RAW_FIR] lval a: <implicit> = x#
+        }
+
+    }
+
 FILE RAW TO BODY:
 FILE: secondaryConstructor.kt
     public final [BODY_RESOLVE] fun resolveMe(): R|kotlin/Unit| {

@@ -57,6 +57,12 @@ FILE: annotations.kt
     @R|kotlin/Suppress|(names = vararg(String(2))) public final [BODY_RESOLVE] fun resolveMe(): R|kotlin/Unit| {
     }
 
+EXPECT_ACTUAL_MATCHING:
+FILE: annotations.kt
+    @FILE:Suppress(String(1))
+    @R|kotlin/Suppress|(names = vararg(String(2))) public final [BODY_RESOLVE] fun resolveMe(): R|kotlin/Unit| {
+    }
+
 FILE RAW TO BODY:
 FILE: annotations.kt
     @FILE:R|kotlin/Suppress|(names = vararg(String(1)))
