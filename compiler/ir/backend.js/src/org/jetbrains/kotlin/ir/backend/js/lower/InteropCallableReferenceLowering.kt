@@ -555,7 +555,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
 
         val nameGetter = context.mapping.reflectedNameAccessor[lambdaInfo.lambdaClass]
 
-        if (nameGetter != null || lambdaDeclaration.isSuspend) {
+        if (lambdaDeclaration.isSuspend) {
             val tmpVar = JsIrBuilder.buildVar(functionExpression.type, factoryFunction, "l", initializer = functionExpression)
             statements.add(tmpVar)
 
@@ -563,24 +563,34 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
                 statements.add(setDynamicProperty(tmpVar.symbol, Namer.KCALLABLE_NAME, extractReferenceReflectionName(nameGetter)))
             }
 
-            if (lambdaDeclaration.isSuspend) {
-                statements.add(
-                    setDynamicProperty(
-                        tmpVar.symbol, Namer.KCALLABLE_ARITY,
-                        IrConstImpl.int(
-                            UNDEFINED_OFFSET,
-                            UNDEFINED_OFFSET,
-                            context.irBuiltIns.intType,
-                            lambdaDeclaration.valueParameters.size
-                        )
+            statements.add(
+                setDynamicProperty(
+                    tmpVar.symbol, Namer.KCALLABLE_ARITY,
+                    IrConstImpl.int(
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        context.irBuiltIns.intType,
+                        lambdaDeclaration.valueParameters.size
                     )
                 )
-            }
+            )
 
             statements.add(
                 JsIrBuilder.buildReturn(
                     factoryFunction.symbol,
                     JsIrBuilder.buildGetValue(tmpVar.symbol),
+                    context.irBuiltIns.nothingType
+                )
+            )
+        } else if (nameGetter != null) {
+            val callableRefExpr = JsIrBuilder.buildCall(context.kCallableRefBuilder).apply {
+                putValueArgument(0, extractReferenceReflectionName(nameGetter))
+                putValueArgument(1, functionExpression)
+            }
+            statements.add(
+                JsIrBuilder.buildReturn(
+                    factoryFunction.symbol,
+                    callableRefExpr,
                     context.irBuiltIns.nothingType
                 )
             )

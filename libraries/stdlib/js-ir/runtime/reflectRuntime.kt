@@ -5,7 +5,13 @@
 
 package kotlin.js
 
+import kotlin.reflect.KFunction
 import kotlin.reflect.KProperty
+
+internal fun getCallableRef(name: String, f: dynamic): KFunction<*> {
+    f.callableName = name
+    return f.unsafeCast<KFunction<*>>()
+}
 
 internal fun getPropertyCallableRef(name: String, paramCount: Int, type: dynamic, getter: dynamic, setter: dynamic): KProperty<*> {
     getter.get = getter
