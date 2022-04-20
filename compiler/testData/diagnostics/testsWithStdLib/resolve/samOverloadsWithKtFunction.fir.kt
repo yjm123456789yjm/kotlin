@@ -16,5 +16,5 @@ public class Foo {
 
 // FILE: 1.kt
 fun bar() {
-    Foo().<!OVERLOAD_RESOLUTION_AMBIGUITY!>test<!> {} <!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>checkType<!> { _<String>() }
+    Foo().test {} checkType { <!UNRESOLVED_REFERENCE_WRONG_RECEIVER!>_<!><String>() }
 }
