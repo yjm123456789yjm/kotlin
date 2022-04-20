@@ -83,7 +83,8 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
                 lambdaContextMapping,
                 outerReceiverMapping,
             )
-            val functionExpression = IrFunctionExpressionImpl(
+
+            var functionExpression: IrExpression = IrFunctionExpressionImpl(
                 ctorCall.startOffset,
                 ctorCall.endOffset,
                 lambdaType,
@@ -94,7 +95,7 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
             // TODO: If we generate arrow functions instead of anonymous functions, there's no need for jsBind
             // TODO: Do we need to set proper offsets?
             if (capturedDispatchReceiver != null)
-                return IrCallImpl(
+                functionExpression = IrCallImpl(
                     UNDEFINED_OFFSET,
                     UNDEFINED_OFFSET,
                     context.irBuiltIns.anyType,
@@ -106,6 +107,11 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
                     putValueArgument(0, IrGetValueImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, capturedDispatchReceiver))
                     putValueArgument(1, functionExpression)
                 }
+
+            val nameGetter = context.mapping.reflectedNameAccessor[lambdaInfo.lambdaClass]
+
+            if (lambdaInfo.lambdaClass.origin == CallableReferenceLowering.Companion.FUNCTION_REFERENCE_IMPL && nameGetter != null)
+                functionExpression = buildGetCallableRefCall(nameGetter, functionExpression)
 
             return functionExpression
         }
@@ -316,8 +322,9 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         private fun replaceWithFactory(lambdaClass: IrClass): List<IrDeclaration> {
             val lambdaInfo = LambdaInfo(lambdaClass)
 
-            return if (lambdaClass.origin == CallableReferenceLowering.Companion.LAMBDA_IMPL && !lambdaInfo.isSuspendLambda) {
-                if (lambdaClass.fields.none()) {
+            return if (!lambdaInfo.isSuspendLambda) {
+                val isContextlessLambda = lambdaClass.fields.none()
+                if (isContextlessLambda && lambdaClass.origin == CallableReferenceLowering.Companion.LAMBDA_IMPL) {
                     // Optimization:
                     // If the lambda has no context, we lift it, i.e. instead of generating an anonymous function,
                     // we generate a named free function. The usage of the lambda is then replaced with a reference to the free function.
@@ -330,6 +337,8 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
                     // In-line anonymous functions that capture variables declared in loops are dangerous.
                     // See https://stackoverflow.com/questions/750486/javascript-closure-inside-loops-simple-practical-example
                     && !closureUsageAnalyser.lambdaCapturesVariablesDeclaredInLoops(lambdaClass)
+                    // If this is a callable reference, for simplicity only inline its creation if no values are captured.
+                    && (lambdaClass.origin != CallableReferenceLowering.Companion.FUNCTION_REFERENCE_IMPL || isContextlessLambda)
                 ) {
                     // If possible, generate anonymous functions in-line instead of factories of anonymous functions.
                     buildFunctionExpression(ctorToFunctionExpressionMap, lambdaInfo)
@@ -583,14 +592,10 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
                 )
             )
         } else if (nameGetter != null) {
-            val callableRefExpr = JsIrBuilder.buildCall(context.kCallableRefBuilder).apply {
-                putValueArgument(0, extractReferenceReflectionName(nameGetter))
-                putValueArgument(1, functionExpression)
-            }
             statements.add(
                 JsIrBuilder.buildReturn(
                     factoryFunction.symbol,
-                    callableRefExpr,
+                    buildGetCallableRefCall(nameGetter, functionExpression),
                     context.irBuiltIns.nothingType
                 )
             )
@@ -599,6 +604,14 @@ class InteropCallableReferenceLowering(val context: JsIrBackendContext) : BodyLo
         }
 
         return context.irFactory.createBlockBody(lambdaInfo.lambdaClass.startOffset, lambdaInfo.lambdaClass.endOffset, statements)
+    }
+
+    private fun buildGetCallableRefCall(
+        nameGetter: IrSimpleFunction,
+        functionExpression: IrExpression
+    ) = JsIrBuilder.buildCall(context.kCallableRefBuilder).apply {
+        putValueArgument(0, extractReferenceReflectionName(nameGetter))
+        putValueArgument(1, functionExpression)
     }
 
     private fun createLambdaDeclaration(

@@ -676,6 +676,108 @@ public class IrBoxJsTestGenerated extends AbstractIrBoxJsTest {
             public void testTwiceRegeneratedAnonymousObject() throws Exception {
                 runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/twiceRegeneratedAnonymousObject.kt");
             }
+
+            @Nested
+            @TestMetadata("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference")
+            @TestDataPath("$PROJECT_ROOT")
+            public class CallableReference {
+                @Test
+                public void testAllFilesPresentInCallableReference() throws Exception {
+                    KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+                }
+
+                @Nested
+                @TestMetadata("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function")
+                @TestDataPath("$PROJECT_ROOT")
+                public class Function {
+                    @Test
+                    public void testAllFilesPresentInFunction() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+                    }
+
+                    @Test
+                    @TestMetadata("classMemberAndNonExtensionCompatibility.kt")
+                    public void testClassMemberAndNonExtensionCompatibility() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/classMemberAndNonExtensionCompatibility.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("classMemberOverridden.kt")
+                    public void testClassMemberOverridden() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/classMemberOverridden.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("constructorsWithArgs.kt")
+                    public void testConstructorsWithArgs() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/constructorsWithArgs.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("constructorsWithArgsSimple.kt")
+                    public void testConstructorsWithArgsSimple() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/constructorsWithArgsSimple.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("extensionFromTopLevel.kt")
+                    public void testExtensionFromTopLevel() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/extensionFromTopLevel.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("functionReferenceName.kt")
+                    public void testFunctionReferenceName() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/functionReferenceName.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("localAndTopLevelExtensions.kt")
+                    public void testLocalAndTopLevelExtensions() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/localAndTopLevelExtensions.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("stringNativeExtension.kt")
+                    public void testStringNativeExtension() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/stringNativeExtension.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("topLevelFromTopLevelWithArg.kt")
+                    public void testTopLevelFromTopLevelWithArg() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/function/topLevelFromTopLevelWithArg.kt");
+                    }
+                }
+
+                @Nested
+                @TestMetadata("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/property")
+                @TestDataPath("$PROJECT_ROOT")
+                public class Property {
+                    @Test
+                    public void testAllFilesPresentInProperty() throws Exception {
+                        KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/property"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.JS_IR, true);
+                    }
+
+                    @Test
+                    @TestMetadata("extensionProperty.kt")
+                    public void testExtensionProperty() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/property/extensionProperty.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("memberProperty.kt")
+                    public void testMemberProperty() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/property/memberProperty.kt");
+                    }
+
+                    @Test
+                    @TestMetadata("topLevelVar.kt")
+                    public void testTopLevelVar() throws Exception {
+                        runTest("js/js.translator/testData/box/closure/inlineAnonymousFunctions/callableReference/property/topLevelVar.kt");
+                    }
+                }
+            }
         }
     }
 
