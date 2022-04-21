@@ -58,6 +58,13 @@ val shadowJar = runtimeJar(tasks.register<ShadowJar>("shadowJar")) {
     configurations = listOf(shadows)
     relocate("kotlinx.metadata", "org.jetbrains.kotlin.jvm.abi.kotlinx.metadata")
     mergeServiceFiles() // This is needed to relocate the services files for kotlinx.metadata
+
+    doLast {
+        val manifest = project.buildDir.resolve("tmp/shadowJar/MANIFEST.MF")
+        println("$manifest contents START")
+        println(manifest.readText())
+        println("$manifest contents END")
+    }
 }
 
 sourcesJar()
