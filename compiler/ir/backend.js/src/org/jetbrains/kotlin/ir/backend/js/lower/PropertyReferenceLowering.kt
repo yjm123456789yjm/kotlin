@@ -9,7 +9,10 @@ import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.backend.common.ir.copyTo
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.languageVersionSettings
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.declarations.buildValueParameter
@@ -82,17 +85,9 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
             // 3 - getter
             // 4 - setter
 
-            val arity = (reference.type as IrSimpleType).arguments.size - 1
-
             val irBuilder = context.createIrBuilder(factoryDeclaration.symbol)
             factoryDeclaration.body = irBuilder.irBlockBody {
-                +irReturn(irCall(referenceBuilderSymbol).apply {
-                    putValueArgument(0, reference.nameExpression())
-                    putValueArgument(1, irInt(arity))
-                    putValueArgument(2, reference.getJsTypeConstructor())
-                    putValueArgument(3, buildGetterLambda(factoryDeclaration, reference, valueParameters))
-                    putValueArgument(4, buildSetterLambda(factoryDeclaration, reference, valueParameters))
-                })
+                +irReturn(buildGetPropertyCallableRefCall(reference, factoryDeclaration, valueParameters))
             }
 
             newDeclarations.add(factoryDeclaration)
@@ -100,24 +95,52 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
             return factoryDeclaration
         }
 
-        private fun buildGetterLambda(factory: IrSimpleFunction, reference: IrPropertyReference, boundValueParameters: List<IrValueParameter>): IrExpression {
+        fun buildGetPropertyCallableRefCall(
+            reference: IrPropertyReference,
+            parent: IrDeclarationParent,
+            valueParameters: List<IrValueParameter>
+        ): IrCall {
+            val arity = (reference.type as IrSimpleType).arguments.size - 1
+            return JsIrBuilder.buildCall(referenceBuilderSymbol).apply {
+                putValueArgument(0, reference.nameExpression())
+                putValueArgument(1, JsIrBuilder.buildInt(context.irBuiltIns.intType, arity))
+                putValueArgument(2, reference.getJsTypeConstructor())
+                putValueArgument(3, buildGetterLambda(parent, reference, valueParameters))
+                putValueArgument(4, buildSetterLambda(parent, reference, valueParameters))
+            }
+        }
+
+        private fun buildGetterLambda(
+            parent: IrDeclarationParent,
+            reference: IrPropertyReference,
+            boundValueParameters: List<IrValueParameter>
+        ): IrExpression {
             val getter = reference.getter?.owner
                 ?: compilationException(
                     "Getter expected",
                     reference
                 )
-            return buildAccessorLambda(factory, getter, reference, boundValueParameters)
+            return buildAccessorLambda(parent, getter, reference, boundValueParameters)
         }
 
-        private fun buildSetterLambda(factory: IrSimpleFunction, reference: IrPropertyReference, boundValueParameters: List<IrValueParameter>): IrExpression {
+        private fun buildSetterLambda(
+            parent: IrDeclarationParent,
+            reference: IrPropertyReference,
+            boundValueParameters: List<IrValueParameter>
+        ): IrExpression {
             val setter = reference.run {
                 setter?.owner ?: return IrConstImpl.constNull(startOffset, endOffset, context.irBuiltIns.nothingNType)
             }
 
-            return buildAccessorLambda(factory, setter, reference, boundValueParameters)
+            return buildAccessorLambda(parent, setter, reference, boundValueParameters)
         }
 
-        private fun buildAccessorLambda(factory: IrSimpleFunction, accessor: IrSimpleFunction, reference: IrPropertyReference, boundValueParameters: List<IrValueParameter>): IrExpression {
+        private fun buildAccessorLambda(
+            parent: IrDeclarationParent,
+            accessor: IrSimpleFunction,
+            reference: IrPropertyReference,
+            boundValueParameters: List<IrValueParameter>
+        ): IrExpression {
             val superName = when (accessor.symbol) {
                 reference.getter -> "get"
                 reference.setter -> "set"
@@ -142,7 +165,7 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
                 name = supperAccessor.name
             }
 
-            function.parent = factory
+            function.parent = parent
 
             val unboundValueParameters = supperAccessor.valueParameters.map { it.copyTo(function) }
             function.valueParameters = unboundValueParameters
@@ -198,6 +221,15 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
 
         override fun visitPropertyReference(expression: IrPropertyReference): IrExpression {
             expression.transformChildrenVoid(this)
+
+            if (context.configuration.languageVersionSettings.supportsFeature(LanguageFeature.JsGenerateInlineAnonymousFunctions)
+                && expression.dispatchReceiver == null
+                && expression.extensionReceiver == null
+            ) {
+                // If the property is not bound to any instance, instead of generating a factory,
+                // generate an in-line call to getPropertyCallableRef.
+                return buildGetPropertyCallableRefCall(expression, currentParent, emptyList())
+            }
 
             val factoryFunction = buildFactoryFunction(expression)
 

@@ -1,4 +1,4 @@
-// EXPECTED_REACHABLE_NODES: 1289
+// FUNCTION_CALLED_TIMES: getPropertyCallableRef count=3
 package foo
 
 var x = 1
@@ -8,6 +8,7 @@ val y = 2
 val z: Int
     get() = 3
 
+// CHECK_CALLED_IN_SCOPE: scope=box function=getPropertyCallableRef
 fun box(): String {
     var refX = ::x
     assertEquals(1, refX.get())
