@@ -32,7 +32,6 @@ dependencies {
     api(project(":jps:jps-common"))
     compileOnly(commonDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil"))
     compileOnly(commonDependency("org.jetbrains.intellij.deps:trove4j"))
-    compileOnly(intellijCore())
     compileOnly(jpsModel())
     compileOnly(jpsModelImpl())
     compileOnly(jpsBuild())
@@ -68,8 +67,6 @@ dependencies {
     testApi(projectTests(":compiler:test-infrastructure-utils"))
     testCompileOnly(jpsBuild())
     testApi(devKitJps())
-
-    testApi(intellijCore())
 
     testApi(jpsBuildTest())
     compilerModules.forEach {
