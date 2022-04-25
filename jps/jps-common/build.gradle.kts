@@ -13,7 +13,6 @@ dependencies {
     api(project(":compiler:frontend.java"))
     api(project(":js:js.frontend"))
     api(project(":native:frontend.native"))
-    compileOnly(intellijCore())
     compileOnly(jpsModel())
     compileOnly(jpsModelImpl())
     compileOnly(jpsModelSerialization())
