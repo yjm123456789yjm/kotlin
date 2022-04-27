@@ -9,6 +9,7 @@ package org.jetbrains.kotlin.generators.gradle.dsl
 
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.presetName
+import java.util.*
 import kotlin.io.path.ExperimentalPathApi
 import kotlin.io.path.Path
 import kotlin.io.path.writeText
@@ -96,7 +97,7 @@ private fun allVariantConstructors() = allKonanTargets()
 
 private val KonanTarget.variantClassName
     get() = presetName
-        .capitalize()
+        .replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
         .let { "Kotlin${it}Variant" }
 
 private val KonanTarget.className get() = javaClass.simpleName

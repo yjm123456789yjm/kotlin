@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeBuildType
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import java.io.File
+import java.util.*
 
 fun main() {
     generateAbstractKotlinArtifactsExtensionImplementation()
@@ -53,14 +54,17 @@ private fun generateAbstractKotlinArtifactsExtensionImplementation() {
         "val EmbedBitcodeMode = BitcodeEmbeddingModeDsl()"
     ).joinToString("\n").indented(4)
 
-    val konanTargetConstants = KonanTarget.predefinedTargets.values.joinToString("\n") {
-        val nameParts = it.name.split("_")
+    val konanTargetConstants = KonanTarget.predefinedTargets.values.joinToString("\n") { konanTarget ->
+        val nameParts = konanTarget.name.split("_")
         val name = nameParts.drop(1).joinToString(
             separator = "",
-            prefix = nameParts.first(),
-            transform = String::capitalize
-        )
-        "val $name = KonanTarget.${it.name.toUpperCase()}"
+            prefix = nameParts.first()
+        ) { namePart ->
+            namePart.replaceFirstChar {
+                if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString()
+            }
+        }
+        "val $name = KonanTarget.${konanTarget.name.uppercase(Locale.getDefault())}"
     }.indented(4)
 
     val code = listOf(

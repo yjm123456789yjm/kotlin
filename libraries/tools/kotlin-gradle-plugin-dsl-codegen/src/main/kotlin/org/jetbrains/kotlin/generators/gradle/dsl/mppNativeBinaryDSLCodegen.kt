@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.generators.gradle.dsl
 
 import java.io.File
+import java.util.*
 
 fun main() {
     generateAbstractKotlinNativeBinaryContainer()
@@ -33,8 +34,8 @@ private fun binaryType(
         typeName("$MPP_PACKAGE.$className"),
         typeName("${nativeOutputKindClass.fqName}.$outputKind"),
         baseMethodName,
-        "get${baseMethodName.capitalize()}",
-        "find${baseMethodName.capitalize()}",
+        "get${baseMethodName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}",
+        "find${baseMethodName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}",
         defaultBaseName
     )
 

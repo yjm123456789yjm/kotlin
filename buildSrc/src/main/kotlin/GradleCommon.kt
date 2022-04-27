@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import org.jetbrains.kotlin.project.model.KotlinPlatformTypeAttribute
 import plugins.configureDefaultPublishing
 import plugins.configureKotlinPomAttributes
+import java.util.*
 
 /**
  * Gradle plugins common variants.
@@ -130,7 +131,7 @@ fun Project.createGradleCommonSourceSet(): SourceSet {
 
     // Common outputs will also produce '${project.name}.kotlin_module' file, so we need to avoid
     // files clash
-    tasks.named<KotlinCompile>("compile${commonSourceSet.name.capitalize()}Kotlin") {
+    tasks.named<KotlinCompile>("compile${commonSourceSet.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}Kotlin") {
         kotlinOptions {
             moduleName = "${this@createGradleCommonSourceSet.name}_${commonSourceSet.name}"
         }
@@ -354,7 +355,14 @@ fun Project.createGradlePluginVariant(
 
     if (kotlinBuildProperties.publishGradlePluginsJavadoc) {
         plugins.withId("org.jetbrains.dokka") {
-            val dokkaTask = tasks.register<DokkaTask>("dokka${variantSourceSet.javadocTaskName.capitalize()}") {
+            val dokkaTask = tasks.register<DokkaTask>(
+                "dokka${
+                    variantSourceSet.javadocTaskName.replaceFirstChar {
+                        if (it.isLowerCase()) it.titlecase(
+                            Locale.getDefault()
+                        ) else it.toString()
+                    }
+                }") {
                 description = "Generates documentation in 'javadoc' format for '${variantSourceSet.javadocTaskName}' variant"
 
                 plugins.dependencies.add(
@@ -399,7 +407,7 @@ fun Project.createGradlePluginVariant(
     }
 
     // KT-52138: Make module name the same for all variants, so KSP could access internal methods/properties
-    tasks.named<KotlinCompile>("compile${variantSourceSet.name.capitalize()}Kotlin") {
+    tasks.named<KotlinCompile>("compile${variantSourceSet.name.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}Kotlin") {
         kotlinOptions {
             moduleName = this@createGradlePluginVariant.name
         }
@@ -459,7 +467,7 @@ fun Project.publishShadowedJar(
     val jarTask = tasks.named<Jar>(sourceSet.jarTaskName)
 
     val shadowJarTask = embeddableCompilerDummyForDependenciesRewriting(
-        taskName = "$EMBEDDABLE_COMPILER_TASK_NAME${sourceSet.jarTaskName.capitalize()}"
+        taskName = "$EMBEDDABLE_COMPILER_TASK_NAME${sourceSet.jarTaskName.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }}"
     ) {
         setupPublicJar(
             jarTask.flatMap { it.archiveBaseName },
