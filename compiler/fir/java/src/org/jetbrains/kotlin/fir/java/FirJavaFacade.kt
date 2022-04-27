@@ -193,6 +193,14 @@ abstract class FirJavaFacade(
         }
         firJavaClass.replaceSuperTypeRefs(enhancedSuperTypes)
         firJavaClass.replaceDeprecation(firJavaClass.getDeprecationInfos(session.languageVersionSettings.apiVersion))
+        if (javaClass is BinaryJavaClass) {
+            for (declaration in firJavaClass.declarations) {
+                val symbol = declaration.symbol
+                if (symbol is FirVariableSymbol<*>) {
+                    enhancement.enhancedProperty(symbol, symbol.name)
+                }
+            }
+        }
         return firJavaClass
     }
 
