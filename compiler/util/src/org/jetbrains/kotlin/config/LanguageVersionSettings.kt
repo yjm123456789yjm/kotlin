@@ -259,6 +259,7 @@ enum class LanguageFeature(
     ReportMissingUpperBoundsViolatedErrorOnAbbreviationAtSupertypes(KOTLIN_1_8, kind = BUG_FIX), // KT-29168
     IgnoreNullabilityForErasedValueParameters(KOTLIN_1_8, kind = BUG_FIX),
     ForbidUsingExtensionPropertyTypeParameterInDelegate(KOTLIN_1_8, kind = BUG_FIX),
+    EnableDfaWarningsInK2(KOTLIN_1_8, kind = OTHER), // KT-50965
 
     // 1.9
 
