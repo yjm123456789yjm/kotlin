@@ -42,9 +42,9 @@ val targetList: List<String> by project
 bitcode {
     module("main") {
         includeRuntime()
-
-        outputName = "runtime.bc"
     }
+
+    linkModules("runtime", listOf("main"))
 
     module("mimalloc") {
         val srcRoot = file("src/mimalloc")

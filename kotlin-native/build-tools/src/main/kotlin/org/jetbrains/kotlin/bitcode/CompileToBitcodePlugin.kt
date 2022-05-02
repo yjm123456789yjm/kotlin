@@ -65,13 +65,54 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
         })
     }
 
-    private fun addToCompdb(compileTask: CompileToBitcode) {
-        val task = project.tasks.create("${compileTask.name}_CompilationDatabase", GenerateCompilationDatabase::class.java, compileTask.target, compileTask.inputFiles, compileTask.executable, compileTask.compilerFlags, compileTask.objDir)
-        val compdbTask = compdbTasks[compileTask.target]!!
-        compdbTask.configure {
-            dependsOn(task)
-            inputFiles.add(task.outputFile)
+    private fun compileToBitcode(
+            folderName: String,
+            targetName: String,
+            sanitizer: SanitizerKind?,
+            outputGroup: String,
+            configurationBlock: CompileToBitcode.() -> Unit,
+    ): LlvmLink {
+        val compileTaskName = "${targetName}${folderName.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}Bitcode"
+        val compileTask = project.tasks.create(compileTaskName, CompileToBitcode::class.java, folderName, targetName, outputGroup).apply {
+            this.sanitizer = sanitizer
+            group = BasePlugin.BUILD_GROUP
+            val sanitizerDescription = when (sanitizer) {
+                null -> ""
+                SanitizerKind.ADDRESS -> " with ASAN"
+                SanitizerKind.THREAD -> " with TSAN"
+            }
+            description = "Compiles '$name' to bitcode for $targetName$sanitizerDescription"
+            dependsOn(":kotlin-native:dependencies:update")
+            configurationBlock()
         }
+
+        // TODO: No need to create compdb tasks for different sanitizers.
+        val compdbTaskName = "${targetName}${folderName.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}CompilationDatabase"
+        val compdbTask = project.tasks.create(compdbTaskName, GenerateCompilationDatabase::class.java, compileTask.target, compileTask.inputFiles, compileTask.executable, compileTask.compilerFlags, compileTask.objDir)
+        compdbTasks[targetName]!!.configure {
+            dependsOn(compdbTask)
+            inputFiles.add(compdbTask.outputFile)
+        }
+
+        val linkTaskName = "${targetName}${folderName.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}Link"
+        val linkTask = project.tasks.create(linkTaskName, LlvmLink::class.java, folderName).apply {
+            onlyIf {
+                // TODO: Must be the same `onlyIf` applied in `configurationBlock`
+                val state = compileTask.state
+                state.executed || state.upToDate
+            }
+            targetDir = compileTask.targetDir
+            inputFiles.addAll(compileTask.outputFiles)
+            dependsOn(compileTask)
+        }
+
+        if (outputGroup == "main" && sanitizer == null) {
+            allMainModulesTasks[targetName]!!.configure {
+                dependsOn(linkTaskName)
+            }
+        }
+
+        return linkTask
     }
 
     fun module(name: String, srcRoot: File = project.file("src/$name"), outputGroup: String = "main", configurationBlock: CompileToBitcode.() -> Unit = {}) {
@@ -79,74 +120,51 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
             val platformManager = project.rootProject.project(":kotlin-native").findProperty("platformManager") as PlatformManager
             val target = platformManager.targetByName(targetName)
             val sanitizers: List<SanitizerKind?> = target.supportedSanitizers() + listOf(null)
-            val allMainModulesTask = allMainModulesTasks[targetName]!!
             sanitizers.forEach { sanitizer ->
-                val taskName = "${targetName}${name.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}"
-                val task = project.tasks.create(taskName, CompileToBitcode::class.java, name, targetName, outputGroup).apply {
+                compileToBitcode(name, targetName, sanitizer, outputGroup) {
                     srcDirs = project.files(srcRoot.resolve("cpp"))
                     headersDirs = srcDirs + project.files(srcRoot.resolve("headers"))
 
-                    this.sanitizer = sanitizer
-                    group = BasePlugin.BUILD_GROUP
-                    val sanitizerDescription = when (sanitizer) {
-                        null -> ""
-                        SanitizerKind.ADDRESS -> " with ASAN"
-                        SanitizerKind.THREAD -> " with TSAN"
-                    }
-                    description = "Compiles '$name' to bitcode for $targetName$sanitizerDescription"
-                    dependsOn(":kotlin-native:dependencies:update")
                     configurationBlock()
-                }
-                addToCompdb(task)
-                if (outputGroup == "main" && sanitizer == null) {
-                    allMainModulesTask.configure {
-                        dependsOn(taskName)
-                    }
                 }
             }
         }
     }
 
     private fun createTestTask(
-            project: Project,
             testName: String,
             testedTaskNames: List<String>,
+            target: String,
             sanitizer: SanitizerKind?,
-    ): Task {
+    ) {
         val platformManager = project.project(":kotlin-native").findProperty("platformManager") as PlatformManager
         val googleTestExtension = project.extensions.getByName(RuntimeTestingPlugin.GOOGLE_TEST_EXTENSION_NAME) as GoogleTestExtension
         val testedTasks = testedTaskNames.map {
-            project.tasks.getByName(it) as CompileToBitcode
+            val fullName = "${target}${it.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}Link"
+            project.tasks.getByName(fullName) as LlvmLink
         }
-        val target = testedTasks.map {
-            it.target
-        }.distinct().single()
         val konanTarget = platformManager.targetByName(target)
-        val compileToBitcodeTasks = testedTasks.mapNotNull {
-            val name = "${it.name}TestBitcode"
-            val task = project.tasks.findByName(name) as? CompileToBitcode
-                    ?: project.tasks.create(name, CompileToBitcode::class.java, "${it.folderName}Tests", target, "test").apply {
-                        srcDirs = it.srcDirs
-                        headersDirs = it.headersDirs + googleTestExtension.headersDirs
-
-                        this.sanitizer = sanitizer
-                        excludeFiles = emptyList()
-                        includeFiles = listOf("**/*Test.cpp", "**/*TestSupport.cpp", "**/*Test.mm", "**/*TestSupport.mm")
-                        dependsOn(":kotlin-native:dependencies:update")
-                        dependsOn("downloadGoogleTest")
-                        compilerArgs.addAll(it.compilerArgs)
-
-                        addToCompdb(this)
-                    }
+        val testTasks = testedTaskNames.mapNotNull {
+            val compileTaskName = "${target}${it.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}Bitcode"
+            val compileTask = project.tasks.getByName(compileTaskName) as CompileToBitcode
+            val name = "${target}${it.snakeCaseToCamelCase().capitalize()}Test${suffixForSanitizer(sanitizer)}Link"
+            val task = project.tasks.findByName(name) as? LlvmLink ?: compileToBitcode("${it}_test", target, sanitizer, "test") {
+                srcDirs = compileTask.srcDirs
+                headersDirs = compileTask.headersDirs + googleTestExtension.headersDirs
+                excludeFiles = emptyList()
+                includeFiles = listOf("**/*Test.cpp", "**/*TestSupport.cpp", "**/*Test.mm", "**/*TestSupport.mm")
+                dependsOn("downloadGoogleTest")
+                compilerArgs.addAll(compileTask.compilerArgs)
+            }
             if (task.inputFiles.count() == 0) null
             else task
         }
         // TODO: Consider using sanitized versions.
-        val testFrameworkTasks = listOf(project.tasks.getByName("${target}Googletest") as CompileToBitcode, project.tasks.getByName("${target}Googlemock") as CompileToBitcode)
+        val testFrameworkTasks = listOf(project.tasks.getByName("${target}GoogletestLink") as LlvmLink, project.tasks.getByName("${target}GooglemockLink") as LlvmLink)
 
-        val testSupportTask = project.tasks.getByName("${target}TestSupport${CompileToBitcodeExtension.suffixForSanitizer(sanitizer)}") as CompileToBitcode
+        val testSupportTask = project.tasks.getByName("${target}TestSupport${CompileToBitcodeExtension.suffixForSanitizer(sanitizer)}Link") as LlvmLink
 
-        val mimallocEnabled = testedTaskNames.any { it.contains("mimalloc", ignoreCase = true) }
+        val mimallocEnabled = testedTaskNames.any { it.contains("mimalloc") }
         val compileTask = project.tasks.create(
                 "${testName}Compile",
                 CompileNativeTest::class.java,
@@ -156,7 +174,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
                 platformManager,
                 mimallocEnabled,
         ).apply {
-            val tasksToLink = (compileToBitcodeTasks + testedTasks + testFrameworkTasks)
+            val tasksToLink = (testTasks + testedTasks + testFrameworkTasks)
             this.sanitizer = sanitizer
             this.inputFiles.setFrom(tasksToLink.map { it.outFile })
             dependsOn(testSupportTask)
@@ -173,7 +191,9 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
             dependsOn(compileTask)
         }
 
-        return runTask
+        allTestsTasks[target]!!.configure {
+            dependsOn(runTask)
+        }
     }
 
     fun testsGroup(
@@ -184,16 +204,42 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
         targetList.get().forEach { targetName ->
             val target = platformManager.targetByName(targetName)
             val sanitizers: List<SanitizerKind?> = target.supportedSanitizers() + listOf(null)
-            val allTestsTask = allTestsTasks[targetName]!!
             sanitizers.forEach { sanitizer ->
                 val suffix = CompileToBitcodeExtension.suffixForSanitizer(sanitizer)
                 val name = targetName + testTaskName.snakeCaseToCamelCase().capitalize() + suffix
-                val testedNames = testedTaskNames.map {
-                    targetName + it.snakeCaseToCamelCase().capitalize() + suffix
+                createTestTask(name, testedTaskNames, targetName, sanitizer)
+            }
+        }
+    }
+
+    fun linkModules(name: String, modules: List<String>, outputGroup: String = "main") {
+        val platformManager = project.rootProject.project(":kotlin-native").findProperty("platformManager") as PlatformManager
+        targetList.get().forEach { targetName ->
+            val target = platformManager.targetByName(targetName)
+            val sanitizers: List<SanitizerKind?> = target.supportedSanitizers() + listOf(null)
+            sanitizers.forEach { sanitizer ->
+                val linkTaskName = "${targetName}${name.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}Link"
+                // TODO: Deduplicate with CompileToBitcode
+                val sanitizerSuffix = when (sanitizer) {
+                    null -> ""
+                    SanitizerKind.ADDRESS -> "-asan"
+                    SanitizerKind.THREAD -> "-tsan"
                 }
-                val task = createTestTask(project, name, testedNames, sanitizer)
-                allTestsTask.configure {
-                    dependsOn(task)
+                val targetDir = project.buildDir.resolve("bitcode/$outputGroup/$targetName$sanitizerSuffix")
+                project.tasks.register(linkTaskName, LlvmLink::class.java, name).configure {
+                    this.targetDir = targetDir
+                    modules.forEach {
+                        val moduleName = "${targetName}${it.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}Link"
+                        val task = project.tasks.findByName(moduleName) as LlvmLink
+                        inputFiles.add(task.outFile)
+                        dependsOn(task)
+                    }
+                }
+
+                if (outputGroup == "main" && sanitizer == null) {
+                    allMainModulesTasks[targetName]!!.configure {
+                        dependsOn(linkTaskName)
+                    }
                 }
             }
         }

@@ -27,7 +27,6 @@ interface CompileToBitcodeParameters : WorkParameters {
     var target: String
     var compilerExecutable: String
     var compilerArgs: List<String>
-    var llvmLinkArgs: List<String>
 
     var konanHome: File
     var llvmDir: File
@@ -53,11 +52,6 @@ abstract class CompileToBitcodeJob : WorkAction<CompileToBitcodeParameters> {
                 executable = compilerExecutable
                 args = compilerArgs
             }
-
-            execOperations.exec {
-                executable = "${llvmDir.absolutePath}/bin/llvm-link"
-                args = llvmLinkArgs
-            }
         }
     }
 }
@@ -75,8 +69,7 @@ abstract class CompileToBitcode @Inject constructor(
     // Compiler args are part of compilerFlags so we don't register them as an input.
     @Internal
     val compilerArgs = mutableListOf<String>()
-    @Input
-    val linkerArgs = mutableListOf<String>()
+
     @Input
     var excludeFiles: List<String> = listOf(
             "**/*Test.cpp",
@@ -105,7 +98,8 @@ abstract class CompileToBitcode @Inject constructor(
     @Input @Optional
     val extraSanitizerArgs = mutableMapOf<SanitizerKind, List<String>>()
 
-    private val targetDir: File
+    @get:Internal
+    val targetDir: File
         get() {
             val sanitizerSuffix = when (sanitizer) {
                 null -> ""
@@ -176,6 +170,10 @@ abstract class CompileToBitcode @Inject constructor(
     private fun outputFileForInputFile(file: File, extension: String) = objDir.resolve("${file.nameWithoutExtension}.${extension}")
     private fun bitcodeFileForInputFile(file: File) = outputFileForInputFile(file, "bc")
 
+    @get:OutputFiles
+    val outputFiles: List<File>
+        get() = inputFiles.map { bitcodeFileForInputFile(it) }
+
     @get:InputFiles
     protected val headers: Iterable<File>
         get() {
@@ -212,13 +210,6 @@ abstract class CompileToBitcode @Inject constructor(
             }
         }
 
-    @Input
-    var outputName = "${folderName}.bc"
-
-    @get:OutputFile
-    val outFile: File
-        get() = File(targetDir, outputName)
-
     @get:Inject
     abstract val workerExecutor: WorkerExecutor
 
@@ -226,20 +217,18 @@ abstract class CompileToBitcode @Inject constructor(
     fun compile() {
         val workQueue = workerExecutor.noIsolation()
 
-        val parameters = { it: CompileToBitcodeParameters ->
-            it.objDir = objDir
-            it.target = target
-            it.compilerExecutable = executable
-            it.compilerArgs = compilerFlags + inputFiles.map { it.absolutePath }
-            it.llvmLinkArgs = listOf("-o", outFile.absolutePath) + linkerArgs +
-                    inputFiles.map {
-                        bitcodeFileForInputFile(it).absolutePath
-                    }
+        inputFiles.forEach { inputFile ->
+            val parameters = { it: CompileToBitcodeParameters ->
+                it.objDir = objDir
+                it.target = target
+                it.compilerExecutable = executable
+                it.compilerArgs = compilerFlags + inputFile.absolutePath
 
-            it.konanHome = project.project(":kotlin-native").projectDir
-            it.llvmDir = project.file(project.findProperty("llvmDir")!!)
+                it.konanHome = project.project(":kotlin-native").projectDir
+                it.llvmDir = project.file(project.findProperty("llvmDir")!!)
+            }
+
+            workQueue.submit(CompileToBitcodeJob::class.java, parameters)
         }
-
-        workQueue.submit(CompileToBitcodeJob::class.java, parameters)
     }
 }

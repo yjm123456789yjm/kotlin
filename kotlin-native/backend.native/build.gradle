@@ -66,7 +66,7 @@ kotlinNativeInterop {
 
     files {
         linker 'clang++'
-        linkOutputs ":kotlin-native:common:${hostName}Files"
+        linkOutputs ":kotlin-native:common:${hostName}FilesLink"
 
         headers fileTree('../common/src/files/headers') {
             include '**/*.h'
@@ -79,7 +79,7 @@ kotlinNativeInterop {
 
     env {
         linker 'clang++'
-        linkOutputs ":kotlin-native:common:${hostName}Env"
+        linkOutputs ":kotlin-native:common:${hostName}EnvLink"
 
         headers fileTree('../common/src/env/headers') {
             include '**/*.h'
