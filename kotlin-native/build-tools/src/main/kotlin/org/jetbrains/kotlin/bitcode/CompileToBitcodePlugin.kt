@@ -24,7 +24,7 @@ import javax.inject.Inject
 /**
  * A plugin creating extensions to compile
  */
-open class CompileToBitcodePlugin: Plugin<Project> {
+open class CompileToBitcodePlugin : Plugin<Project> {
     override fun apply(target: Project) = with(target) {
         extensions.create(EXTENSION_NAME, CompileToBitcodeExtension::class.java, target)
         Unit
@@ -66,13 +66,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
     }
 
     private fun addToCompdb(compileTask: CompileToBitcode) {
-        val task = project.tasks.create("${compileTask.name}_CompilationDatabase",
-                GenerateCompilationDatabase::class.java,
-                compileTask.target,
-                compileTask.inputFiles,
-                compileTask.executable,
-                compileTask.compilerFlags,
-                compileTask.objDir)
+        val task = project.tasks.create("${compileTask.name}_CompilationDatabase", GenerateCompilationDatabase::class.java, compileTask.target, compileTask.inputFiles, compileTask.executable, compileTask.compilerFlags, compileTask.objDir)
         val compdbTask = compdbTasks[compileTask.target]!!
         compdbTask.configure {
             dependsOn(task)
@@ -80,12 +74,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
         }
     }
 
-    fun module(
-            name: String,
-            srcRoot: File = project.file("src/$name"),
-            outputGroup: String = "main",
-            configurationBlock: CompileToBitcode.() -> Unit = {}
-    ) {
+    fun module(name: String, srcRoot: File = project.file("src/$name"), outputGroup: String = "main", configurationBlock: CompileToBitcode.() -> Unit = {}) {
         targetList.get().forEach { targetName ->
             val platformManager = project.rootProject.project(":kotlin-native").findProperty("platformManager") as PlatformManager
             val target = platformManager.targetByName(targetName)
@@ -93,11 +82,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
             val allMainModulesTask = allMainModulesTasks[targetName]!!
             sanitizers.forEach { sanitizer ->
                 val taskName = "${targetName}${name.snakeCaseToCamelCase().capitalize()}${suffixForSanitizer(sanitizer)}"
-                val task = project.tasks.create(
-                        taskName,
-                        CompileToBitcode::class.java,
-                        name, targetName, outputGroup
-                ).apply {
+                val task = project.tasks.create(taskName, CompileToBitcode::class.java, name, targetName, outputGroup).apply {
                     srcDirs = project.files(srcRoot.resolve("cpp"))
                     headersDirs = srcDirs + project.files(srcRoot.resolve("headers"))
 
@@ -139,34 +124,25 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
         val konanTarget = platformManager.targetByName(target)
         val compileToBitcodeTasks = testedTasks.mapNotNull {
             val name = "${it.name}TestBitcode"
-            val task = project.tasks.findByName(name) as? CompileToBitcode ?:
-            project.tasks.create(name,
-                    CompileToBitcode::class.java,
-                    "${it.folderName}Tests",
-                    target, "test"
-            ).apply {
-                srcDirs = it.srcDirs
-                headersDirs = it.headersDirs + googleTestExtension.headersDirs
+            val task = project.tasks.findByName(name) as? CompileToBitcode
+                    ?: project.tasks.create(name, CompileToBitcode::class.java, "${it.folderName}Tests", target, "test").apply {
+                        srcDirs = it.srcDirs
+                        headersDirs = it.headersDirs + googleTestExtension.headersDirs
 
-                this.sanitizer = sanitizer
-                excludeFiles = emptyList()
-                includeFiles = listOf("**/*Test.cpp", "**/*TestSupport.cpp", "**/*Test.mm", "**/*TestSupport.mm")
-                dependsOn(":kotlin-native:dependencies:update")
-                dependsOn("downloadGoogleTest")
-                compilerArgs.addAll(it.compilerArgs)
+                        this.sanitizer = sanitizer
+                        excludeFiles = emptyList()
+                        includeFiles = listOf("**/*Test.cpp", "**/*TestSupport.cpp", "**/*Test.mm", "**/*TestSupport.mm")
+                        dependsOn(":kotlin-native:dependencies:update")
+                        dependsOn("downloadGoogleTest")
+                        compilerArgs.addAll(it.compilerArgs)
 
-                addToCompdb(this)
-            }
-            if (task.inputFiles.count() == 0)
-                null
-            else
-                task
+                        addToCompdb(this)
+                    }
+            if (task.inputFiles.count() == 0) null
+            else task
         }
         // TODO: Consider using sanitized versions.
-        val testFrameworkTasks = listOf(
-                project.tasks.getByName("${target}Googletest") as CompileToBitcode,
-                project.tasks.getByName("${target}Googlemock") as CompileToBitcode
-        )
+        val testFrameworkTasks = listOf(project.tasks.getByName("${target}Googletest") as CompileToBitcode, project.tasks.getByName("${target}Googlemock") as CompileToBitcode)
 
         val testSupportTask = project.tasks.getByName("${target}TestSupport${CompileToBitcodeExtension.suffixForSanitizer(sanitizer)}") as CompileToBitcode
 
@@ -227,15 +203,13 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
 
         private const val COMPILATION_DATABASE_TASK_NAME = "CompilationDatabase"
 
-        private fun String.snakeCaseToCamelCase() =
-                split('_').joinToString(separator = "") { it.capitalize() }
+        private fun String.snakeCaseToCamelCase() = split('_').joinToString(separator = "") { it.capitalize() }
 
-        fun suffixForSanitizer(sanitizer: SanitizerKind?) =
-            when (sanitizer) {
-                null -> ""
-                SanitizerKind.ADDRESS -> "_ASAN"
-                SanitizerKind.THREAD -> "_TSAN"
-            }
+        fun suffixForSanitizer(sanitizer: SanitizerKind?) = when (sanitizer) {
+            null -> ""
+            SanitizerKind.ADDRESS -> "_ASAN"
+            SanitizerKind.THREAD -> "_TSAN"
+        }
 
     }
 }
