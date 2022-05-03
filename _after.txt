@@ -1,0 +1,55 @@
+jsIrTest
+
+org.jetbrains.kotlin.js.test.ir.IrBoxJsTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrCodegenWasmJsInteropJsTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsCodegenBoxErrorTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsCodegenBoxTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsCodegenInlineTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsTypeScriptExportTestGenerated
+org.jetbrains.kotlin.js.test.ir.JsIrLineNumberTestGenerated
+
+jsTest
+-- old infra
+org.jetbrains.kotlin.js.test.JsKLibABITestCaseGenerated
+-- new infra
+org.jetbrains.kotlin.js.test.BoxJsTestGenerated
+org.jetbrains.kotlin.js.test.JsCodegenBoxTestGenerated
+org.jetbrains.kotlin.js.test.JsCodegenInlineTestGenerated
+org.jetbrains.kotlin.js.test.JsLegacyPrimitiveArraysBoxTestGenerated
+org.jetbrains.kotlin.js.test.JsLineNumberTestGenerated
+org.jetbrains.kotlin.js.test.MultiModuleOrderTestGenerated
+org.jetbrains.kotlin.js.test.OutputPrefixPostfixTestGenerated
+org.jetbrains.kotlin.js.test.SourceMapGenerationSmokeTestGenerated
+org.jetbrains.kotlin.js.test.WebDemoExamplesTestGenerated
+
+test
+-- ignored
+- org.jetbrains.kotlin.benchmarks.GenerateIrRuntime
+- org.jetbrains.kotlin.js.testOld.optimizer.TemporaryAssignmentEliminationTest
+
+-- old infra
+org.jetbrains.kotlin.incremental.InvalidationTestGenerated
+org.jetbrains.kotlin.js.test.JsKLibABITestCaseGenerated
+org.jetbrains.kotlin.js.testOld.compatibility.binary.JsKlibBinaryCompatibilityTestGenerated
+org.jetbrains.kotlin.js.testOld.DceTestGenerated
+
+-- new infra
+org.jetbrains.kotlin.js.test.ir.IrBoxJsTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrCodegenWasmJsInteropJsTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsCodegenBoxErrorTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsCodegenBoxTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsCodegenInlineTestGenerated
+org.jetbrains.kotlin.js.test.ir.IrJsTypeScriptExportTestGenerated
+org.jetbrains.kotlin.js.test.ir.JsIrLineNumberTestGenerated
+
+org.jetbrains.kotlin.js.test.BoxJsTestGenerated
+org.jetbrains.kotlin.js.test.JsCodegenBoxTestGenerated
+org.jetbrains.kotlin.js.test.JsCodegenInlineTestGenerated
+org.jetbrains.kotlin.js.test.JsLegacyPrimitiveArraysBoxTestGenerated
+org.jetbrains.kotlin.js.test.JsLineNumberTestGenerated
+org.jetbrains.kotlin.js.test.MultiModuleOrderTestGenerated
+org.jetbrains.kotlin.js.test.OutputPrefixPostfixTestGenerated
+org.jetbrains.kotlin.js.test.SourceMapGenerationSmokeTestGenerated
+org.jetbrains.kotlin.js.test.WebDemoExamplesTestGenerated
+
+org.jetbrains.kotlin.js.testOld.ApiTest

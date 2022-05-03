@@ -217,25 +217,17 @@ fun Test.setupSpiderMonkey() {
 }
 
 fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean) {
-    setupV8()
-
-    inputs.files(rootDir.resolve("js/js.engines/src/org/jetbrains/kotlin/js/engine/repl.js"))
-
-    dependsOn(":dist")
-
-    if (!project.hasProperty("teamcity")) {
-        dependsOn(generateTypeScriptTests)
-    }
-
     if (jsEnabled) {
         dependsOn(testJsRuntime)
         inputs.files(testJsRuntime)
     }
 
     if (jsIrEnabled) {
-        dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
-        systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
-        inputs.dir(rootDir.resolve("libraries/stdlib/js-ir/build/classes/kotlin/js/main"))
+        if (!project.hasProperty("teamcity")) {
+            dependsOn(generateTypeScriptTests)
+        }
+
+        fullJsStdlib()
 
         dependsOn(":kotlin-stdlib-js-ir-minimal-for-test:compileKotlinJs")
         systemProperty("kotlin.js.reduced.stdlib.path", "libraries/stdlib/js-ir-minimal-for-test/build/classes/kotlin/js/main")
@@ -246,24 +238,31 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean) {
         inputs.dir(rootDir.resolve("libraries/kotlin.test/js-ir/build/classes/kotlin/js/main"))
     }
 
-    exclude("org/jetbrains/kotlin/js/testOld/wasm/semantics/*")
 
-    if (jsEnabled && !jsIrEnabled) exclude("org/jetbrains/kotlin/js/test/ir/*")
-    if (!jsEnabled && jsIrEnabled) include("org/jetbrains/kotlin/js/test/ir/*")
+    if (jsEnabled && !jsIrEnabled) {
+        include("org/jetbrains/kotlin/js/test/*")
+        exclude("org/jetbrains/kotlin/js/test/ir/*")
+    }
+    if (!jsEnabled && jsIrEnabled) {
+        include("org/jetbrains/kotlin/js/test/ir/*")
+    }
 
-    jvmArgs("-da:jdk.nashorn.internal.runtime.RecompilableScriptFunctionData") // Disable assertion which fails due to a bug in nashorn (KT-23637)
-    setUpBoxTests()
+    commonSetupForJsTests()
 }
 
-fun Test.setUpBoxTests() {
+fun Test.commonSetupForJsTests() {
+    setupV8()
+
+    inputs.files(rootDir.resolve("js/js.engines/src/org/jetbrains/kotlin/js/engine/repl.js"))
+    jvmArgs("-da:jdk.nashorn.internal.runtime.RecompilableScriptFunctionData") // Disable assertion which fails due to a bug in nashorn (KT-23637)
+
+    dependsOn(":dist")
+
+    // Required for proper ApplicationEnvironment configuration
     workingDir = rootDir
-    dependsOn(antLauncherJar)
-    inputs.files(antLauncherJar)
-    val antLauncherJarPath = antLauncherJar.asPath
-    doFirst {
-        systemProperty("kotlin.ant.classpath", antLauncherJarPath)
-        systemProperty("kotlin.ant.launcher.class", "org.apache.tools.ant.Main")
-    }
+
+    // TODO move
+    exclude("org/jetbrains/kotlin/js/testOld/wasm/semantics/*")
 
     systemProperty("kotlin.js.test.root.out.dir", "$buildDir/")
     systemProperty("overwrite.output", project.providers.gradleProperty("overwrite.output")
@@ -275,11 +274,36 @@ fun Test.setUpBoxTests() {
             systemProperty(key.substring(prefixForPpropertiesToForward.length), value!!)
         }
     }
+
+    configureTestDistribution()
 }
 
-projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests(jsEnabled = true, jsIrEnabled = true)
+val jsTest = projectTest("jsTest", parallel = true, jUnitMode = JUnitMode.JUnit5) {
+    setUpJsBoxTests(jsEnabled = true, jsIrEnabled = false)
+    useJUnitPlatform()
+}
 
+val jsIrTest = projectTest("jsIrTest", true, jUnitMode = JUnitMode.JUnit5) {
+    setUpJsBoxTests(jsEnabled = false, jsIrEnabled = true)
+    useJUnitPlatform()
+}
+
+val jsMiscTest = projectTest("jsMiscTest", parallel = true, jUnitMode = JUnitMode.JUnit5) {
+    exclude("org/jetbrains/kotlin/js/test/*")
+
+    // Ant tests
+    dependsOn(antLauncherJar)
+    inputs.files(antLauncherJar)
+    val antLauncherJarPath = antLauncherJar.asPath
+    doFirst {
+        systemProperty("kotlin.ant.classpath", antLauncherJarPath)
+        systemProperty("kotlin.ant.launcher.class", "org.apache.tools.ant.Main")
+    }
+
+    // For ApiTest
+    fullJsStdlib()
+
+    //TODO
     inputs.dir(rootDir.resolve("compiler/cli/cli-common/resources")) // compiler.xml
 
     inputs.dir(testDataDir)
@@ -293,17 +317,20 @@ projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5) {
 
     systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
 
-    configureTestDistribution()
+    commonSetupForJsTests()
 }
 
-projectTest("jsTest", parallel = true, jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests(jsEnabled = true, jsIrEnabled = false)
-    useJUnitPlatform()
+val jsAllTests = projectTest("jsAllTests") {
+    dependsOn(jsTest)
+    dependsOn(jsIrTest)
+    dependsOn(jsMiscTest)
+    exclude("*")
 }
 
-projectTest("jsIrTest", true, jUnitMode = JUnitMode.JUnit5) {
-    setUpJsBoxTests(jsEnabled = false, jsIrEnabled = true)
-    useJUnitPlatform()
+projectTest {
+    dependsOn(jsAllTests)
+//    dependsOn(wasmTest)
+    exclude("*")
 }
 
 projectTest("quickTest", parallel = true, jUnitMode = JUnitMode.JUnit5) {
@@ -351,7 +378,7 @@ val runMocha by task<NpmTask> {
     ))
 }
 
-projectTest("wasmTest", true) {
+val wasmTest = projectTest("wasmTest", true) {
     setupV8()
     setupSpiderMonkey()
 
@@ -363,7 +390,7 @@ projectTest("wasmTest", true) {
     dependsOn(":kotlin-test:kotlin-test-wasm:compileKotlinWasm")
     systemProperty("kotlin.wasm.kotlin.test.path", "libraries/kotlin.test/wasm/build/classes/kotlin/wasm/main")
 
-    setUpBoxTests()
+    commonSetupForJsTests()
 }
 
 projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit4) {
@@ -376,4 +403,10 @@ projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit4) {
     dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
 
     systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
+}
+
+fun Test.fullJsStdlib() {
+    dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
+    systemProperty("kotlin.js.full.stdlib.path", "libraries/stdlib/js-ir/build/classes/kotlin/js/main")
+    inputs.dir(rootDir.resolve("libraries/stdlib/js-ir/build/classes/kotlin/js/main"))
 }
