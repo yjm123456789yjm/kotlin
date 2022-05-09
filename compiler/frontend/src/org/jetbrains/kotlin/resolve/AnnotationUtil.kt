@@ -23,6 +23,17 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.resolve.constants.ConstantValue
 import org.jetbrains.kotlin.resolve.constants.ErrorValue
+import java.io.File
+import java.lang.management.ManagementFactory
+
+fun checkClassInClasspath(className: String) {
+    try {
+        Class.forName(className)
+        File("/home/bobko/jps-log").appendText("+ BindingContext (3): $className ${ManagementFactory.getRuntimeMXBean().name}\n")
+    } catch (ex: ClassNotFoundException) {
+        File("/home/bobko/jps-log").appendText("- BindingContext (3): $className ${ManagementFactory.getRuntimeMXBean().name}\n")
+    }
+}
 
 // This annotation is declared here in frontend (as opposed to frontend.java) because it's used in MainFunctionDetector.
 // If you wish to add another JVM-related annotation and has/find utility methods, please proceed to jvmAnnotationUtil.kt
