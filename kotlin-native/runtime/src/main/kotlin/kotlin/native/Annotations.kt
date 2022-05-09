@@ -83,3 +83,18 @@ public annotation class EagerInitialization
 @Retention(AnnotationRetention.BINARY)
 public actual annotation class CName(actual val externName: String = "", actual val shortName: String = "")
 
+/**
+ * Instructs the Kotlin compiler to remove this property or function from the public Objective-C API.
+ */
+@Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+public actual annotation class ObjCRefined
+
+/**
+ * Instructs the Kotlin compiler to mark this property or function as [`swift_private`](https://developer.apple.com/documentation/swift/objective-c_and_c_code_customization/improving_objective-c_api_declarations_for_swift).
+ */
+@Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+public actual annotation class SwiftRefined

@@ -75,8 +75,15 @@ private fun isSealedClassConstructor(descriptor: ConstructorDescriptor) = descri
 
 // Note: partially duplicated in ObjCExportLazyImpl.translateTopLevels.
 internal fun ObjCExportMapper.shouldBeExposed(descriptor: CallableMemberDescriptor): Boolean =
-        descriptor.isEffectivelyPublicApi && !descriptor.isExpect &&
-                !isHiddenByDeprecation(descriptor) && !(descriptor is ConstructorDescriptor && isSealedClassConstructor(descriptor))
+        descriptor.isEffectivelyPublicApi && !descriptor.isExpect && !isHiddenByDeprecation(descriptor) &&
+                !(descriptor is ConstructorDescriptor && isSealedClassConstructor(descriptor)) && !descriptor.isObjCRefined()
+
+private fun CallableMemberDescriptor.isObjCRefined(): Boolean {
+    if (overriddenDescriptors.isNotEmpty()) return overriddenDescriptors.all { it.isObjCRefined() }
+    return annotations.any { it.fqName == KonanFqNames.objCRefined } || annotations.any { annotation ->
+        annotation.annotationClass?.annotations?.any { it.fqName == KonanFqNames.objCRefined } == true
+    }
+}
 
 internal fun ObjCExportMapper.shouldBeExposed(descriptor: ClassDescriptor): Boolean =
         shouldBeVisible(descriptor) && !isSpecialMapped(descriptor) && !descriptor.defaultType.isObjCObjectType()

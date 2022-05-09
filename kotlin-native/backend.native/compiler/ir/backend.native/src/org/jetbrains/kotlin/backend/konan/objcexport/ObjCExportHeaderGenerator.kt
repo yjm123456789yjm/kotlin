@@ -607,7 +607,7 @@ internal class ObjCExportTranslatorImpl(
         val getterSelector = getSelector(baseProperty.getter!!)
         val getterName: String? = if (getterSelector != name) getterSelector else null
 
-        val declarationAttributes = mutableListOf(swiftNameAttribute(name))
+        val declarationAttributes = mutableListOf(property.getSwiftPrivateAttribute() ?: swiftNameAttribute(name))
         declarationAttributes.addIfNotNull(mapper.getDeprecation(property)?.toDeprecationAttribute())
 
         return ObjCProperty(name, property, type, attributes, setterName, getterName, declarationAttributes)
@@ -692,7 +692,7 @@ internal class ObjCExportTranslatorImpl(
         val swiftName = namer.getSwiftName(baseMethod)
         val attributes = mutableListOf<String>()
 
-        attributes += swiftNameAttribute(swiftName)
+        attributes += method.getSwiftPrivateAttribute() ?: swiftNameAttribute(swiftName)
         if (baseMethodBridge.returnBridge is MethodBridge.ReturnValue.WithError.ZeroForError
                 && baseMethodBridge.returnBridge.successMayBeZero) {
 
@@ -1372,6 +1372,16 @@ private fun DeprecationInfo.toDeprecationAttribute(): String {
 }
 
 private fun renderDeprecationAttribute(attribute: String, message: String) = "$attribute(${quoteAsCStringLiteral(message)})"
+
+private fun CallableMemberDescriptor.isSwiftRefined(): Boolean {
+    if (overriddenDescriptors.isNotEmpty()) return overriddenDescriptors.all { it.isSwiftRefined() }
+    return annotations.any { it.fqName == KonanFqNames.swiftRefined } || annotations.any { annotation ->
+        annotation.annotationClass?.annotations?.any { it.fqName == KonanFqNames.swiftRefined } == true
+    }
+}
+
+private fun CallableMemberDescriptor.getSwiftPrivateAttribute(): String? =
+        if (isSwiftRefined()) "swift_private" else null
 
 private fun quoteAsCStringLiteral(str: String): String = buildString {
     append('"')

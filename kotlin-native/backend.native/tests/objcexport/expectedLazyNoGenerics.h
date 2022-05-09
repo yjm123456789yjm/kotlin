@@ -1176,6 +1176,15 @@ __attribute__((swift_name("OverrideMethodsOfAnyKt")))
 + (BOOL)testObj:(id)obj other:(id)other swift:(BOOL)swift error:(NSError * _Nullable * _Nullable)error __attribute__((swift_name("test(obj:other:swift:)")));
 @end;
 
+__attribute__((objc_subclassing_restricted))
+__attribute__((swift_name("RefinedKt")))
+@interface KtRefinedKt : KtBase
++ (NSString *)fooRefined __attribute__((swift_private));
++ (NSString *)myFooRefined __attribute__((swift_private));
+@property (class, readonly) NSString *barRefined __attribute__((swift_private));
+@property (class, readonly) NSString *myBarRefined __attribute__((swift_private));
+@end;
+
 __attribute__((swift_name("Person")))
 @interface KtPerson : KtBase
 @end;
