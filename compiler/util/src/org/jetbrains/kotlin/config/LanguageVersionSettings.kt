@@ -295,7 +295,7 @@ enum class LanguageFeature(
     JsAllowInvalidCharsIdentifiersEscaping(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     JsAllowValueClassesInExternals(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     ContextReceivers(sinceVersion = null, defaultState = State.DISABLED),
-    GenericInlineClassParameter(sinceVersion = null, defaultState = State.ENABLED_WITH_WARNING, kind = UNSTABLE_FEATURE),
+    GenericInlineClassParameter(KOTLIN_1_7, defaultState = State.ENABLED_WITH_WARNING, kind = UNSTABLE_FEATURE),
     ValueClasses(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     JavaSamConversionEqualsHashCode(sinceVersion = null, defaultState = State.DISABLED, kind = UNSTABLE_FEATURE),
     ;

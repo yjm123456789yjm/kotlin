@@ -1,5 +1,5 @@
 // FIR_IDENTICAL
-// !LANGUAGE: +InlineClasses, -JvmInlineValueClasses
+// !LANGUAGE: +InlineClasses, -JvmInlineValueClasses, -GenericInlineClassParameter
 
 inline class Foo<T>(val x: <!VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE!>T<!>)
 inline class FooNullable<T>(val x: <!VALUE_CLASS_HAS_INAPPLICABLE_PARAMETER_TYPE!>T?<!>)

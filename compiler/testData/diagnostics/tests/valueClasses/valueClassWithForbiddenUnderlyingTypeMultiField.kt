@@ -2,7 +2,7 @@
 // WITH_STDLIB
 // TARGET_BACKEND: JVM_IR
 // WORKS_WHEN_VALUE_CLASS
-// LANGUAGE: +ValueClasses
+// LANGUAGE: +ValueClasses, -GenericInlineClassParameter
 
 OPTIONAL_JVM_INLINE_ANNOTATION
 value class Empty<T><!VALUE_CLASS_EMPTY_CONSTRUCTOR!>()<!>
