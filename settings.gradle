@@ -298,6 +298,7 @@ include ":benchmarks",
         ":kotlin-scripting-jsr223",
         ":kotlin-main-kts",
         ":kotlin-main-kts-test",
+        ":kotlin-dist-for-jps-meta",
         ":examples:scripting-jvm-simple-script",
         ":examples:scripting-jvm-simple-script-host",
         ":examples:scripting-jvm-maven-deps",
@@ -752,6 +753,7 @@ project(':kotlin-scripting-compiler-impl').projectDir = "$rootDir/plugins/script
 project(':kotlin-scripting-compiler-impl-embeddable').projectDir = "$rootDir/plugins/scripting/scripting-compiler-impl-embeddable" as File
 project(':kotlin-main-kts').projectDir = "$rootDir/libraries/tools/kotlin-main-kts" as File
 project(':kotlin-main-kts-test').projectDir = "$rootDir/libraries/tools/kotlin-main-kts-test" as File
+project(':kotlin-dist-for-jps-meta').projectDir = "$rootDir/libraries/tools/kotlin-dist-for-jps-meta" as File
 project(':examples:scripting-jvm-simple-script').projectDir = "$rootDir/libraries/examples/scripting/jvm-simple-script/script" as File
 project(':examples:scripting-jvm-simple-script-host').projectDir = "$rootDir/libraries/examples/scripting/jvm-simple-script/host" as File
 project(':examples:scripting-jvm-maven-deps').projectDir = "$rootDir/libraries/examples/scripting/jvm-maven-deps/script" as File
