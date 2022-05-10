@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.jps.build
 
-import com.intellij.execution.process.ProcessHandler
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.NlsSafe
 import org.jetbrains.jps.ModuleChunk
@@ -49,7 +48,6 @@ import org.jetbrains.kotlin.utils.KotlinPaths
 import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.File
-import java.lang.management.ManagementFactory
 import java.util.*
 import kotlin.collections.HashSet
 import kotlin.system.measureTimeMillis
@@ -292,7 +290,6 @@ class KotlinBuilder : ModuleLevelBuilder(BuilderCategory.SOURCE_PROCESSOR) {
         dirtyFilesHolder: DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget>,
         outputConsumer: OutputConsumer
     ): ExitCode {
-        File("/home/bobko/jps-log").appendText("version: 0 ${ManagementFactory.getRuntimeMXBean().name}\n")
         if (chunk.isDummy(context))
             return NOTHING_DONE
 
