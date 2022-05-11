@@ -9,7 +9,6 @@ val ktorExcludesForDaemon : List<Pair<String, String>> by rootProject.extra
 
 dependencies {
     api(commonDependency("org.fusesource.jansi", "jansi"))
-    api(commonDependency("org.jline", "jline"))
 
     compileOnly(project(":compiler:cli"))
     compileOnly(project(":compiler:cli-js"))
