@@ -15,12 +15,12 @@ import org.jetbrains.kotlin.fir.declarations.utils.isInner
 import org.jetbrains.kotlin.fir.resolve.*
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
-import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.scopes.FakeOverrideTypeCalculator
 import org.jetbrains.kotlin.fir.scopes.FirScope
 import org.jetbrains.kotlin.fir.scopes.impl.FirFakeOverrideGenerator
 import org.jetbrains.kotlin.fir.scopes.processClassifiersByName
 import org.jetbrains.kotlin.fir.scopes.scopeForClass
+import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.fir.symbols.impl.*
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visibilityChecker
@@ -243,9 +243,7 @@ private fun processConstructors(
 
                     val outerType = bodyResolveComponents.outerClassManager.outerType(type)
 
-                    if (basicScope != null &&
-                        (matchedSymbol.fir.typeParameters.isNotEmpty() || outerType != null || type.typeArguments.isNotEmpty())
-                    ) {
+                    if (basicScope != null) {
                         TypeAliasConstructorsSubstitutingScope(
                             matchedSymbol,
                             basicScope,
@@ -315,6 +313,7 @@ private class TypeAliasConstructorsSubstitutingScope(
 
                 }.apply {
                     originalConstructorIfTypeAlias = originalConstructorSymbol.fir
+                    typeAliasSymbol = this@TypeAliasConstructorsSubstitutingScope.typeAliasSymbol
                 }.symbol
             )
         }
