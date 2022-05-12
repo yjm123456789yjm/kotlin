@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.descriptors.impl.AnonymousFunctionDescriptor;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.FqNameUnsafe;
 import org.jetbrains.kotlin.psi.*;
-import org.jetbrains.kotlin.resolve.annotations.AnnotationUtilKt;
 import org.jetbrains.kotlin.resolve.calls.context.BasicCallResolutionContext;
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemCompleter;
 import org.jetbrains.kotlin.resolve.calls.model.PartialCallContainer;
@@ -55,55 +54,7 @@ import static org.jetbrains.kotlin.util.slicedMap.RewritePolicy.DO_NOTHING;
 import static org.jetbrains.kotlin.util.slicedMap.Slices.COMPILE_TIME_VALUE_REWRITE_POLICY;
 import static org.jetbrains.kotlin.util.slicedMap.Slices.CONSERVATIVE_SET_INCLUSION_SEMANTICS;
 
-class Foo {
-    Foo() {
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.allopen.AbstractAllOpenDeclarationAttributeAltererExtension");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.android.synthetic.diagnostic.ErrorsAndroid");
-        AnnotationUtilKt.checkClassInClasspath("kotlinx.android.extensions.CacheImplementation");
-        AnnotationUtilKt.checkClassInClasspath("org.intellij.lang.annotations.Flow");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.js.engine.ProcessBasedScriptEngine");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.jvm.abi.AbiClassInfo");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.kapt.cli.CliToolOption");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.kapt3.AbstractKapt3Extension");
-        AnnotationUtilKt.checkClassInClasspath("kotlinx.kapt.KaptIgnored");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.annotations.jvm.MigrationStatus");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.ant.Kotlin2JsTask");
-        AnnotationUtilKt.checkClassInClasspath("com.google.common.annotations.Beta");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.daemon.client.BasicCompilerServicesWithResultsFacadeServer");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.daemon.CompileServiceImpl");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.importsDumper.ImportsDumperCliOptions");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.mainKts.impl.Directories");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.preloading.ClassCondition");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.reflect.full.IllegalCallableAccessException");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.runner.AbstractRunner");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.script.experimental.annotations.KotlinScript");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.scripting.definitions.ScriptPriorities");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.scripting.compiler.plugin.AbstractScriptEvaluationExtension");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.scripting.repl.js.JsCompiledScript");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.script.experimental.jvm.BasicJvmReplEvaluator");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.script.dependencies.BasicScriptDependenciesResolver");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.collections.ArraysUtilJVM");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.internal.jdk7.JDK7PlatformImplementations");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.collections.jdk8.CollectionsJDK8Kt");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.test.AssertContentEqualsImplKt");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.test.junit5.JUnit5Asserter");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.test.junit.JUnitAsserter");
-        AnnotationUtilKt.checkClassInClasspath("kotlin.test.testng.TestNGAsserter");
-        AnnotationUtilKt.checkClassInClasspath("kotlinx.coroutines.JobNode");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlinx.serialization.compiler.diagnostic.SerializationErrors");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.lombok.LombokCommandLineProcessor");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.annotations.Mutable");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.noarg.diagnostic.ErrorsNoArg");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.parcelize.diagnostic.ErrorsParcelize");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.parcelize.ParcelizeFirIrGeneratorExtension");
-        AnnotationUtilKt.checkClassInClasspath("kotlinx.parcelize.IgnoredOnParcel");
-        AnnotationUtilKt.checkClassInClasspath("org.jetbrains.kotlin.samWithReceiver.CliSamWithReceiverComponentContributor");
-        AnnotationUtilKt.checkClassInClasspath("gnu.trove.TDoubleDoubleHashMap");
-    }
-}
-
 public interface BindingContext {
-    Foo foo = new Foo();
     BindingContext EMPTY = new BindingContext() {
         @NotNull
         @Override
