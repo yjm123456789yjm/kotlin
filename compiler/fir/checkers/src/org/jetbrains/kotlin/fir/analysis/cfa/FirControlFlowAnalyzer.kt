@@ -63,7 +63,12 @@ class FirControlFlowAnalyzer(
         runAssignmentCfaCheckers(graph, reporter, context)
     }
 
-    private fun runAssignmentCfaCheckers(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext, onlyLocals: Boolean = true) {
+    private fun runAssignmentCfaCheckers(
+        graph: ControlFlowGraph,
+        reporter: DiagnosticReporter,
+        context: CheckerContext,
+        onlyLocals: Boolean = true
+    ) {
         val (properties, capturedWrites) = PropertyAndCapturedWriteCollector.collect(graph, onlyLocals)
         if (properties.isEmpty()) return
         val data = PropertyInitializationInfoCollector(properties).getData(graph)

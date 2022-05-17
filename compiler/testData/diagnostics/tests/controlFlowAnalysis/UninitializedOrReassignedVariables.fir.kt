@@ -343,6 +343,6 @@ fun test(m : M) {
 }
 
 fun test1(m : M) {
-    m.<!VAL_REASSIGNMENT, VAL_REASSIGNMENT!>x<!>++
+    m.<!VAL_REASSIGNMENT!>x<!>++
     m.y--
 }
