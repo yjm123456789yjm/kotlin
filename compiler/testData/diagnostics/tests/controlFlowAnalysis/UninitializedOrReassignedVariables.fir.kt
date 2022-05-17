@@ -234,7 +234,7 @@ class Outer() {
     }
 
     fun foo() {
-        a++
+        <!VAL_REASSIGNMENT!>a<!>++
         b++
     }
 }
@@ -271,7 +271,7 @@ fun foo() {
             z = 3
         }
         fun foo() {
-            y = 10
+            <!VAL_REASSIGNMENT!>y<!> = 10
             <!VAL_REASSIGNMENT!>z<!> = 13
         }
     }
@@ -290,12 +290,12 @@ class TestObjectExpression() {
                     x = 1
             }
             fun inner1() {
-                y = 101
-                a = 231
+                <!VAL_REASSIGNMENT!>y<!> = 101
+                <!VAL_REASSIGNMENT!>a<!> = 231
             }
             fun inner2() {
-                y = 101
-                a = 231
+                <!VAL_REASSIGNMENT!>y<!> = 101
+                <!VAL_REASSIGNMENT!>a<!> = 231
             }
         }
     }
@@ -311,7 +311,7 @@ object TestObjectDeclaration {
     }
 
     fun foo() {
-        y = 10
+        <!VAL_REASSIGNMENT!>y<!> = 10
         val i: Int
         if (1 < 3) {
             i = 10
@@ -343,6 +343,6 @@ fun test(m : M) {
 }
 
 fun test1(m : M) {
-    m.<!VAL_REASSIGNMENT!>x<!>++
+    m.<!VAL_REASSIGNMENT, VAL_REASSIGNMENT!>x<!>++
     m.y--
 }

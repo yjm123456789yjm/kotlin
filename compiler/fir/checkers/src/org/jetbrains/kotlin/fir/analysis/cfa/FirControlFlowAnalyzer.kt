@@ -30,7 +30,7 @@ class FirControlFlowAnalyzer(
     fun analyzeClassInitializer(klass: FirClass, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
         if (graph.owner != null) return
         cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        runAssignmentCfaCheckers(graph, reporter, context)
+        runAssignmentCfaCheckers(graph, reporter, context, onlyLocals = false)
     }
 
     @Suppress("UNUSED_PARAMETER")
@@ -55,7 +55,7 @@ class FirControlFlowAnalyzer(
         accessor: FirPropertyAccessor,
         graph: ControlFlowGraph,
         context: CheckerContext,
-        reporter: DiagnosticReporter
+        reporter: DiagnosticReporter,
     ) {
         if (graph.owner != null) return
 
@@ -63,8 +63,8 @@ class FirControlFlowAnalyzer(
         runAssignmentCfaCheckers(graph, reporter, context)
     }
 
-    private fun runAssignmentCfaCheckers(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
-        val (properties, capturedWrites) = PropertyAndCapturedWriteCollector.collect(graph, false)
+    private fun runAssignmentCfaCheckers(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext, onlyLocals: Boolean = true) {
+        val (properties, capturedWrites) = PropertyAndCapturedWriteCollector.collect(graph, onlyLocals)
         if (properties.isEmpty()) return
         val data = PropertyInitializationInfoCollector(properties).getData(graph)
         variableAssignmentCheckers.forEach { it.analyze(graph, reporter, data, properties, capturedWrites, context) }

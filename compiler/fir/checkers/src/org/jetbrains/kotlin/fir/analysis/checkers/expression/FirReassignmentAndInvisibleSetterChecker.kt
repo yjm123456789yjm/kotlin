@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
 import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
+import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.expressions.FirExpressionWithSmartcast
@@ -24,6 +26,7 @@ import org.jetbrains.kotlin.fir.resolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
+import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 import org.jetbrains.kotlin.fir.visibilityChecker
 
 object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker() {
@@ -100,7 +103,12 @@ object FirReassignmentAndInvisibleSetterChecker : FirVariableAssignmentChecker()
         context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val valueParameter = expression.lValue.resolvedSymbol as? FirValueParameterSymbol ?: return
-        reporter.reportOn(expression.lValue.source, FirErrors.VAL_REASSIGNMENT, valueParameter, context)
+        val varSymbol = expression.lValue.resolvedSymbol as? FirVariableSymbol<*> ?: return
+        if (varSymbol is FirValueParameterSymbol ||
+            varSymbol is FirPropertySymbol &&
+            varSymbol.isVal && !varSymbol.isLocal && context.containingDeclarations.all { it !is FirAnonymousInitializer && it !is FirConstructor }
+        ) {
+            reporter.reportOn(expression.lValue.source, FirErrors.VAL_REASSIGNMENT, varSymbol, context)
+        }
     }
 }

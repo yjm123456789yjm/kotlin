@@ -85,7 +85,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
             }
 
             val kind = info[symbol] ?: EventOccurrencesRange.ZERO
-            if (symbol.hasInitializer || symbol is FirSyntheticPropertySymbol || kind.canBeRevisited()) {
+            if (symbol.hasInitializer || kind.canBeRevisited()) {
                 reporter.reportOn(node.fir.lValue.source, FirErrors.VAL_REASSIGNMENT, symbol, context)
                 return true
             }

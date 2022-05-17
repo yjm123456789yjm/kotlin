@@ -27,7 +27,7 @@ class Case1() {
 
 fun case2() {
     var b= Case2()
-    --b.<!VAL_REASSIGNMENT!>a<!>
+    --b.<!VAL_REASSIGNMENT, VAL_REASSIGNMENT!>a<!>
 }
 
 class Case2() {
