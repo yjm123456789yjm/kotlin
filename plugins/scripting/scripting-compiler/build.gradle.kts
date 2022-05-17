@@ -19,6 +19,7 @@ dependencies {
     compile(project(":kotlin-scripting-jvm"))
     compile(project(":kotlin-scripting-compiler-impl"))
     compile(kotlinStdlib())
+    compile(commonDep("org.jline", "jline"))
     compileOnly(intellijCoreDep()) { includeJars("intellij-core") }
 
     testCompile(project(":compiler:frontend"))

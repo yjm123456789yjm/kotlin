@@ -8,9 +8,6 @@ plugins {
 val ktorExcludesForDaemon : List<Pair<String, String>> by rootProject.extra
 
 dependencies {
-    compile(commonDep("org.fusesource.jansi", "jansi"))
-    compile(commonDep("org.jline", "jline"))
-
     compileOnly(project(":compiler:cli"))
     compileOnly(project(":compiler:cli-js"))
     compileOnly(project(":compiler:incremental-compilation-impl"))

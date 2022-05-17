@@ -22,7 +22,6 @@ dependencies {
     compile(project(":js:js.translator"))
     compile(project(":native:frontend.native"))
     compile(commonDep("org.fusesource.jansi", "jansi"))
-    compile(commonDep("org.jline", "jline"))
     compile(project(":compiler:fir:raw-fir:psi2fir"))
     compile(project(":compiler:fir:resolve"))
     compile(project(":compiler:fir:jvm"))
