@@ -20,20 +20,19 @@ import org.gradle.api.Action
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.api.internal.file.FileOperations
-import org.gradle.api.internal.project.ProjectInternal
 import org.gradle.api.model.ObjectFactory
+import org.gradle.kotlin.dsl.*
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.konan.file.*
-import org.jetbrains.kotlin.konan.file.File as KFile
 import java.io.File
 import javax.inject.Inject
 
 abstract class ExecClang @Inject constructor(
         private val platformManager: PlatformManager,
-        private val llvmDir: File
+        private val llvmDirAbsolutePath: String,
     ) {
 
     @get:Inject
@@ -54,7 +53,7 @@ abstract class ExecClang @Inject constructor(
         val executable = executableOrNull ?: "clang"
 
         if (listOf("clang", "clang++").contains(executable)) {
-            return "${llvmDir.absolutePath}/bin/$executable"
+            return "$llvmDirAbsolutePath/bin/$executable"
         } else {
             throw GradleException("unsupported clang executable: $executable")
         }
@@ -151,6 +150,9 @@ abstract class ExecClang @Inject constructor(
 
         @JvmStatic
         fun create(objects: ObjectFactory, platformManager: PlatformManager, llvmDir: File) =
-                objects.newInstance(ExecClang::class.java, platformManager, llvmDir)
+                objects.newInstance(ExecClang::class.java, platformManager, llvmDir.absolutePath)
+
+        fun create(objects: ObjectFactory, platformManager: PlatformManager) =
+                objects.newInstance<ExecClang>(platformManager, platformManager.hostPlatform.absoluteLlvmHome)
     }
 }
