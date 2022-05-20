@@ -39,7 +39,6 @@ import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSy
 import org.jetbrains.kotlin.analysis.api.impl.base.test.cases.symbols.AbstractSymbolByReferenceTest
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisApiMode
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.AnalysisSessionMode
-import org.jetbrains.kotlin.analysis.test.framework.test.configurators.FrontendKind
 import org.jetbrains.kotlin.analysis.test.framework.test.configurators.TestModuleKind
 import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.*
 import org.jetbrains.kotlin.generators.tests.analysis.api.dsl.AnalysisApiTestGroup
@@ -49,8 +48,7 @@ import org.jetbrains.kotlin.generators.util.TestGeneratorUtil
 internal fun AnalysisApiTestGroup.generateAnalysisApiTests() {
     test(
         AbstractReferenceResolveTest::class,
-        filter = frontendIs(FrontendKind.Fir) and
-                testModuleKindIs(TestModuleKind.Source, TestModuleKind.LibrarySource) and
+        filter = testModuleKindIs(TestModuleKind.Source, TestModuleKind.LibrarySource) and
                 analysisApiModeIs(AnalysisApiMode.Ide, AnalysisApiMode.Standalone),
     ) { data ->
         when (data.moduleKind) {
@@ -77,29 +75,25 @@ internal fun AnalysisApiTestGroup.generateAnalysisApiTests() {
 private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
     group("scopes", filter = analysisSessionModeIs(AnalysisSessionMode.Normal)) {
         test(
-            AbstractSubstitutionOverridesUnwrappingTest::class,
-            filter = frontendIs(FrontendKind.Fir),
+            AbstractSubstitutionOverridesUnwrappingTest::class
         ) {
             model("substitutionOverridesUnwrapping")
         }
 
         test(
-            AbstractMemberScopeByFqNameTest::class,
-            filter = frontendIs(FrontendKind.Fir),
+            AbstractMemberScopeByFqNameTest::class
         ) {
             model("memberScopeByFqName")
         }
 
         test(
-            AbstractFileScopeTest::class,
-            filter = frontendIs(FrontendKind.Fir),
+            AbstractFileScopeTest::class
         ) {
             model("fileScopeTest", extension = "kt")
         }
 
         test(
-            AbstractDelegateMemberScopeTest::class,
-            filter = frontendIs(FrontendKind.Fir),
+            AbstractDelegateMemberScopeTest::class
         ) {
             model("delegatedMemberScope")
         }
@@ -132,7 +126,7 @@ private fun AnalysisApiTestGroup.generateAnalysisApiNonComponentsTests() {
 
         test(
             AbstractAnalysisApiAnnotationsOnFilesTest::class,
-            filter = frontendIs(FrontendKind.Fir) and analysisSessionModeIs(AnalysisSessionMode.Normal), // TODO "fe10 fails with Rewrite at slice ANNOTATION key"
+            filter = analysisSessionModeIs(AnalysisSessionMode.Normal),
         ) {
             model("annotationsOnFiles")
         }
@@ -195,18 +189,18 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
     component("importOptimizer") {
         test(
             AbstractAnalysisApiImportOptimizerTest::class,
-            filter = frontendIs(FrontendKind.Fir) and analysisSessionModeIs(AnalysisSessionMode.Normal),
+            filter = analysisSessionModeIs(AnalysisSessionMode.Normal),
         ) {
             model("analyseImports", pattern = TestGeneratorUtil.KT_WITHOUT_DOTS_IN_NAME)
         }
     }
 
     component("psiTypeProvider") {
-        test(AbstractAnalysisApiPsiTypeProviderTest::class, filter = frontendIs(FrontendKind.Fir)) {
+        test(AbstractAnalysisApiPsiTypeProviderTest::class) {
             model("psiType/forDeclaration")
         }
 
-        test(AbstractAnalysisApiExpressionPsiTypeProviderTest::class, filter = frontendIs(FrontendKind.Fir)) {
+        test(AbstractAnalysisApiExpressionPsiTypeProviderTest::class) {
             model("psiType/forExpression")
         }
     }
@@ -240,10 +234,10 @@ private fun AnalysisApiTestGroup.generateAnalysisApiComponentsTests() {
     }
 
     component("typeInfoProvider") {
-        test(AbstractFunctionClassKindTest::class, filter = frontendIs(FrontendKind.Fir)) {
+        test(AbstractFunctionClassKindTest::class) {
             model("functionClassKind")
         }
-        test(AbstractAnalysisApiGetSuperTypesTest::class, filter = frontendIs(FrontendKind.Fir)) {
+        test(AbstractAnalysisApiGetSuperTypesTest::class) {
             model("superTypes")
         }
         test(AbstractIsDenotableTest::class) {
