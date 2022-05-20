@@ -174,7 +174,7 @@ class AnonymousInitializers(var a: String, val b: String) {
     val n: Int
 
     init {
-        while (n == 0) {
+        while (<!UNINITIALIZED_VARIABLE!>n<!> == 0) {
         }
         n = 10
         while (n == 0) {
@@ -228,7 +228,7 @@ class Outer() {
 
     inner class Inner() {
         init {
-            a++
+            <!VAL_REASSIGNMENT!>a<!>++
             b++
         }
     }
@@ -240,8 +240,8 @@ class Outer() {
 }
 
 class ForwardAccessToBackingField() { //kt-147
-    val a = a // error
-    val b = c // error
+    val a = <!UNINITIALIZED_VARIABLE!>a<!> // error
+    val b = <!UNINITIALIZED_VARIABLE!>c<!> // error
     val c = 1
 }
 

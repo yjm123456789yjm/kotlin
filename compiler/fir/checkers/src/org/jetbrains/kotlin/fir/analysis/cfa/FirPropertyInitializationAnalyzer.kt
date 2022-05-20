@@ -8,19 +8,28 @@ package org.jetbrains.kotlin.fir.analysis.cfa
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.contracts.description.canBeRevisited
 import org.jetbrains.kotlin.contracts.description.isDefinitelyVisited
+import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
+import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.cfa.util.TraverseDirection
 import org.jetbrains.kotlin.fir.analysis.cfa.util.traverse
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
-import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.utils.isLateInit
 import org.jetbrains.kotlin.fir.declarations.utils.referredPropertySymbol
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
+import org.jetbrains.kotlin.fir.expressions.FirSafeCallExpression
+import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
+import org.jetbrains.kotlin.fir.resolve.dfa.popOrNull
+import org.jetbrains.kotlin.fir.resolve.dfa.stackOf
+import org.jetbrains.kotlin.fir.resolve.dfa.topOrNull
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
+import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.types.coneType
+import org.jetbrains.kotlin.fir.types.toRegularClassSymbol
 
 @OptIn(SymbolInternals::class)
 object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChecker() {
@@ -43,10 +52,25 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
         val reporter: DiagnosticReporter,
         val context: CheckerContext
     ) : ControlFlowGraphVisitorVoid() {
+        val classes = stackOf<FirClassSymbol<out FirClass>>()
+        val initializedNotLocalProperties = mutableSetOf<FirPropertySymbol>()
+        val insideLambdaOrAnonymous = stackOf<Boolean>()
+
         override fun visitNode(node: CFGNode<*>) {}
+
+        override fun visitClassEnterNode(node: ClassEnterNode, data: Nothing?) {
+            classes.push(node.fir.symbol)
+        }
+
+        override fun visitClassExitNode(node: ClassExitNode, data: Nothing?) {
+            classes.pop()
+        }
 
         override fun visitVariableAssignmentNode(node: VariableAssignmentNode) {
             val symbol = getPropertySymbol(node) ?: return
+            if (!symbol.isLocal) {
+                initializedNotLocalProperties.add(symbol)
+            }
             if (!symbol.fir.isVal || symbol !in properties) return
 
             if (node.fir in capturedWrites) {
@@ -55,7 +79,9 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
                 return
             }
 
-            if (symbol.hasInitializer) {
+            if (symbol.hasInitializer ||
+                !symbol.isLocal && symbol.dispatchReceiverType?.toRegularClassSymbol(context.session) != classes.topOrNull()
+            ) {
                 reporter.reportOn(node.fir.lValue.source, FirErrors.VAL_REASSIGNMENT, symbol, context)
                 return
             }
@@ -71,9 +97,42 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
             }
         }
 
+        override fun visitPropertyInitializerExitNode(node: PropertyInitializerExitNode) {
+            initializedNotLocalProperties.add(node.fir.symbol)
+        }
+
+        override fun visitPostponedLambdaEnterNode(node: PostponedLambdaEnterNode) {
+            insideLambdaOrAnonymous.push(true)
+        }
+
+        override fun visitPostponedLambdaExitNode(node: PostponedLambdaExitNode) {
+            insideLambdaOrAnonymous.pop()
+        }
+
+        override fun visitAnonymousObjectEnterNode(node: AnonymousObjectEnterNode, data: Nothing?) {
+            insideLambdaOrAnonymous.push(true)
+        }
+
+        override fun visitAnonymousObjectExpressionExitNode(node: AnonymousObjectExpressionExitNode, data: Nothing?) {
+            insideLambdaOrAnonymous.popOrNull()
+        }
+
         override fun visitQualifiedAccessNode(node: QualifiedAccessNode) {
             val symbol = getPropertySymbol(node) ?: return
-            if (symbol.fir.isLateInit || !symbol.isLocal || symbol.hasInitializer || symbol !in properties) return
+            if (symbol.fir.isLateInit || symbol !in properties) return
+            if (symbol.isLocal) {
+                if (symbol.hasInitializer) return
+            } else {
+                val previousNode = node.previousNodes.firstOrNull()
+                if (insideLambdaOrAnonymous.topOrNull() != true &&
+                    symbol.dispatchReceiverType?.toRegularClassSymbol(context.session) == classes.topOrNull() &&
+                    symbol !in initializedNotLocalProperties &&
+                    checkReceiver(previousNode, node, symbol)
+                ) {
+                    reporter.reportOn(node.fir.source, FirErrors.UNINITIALIZED_VARIABLE, symbol, context)
+                }
+                return
+            }
 
             val pathAwareInfo = propertyInitializationInfoData.getValue(node)
             for (info in pathAwareInfo.values) {
@@ -83,6 +142,25 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
                     return
                 }
             }
+        }
+
+        private fun checkReceiver(
+            previousNode: CFGNode<*>?,
+            node: QualifiedAccessNode,
+            symbol: FirPropertySymbol
+        ) : Boolean {
+            if (previousNode == null) return true
+
+            if (previousNode !is QualifiedAccessNode && previousNode !is EnterSafeCallNode) return true
+
+            if ((previousNode.fir as? FirThisReceiverExpression)?.typeRef?.coneType == symbol.dispatchReceiverType) return true
+
+            val previousNodeFir = if (previousNode is QualifiedAccessNode)
+                previousNode.fir
+            else
+                (previousNode.fir as FirSafeCallExpression).checkedSubjectRef.value
+
+            return node.fir.dispatchReceiver != previousNodeFir
         }
 
         private fun getPropertySymbol(node: CFGNode<*>): FirPropertySymbol? {

@@ -32,6 +32,12 @@ class PropertyAndCapturedWriteCollector private constructor(private val onlyLoca
 
     override fun visitNode(node: CFGNode<*>) {}
 
+    override fun visitPropertyInitializerEnterNode(node: PropertyInitializerEnterNode) {
+        if (!onlyLocal) {
+            symbols[node.fir.symbol] = lambdaOrLocalFunctionStack.lastOrNull() == null
+        }
+    }
+
     override fun visitVariableDeclarationNode(node: VariableDeclarationNode) {
         if (!onlyLocal || node.fir.isLocal) {
             symbols[node.fir.symbol] = lambdaOrLocalFunctionStack.lastOrNull() == null

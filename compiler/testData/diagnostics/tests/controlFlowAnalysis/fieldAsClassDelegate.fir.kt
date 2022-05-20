@@ -9,7 +9,7 @@ class HttpClientImpl : HttpClient
 
 // Below we should have initialization error for both (!) delegates
 
-object DefaultHttpClient : HttpClient by client {
+object DefaultHttpClient : HttpClient by <!UNINITIALIZED_VARIABLE!>client<!> {
     val client = HttpClientImpl()
 }
 
@@ -31,6 +31,6 @@ object DefaultHttpClientWithBy : HttpClient by client {
     val client by lazy { HttpClientImpl() }
 }
 
-object DefaultFqHttpClient : HttpClient by DefaultFqHttpClient.client {
+object DefaultFqHttpClient : HttpClient by <!UNINITIALIZED_VARIABLE!>DefaultFqHttpClient.client<!> {
     val client = HttpClientImpl()
 }

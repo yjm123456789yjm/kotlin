@@ -2,8 +2,8 @@
 class A {
     val x: Int
     val useUnitialized = x + // reported on each secondary constructor
-                         y +
-                         v
+                         <!UNINITIALIZED_VARIABLE!>y<!> +
+                         <!UNINITIALIZED_VARIABLE!>v<!>
     var y: Int
     val v = -1
 
@@ -36,7 +36,7 @@ class A {
 
     //anonymous
     init {
-        y
+        <!UNINITIALIZED_VARIABLE!>y<!>
     }
 
     // anonymous
