@@ -2174,6 +2174,10 @@ sealed class KtFirDiagnostic<PSI : PsiElement> : KtDiagnosticWithPsi<PSI> {
         override val diagnosticClass get() = SenselessNullInWhen::class
     }
 
+    abstract class TypecheckerHasRunIntoRecursiveProblem : KtFirDiagnostic<KtExpression>() {
+        override val diagnosticClass get() = TypecheckerHasRunIntoRecursiveProblem::class
+    }
+
     abstract class UnsafeCall : KtFirDiagnostic<PsiElement>() {
         override val diagnosticClass get() = UnsafeCall::class
         abstract val receiverType: KtType

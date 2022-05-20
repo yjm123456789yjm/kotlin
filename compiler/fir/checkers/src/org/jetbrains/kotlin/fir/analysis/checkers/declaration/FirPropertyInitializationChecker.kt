@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
+import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
+import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
 import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNode
@@ -22,6 +24,7 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.EdgeLabel
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.VariableAssignmentNode
 import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.types.ConeErrorType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirPropertyInitializationChecker : FirRegularClassChecker() {
@@ -30,7 +33,16 @@ object FirPropertyInitializationChecker : FirRegularClassChecker() {
         val toReport = mutableSetOf<FirVariableAssignment>()
         for (decl in declaration.declarations.asReversed()) {
             when (decl) {
-                is FirProperty -> properties.add(decl.symbol)
+                is FirProperty -> {
+                    properties.add(decl.symbol)
+
+                    if (decl.symbol.resolvedReturnType.let {
+                            it is ConeErrorType &&
+                                    (it.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.RecursionInImplicitTypes }
+                    ) {
+                        reporter.reportOn(decl.initializer?.source, FirErrors.TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM, context)
+                    }
+                }
                 is FirAnonymousInitializer ->
                     if (properties.isNotEmpty()) {
                         collectInitAssignments(decl, properties, toReport)

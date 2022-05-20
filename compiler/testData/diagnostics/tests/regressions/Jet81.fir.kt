@@ -6,7 +6,7 @@ class Test {
     val a = y;
   }
 
-  val z = y.a;
+  val z = <!TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM!>y.a<!>;
 
 }
 

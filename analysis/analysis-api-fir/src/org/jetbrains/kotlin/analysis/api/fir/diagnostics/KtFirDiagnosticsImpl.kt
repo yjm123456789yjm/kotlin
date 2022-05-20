@@ -2618,6 +2618,11 @@ internal class SenselessNullInWhenImpl(
     override val token: KtLifetimeToken,
 ) : KtFirDiagnostic.SenselessNullInWhen(), KtAbstractFirDiagnostic<KtElement>
 
+internal class TypecheckerHasRunIntoRecursiveProblemImpl(
+    override val firDiagnostic: KtPsiDiagnostic,
+    override val token: KtLifetimeToken,
+) : KtFirDiagnostic.TypecheckerHasRunIntoRecursiveProblem(), KtAbstractFirDiagnostic<KtExpression>
+
 internal class UnsafeCallImpl(
     override val receiverType: KtType,
     override val receiverExpression: KtExpression?,
