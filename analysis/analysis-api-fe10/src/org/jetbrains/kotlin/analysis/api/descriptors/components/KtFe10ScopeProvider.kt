@@ -31,15 +31,19 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithMembers
 import org.jetbrains.kotlin.analysis.api.lifetime.KtLifetimeToken
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
-import org.jetbrains.kotlin.descriptors.ClassDescriptor
-import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
-import org.jetbrains.kotlin.descriptors.packageFragments
+import org.jetbrains.kotlin.descriptors.*
+import org.jetbrains.kotlin.incremental.components.LookupLocation
+import org.jetbrains.kotlin.incremental.components.NoLookupLocation
+import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.scopes.ChainedMemberScope
+import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
 import org.jetbrains.kotlin.resolve.scopes.LexicalScope
+import org.jetbrains.kotlin.resolve.scopes.MemberScope
 import org.jetbrains.kotlin.resolve.scopes.utils.getImplicitReceiversHierarchy
 import org.jetbrains.kotlin.util.containingNonLocalDeclaration
+import org.jetbrains.kotlin.utils.Printer
 
 internal class KtFe10ScopeProvider(
     override val analysisSession: KtFe10AnalysisSession
@@ -55,7 +59,6 @@ internal class KtFe10ScopeProvider(
         val descriptor = getDescriptor<ClassDescriptor>(classSymbol)
             ?: return getEmptyScope()
 
-        // TODO either this or declared scope should return a different set of members
         return KtFe10ScopeMember(descriptor.unsubstitutedMemberScope, analysisContext)
     }
 
@@ -63,8 +66,53 @@ internal class KtFe10ScopeProvider(
         val descriptor = getDescriptor<ClassDescriptor>(classSymbol)
             ?: return getEmptyScope()
 
-        // TODO: need to return declared members only
-        return KtFe10ScopeMember(descriptor.unsubstitutedMemberScope, analysisContext)
+        return KtFe10ScopeMember(DeclaredMemberScope(descriptor), analysisContext)
+    }
+
+    private class DeclaredMemberScope(val allMemberScope: MemberScope, val owner: ClassDescriptor) : MemberScope {
+        constructor(owner: ClassDescriptor) : this(owner.unsubstitutedMemberScope, owner)
+
+        override fun getContributedVariables(name: Name, location: LookupLocation): Collection<PropertyDescriptor> {
+            return allMemberScope.getContributedVariables(name, location).filter { it.containingDeclaration == owner }
+        }
+
+        override fun getContributedFunctions(name: Name, location: LookupLocation): Collection<SimpleFunctionDescriptor> {
+            return allMemberScope.getContributedFunctions(name, location).filter { it.containingDeclaration == owner }
+        }
+
+        override fun getFunctionNames(): Set<Name> {
+            return allMemberScope.getFunctionNames().filterTo(mutableSetOf()) { name ->
+                getContributedFunctions(name, NoLookupLocation.FROM_IDE).isNotEmpty()
+            }
+        }
+
+        override fun getVariableNames(): Set<Name> {
+            return allMemberScope.getVariableNames().filterTo(mutableSetOf()) { name ->
+                getContributedVariables(name, NoLookupLocation.FROM_IDE).isNotEmpty()
+            }
+        }
+
+        override fun getClassifierNames(): Set<Name>? {
+            return allMemberScope.getClassifierNames()?.filterTo(mutableSetOf()) { name ->
+                getContributedClassifier(name, NoLookupLocation.FROM_IDE) != null
+            }
+        }
+
+        override fun printScopeStructure(p: Printer) {
+            allMemberScope.printScopeStructure(p)
+        }
+
+        override fun getContributedClassifier(name: Name, location: LookupLocation): ClassifierDescriptor? {
+            return allMemberScope.getContributedClassifier(name, location)?.takeIf { it.containingDeclaration == owner }
+        }
+
+        override fun getContributedDescriptors(
+            kindFilter: DescriptorKindFilter,
+            nameFilter: (Name) -> Boolean
+        ): Collection<DeclarationDescriptor> {
+            return allMemberScope.getContributedDescriptors(kindFilter, nameFilter).filter { it.containingDeclaration == owner }
+        }
+
     }
 
     override fun getDelegatedMemberScope(classSymbol: KtSymbolWithMembers): KtScope = withValidityAssertion {
