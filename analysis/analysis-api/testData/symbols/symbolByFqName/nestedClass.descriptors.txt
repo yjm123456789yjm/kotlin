@@ -20,6 +20,5 @@ KtNamedClassOrObjectSymbol:
     KtTypeParameterSymbol(V)
   ]
   visibility: Public
-  getContainingModule: Could not render due to kotlin.NotImplementedError: An operation is not implemented: deserialized class MutableEntry
-
+  getContainingModule: KtLibraryModule "Library <dependencies of main>"
   deprecationStatus: null

@@ -23,6 +23,5 @@ KtFunctionSymbol:
   ]
   visibility: Public
   getDispatchReceiver(): kotlin/collections/List<E>
-  getContainingModule: Could not render due to java.lang.NullPointerException: null cannot be cast to non-null type org.jetbrains.kotlin.load.kotlin.JvmPackagePartSource
-
+  getContainingModule: KtLibraryModule "Library <dependencies of main>"
   deprecationStatus: null

@@ -19,6 +19,5 @@ KtNamedClassOrObjectSymbol:
     KtTypeParameterSymbol(T)
   ]
   visibility: Public
-  getContainingModule: Could not render due to kotlin.NotImplementedError: An operation is not implemented: deserialized class Lazy
-
+  getContainingModule: KtLibraryModule "Library <dependencies of main>"
   deprecationStatus: null

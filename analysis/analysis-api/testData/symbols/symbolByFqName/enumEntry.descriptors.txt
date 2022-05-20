@@ -7,6 +7,5 @@ KtEnumEntrySymbol:
   receiverType: null
   returnType: kotlin/LazyThreadSafetyMode
   symbolKind: CLASS_MEMBER
-  getContainingModule: Could not render due to kotlin.NotImplementedError: An operation is not implemented: enum entry SYNCHRONIZED
-
+  getContainingModule: KtLibraryModule "Library <dependencies of main>"
   deprecationStatus: null
