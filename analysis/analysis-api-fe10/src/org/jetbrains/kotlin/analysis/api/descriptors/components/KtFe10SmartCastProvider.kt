@@ -18,7 +18,9 @@ import org.jetbrains.kotlin.analysis.api.lifetime.withValidityAssertion
 import org.jetbrains.kotlin.psi.KtExpression
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.calls.smartcasts.ExplicitSmartCasts
+import org.jetbrains.kotlin.resolve.calls.smartcasts.ImplicitSmartCasts
 import org.jetbrains.kotlin.resolve.calls.smartcasts.MultipleSmartCasts
+import org.jetbrains.kotlin.resolve.scopes.receivers.ExtensionReceiver
 import org.jetbrains.kotlin.types.TypeIntersector
 
 internal class KtFe10SmartCastProvider(
@@ -57,9 +59,12 @@ internal class KtFe10SmartCastProvider(
     override fun getImplicitReceiverSmartCast(expression: KtExpression): Collection<KtImplicitReceiverSmartCast> {
         withValidityAssertion {
             val bindingContext = analysisContext.analyze(expression)
-            val smartCasts = bindingContext[BindingContext.IMPLICIT_RECEIVER_SMARTCAST, expression] ?: return emptyList()
-            return smartCasts.receiverTypes.map { (_, type) ->
-                val kind = KtImplicitReceiverSmartCastKind.DISPATCH // TODO provide precise kind
+            val smartCasts: ImplicitSmartCasts = bindingContext[BindingContext.IMPLICIT_RECEIVER_SMARTCAST, expression]
+                ?: return emptyList()
+            return smartCasts.receiverTypes.map { (implicitReceiver, type) ->
+                val kind =
+                    if (implicitReceiver is ExtensionReceiver) KtImplicitReceiverSmartCastKind.EXTENSION
+                    else KtImplicitReceiverSmartCastKind.DISPATCH
                 KtImplicitReceiverSmartCast(type.toKtType(analysisContext), kind, token)
             }
         }
