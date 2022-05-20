@@ -28,6 +28,7 @@ import org.jetbrains.kotlin.analysis.project.structure.KtModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModule
 import org.jetbrains.kotlin.cfg.getElementParentDeclaration
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
+import org.jetbrains.kotlin.descriptors.ModuleDescriptor
 import org.jetbrains.kotlin.load.kotlin.JvmPackagePartSource
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
@@ -82,28 +83,37 @@ internal class KtFe10SymbolContainingDeclarationProvider(
     }
 
     private fun DeclarationDescriptor.getFakeContainingKtModule(): KtModule {
-        return when (this) {
+        when (this) {
+            is ModuleDescriptor -> {
+                return FakeLibraryModule(analysisSession, platform ?: error("No platform"), name = name.asString())
+            }
             is DescriptorWithContainerSource -> {
-                val libraryPath = Paths.get((containerSource as JvmPackagePartSource).knownJvmBinaryClass?.containingLibrary!!)
-                object : KtLibraryModule {
-                    override val libraryName: String = libraryPath.fileName.toString().substringBeforeLast(".")
-                    override val librarySources: KtLibrarySourceModule? = null
-                    override fun getBinaryRoots(): Collection<Path> = listOf(libraryPath)
-                    override val directRegularDependencies: List<KtModule> = emptyList()
-                    override val directRefinementDependencies: List<KtModule> = emptyList()
-                    override val directFriendDependencies: List<KtModule> = emptyList()
-                    override val contentScope: GlobalSearchScope = ProjectScope.getLibrariesScope(project)
-                    override val platform: TargetPlatform
-                        get() = this@getFakeContainingKtModule.platform!!
-                    override val analyzerServices: PlatformDependentAnalyzerServices
-                        get() = JvmPlatformAnalyzerServices
-                    override val project: Project
-                        get() = analysisSession.analysisContext.resolveSession.project
-
+                val containerSource = containerSource
+                if (containerSource is JvmPackagePartSource) {
+                    val libraryPath = Paths.get(containerSource.knownJvmBinaryClass?.containingLibrary ?: error("No library"))
+                    return FakeLibraryModule(analysisSession, platform ?: error("No platform"), path = libraryPath)
                 }
             }
-
-            else -> TODO(this.toString())
         }
+        return containingDeclaration?.getFakeContainingKtModule() ?: TODO(this.toString())
+    }
+
+    private class FakeLibraryModule(
+        val analysisSession: KtFe10AnalysisSession,
+        override val platform: TargetPlatform,
+        val path: Path? = null,
+        name: String = path!!.fileName.toString(),
+    ) : KtLibraryModule {
+        override val libraryName: String = name.substringBeforeLast(".")
+        override val librarySources: KtLibrarySourceModule? = null
+        override fun getBinaryRoots(): Collection<Path> = listOfNotNull(path)
+        override val directRegularDependencies: List<KtModule> = emptyList()
+        override val directRefinementDependencies: List<KtModule> = emptyList()
+        override val directFriendDependencies: List<KtModule> = emptyList()
+        override val contentScope: GlobalSearchScope = ProjectScope.getLibrariesScope(project)
+        override val analyzerServices: PlatformDependentAnalyzerServices
+            get() = JvmPlatformAnalyzerServices
+        override val project: Project
+            get() = analysisSession.analysisContext.resolveSession.project
     }
 }
