@@ -64,3 +64,39 @@ fun multipleSwiftRefinementsFunction() { }
 <!REDUNDANT_SWIFT_REFINEMENT!>@RefinedInSwift<!>
 <!REDUNDANT_SWIFT_REFINEMENT!>@PluginRefinedInSwift<!>
 fun multipleMixedRefinementsFunction() { }
+
+interface InterfaceA {
+    val barA: Int
+    val barB: Int
+    fun fooA()
+    @RefinedForObjC
+    fun fooB()
+}
+
+interface InterfaceB {
+    val barA: Int
+    @RefinedInSwift
+    val barB: Int
+    @RefinedForObjC
+    fun fooA()
+    @RefinedForObjC
+    fun fooB()
+}
+
+open class ClassA: InterfaceA, InterfaceB {
+    <!INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE!>@RefinedForObjC<!>
+    override val barA: Int = 0
+    <!INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE!>@RefinedInSwift<!>
+    override val barB: Int = 0
+    <!INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE!>override fun fooA() { }<!>
+    override fun fooB() { }
+    @RefinedForObjC
+    open fun fooC() { }
+}
+
+class ClassB: ClassA() {
+    @RefinedForObjC
+    override fun fooB() { }
+    <!INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE!>@RefinedInSwift<!>
+    override fun fooC() { }
+}

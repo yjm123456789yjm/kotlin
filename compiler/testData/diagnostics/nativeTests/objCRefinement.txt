@@ -6,6 +6,50 @@ package
 @kotlin.native.RefinedInSwift @plugin.PluginRefinedInSwift public fun multipleSwiftRefinementsFunction(): kotlin.Unit
 @plugin.PluginRefinedForObjC @plugin.PluginRefinedInSwift public fun pluginRefinedFunction(): kotlin.Unit
 
+public open class ClassA : InterfaceA, InterfaceB {
+    public constructor ClassA()
+    @kotlin.native.RefinedForObjC public open override /*2*/ val barA: kotlin.Int = 0
+    @kotlin.native.RefinedInSwift public open override /*2*/ val barB: kotlin.Int = 0
+    public open override /*2*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*2*/ fun fooA(): kotlin.Unit
+    public open override /*2*/ fun fooB(): kotlin.Unit
+    @kotlin.native.RefinedForObjC public open fun fooC(): kotlin.Unit
+    public open override /*2*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*2*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public final class ClassB : ClassA {
+    public constructor ClassB()
+    @kotlin.native.RefinedForObjC public open override /*1*/ /*fake_override*/ val barA: kotlin.Int
+    @kotlin.native.RefinedInSwift public open override /*1*/ /*fake_override*/ val barB: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun fooA(): kotlin.Unit
+    @kotlin.native.RefinedForObjC public open override /*1*/ fun fooB(): kotlin.Unit
+    @kotlin.native.RefinedInSwift public open override /*1*/ fun fooC(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public interface InterfaceA {
+    public abstract val barA: kotlin.Int
+    public abstract val barB: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public abstract fun fooA(): kotlin.Unit
+    @kotlin.native.RefinedForObjC public abstract fun fooB(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public interface InterfaceB {
+    public abstract val barA: kotlin.Int
+    @kotlin.native.RefinedInSwift public abstract val barB: kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    @kotlin.native.RefinedForObjC public abstract fun fooA(): kotlin.Unit
+    @kotlin.native.RefinedForObjC public abstract fun fooB(): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
 @kotlin.native.RefinesForObjC @kotlin.native.RefinesInSwift @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class MyRefinedAnnotation : kotlin.Annotation {
     public constructor MyRefinedAnnotation()
     public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean

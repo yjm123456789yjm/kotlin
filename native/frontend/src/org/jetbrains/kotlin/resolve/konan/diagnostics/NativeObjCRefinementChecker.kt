@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.checkers.DeclarationChecker
 import org.jetbrains.kotlin.resolve.checkers.DeclarationCheckerContext
@@ -25,61 +26,134 @@ object NativeObjCRefinementChecker : DeclarationChecker {
 
     private fun checkAnnotation(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
         if (descriptor !is ClassDescriptor || descriptor.kind != ClassKind.ANNOTATION_CLASS) return
-        val (refinesForObjC, refinesInSwift) = descriptor.findRefinesAnnotations()
-        if (refinesForObjC == null && refinesInSwift == null) return
-        if (refinesForObjC != null && refinesInSwift != null) {
-            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(refinesInSwift) ?: declaration
+        val (objCAnnotation, swiftAnnotation) = descriptor.findRefinesAnnotations()
+        if (objCAnnotation == null && swiftAnnotation == null) return
+        if (objCAnnotation != null && swiftAnnotation != null) {
+            val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(swiftAnnotation) ?: declaration
             context.trace.report(ErrorsNative.REDUNDANT_SWIFT_REFINEMENT.on(reportLocation))
         }
         // TODO: Check annotation targets
     }
 
+    private fun DeclarationDescriptor.findRefinesAnnotations(): Pair<AnnotationDescriptor?, AnnotationDescriptor?> {
+        var objCAnnotation: AnnotationDescriptor? = null
+        var swiftAnnotation: AnnotationDescriptor? = null
+        for (annotation in annotations) {
+            when (annotation.fqName) {
+                refinesForObjCFqName -> objCAnnotation = annotation
+                refinesInSwiftFqName -> swiftAnnotation = annotation
+            }
+            if (objCAnnotation != null && swiftAnnotation != null) break
+        }
+        return objCAnnotation to swiftAnnotation
+    }
+
     private fun checkDeclaration(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
+        if (descriptor !is CallableMemberDescriptor) return
         if (descriptor !is FunctionDescriptor && descriptor !is PropertyDescriptor) return
-        val (refinedForObjC, refinedInSwift) = descriptor.findRefinedAnnotations()
-        val isRefinedForObjC = refinedForObjC.isNotEmpty()
-        val isRefinedInSwift = refinedInSwift.isNotEmpty()
-        if (!isRefinedForObjC && !isRefinedInSwift) return
-        if (isRefinedForObjC && isRefinedInSwift) {
-            refinedInSwift.forEach {
+        val (objCAnnotations, swiftAnnotations) = descriptor.findRefinedAnnotations()
+        if (objCAnnotations.isNotEmpty() && swiftAnnotations.isNotEmpty()) {
+            swiftAnnotations.forEach {
                 val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(it) ?: declaration
                 context.trace.report(ErrorsNative.REDUNDANT_SWIFT_REFINEMENT.on(reportLocation))
             }
         }
-        // TODO: Check overrides
-    }
-
-    private fun DeclarationDescriptor.findRefinesAnnotations(): Pair<AnnotationDescriptor?, AnnotationDescriptor?> {
-        var refinesForObjC: AnnotationDescriptor? = null
-        var refinesInSwift: AnnotationDescriptor? = null
-        for (annotation in annotations) {
-            when (annotation.fqName) {
-                refinesForObjCFqName -> refinesForObjC = annotation
-                refinesInSwiftFqName -> refinesInSwift = annotation
-            }
-            if (refinesForObjC != null && refinesInSwift != null) break
-        }
-        return refinesForObjC to refinesInSwift
+        checkOverrides(declaration, descriptor, context, objCAnnotations, swiftAnnotations)
     }
 
     private fun DeclarationDescriptor.findRefinedAnnotations(): Pair<List<AnnotationDescriptor>, List<AnnotationDescriptor>> {
-        val refinedForObjC = mutableListOf<AnnotationDescriptor>()
-        val refinedInSwift = mutableListOf<AnnotationDescriptor>()
+        val objCAnnotations = mutableListOf<AnnotationDescriptor>()
+        val swiftAnnotations = mutableListOf<AnnotationDescriptor>()
         for (annotation in annotations) {
             val annotations = annotation.annotationClass?.annotations ?: continue
             for (metaAnnotation in annotations) {
                 when (metaAnnotation.fqName) {
                     refinesForObjCFqName -> {
-                        refinedForObjC.add(annotation)
+                        objCAnnotations.add(annotation)
                         break
                     }
                     refinesInSwiftFqName -> {
-                        refinedInSwift.add(annotation)
+                        swiftAnnotations.add(annotation)
                         break
                     }
                 }
             }
         }
-        return refinedForObjC to refinedInSwift
+        return objCAnnotations to swiftAnnotations
+    }
+
+    private fun checkOverrides(
+        declaration: KtDeclaration,
+        descriptor: CallableMemberDescriptor,
+        context: DeclarationCheckerContext,
+        objCAnnotations: List<AnnotationDescriptor>,
+        swiftAnnotations: List<AnnotationDescriptor>
+    ) {
+        if (descriptor.overriddenDescriptors.isEmpty()) return
+        var isRefinedForObjC = objCAnnotations.isNotEmpty()
+        var isRefinedInSwift = swiftAnnotations.isNotEmpty()
+        val supersNotRefinedForObjC = mutableListOf<CallableMemberDescriptor>()
+        val supersNotRefinedInSwift = mutableListOf<CallableMemberDescriptor>()
+        for (overriddenDescriptor in descriptor.overriddenDescriptors) {
+            val (superIsRefinedForObjC, superIsRefinedInSwift) = overriddenDescriptor.inheritsRefinedAnnotations()
+            if (superIsRefinedForObjC) isRefinedForObjC = true else supersNotRefinedForObjC.add(overriddenDescriptor)
+            if (superIsRefinedInSwift) isRefinedInSwift = true else supersNotRefinedInSwift.add(overriddenDescriptor)
+        }
+        if (isRefinedForObjC && supersNotRefinedForObjC.isNotEmpty()) {
+            context.trace.reportIncompatibleOverride(declaration, objCAnnotations, supersNotRefinedForObjC)
+        }
+        if (isRefinedInSwift && supersNotRefinedInSwift.isNotEmpty()) {
+            context.trace.reportIncompatibleOverride(declaration, swiftAnnotations, supersNotRefinedInSwift)
+        }
+    }
+
+    private fun CallableMemberDescriptor.inheritsRefinedAnnotations(): Pair<Boolean, Boolean> {
+        var (hasObjC, hasSwift) = hasRefinedAnnotations()
+        if (hasObjC && hasSwift) return true to true
+        for (descriptor in overriddenDescriptors) {
+            val (isRefinedForObjC, isRefinedInSwift) = descriptor.inheritsRefinedAnnotations()
+            hasObjC = hasObjC || isRefinedForObjC
+            hasSwift = hasSwift || isRefinedInSwift
+            if (hasObjC && hasSwift) return true to true
+        }
+        return hasObjC to hasSwift
+    }
+
+    private fun CallableMemberDescriptor.hasRefinedAnnotations(): Pair<Boolean, Boolean> {
+        var hasObjC = false
+        var hasSwift = false
+        for (annotation in annotations) {
+            val annotations = annotation.annotationClass?.annotations ?: continue
+            for (metaAnnotation in annotations) {
+                when (metaAnnotation.fqName) {
+                    refinesForObjCFqName -> {
+                        hasObjC = true
+                        break
+                    }
+                    refinesInSwiftFqName -> {
+                        hasSwift = true
+                        break
+                    }
+                }
+            }
+            if (hasObjC && hasSwift) return true to true
+        }
+        return hasObjC to hasSwift
+    }
+
+    private fun BindingTrace.reportIncompatibleOverride(
+        declaration: KtDeclaration,
+        annotations: List<AnnotationDescriptor>,
+        notRefinedSupers: List<CallableMemberDescriptor>
+    ) {
+        val containingDeclarations = notRefinedSupers.map { it.containingDeclaration }
+        if (annotations.isEmpty()) {
+            report(ErrorsNative.INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE.on(declaration, containingDeclarations))
+        } else {
+            annotations.forEach {
+                val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(it) ?: declaration
+                report(ErrorsNative.INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE.on(reportLocation, containingDeclarations))
+            }
+        }
     }
 }

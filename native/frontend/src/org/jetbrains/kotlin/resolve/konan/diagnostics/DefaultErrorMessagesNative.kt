@@ -40,6 +40,11 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
         put(ErrorsNative.INAPPLICABLE_THREAD_LOCAL_TOP_LEVEL, "@ThreadLocal is applicable only to top level declarations")
         put(ErrorsNative.INVALID_CHARACTERS_NATIVE, "Name {0}", CommonRenderers.STRING)
         put(ErrorsNative.REDUNDANT_SWIFT_REFINEMENT, "An ObjC refined declaration can't also be refined in Swift")
+        put(
+            ErrorsNative.INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE,
+            "Refined declaration overrides non refined declarations from {0}",
+            CommonRenderers.commaSeparated(Renderers.NAME)
+        )
     }
 }
 

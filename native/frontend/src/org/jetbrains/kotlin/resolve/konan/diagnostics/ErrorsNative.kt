@@ -38,6 +38,8 @@ object ErrorsNative {
     val INVALID_CHARACTERS_NATIVE = DiagnosticFactoryForDeprecation1.create<PsiElement, String>(LanguageFeature.ProhibitInvalidCharsInNativeIdentifiers)
     @JvmField
     val REDUNDANT_SWIFT_REFINEMENT = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
+    @JvmField
+    val INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE = DiagnosticFactory1.create<KtElement, Collection<DeclarationDescriptor>>(Severity.ERROR)
 
     init {
         Errors.Initializer.initializeFactoryNames(ErrorsNative::class.java)
