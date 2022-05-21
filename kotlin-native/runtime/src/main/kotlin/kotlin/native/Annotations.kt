@@ -83,12 +83,19 @@ public annotation class EagerInitialization
 @Retention(AnnotationRetention.BINARY)
 public actual annotation class CName(actual val externName: String = "", actual val shortName: String = "")
 
+@RequiresOptIn
+@Target(AnnotationTarget.ANNOTATION_CLASS)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+public actual annotation class ExperimentalObjCRefinement
+
 /**
  * Instructs the Kotlin compiler to remove this property or function from the public Objective-C API.
  */
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
+@ExperimentalObjCRefinement
 public actual annotation class ObjCRefined
 
 /**
@@ -97,4 +104,5 @@ public actual annotation class ObjCRefined
 @Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
+@ExperimentalObjCRefinement
 public actual annotation class SwiftRefined

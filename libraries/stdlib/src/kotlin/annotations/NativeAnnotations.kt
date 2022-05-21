@@ -17,6 +17,13 @@ package kotlin.native
 @OptionalExpectation
 public expect annotation class CName(val externName: String = "", val shortName: String = "")
 
+@RequiresOptIn
+@Target(AnnotationTarget.ANNOTATION_CLASS)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+@OptionalExpectation
+public expect annotation class ExperimentalObjCRefinement()
+
 /**
  * Instructs the Kotlin compiler to remove this property or function from the public Objective-C API.
  */
@@ -24,6 +31,7 @@ public expect annotation class CName(val externName: String = "", val shortName:
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 @OptionalExpectation
+@ExperimentalObjCRefinement
 public expect annotation class ObjCRefined()
 
 /**
@@ -33,4 +41,5 @@ public expect annotation class ObjCRefined()
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 @OptionalExpectation
+@ExperimentalObjCRefinement
 public expect annotation class SwiftRefined()
