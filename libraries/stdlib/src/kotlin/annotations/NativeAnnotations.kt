@@ -24,22 +24,38 @@ public expect annotation class CName(val externName: String = "", val shortName:
 @OptionalExpectation
 public expect annotation class ExperimentalObjCRefinement()
 
-/**
- * Instructs the Kotlin compiler to remove this property or function from the public Objective-C API.
- */
-@Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+@Target(AnnotationTarget.ANNOTATION_CLASS)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 @OptionalExpectation
 @ExperimentalObjCRefinement
-public expect annotation class ObjCRefined()
+public expect annotation class RefinesForObjC()
+
+/**
+ * Instructs the Kotlin compiler to remove this property or function from the public Objective-C API.
+ */
+@RefinesForObjC
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+@OptionalExpectation
+@ExperimentalObjCRefinement
+public expect annotation class RefinedForObjC()
+
+@Target(AnnotationTarget.ANNOTATION_CLASS)
+@Retention(AnnotationRetention.BINARY)
+@MustBeDocumented
+@OptionalExpectation
+@ExperimentalObjCRefinement
+public expect annotation class RefinesInSwift()
 
 /**
  * Instructs the Kotlin compiler to mark this property or function as [`swift_private`](https://developer.apple.com/documentation/swift/objective-c_and_c_code_customization/improving_objective-c_api_declarations_for_swift).
  */
-@Target(AnnotationTarget.ANNOTATION_CLASS, AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
+@RefinesInSwift
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
 @OptionalExpectation
 @ExperimentalObjCRefinement
-public expect annotation class SwiftRefined()
+public expect annotation class RefinedInSwift()

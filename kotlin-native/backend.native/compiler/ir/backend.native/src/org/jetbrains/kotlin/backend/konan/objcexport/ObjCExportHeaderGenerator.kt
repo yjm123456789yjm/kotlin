@@ -1373,15 +1373,15 @@ private fun DeprecationInfo.toDeprecationAttribute(): String {
 
 private fun renderDeprecationAttribute(attribute: String, message: String) = "$attribute(${quoteAsCStringLiteral(message)})"
 
-private fun CallableMemberDescriptor.isSwiftRefined(): Boolean {
-    if (overriddenDescriptors.isNotEmpty()) return overriddenDescriptors.all { it.isSwiftRefined() }
-    return annotations.any { it.fqName == KonanFqNames.swiftRefined } || annotations.any { annotation ->
-        annotation.annotationClass?.annotations?.any { it.fqName == KonanFqNames.swiftRefined } == true
+private fun CallableMemberDescriptor.isRefinedInSwift(): Boolean = when {
+    overriddenDescriptors.isNotEmpty() -> overriddenDescriptors.all { it.isRefinedInSwift() }
+    else -> annotations.any { annotation ->
+        annotation.annotationClass?.annotations?.any { it.fqName == KonanFqNames.refinesInSwift } == true
     }
 }
 
 private fun CallableMemberDescriptor.getSwiftPrivateAttribute(): String? =
-        if (isSwiftRefined()) "swift_private" else null
+        if (isRefinedInSwift()) "swift_private" else null
 
 private fun quoteAsCStringLiteral(str: String): String = buildString {
     append('"')

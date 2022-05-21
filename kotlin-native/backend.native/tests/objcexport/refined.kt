@@ -9,44 +9,44 @@ package refined
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
-@ObjCRefined
-annotation class MyObjCRefined
+@RefinesForObjC
+annotation class MyRefinedForObjC
 
 @ExperimentalObjCRefinement
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
 @MustBeDocumented
-@SwiftRefined
-annotation class MySwiftRefined
+@RefinesInSwift
+annotation class MyRefinedInSwift
 
 @OptIn(ExperimentalObjCRefinement::class)
-@ObjCRefined
+@RefinedForObjC
 fun foo(): Int = 1
 
 @OptIn(ExperimentalObjCRefinement::class)
-@SwiftRefined
+@RefinedInSwift
 fun fooRefined(): String = foo().toString()
 
 @OptIn(ExperimentalObjCRefinement::class)
-@MyObjCRefined
+@MyRefinedForObjC
 fun myFoo(): Int = 2
 
 @OptIn(ExperimentalObjCRefinement::class)
-@MySwiftRefined
+@MyRefinedInSwift
 fun myFooRefined(): String = myFoo().toString()
 
 @OptIn(ExperimentalObjCRefinement::class)
-@ObjCRefined
+@RefinedForObjC
 val bar: Int = 3
 
 @OptIn(ExperimentalObjCRefinement::class)
-@SwiftRefined
+@RefinedInSwift
 val barRefined: String get() = bar.toString()
 
 @OptIn(ExperimentalObjCRefinement::class)
-@MyObjCRefined
+@MyRefinedForObjC
 val myBar: Int = 4
 
 @OptIn(ExperimentalObjCRefinement::class)
-@MySwiftRefined
+@MyRefinedInSwift
 val myBarRefined: String get() = myBar.toString()
