@@ -41,7 +41,16 @@ import plugin.PluginRefinedInSwift
 <!REDUNDANT_SWIFT_REFINEMENT!>@RefinesInSwift<!>
 @Target(AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION)
 @Retention(AnnotationRetention.BINARY)
-annotation class MyRefinedAnnotation
+annotation class MyRefinedAnnotationA
+
+<!INVALID_OBJC_REFINEMENT_TARGETS!>@RefinesForObjC<!>
+@Target(AnnotationTarget.PROPERTY, AnnotationTarget.CLASS)
+@Retention(AnnotationRetention.BINARY)
+annotation class MyRefinedAnnotationB
+
+<!INVALID_OBJC_REFINEMENT_TARGETS!>@RefinesInSwift<!>
+@Retention(AnnotationRetention.BINARY)
+annotation class MyRefinedAnnotationC
 
 @RefinedForObjC
 <!REDUNDANT_SWIFT_REFINEMENT!>@RefinedInSwift<!>

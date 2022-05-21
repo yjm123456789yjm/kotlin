@@ -7,8 +7,10 @@ package org.jetbrains.kotlin.resolve.konan.diagnostics
 
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
+import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.resolve.AnnotationChecker
 import org.jetbrains.kotlin.resolve.BindingTrace
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.checkers.DeclarationChecker
@@ -18,6 +20,7 @@ import org.jetbrains.kotlin.resolve.descriptorUtil.annotationClass
 object NativeObjCRefinementChecker : DeclarationChecker {
     private val refinesForObjCFqName = FqName("kotlin.native.RefinesForObjC")
     private val refinesInSwiftFqName = FqName("kotlin.native.RefinesInSwift")
+    private val supportedTargets = arrayOf(KotlinTarget.FUNCTION, KotlinTarget.PROPERTY)
 
     override fun check(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {
         checkAnnotation(declaration, descriptor, context)
@@ -32,7 +35,12 @@ object NativeObjCRefinementChecker : DeclarationChecker {
             val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(swiftAnnotation) ?: declaration
             context.trace.report(ErrorsNative.REDUNDANT_SWIFT_REFINEMENT.on(reportLocation))
         }
-        // TODO: Check annotation targets
+        val targets = AnnotationChecker.applicableTargetSet(descriptor)
+        val unsupportedTargets = targets - supportedTargets
+        if (unsupportedTargets.isNotEmpty()) {
+            objCAnnotation?.let { context.trace.reportInvalidAnnotationTargets(declaration, it) }
+            swiftAnnotation?.let { context.trace.reportInvalidAnnotationTargets(declaration, it) }
+        }
     }
 
     private fun DeclarationDescriptor.findRefinesAnnotations(): Pair<AnnotationDescriptor?, AnnotationDescriptor?> {
@@ -46,6 +54,14 @@ object NativeObjCRefinementChecker : DeclarationChecker {
             if (objCAnnotation != null && swiftAnnotation != null) break
         }
         return objCAnnotation to swiftAnnotation
+    }
+
+    private fun BindingTrace.reportInvalidAnnotationTargets(
+        declaration: KtDeclaration,
+        annotation: AnnotationDescriptor
+    ) {
+        val reportLocation = DescriptorToSourceUtils.getSourceFromAnnotation(annotation) ?: declaration
+        report(ErrorsNative.INVALID_OBJC_REFINEMENT_TARGETS.on(reportLocation))
     }
 
     private fun checkDeclaration(declaration: KtDeclaration, descriptor: DeclarationDescriptor, context: DeclarationCheckerContext) {

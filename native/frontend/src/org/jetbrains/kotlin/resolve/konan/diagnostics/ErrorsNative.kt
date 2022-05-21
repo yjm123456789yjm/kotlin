@@ -40,6 +40,8 @@ object ErrorsNative {
     val REDUNDANT_SWIFT_REFINEMENT = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
     @JvmField
     val INCOMPATIBLE_OBJC_REFINEMENT_OVERRIDE = DiagnosticFactory1.create<KtElement, Collection<DeclarationDescriptor>>(Severity.ERROR)
+    @JvmField
+    val INVALID_OBJC_REFINEMENT_TARGETS = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
 
     init {
         Errors.Initializer.initializeFactoryNames(ErrorsNative::class.java)

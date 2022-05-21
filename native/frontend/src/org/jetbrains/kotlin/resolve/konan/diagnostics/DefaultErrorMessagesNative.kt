@@ -45,6 +45,7 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
             "Refined declaration overrides non refined declarations from {0}",
             CommonRenderers.commaSeparated(Renderers.NAME)
         )
+        put(ErrorsNative.INVALID_OBJC_REFINEMENT_TARGETS, "Only properties and functions can be refined")
     }
 }
 
