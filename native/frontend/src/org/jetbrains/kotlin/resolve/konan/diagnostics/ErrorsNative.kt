@@ -36,6 +36,8 @@ object ErrorsNative {
     val VARIABLE_IN_ENUM = DiagnosticFactory0.create<KtElement>(Severity.WARNING)
     @JvmField
     val INVALID_CHARACTERS_NATIVE = DiagnosticFactoryForDeprecation1.create<PsiElement, String>(LanguageFeature.ProhibitInvalidCharsInNativeIdentifiers)
+    @JvmField
+    val REDUNDANT_SWIFT_REFINEMENT = DiagnosticFactory0.create<KtElement>(Severity.ERROR)
 
     init {
         Errors.Initializer.initializeFactoryNames(ErrorsNative::class.java)

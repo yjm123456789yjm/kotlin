@@ -1,0 +1,65 @@
+package
+
+@kotlin.native.RefinedForObjC @kotlin.native.RefinedInSwift public var refinedProperty: kotlin.Int
+@kotlin.native.RefinedForObjC @plugin.PluginRefinedForObjC @kotlin.native.RefinedInSwift @plugin.PluginRefinedInSwift public fun multipleMixedRefinementsFunction(): kotlin.Unit
+@kotlin.native.RefinedForObjC @plugin.PluginRefinedForObjC public fun multipleObjCRefinementsFunction(): kotlin.Unit
+@kotlin.native.RefinedInSwift @plugin.PluginRefinedInSwift public fun multipleSwiftRefinementsFunction(): kotlin.Unit
+@plugin.PluginRefinedForObjC @plugin.PluginRefinedInSwift public fun pluginRefinedFunction(): kotlin.Unit
+
+@kotlin.native.RefinesForObjC @kotlin.native.RefinesInSwift @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class MyRefinedAnnotation : kotlin.Annotation {
+    public constructor MyRefinedAnnotation()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+package kotlin {
+
+    package kotlin.native {
+
+        @kotlin.native.RefinesForObjC @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class RefinedForObjC : kotlin.Annotation {
+            public constructor RefinedForObjC()
+            public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+            public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+            public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+        }
+
+        @kotlin.native.RefinesInSwift @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class RefinedInSwift : kotlin.Annotation {
+            public constructor RefinedInSwift()
+            public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+            public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+            public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+        }
+
+        @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.ANNOTATION_CLASS}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) @kotlin.annotation.MustBeDocumented public final annotation class RefinesForObjC : kotlin.Annotation {
+            public constructor RefinesForObjC()
+            public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+            public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+            public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+        }
+
+        @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.ANNOTATION_CLASS}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class RefinesInSwift : kotlin.Annotation {
+            public constructor RefinesInSwift()
+            public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+            public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+            public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+        }
+    }
+}
+
+package plugin {
+
+    @kotlin.native.RefinesForObjC @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class PluginRefinedForObjC : kotlin.Annotation {
+        public constructor PluginRefinedForObjC()
+        public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+        public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    }
+
+    @kotlin.native.RefinesInSwift @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY, AnnotationTarget.FUNCTION}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class PluginRefinedInSwift : kotlin.Annotation {
+        public constructor PluginRefinedInSwift()
+        public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+        public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    }
+}

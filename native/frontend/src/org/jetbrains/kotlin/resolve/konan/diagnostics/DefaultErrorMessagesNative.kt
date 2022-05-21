@@ -38,7 +38,8 @@ private val DIAGNOSTIC_FACTORY_TO_RENDERER by lazy {
             "@ThreadLocal is applicable only to property with backing field, to property with delegation or to objects"
         )
         put(ErrorsNative.INAPPLICABLE_THREAD_LOCAL_TOP_LEVEL, "@ThreadLocal is applicable only to top level declarations")
-        put(ErrorsNative.INVALID_CHARACTERS_NATIVE, "Name {0}", CommonRenderers.STRING);
+        put(ErrorsNative.INVALID_CHARACTERS_NATIVE, "Name {0}", CommonRenderers.STRING)
+        put(ErrorsNative.REDUNDANT_SWIFT_REFINEMENT, "An ObjC refined declaration can't also be refined in Swift")
     }
 }
 
