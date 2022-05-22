@@ -135,6 +135,12 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
  *
  * Takes bitcode files [inputFiles] and bitcode file [mainFile] with `main()` entrypoint and produces executable [outputFile].
  *
+ * This works in 4 stages:
+ * 1. `llvm-link` all [inputFiles] into [llvmLinkFirstStageOutputFile].
+ * 2. `llvm-link` [llvmLinkFirstStageOutputFile] and [mainFile] with `-internalize` into [llvmLinkOutputFile].
+ * 3. `clang++` [llvmLinkOutputFile] into object file [compilerOutputFile].
+ * 4. Link [compilerOutputFile] into executable [outputFile].
+ *
  * @see CompileToBitcodePlugin
  */
 abstract class CompileToExecutable : DefaultTask() {

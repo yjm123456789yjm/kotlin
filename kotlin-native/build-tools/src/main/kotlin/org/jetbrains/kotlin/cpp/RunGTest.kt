@@ -68,6 +68,8 @@ abstract class RunGTest : DefaultTask() {
 
     @TaskAction
     fun run() {
+        // TODO: Try to make it like other gradle test tasks: report progress in a way gradle understands instead of dumping stdout of gtest.
+
         reportFileUnprocessed.asFile.get().parentFile.mkdirs()
 
         // Do not run this in workers, because we don't want this task to run in parallel.

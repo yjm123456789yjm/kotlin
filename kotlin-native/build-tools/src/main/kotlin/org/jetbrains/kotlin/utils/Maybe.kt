@@ -17,7 +17,7 @@ package org.jetbrains.kotlin.utils
 data class Maybe<T>(val orNull: T?)
 
 /**
- * Construct Maybe<[T]> from [T]?.
+ * Construct [Maybe]<[T]> from [T]?.
  */
 inline val <T> T?.asMaybe
     get() = Maybe(this)
