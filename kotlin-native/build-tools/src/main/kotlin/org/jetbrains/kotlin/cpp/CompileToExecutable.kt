@@ -34,7 +34,9 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
         val llvmLinkOutputFile: RegularFileProperty
         val compilerOutputFile: RegularFileProperty
         val outputFile: RegularFileProperty
-        val target: Property<KonanTarget>
+        // TODO: Figure out a way to pass KonanTarget, but it is used as a key into PlatformManager,
+        //       so object identity matters, and platform managers are different between project and worker sides.
+        val targetName: Property<String>
         val clangFlags: ListProperty<String>
         val linkCommands: ListProperty<List<String>>
         val konanHome: DirectoryProperty
@@ -49,6 +51,10 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
 
     private val platformManager by lazy {
         PlatformManager(buildDistribution(parameters.konanHome.asFile.get().absolutePath), parameters.experimentalDistribution.get())
+    }
+
+    private val target by lazy {
+        platformManager.targetByName(parameters.targetName.get())
     }
 
     private fun llvmLink() {
@@ -82,8 +88,8 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
 
             compilerOutputFile.asFile.get().parentFile.mkdirs()
 
-            if (target.get().family.isAppleFamily) {
-                execClang.execToolchainClang(target.get()) {
+            if (target.family.isAppleFamily) {
+                execClang.execToolchainClang(target) {
                     executable = "clang++"
                     this.args = args
                 }
@@ -246,7 +252,7 @@ abstract class CompileToExecutable : DefaultTask() {
             llvmLinkOutputFile.set(this@CompileToExecutable.llvmLinkOutputFile)
             compilerOutputFile.set(this@CompileToExecutable.compilerOutputFile)
             outputFile.set(this@CompileToExecutable.outputFile)
-            target.set(this@CompileToExecutable.target)
+            targetName.set(this@CompileToExecutable.target.get().name)
             clangFlags.addAll(defaultClangFlags + compilerArgs.get() + sanitizerFlags)
             linkCommands.set(this@CompileToExecutable.linkCommands)
             konanHome.set(project.project(":kotlin-native").layout.projectDirectory)
