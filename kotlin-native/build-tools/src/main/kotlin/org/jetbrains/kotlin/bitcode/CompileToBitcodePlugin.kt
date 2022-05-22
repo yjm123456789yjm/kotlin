@@ -11,6 +11,8 @@ import org.gradle.api.Project
 import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
+import org.gradle.api.services.BuildService
+import org.gradle.api.services.BuildServiceParameters
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.cpp.CompilationDatabaseExtension
@@ -26,6 +28,8 @@ import org.jetbrains.kotlin.utils.Maybe
 import org.jetbrains.kotlin.utils.asMaybe
 import java.io.File
 import javax.inject.Inject
+
+private abstract class RunGTestSemaphore : BuildService<BuildServiceParameters.None>
 
 /**
  * A plugin creating extensions to compile
@@ -51,6 +55,12 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
     //       But for usefulness this service should be accessible from WorkAction.
     private val execClang = project.extensions.getByType<ExecClang>()
     private val platformManager = project.extensions.getByType<PlatformManager>()
+
+    // A shared service used to limit parallel execution of test binaries.
+    private val runGTestSemaphore = project.gradle.sharedServices.registerIfAbsent("runGTestSemaphore", RunGTestSemaphore::class.java) {
+        // Probably can be made configurable if test reporting moves away from simple gtest stdout dumping.
+        maxParallelUsages.set(1)
+    }
 
     private val targetList = with(project) {
         provider { (rootProject.project(":kotlin-native").property("targetList") as? List<*>)?.filterIsInstance<String>() ?: emptyList() } // TODO: Can we make it better?
@@ -197,6 +207,8 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
             reportFile.set(project.layout.buildDirectory.file("testReports/$testName/report-with-prefixes.xml"))
             filter.set(project.findProperty("gtest_filter") as? String)
             tsanSuppressionsFile.set(project.layout.projectDirectory.file("tsan_suppressions.txt"))
+
+            usesService(runGTestSemaphore)
         }
 
         allTestsTasks[target.name]!!.configure {

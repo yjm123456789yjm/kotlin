@@ -9,6 +9,53 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.file.RegularFileProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
+import org.gradle.process.ExecOperations
+import org.gradle.workers.WorkAction
+import org.gradle.workers.WorkParameters
+import org.gradle.workers.WorkerExecutor
+import javax.inject.Inject
+
+private abstract class RunGTestJob : WorkAction<RunGTestJob.Parameters> {
+    interface Parameters : WorkParameters {
+        val testName: Property<String>
+        val executable: RegularFileProperty
+        val reportFile: RegularFileProperty
+        val reportFileUnprocessed: RegularFileProperty
+        val filter: Property<String>
+        val tsanSuppressionsFile: RegularFileProperty
+    }
+
+    @get:Inject
+    abstract val execOperations: ExecOperations
+
+    override fun execute() {
+        // TODO: Try to make it like other gradle test tasks: report progress in a way gradle understands instead of dumping stdout of gtest.
+
+        with(parameters) {
+            reportFileUnprocessed.asFile.get().parentFile.mkdirs()
+
+            execOperations.exec {
+                executable = this@with.executable.asFile.get().absolutePath
+
+                filter.orNull?.also {
+                    args("--gtest_filter=${it}")
+                }
+                args("--gtest_output=xml:${reportFileUnprocessed.asFile.get().absolutePath}")
+                tsanSuppressionsFile.orNull?.also {
+                    environment("TSAN_OPTIONS", "suppressions=${it.asFile.absolutePath}")
+                }
+            }
+
+            reportFile.asFile.get().parentFile.mkdirs()
+
+            // TODO: Better to use proper XML parsing.
+            var contents = reportFileUnprocessed.asFile.get().readText()
+            contents = contents.replace("<testsuite name=\"", "<testsuite name=\"${testName.get()}.")
+            contents = contents.replace("classname=\"", "classname=\"${testName.get()}.")
+            reportFile.asFile.get().writeText(contents)
+        }
+    }
+}
 
 /**
  * Run [googletest](https://google.github.io/googletest) test binary from [executable].
@@ -66,32 +113,20 @@ abstract class RunGTest : DefaultTask() {
     @get:Optional
     abstract val tsanSuppressionsFile: RegularFileProperty
 
+    @get:Inject
+    protected abstract val workerExecutor: WorkerExecutor
+
     @TaskAction
     fun run() {
-        // TODO: Try to make it like other gradle test tasks: report progress in a way gradle understands instead of dumping stdout of gtest.
+        val workQueue = workerExecutor.noIsolation()
 
-        reportFileUnprocessed.asFile.get().parentFile.mkdirs()
-
-        // Do not run this in workers, because we don't want this task to run in parallel.
-        // TODO: Consider using build services https://docs.gradle.org/current/userguide/build_services.html#concurrent_access_to_the_service to have configurable parallel execution.
-        project.exec {
-            executable = this@RunGTest.executable.asFile.get().absolutePath
-
-            filter.orNull?.also {
-                args("--gtest_filter=${it}")
-            }
-            args("--gtest_output=xml:${reportFileUnprocessed.asFile.get().absolutePath}")
-            tsanSuppressionsFile.orNull?.also {
-                environment("TSAN_OPTIONS", "suppressions=${it.asFile.absolutePath}")
-            }
+        workQueue.submit(RunGTestJob::class.java) {
+            testName.set(this@RunGTest.testName)
+            executable.set(this@RunGTest.executable)
+            reportFile.set(this@RunGTest.reportFile)
+            reportFileUnprocessed.set(this@RunGTest.reportFileUnprocessed)
+            filter.set(this@RunGTest.filter)
+            tsanSuppressionsFile.set(this@RunGTest.tsanSuppressionsFile)
         }
-
-        reportFile.asFile.get().parentFile.mkdirs()
-
-        // TODO: Better to use proper XML parsing.
-        var contents = reportFileUnprocessed.asFile.get().readText()
-        contents = contents.replace("<testsuite name=\"", "<testsuite name=\"${testName.get()}.")
-        contents = contents.replace("classname=\"", "classname=\"${testName.get()}.")
-        reportFile.asFile.get().writeText(contents)
     }
 }
