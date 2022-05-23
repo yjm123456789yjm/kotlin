@@ -11,19 +11,19 @@ import org.gradle.api.Project
 import org.gradle.process.ExecOperations
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
+import org.gradle.process.JavaExecSpec
 import org.jetbrains.kotlin.konan.target.PlatformManager
 
 fun execLlvmUtility(project: Project, utility: String, action: Action<in ExecSpec>): ExecResult {
-    val llvmBinDirectory = "${project.platformManager.hostPlatform.absoluteLlvmHome}/bin"
-    return project.exec(Action<ExecSpec> {
-        action.execute(this)
-        executable = "$llvmBinDirectory/$utility"
-    })
+    val execOperations = object : ExecOperations {
+        override fun exec(action: Action<in ExecSpec>) = project.exec(action)
+        override fun javaexec(action: Action<in JavaExecSpec>) = project.javaexec(action)
+    }
+    return execLlvmUtility(execOperations, project.platformManager, utility, action)
 }
 
-fun execLlvmUtility(project: Project, utility: String, closure: Closure<in ExecSpec>): ExecResult {
-    return execLlvmUtility(project, utility) { project.configure(this, closure) }
-}
+fun execLlvmUtility(project: Project, utility: String, closure: Closure<in ExecSpec>) =
+        execLlvmUtility(project, utility) { project.configure(this, closure) }
 
 fun execLlvmUtility(execOperations: ExecOperations, platformManager: PlatformManager, utility: String, action: Action<in ExecSpec>): ExecResult {
     return execOperations.exec {

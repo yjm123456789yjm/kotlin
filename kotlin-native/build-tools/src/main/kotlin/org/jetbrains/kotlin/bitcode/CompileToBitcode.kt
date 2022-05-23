@@ -10,6 +10,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.ExecClang
+import org.jetbrains.kotlin.execLlvmUtility
 import java.io.File
 import javax.inject.Inject
 import kotlinBuildProperties
@@ -53,8 +54,7 @@ abstract class CompileToBitcodeJob : WorkAction<CompileToBitcodeParameters> {
                 args = compilerArgs
             }
 
-            execOperations.exec {
-                executable = "${llvmDir.absolutePath}/bin/llvm-link"
+            execLlvmUtility(execOperations, platformManager, "llvm-link") {
                 args = llvmLinkArgs
             }
         }
