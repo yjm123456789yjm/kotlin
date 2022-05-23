@@ -71,6 +71,13 @@ public interface InterfaceB {
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
 }
 
+@kotlin.native.RefinesInSwift @kotlin.annotation.Target(allowedTargets = {AnnotationTarget.PROPERTY}) @kotlin.annotation.Retention(value = AnnotationRetention.BINARY) public final annotation class MyRefinedAnnotationD : kotlin.Annotation {
+    public constructor MyRefinedAnnotationD()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
 package kotlin {
 
     package kotlin.native {

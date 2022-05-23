@@ -52,6 +52,11 @@ annotation class MyRefinedAnnotationB
 @Retention(AnnotationRetention.BINARY)
 annotation class MyRefinedAnnotationC
 
+@RefinesInSwift
+@Target(AnnotationTarget.PROPERTY)
+@Retention(AnnotationRetention.BINARY)
+annotation class MyRefinedAnnotationD
+
 @RefinedForObjC
 <!REDUNDANT_SWIFT_REFINEMENT!>@RefinedInSwift<!>
 var refinedProperty: Int = 0
