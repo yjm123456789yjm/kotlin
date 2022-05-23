@@ -1374,7 +1374,8 @@ private fun DeprecationInfo.toDeprecationAttribute(): String {
 private fun renderDeprecationAttribute(attribute: String, message: String) = "$attribute(${quoteAsCStringLiteral(message)})"
 
 private fun CallableMemberDescriptor.isRefinedInSwift(): Boolean = when {
-    overriddenDescriptors.isNotEmpty() -> overriddenDescriptors.all { it.isRefinedInSwift() }
+    // Note: the front-end checker requires all overridden descriptors to be either refined or not refined.
+    overriddenDescriptors.isNotEmpty() -> overriddenDescriptors.first().isRefinedInSwift()
     else -> annotations.any { annotation ->
         annotation.annotationClass?.annotations?.any { it.fqName == KonanFqNames.refinesInSwift } == true
     }

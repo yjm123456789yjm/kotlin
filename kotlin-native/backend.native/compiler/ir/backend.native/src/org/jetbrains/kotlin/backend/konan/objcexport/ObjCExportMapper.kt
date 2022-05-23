@@ -79,7 +79,8 @@ internal fun ObjCExportMapper.shouldBeExposed(descriptor: CallableMemberDescript
                 !(descriptor is ConstructorDescriptor && isSealedClassConstructor(descriptor)) && !descriptor.isRefinedForObjC()
 
 private fun CallableMemberDescriptor.isRefinedForObjC(): Boolean = when {
-    overriddenDescriptors.isNotEmpty() -> overriddenDescriptors.all { it.isRefinedForObjC() }
+    // Note: the front-end checker requires all overridden descriptors to be either refined or not refined.
+    overriddenDescriptors.isNotEmpty() -> overriddenDescriptors.first().isRefinedForObjC()
     else -> annotations.any { annotation ->
         annotation.annotationClass?.annotations?.any { it.fqName == KonanFqNames.refinesForObjC } == true
     }
