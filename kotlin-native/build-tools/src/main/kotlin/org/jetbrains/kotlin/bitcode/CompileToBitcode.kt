@@ -30,7 +30,6 @@ interface CompileToBitcodeParameters : WorkParameters {
     var llvmLinkArgs: List<String>
 
     var konanHome: File
-    var llvmDir: File
     var experimentalDistribution: Boolean
 }
 
@@ -46,7 +45,7 @@ abstract class CompileToBitcodeJob : WorkAction<CompileToBitcodeParameters> {
             objDir.mkdirs()
 
             val platformManager = PlatformManager(buildDistribution(konanHome.absolutePath), experimentalDistribution)
-            val execClang = ExecClang.create(objects, platformManager, llvmDir)
+            val execClang = ExecClang.create(objects, platformManager)
 
             execClang.execKonanClang(target) {
                 workingDir = objDir
@@ -236,7 +235,6 @@ abstract class CompileToBitcode @Inject constructor(
                     }
 
             it.konanHome = project.project(":kotlin-native").projectDir
-            it.llvmDir = project.file(project.findProperty("llvmDir")!!)
         }
 
         workQueue.submit(CompileToBitcodeJob::class.java, parameters)

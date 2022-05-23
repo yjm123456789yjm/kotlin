@@ -33,7 +33,6 @@ import javax.inject.Inject
 
 abstract class ExecClang @Inject constructor(
         private val platformManager: PlatformManager,
-        private val llvmDirAbsolutePath: String
     ) {
 
     @get:Inject
@@ -54,7 +53,7 @@ abstract class ExecClang @Inject constructor(
         val executable = executableOrNull ?: "clang"
 
         if (listOf("clang", "clang++").contains(executable)) {
-            return "$llvmDirAbsolutePath/bin/$executable"
+            return "${platformManager.hostPlatform.absoluteLlvmHome}/bin/$executable"
         } else {
             throw GradleException("unsupported clang executable: $executable")
         }
@@ -143,17 +142,8 @@ abstract class ExecClang @Inject constructor(
 
     companion object {
         @JvmStatic
-        fun create(project: Project): ExecClang = create(
-                project.objects,
-                project.project(":kotlin-native").findProperty("platformManager") as PlatformManager,
-                project.file(project.findProperty("llvmDir")!!)
-        )
+        fun create(project: Project) = create(project.objects, project.platformManager)
 
-        @JvmStatic
-        fun create(objects: ObjectFactory, platformManager: PlatformManager, llvmDir: File) =
-                objects.newInstance(ExecClang::class.java, platformManager, llvmDir.absolutePath)
-
-        fun create(objects: ObjectFactory, platformManager: PlatformManager) =
-                objects.newInstance(ExecClang::class.java, platformManager, platformManager.hostPlatform.absoluteLlvmHome)
+        fun create(objects: ObjectFactory, platformManager: PlatformManager): ExecClang = objects.newInstance(ExecClang::class.java, platformManager)
     }
 }
