@@ -41,34 +41,19 @@
   </developers>
 
   <dependencies>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>jvm-abi-gen</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-android-extensions-runtime</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-android-extensions</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-annotation-processing-runtime</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-annotation-processing</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-annotations-jvm</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-compiler</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-daemon-client</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-daemon</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-main-kts</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-parcelize-compiler</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-parcelize-runtime</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-reflect</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-script-runtime</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-common</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-compiler-impl</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-compiler</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-js</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-jvm</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-stdlib-jdk7</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-stdlib-jdk8</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-stdlib-js</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-stdlib</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-test-js</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-test-junit5</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-test-junit</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-test-testng</artifactId><version>${project.version}</version></dependency>
-    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-test</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>org.jetbrains.intellij.deps</groupId><artifactId>trove4j</artifactId><version>1.0.20200330</version></dependency>
     <dependency><groupId>org.jetbrains.kotlinx</groupId><artifactId>kotlinx-coroutines-core-jvm</artifactId><version>1.5.0</version></dependency>
     <dependency><groupId>org.jetbrains</groupId><artifactId>annotations</artifactId><version>13.0</version></dependency>
