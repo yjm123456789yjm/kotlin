@@ -64,11 +64,6 @@ public class OperatorConventions {
             .put(KtTokens.RANGE, RANGE_TO)
             .build();
 
-    public static final ImmutableBiMap<Name, Name> REM_TO_MOD_OPERATION_NAMES = ImmutableBiMap.<Name, Name>builder()
-            .put(REM, Name.identifier("mod"))
-            .put(REM_ASSIGN, Name.identifier("modAssign"))
-            .build();
-
     public static final ImmutableSet<KtSingleValueToken> NOT_OVERLOADABLE =
             ImmutableSet.of(KtTokens.ANDAND, KtTokens.OROR, KtTokens.ELVIS, KtTokens.EQEQEQ, KtTokens.EXCLEQEQEQ);
     

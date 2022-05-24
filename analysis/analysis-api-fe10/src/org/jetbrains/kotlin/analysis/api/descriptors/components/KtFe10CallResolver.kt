@@ -67,7 +67,6 @@ internal class KtFe10CallResolver(
             OperatorNameConventions.TIMES,
             OperatorNameConventions.DIV,
             OperatorNameConventions.REM,
-            OperatorNameConventions.MOD,
         )
 
         private val callArgErrors = setOf(

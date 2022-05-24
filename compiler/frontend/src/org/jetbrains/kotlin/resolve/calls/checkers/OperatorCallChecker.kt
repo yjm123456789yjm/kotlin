@@ -61,11 +61,6 @@ class OperatorCallChecker : CallChecker {
         }
 
         val isConventionOperator = element is KtOperationReferenceExpression && element.isConventionOperator()
-
-        if (isConventionOperator) {
-            checkModConvention(functionDescriptor, context.languageVersionSettings, context.trace, reportOn)
-        }
-
         if (isConventionOperator || element is KtArrayAccessExpression) {
             if (!functionDescriptor.isOperator) {
                 report(reportOn, functionDescriptor, context.trace)
@@ -95,44 +90,4 @@ class OperatorCallChecker : CallChecker {
             return passedTypeArgumentsToInvoke && resolvedCall.variableCall.candidateDescriptor.typeParameters.isNotEmpty()
         }
     }
-}
-
-fun FunctionDescriptor.isOperatorMod(): Boolean {
-    return this.isOperator && name in OperatorConventions.REM_TO_MOD_OPERATION_NAMES.values
-}
-
-fun shouldWarnAboutDeprecatedModFromBuiltIns(languageVersionSettings: LanguageVersionSettings): Boolean {
-    return languageVersionSettings.supportsFeature(LanguageFeature.OperatorRem) && languageVersionSettings.apiVersion >= ApiVersion.KOTLIN_1_1
-}
-
-private fun checkModConvention(
-    descriptor: FunctionDescriptor, languageVersionSettings: LanguageVersionSettings,
-    diagnosticHolder: DiagnosticSink, modifier: PsiElement
-) {
-    if (!descriptor.isOperatorMod()) return
-
-    if (KotlinBuiltIns.isUnderKotlinPackage(descriptor)) {
-        if (shouldWarnAboutDeprecatedModFromBuiltIns(languageVersionSettings)) {
-            warnAboutDeprecatedOrForbiddenMod(descriptor, diagnosticHolder, modifier, languageVersionSettings)
-        }
-    } else {
-        if (languageVersionSettings.supportsFeature(LanguageFeature.OperatorRem)) {
-            warnAboutDeprecatedOrForbiddenMod(descriptor, diagnosticHolder, modifier, languageVersionSettings)
-        }
-    }
-}
-
-private fun warnAboutDeprecatedOrForbiddenMod(
-    descriptor: FunctionDescriptor,
-    diagnosticHolder: DiagnosticSink,
-    reportOn: PsiElement,
-    languageVersionSettings: LanguageVersionSettings
-) {
-    val diagnosticFactory = if (languageVersionSettings.supportsFeature(LanguageFeature.ProhibitOperatorMod))
-        Errors.FORBIDDEN_BINARY_MOD_AS_REM
-    else
-        Errors.DEPRECATED_BINARY_MOD_AS_REM
-
-    val newNameConvention = OperatorConventions.REM_TO_MOD_OPERATION_NAMES.inverse()[descriptor.name]
-    diagnosticHolder.report(diagnosticFactory.on(reportOn, descriptor, newNameConvention!!.asString()))
 }
