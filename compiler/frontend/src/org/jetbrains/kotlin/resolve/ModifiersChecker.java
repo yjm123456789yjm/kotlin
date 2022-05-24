@@ -284,7 +284,7 @@ public class ModifiersChecker {
                 ProgressManager.checkCanceled();
                 checker.check(declaration, descriptor, context);
             }
-            OperatorModifierChecker.INSTANCE.check(declaration, descriptor, trace);
+            OperatorModifierChecker.INSTANCE.check(declaration, descriptor, trace, languageVersionSettings);
             PublishedApiUsageChecker.INSTANCE.check(declaration, descriptor, trace);
             OptionalExpectationChecker.INSTANCE.check(declaration, descriptor, trace);
         }

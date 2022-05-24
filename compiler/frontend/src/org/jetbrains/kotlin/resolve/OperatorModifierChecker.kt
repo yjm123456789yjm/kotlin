@@ -16,12 +16,16 @@
 
 package org.jetbrains.kotlin.resolve
 
+import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.descriptors.DeclarationDescriptor
 import org.jetbrains.kotlin.descriptors.FunctionDescriptor
 import org.jetbrains.kotlin.diagnostics.DiagnosticSink
 import org.jetbrains.kotlin.diagnostics.Errors
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
+import org.jetbrains.kotlin.types.expressions.OperatorConventions.REM_TO_MOD_OPERATION_NAMES
 import org.jetbrains.kotlin.util.CheckResult
 import org.jetbrains.kotlin.util.OperatorChecks
 
@@ -30,13 +34,30 @@ object OperatorModifierChecker {
         declaration: KtDeclaration,
         descriptor: DeclarationDescriptor,
         diagnosticHolder: DiagnosticSink,
+        languageVersionSettings: LanguageVersionSettings
     ) {
         val functionDescriptor = descriptor as? FunctionDescriptor ?: return
         if (!functionDescriptor.isOperator) return
         val modifier = declaration.modifierList?.getModifier(KtTokens.OPERATOR_KEYWORD) ?: return
 
         val checkResult = OperatorChecks.check(functionDescriptor)
-        if (checkResult.isSuccess) return
+        if (checkResult.isSuccess) {
+            if (functionDescriptor.name in REM_TO_MOD_OPERATION_NAMES.values &&
+                languageVersionSettings.supportsFeature(LanguageFeature.OperatorRem)
+            ) {
+                val diagnosticFactory = if (!KotlinBuiltIns.isUnderKotlinPackage(descriptor) &&
+                    languageVersionSettings.supportsFeature(LanguageFeature.ProhibitOperatorMod)
+                )
+                    Errors.FORBIDDEN_BINARY_MOD
+                else
+                    Errors.DEPRECATED_BINARY_MOD
+
+                val newNameConvention = REM_TO_MOD_OPERATION_NAMES.inverse()[functionDescriptor.name]
+                diagnosticHolder.report(diagnosticFactory.on(modifier, functionDescriptor, newNameConvention!!.asString()))
+            }
+
+            return
+        }
 
         val errorDescription = (checkResult as? CheckResult.IllegalSignature)?.error ?: "illegal function name"
 
