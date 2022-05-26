@@ -8,26 +8,14 @@ package org.jetbrains.kotlin
 import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.Project
-import org.gradle.process.ExecOperations
 import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
-import org.gradle.process.JavaExecSpec
-import org.jetbrains.kotlin.konan.target.PlatformManager
+import org.jetbrains.kotlin.llvm.hostLlvmTool
 
-fun execLlvmUtility(project: Project, utility: String, action: Action<in ExecSpec>): ExecResult {
-    val execOperations = object : ExecOperations {
-        override fun exec(action: Action<in ExecSpec>) = project.exec(action)
-        override fun javaexec(action: Action<in JavaExecSpec>) = project.javaexec(action)
-    }
-    return execLlvmUtility(execOperations, project.platformManager, utility, action)
+fun execLlvmUtility(project: Project, utility: String, action: Action<in ExecSpec>): ExecResult = project.exec {
+    action.execute(this)
+    hostLlvmTool(project.platformManager, utility)
 }
 
 fun execLlvmUtility(project: Project, utility: String, closure: Closure<in ExecSpec>) =
         execLlvmUtility(project, utility) { project.configure(this, closure) }
-
-fun execLlvmUtility(execOperations: ExecOperations, platformManager: PlatformManager, utility: String, action: Action<in ExecSpec>): ExecResult {
-    return execOperations.exec {
-        action.execute(this)
-        executable = "${platformManager.hostPlatform.absoluteLlvmHome}/bin/$utility"
-    }
-}

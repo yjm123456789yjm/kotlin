@@ -21,8 +21,8 @@ import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.ExecClang
-import org.jetbrains.kotlin.execLlvmUtility
 import org.jetbrains.kotlin.konan.target.*
+import org.jetbrains.kotlin.llvm.hostLlvmTool
 import java.io.OutputStream
 import javax.inject.Inject
 
@@ -68,13 +68,15 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
             // errors at the link stage. So we have to run llvm-link twice: the first one links all modules
             // except the one containing the entry point to a single *.bc without internalization. The second
             // run internalizes this big module and links it with a module containing the entry point.
-            execLlvmUtility(execOperations, platformManager, "llvm-link") {
+            execOperations.exec {
+                hostLlvmTool(platformManager, "llvm-link")
                 args = listOf("-o", llvmLinkFirstStageOutputFile.asFile.get().absolutePath) + inputFiles.map { it.absolutePath }
             }
 
             llvmLinkOutputFile.asFile.get().parentFile.mkdirs()
 
-            execLlvmUtility(execOperations, platformManager, "llvm-link") {
+            execOperations.exec {
+                hostLlvmTool(platformManager, "llvm-link")
                 args = listOf("-o", llvmLinkOutputFile.asFile.get().absolutePath, mainFile.asFile.get().absolutePath, llvmLinkFirstStageOutputFile.asFile.get().absolutePath, "-internalize")
             }
         }

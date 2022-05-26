@@ -10,7 +10,7 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.*
 import org.gradle.kotlin.dsl.getByType
 import org.jetbrains.kotlin.ExecClang
-import org.jetbrains.kotlin.execLlvmUtility
+import org.jetbrains.kotlin.llvm.hostLlvmTool
 import java.io.File
 import javax.inject.Inject
 import kotlinBuildProperties
@@ -53,7 +53,8 @@ abstract class CompileToBitcodeJob : WorkAction<CompileToBitcodeParameters> {
                 args = compilerArgs
             }
 
-            execLlvmUtility(execOperations, platformManager, "llvm-link") {
+            execOperations.exec {
+                hostLlvmTool(platformManager, "llvm-link")
                 args = llvmLinkArgs
             }
         }
