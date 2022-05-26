@@ -29,6 +29,7 @@ private abstract class RunGTestJob : WorkAction<RunGTestJob.Parameters> {
     abstract val execOperations: ExecOperations
 
     override fun execute() {
+        // TODO: Use ExecutorService to allow running it on targets other than host.
         // TODO: Try to make it like other gradle test tasks: report progress in a way gradle understands instead of dumping stdout of gtest.
 
         with(parameters) {
