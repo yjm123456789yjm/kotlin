@@ -443,6 +443,7 @@ if (attachedIntellijVersion == "212") { // Latest available platform in scope of
 
 include ":jps:jps-common",
         ":jps:jps-plugin",
+        ":prepare:kotlin-jps-plugin",
         ":jps:jps-platform-api-signatures"
 
 include ":generators:frontend-api-generator",

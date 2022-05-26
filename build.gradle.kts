@@ -317,6 +317,7 @@ extra["compilerArtifactsForIde"] = listOf(
     ":prepare:ide-plugin-dependencies:high-level-api-fir-tests-for-ide",
     ":prepare:ide-plugin-dependencies:analysis-api-providers-for-ide",
     ":prepare:ide-plugin-dependencies:symbol-light-classes-for-ide",
+    ":prepare:kotlin-jps-plugin",
     ":kotlin-script-runtime",
     ":kotlin-script-util",
     ":kotlin-scripting-common",
