@@ -13,6 +13,10 @@ val generateTests by generator("org.jetbrains.kotlin.jps.GenerateJpsPluginTestsK
     )
 }
 
+// Dependencies which are currently bundled into kotlin-jps-plugin artifact itself.
+// The dependencies are bundled because we don't want to publish those dependencies as separate artifacts (yet).
+val embeddedDependencies = listOf(":kotlin-preloader", ":jps:jps-common")
+
 dependencies {
     compile(project(":kotlin-build-common"))
     compile(project(":core:descriptors"))
@@ -27,8 +31,10 @@ dependencies {
     testCompile(projectTests(":generators:test-generator"))
     compile(project(":compiler:frontend.java"))
     compile(project(":js:js.frontend"))
-    compile(projectRuntimeJar(":kotlin-preloader"))
-    compile(project(":jps:jps-common"))
+    embeddedDependencies.forEach {
+        compileOnly(project(it))
+        testImplementation(project(it))
+    }
     compileOnly("org.jetbrains.intellij.deps:asm-all:9.1")
     compileOnly(intellijDep()) {
         includeJars("jdom", "trove4j", "jps-model", "platform-api", "util", rootProject = rootProject)
@@ -60,6 +66,8 @@ dependencies {
     testRuntime(project(":kotlin-reflect"))
     testRuntime(project(":kotlin-script-runtime"))
 }
+
+publishProjectJars(embeddedDependencies)
 
 sourceSets {
     "main" {

@@ -444,8 +444,7 @@ if (attachedIntellijVersion == "212") { // Latest available platform in scope of
 }
 
 include ":jps:jps-common",
-        ":jps:jps-plugin",
-        ":kotlin-jps-plugin",
+        "kotlin-jps-plugin",
         ":jps:jps-platform-api-signatures"
 
 include ":generators:frontend-api-generator",
@@ -608,7 +607,7 @@ project(':kotlin-scripting-dependencies-maven-all').projectDir = "$rootDir/libra
 project(':kotlin-scripting-jsr223-unshaded').projectDir = "$rootDir/libraries/scripting/jsr223" as File
 project(':kotlin-scripting-jsr223-test').projectDir = "$rootDir/libraries/scripting/jsr223-test" as File
 project(':kotlin-scripting-jsr223').projectDir = "$rootDir/libraries/scripting/jsr223-embeddable" as File
-project(':kotlin-jps-plugin').projectDir = "$rootDir/prepare/kotlin-jps-plugin" as File
+project(':kotlin-jps-plugin').projectDir = "$rootDir/jps/jps-plugin" as File
 project(':kotlin-scripting-intellij').projectDir = "$rootDir/libraries/scripting/intellij" as File
 project(':kotlin-scripting-compiler').projectDir = "$rootDir/plugins/scripting/scripting-compiler" as File
 project(':kotlin-scripting-compiler-js').projectDir = "$rootDir/plugins/scripting/scripting-compiler-js" as File

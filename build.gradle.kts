@@ -806,7 +806,7 @@ tasks {
 
     register("jps-tests") {
         dependsOn("dist")
-        dependsOn(":jps:jps-plugin:test")
+        dependsOn(":kotlin-jps-plugin:test")
     }
 
     register("idea-plugin-additional-tests") {
