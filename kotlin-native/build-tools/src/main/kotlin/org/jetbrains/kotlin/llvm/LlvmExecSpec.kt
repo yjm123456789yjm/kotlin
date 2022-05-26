@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.llvm
 
+import org.gradle.api.GradleException
 import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.PlatformManager
@@ -27,3 +28,14 @@ fun ExecSpec.toolchainLlvmTool(platformManager: PlatformManager, target: KonanTa
 }
 
 fun PlatformManager.clangArgsForRuntime(target: KonanTarget) = platform(target).clang.clangArgsForKonanSources.asList()
+
+fun ExecSpec.clangToExecutable(platformManager: PlatformManager, target: KonanTarget, tool: String) {
+    if (!listOf("clang", "clang++").contains(tool)) {
+        throw GradleException("unsupported clang executable: $tool")
+    }
+    if (target.family.isAppleFamily) {
+        toolchainLlvmTool(platformManager, target, tool)
+    } else {
+        hostLlvmTool(platformManager, tool)
+    }
+}

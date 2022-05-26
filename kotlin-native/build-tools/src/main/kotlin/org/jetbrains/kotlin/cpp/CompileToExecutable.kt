@@ -20,8 +20,8 @@ import org.gradle.process.ExecOperations
 import org.gradle.workers.WorkAction
 import org.gradle.workers.WorkParameters
 import org.gradle.workers.WorkerExecutor
-import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.konan.target.*
+import org.jetbrains.kotlin.llvm.clangToExecutable
 import org.jetbrains.kotlin.llvm.hostLlvmTool
 import java.io.OutputStream
 import javax.inject.Inject
@@ -84,12 +84,10 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
 
     private fun compile() {
         with(parameters) {
-            val execClang = ExecClang.create(objects, platformManager)
-
             compilerOutputFile.asFile.get().parentFile.mkdirs()
 
-            execClang.execClangBackend(target) {
-                executable = "clang++"
+            execOperations.exec {
+                clangToExecutable(platformManager, target, "clang++")
                 args = clangFlags.get() + listOf(llvmLinkOutputFile.asFile.get().absolutePath, "-o", compilerOutputFile.asFile.get().absolutePath)
             }
         }
