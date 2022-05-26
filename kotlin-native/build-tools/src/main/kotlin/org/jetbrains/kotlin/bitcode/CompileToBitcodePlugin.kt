@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.PlatformManager
 import org.jetbrains.kotlin.konan.target.SanitizerKind
 import org.jetbrains.kotlin.konan.target.supportedSanitizers
+import org.jetbrains.kotlin.llvm.clangArgsForRuntime
+import org.jetbrains.kotlin.llvm.hostLlvmToolExecutable
 import org.jetbrains.kotlin.testing.native.GoogleTestExtension
 import org.jetbrains.kotlin.utils.Maybe
 import org.jetbrains.kotlin.utils.asMaybe
@@ -93,7 +95,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
         }
         compilationDatabase.target(konanTarget) {
             entry {
-                val args = listOf(execClang.resolveExecutable(compileTask.executable)) + compileTask.compilerFlags + execClang.clangArgsForCppRuntime(konanTarget.name)
+                val args = listOf(platformManager.hostLlvmToolExecutable(compileTask.executable)) + compileTask.compilerFlags + platformManager.clangArgsForRuntime(konanTarget)
                 directory.set(compileTask.objDir)
                 files.setFrom(compileTask.inputFiles)
                 arguments.set(args)

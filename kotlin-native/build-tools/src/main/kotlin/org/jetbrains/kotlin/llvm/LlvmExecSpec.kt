@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.llvm
 
 import org.gradle.process.ExecSpec
+import org.jetbrains.kotlin.konan.target.KonanTarget
 import org.jetbrains.kotlin.konan.target.PlatformManager
 
 fun PlatformManager.hostLlvmToolExecutable(tool: String) = "${hostPlatform.absoluteLlvmHome}/bin/$tool"
@@ -13,3 +14,16 @@ fun PlatformManager.hostLlvmToolExecutable(tool: String) = "${hostPlatform.absol
 fun ExecSpec.hostLlvmTool(platformManager: PlatformManager, tool: String) {
     executable = platformManager.hostLlvmToolExecutable(tool)
 }
+
+// TODO: This is copied from `BitcodeCompiler`. Consider sharing the code instead.
+fun PlatformManager.toolchainLlvmToolExecutable(target: KonanTarget, tool: String) = if (target.family.isAppleFamily) {
+    "${platform(target).absoluteTargetToolchain}/usr/bin/$tool"
+} else {
+    "${platform(target).absoluteTargetToolchain}/bin/$tool"
+}
+
+fun ExecSpec.toolchainLlvmTool(platformManager: PlatformManager, target: KonanTarget, tool: String) {
+    executable = platformManager.toolchainLlvmToolExecutable(target, tool)
+}
+
+fun PlatformManager.clangArgsForRuntime(target: KonanTarget) = platform(target).clang.clangArgsForKonanSources.asList()

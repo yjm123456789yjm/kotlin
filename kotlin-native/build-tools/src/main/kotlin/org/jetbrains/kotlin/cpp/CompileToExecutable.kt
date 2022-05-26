@@ -86,20 +86,11 @@ private abstract class CompileToExecutableJob : WorkAction<CompileToExecutableJo
         with(parameters) {
             val execClang = ExecClang.create(objects, platformManager)
 
-            val args = clangFlags.get() + listOf(llvmLinkOutputFile.asFile.get().absolutePath, "-o", compilerOutputFile.asFile.get().absolutePath)
-
             compilerOutputFile.asFile.get().parentFile.mkdirs()
 
-            if (target.family.isAppleFamily) {
-                execClang.execToolchainClang(target) {
-                    executable = "clang++"
-                    this.args = args
-                }
-            } else {
-                execClang.execBareClang {
-                    executable = "clang++"
-                    this.args = args
-                }
+            execClang.execClangBackend(target) {
+                executable = "clang++"
+                args = clangFlags.get() + listOf(llvmLinkOutputFile.asFile.get().absolutePath, "-o", compilerOutputFile.asFile.get().absolutePath)
             }
         }
     }

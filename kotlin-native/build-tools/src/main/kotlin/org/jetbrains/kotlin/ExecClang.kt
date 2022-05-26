@@ -27,6 +27,9 @@ import org.gradle.process.ExecResult
 import org.gradle.process.ExecSpec
 import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.konan.file.*
+import org.jetbrains.kotlin.llvm.clangArgsForRuntime
+import org.jetbrains.kotlin.llvm.hostLlvmToolExecutable
+import org.jetbrains.kotlin.llvm.toolchainLlvmToolExecutable
 import org.jetbrains.kotlin.konan.file.File as KFile
 import java.io.File
 import javax.inject.Inject
@@ -40,58 +43,36 @@ abstract class ExecClang @Inject constructor(
     @get:Inject
     protected abstract val execOperations: ExecOperations
 
-    private fun clangArgsForCppRuntime(target: KonanTarget): List<String> {
-        return platformManager.platform(target).clang.clangArgsForKonanSources.asList()
-    }
-
-    fun clangArgsForCppRuntime(targetName: String?): List<String> {
-        val target = platformManager.targetManager(targetName).target
-        return clangArgsForCppRuntime(target)
-    }
-
-    fun resolveExecutable(executableOrNull: String?): String {
+    private fun resolveExecutable(executableOrNull: String?): String {
         val executable = executableOrNull ?: "clang"
 
         if (listOf("clang", "clang++").contains(executable)) {
-            return "${platformManager.hostPlatform.absoluteLlvmHome}/bin/$executable"
+            return platformManager.hostLlvmToolExecutable(executable)
         } else {
             throw GradleException("unsupported clang executable: $executable")
         }
     }
 
-    fun resolveToolchainExecutable(target: KonanTarget, executableOrNull: String?): String {
+    private fun resolveToolchainExecutable(target: KonanTarget, executableOrNull: String?): String {
         val executable = executableOrNull ?: "clang"
 
         if (listOf("clang", "clang++").contains(executable)) {
-            // TODO: This is copied from `BitcodeCompiler`. Consider sharing the code instead.
-            val platform = platformManager.platform(target)
-            return if (target.family.isAppleFamily) {
-                "${platform.absoluteTargetToolchain}/usr/bin/$executable"
-            } else {
-                "${platform.absoluteTargetToolchain}/bin/$executable"
-            }
+            return platformManager.toolchainLlvmToolExecutable(target, executable)
         } else {
             throw GradleException("unsupported clang executable: $executable")
         }
     }
 
-    // The bare ones invoke clang with system default sysroot.
 
-    fun execBareClang(action: Action<in ExecSpec>): ExecResult {
-        return this.execClang(emptyList(), action)
-    }
+    // Invoke clang with konan provided sysroots.
+    fun execKonanClang(target: KonanTarget, action: Action<in ExecSpec>): ExecResult = execOperations.exec {
+        action.execute(this)
+        executable = resolveExecutable(executable)
 
-    // The konan ones invoke clang with konan provided sysroots.
-    // So they require a target or assume it to be the host.
-    // The target can be specified as KonanTarget or as a
-    // (nullable, which means host) target name.
-
-    fun execKonanClang(target: String?, action: Action<in ExecSpec>): ExecResult {
-        return this.execClang(clangArgsForCppRuntime(target), action)
-    }
-
-    fun execKonanClang(target: KonanTarget, action: Action<in ExecSpec>): ExecResult {
-        return this.execClang(clangArgsForCppRuntime(target), action)
+        val hostPlatform = platformManager.hostPlatform
+        environment["PATH"] = fileOperations.configurableFiles(hostPlatform.clang.clangPaths).asPath +
+                File.pathSeparator + environment["PATH"]
+        args = args + platformManager.clangArgsForRuntime(target)
     }
 
     /**
@@ -100,45 +81,23 @@ abstract class ExecClang @Inject constructor(
      * 1. We pass flags that set sysroot.
      * 2. We call Clang from toolchain in case of Apple target.
      */
-    fun execClangForCompilerTests(target: KonanTarget, action: Action<in ExecSpec>): ExecResult {
-        val defaultArgs = platformManager.platform(target).clang.clangArgs.toList()
-        return execOperations.exec {
-            action.execute(this)
-            executable = if (target.family.isAppleFamily) {
-                resolveToolchainExecutable(target, executable)
-            } else {
-                resolveExecutable(executable)
+    fun execClangForCompilerTests(target: KonanTarget, action: Action<in ExecSpec>) = execClangBackend(target) {
+        action.execute(this)
+        args = platformManager.platform(target).clang.clangArgs.toList()
+    }
+
+    fun execClangBackend(target: KonanTarget, action: Action<in ExecSpec>): ExecResult =
+            execOperations.exec {
+                action.execute(this)
+                if (target.family.isAppleFamily) {
+                    executable = resolveToolchainExecutable(target, executable)
+                } else {
+                    executable = resolveExecutable(executable)
+                    val hostPlatform = platformManager.hostPlatform
+                    environment["PATH"] = fileOperations.configurableFiles(hostPlatform.clang.clangPaths).asPath +
+                            File.pathSeparator + environment["PATH"]
+                }
             }
-            args = defaultArgs + args
-        }
-    }
-
-    // The toolchain ones execute clang from the toolchain.
-
-    fun execToolchainClang(target: String?, action: Action<in ExecSpec>): ExecResult {
-        return this.execToolchainClang(platformManager.targetManager(target).target, action)
-    }
-
-    fun execToolchainClang(target: KonanTarget, action: Action<in ExecSpec>): ExecResult {
-        val extendedAction = Action<ExecSpec> {
-            action.execute(this)
-            executable = resolveToolchainExecutable(target, executable)
-        }
-        return execOperations.exec(extendedAction)
-    }
-
-    private fun execClang(defaultArgs: List<String>, action: Action<in ExecSpec>): ExecResult {
-        val extendedAction = Action<ExecSpec> {
-            action.execute(this)
-            executable = resolveExecutable(executable)
-
-            val hostPlatform = platformManager.hostPlatform
-            environment["PATH"] = fileOperations.configurableFiles(hostPlatform.clang.clangPaths).asPath +
-                    File.pathSeparator + environment["PATH"]
-            args = args + defaultArgs
-        }
-        return execOperations.exec(extendedAction)
-    }
 
     companion object {
         @JvmStatic

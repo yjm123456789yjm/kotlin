@@ -47,7 +47,7 @@ abstract class CompileToBitcodeJob : WorkAction<CompileToBitcodeParameters> {
             val platformManager = PlatformManager(buildDistribution(konanHome.absolutePath), experimentalDistribution)
             val execClang = ExecClang.create(objects, platformManager)
 
-            execClang.execKonanClang(target) {
+            execClang.execKonanClang(platformManager.targetByName(target)) {
                 workingDir = objDir
                 executable = compilerExecutable
                 args = compilerArgs
