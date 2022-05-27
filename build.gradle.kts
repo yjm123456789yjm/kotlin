@@ -242,14 +242,9 @@ extra["compilerModules"] =
             commonCompilerModules +
             firAllCompilerModules
 
-
-extra["compilerModulesForJps"] = listOf(
+// They are embedded just because we don't publish those dependencies as separate Maven artifacts (yet)
+extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
     ":kotlin-daemon-client",
-    ":kotlin-reflect",
-    ":kotlin-build-common",
-    ":kotlin-util-io",
-    ":kotlin-util-klib",
-    ":kotlin-util-klib-metadata",
     ":compiler:cli-common",
     ":kotlin-compiler-runner-unshaded",
     ":daemon-common",
@@ -259,7 +254,6 @@ extra["compilerModulesForJps"] = listOf(
     ":core:descriptors",
     ":core:descriptors.jvm",
     ":compiler:backend.common.jvm",
-    ":native:kotlin-native-utils",
     ":js:js.serializer",
     ":core:deserialization",
     ":core:deserialization.common",
@@ -275,6 +269,15 @@ extra["compilerModulesForJps"] = listOf(
     ":js:js.config",
     ":core:util.runtime",
     ":compiler:compiler.version"
+)
+
+extra["kotlinJpsPluginMavenDependencies"] = listOf(
+    ":kotlin-build-common",
+    ":kotlin-reflect",
+    ":kotlin-util-io",
+    ":kotlin-util-klib",
+    ":kotlin-util-klib-metadata",
+    ":native:kotlin-native-utils"
 )
 
 extra["compilerArtifactsForIde"] = listOfNotNull(

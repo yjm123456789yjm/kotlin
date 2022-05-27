@@ -18,7 +18,7 @@ dependencies {
     compileOnly(project(":jps:jps-platform-api-signatures"))
     testImplementation(projectTests(":generators:test-generator"))
 
-    rootProject.extra["compilerModulesForJps"]
+    rootProject.extra["kotlinJpsPluginEmbeddedDependencies"]
         .let { it as List<String> }
         .forEach { implementation(project(it)) }
 
