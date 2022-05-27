@@ -244,7 +244,6 @@ extra["compilerModules"] =
 
 // They are embedded just because we don't publish those dependencies as separate Maven artifacts (yet)
 extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
-    ":kotlin-daemon-client",
     ":compiler:cli-common",
     ":kotlin-compiler-runner-unshaded",
     ":daemon-common",
@@ -272,6 +271,7 @@ extra["kotlinJpsPluginEmbeddedDependencies"] = listOf(
 )
 
 extra["kotlinJpsPluginMavenDependencies"] = listOf(
+    ":kotlin-daemon-client",
     ":kotlin-build-common",
     ":kotlin-reflect",
     ":kotlin-util-io",
