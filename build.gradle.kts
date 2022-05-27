@@ -301,7 +301,6 @@ extra["compilerArtifactsForIde"] = listOf(
     ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
-    ":prepare:ide-plugin-dependencies:compiler-components-for-jps",
     ":prepare:ide-plugin-dependencies:parcelize-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:lombok-compiler-plugin-for-ide",
     ":prepare:ide-plugin-dependencies:kotlin-compiler-tests-for-ide",
