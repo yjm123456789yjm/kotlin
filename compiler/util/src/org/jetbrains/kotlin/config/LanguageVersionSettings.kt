@@ -239,6 +239,7 @@ enum class LanguageFeature(
     ForbidRecursiveDelegateExpressions(KOTLIN_1_7, kind = BUG_FIX),
     KotlinFunInterfaceConstructorReference(KOTLIN_1_7),
     SuspendOnlySamConversions(KOTLIN_1_7),
+    WarnAboutUnsupportedScriptsInSourceRoots(KOTLIN_1_7, kind = OTHER), // KT-52525
 
     // 1.8
 
@@ -262,6 +263,7 @@ enum class LanguageFeature(
     ReportNonVarargSpreadOnGenericCalls(KOTLIN_1_8, kind = BUG_FIX), // KT-48162
     AllowExpressionAfterTypeReferenceWithoutSpacing(KOTLIN_1_8, kind = BUG_FIX), // KT-35811
     RefineTypeCheckingOnAssignmentsToJavaFields(KOTLIN_1_8, kind = BUG_FIX),
+    SkipUnsupportedScriptsInSourceRoots(KOTLIN_1_8, kind = OTHER), // KT-52525
 
     // 1.9
 
