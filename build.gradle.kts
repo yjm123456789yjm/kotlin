@@ -248,6 +248,8 @@ extra["compilerModules"] =
 
 
 extra["compilerModulesForJps"] = listOf(
+    ":kotlin-daemon-client",
+    ":kotlin-reflect",
     ":kotlin-build-common",
     ":kotlin-util-io",
     ":kotlin-util-klib",
