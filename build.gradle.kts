@@ -279,7 +279,6 @@ extra["compilerModulesForJps"] = listOf(
     ":compiler:frontend.java",
     ":core:metadata",
     ":core:metadata.jvm",
-    ":jps:jps-common",
     ":kotlin-preloader",
     ":compiler:util",
     ":compiler:config",
