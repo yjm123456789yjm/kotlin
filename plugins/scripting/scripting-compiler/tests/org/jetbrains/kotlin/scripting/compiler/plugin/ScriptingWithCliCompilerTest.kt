@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.scripting.compiler.plugin
 
 import org.jetbrains.kotlin.cli.common.CLITool
+import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.common.environment.setIdeaIoUseFallback
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
 import org.jetbrains.kotlin.scripting.compiler.test.linesSplitTrim
@@ -185,6 +186,58 @@ class ScriptingWithCliCompilerTest {
             """.trimIndent().linesSplitTrim(),
             filteredErr
         )
+    }
+
+    @Test
+    fun testCompileScriptWithRegularKotlin() {
+
+        fun compileVariant(vararg flags: String): Pair<List<String>, ExitCode> {
+            val (_, err, exitCode) = captureOutErrRet {
+                CLITool.doMainNoExit(
+                    K2JVMCompiler(),
+                    arrayOf(
+                        "-cp", getMainKtsClassPath().joinToString(File.pathSeparator),
+                        *flags,
+                        "$TEST_DATA_DIR/compiler/mixedCompilation/simpleScriptInstance.kt",
+                        "$TEST_DATA_DIR/compiler/mixedCompilation/simpleScript.main.kts"
+                    )
+                )
+            }
+            return err.linesSplitTrim() to exitCode
+        }
+
+        val scriptInSourceRootWarning =
+            "warning: script 'simpleScript.main.kts' is not supposed to be used along with regular Kotlin sources, and will be ignored in the future versions"
+
+        val unresolvedScriptError =
+            "plugins/scripting/scripting-compiler/testData/compiler/mixedCompilation/simpleScriptInstance.kt:3:13: error: unresolved reference: SimpleScript_main"
+
+        compileVariant("-language-version", "1.6").let { (errLines, exitCode) ->
+            Assert.assertTrue(errLines.none { it == scriptInSourceRootWarning })
+            Assert.assertEquals(ExitCode.OK, exitCode)
+        }
+
+        compileVariant("-language-version", "1.7").let { (errLines, exitCode) ->
+            Assert.assertTrue(errLines.any { it == scriptInSourceRootWarning })
+            Assert.assertEquals(ExitCode.OK, exitCode)
+        }
+
+        compileVariant("-language-version", "1.7", "-Xallow-any-scripts-in-source-roots").let { (errLines, exitCode) ->
+            Assert.assertTrue(errLines.none { it == scriptInSourceRootWarning })
+            Assert.assertEquals(ExitCode.OK, exitCode)
+        }
+
+        compileVariant("-language-version", "1.8").let { (errLines, exitCode) ->
+            Assert.assertTrue(errLines.any { it == unresolvedScriptError })
+            Assert.assertEquals(ExitCode.COMPILATION_ERROR, exitCode)
+        }
+
+        compileVariant("-language-version", "1.8", "-Xallow-any-scripts-in-source-roots").let { (errLines, exitCode) ->
+            Assert.assertTrue(errLines.none {
+                it == unresolvedScriptError || it == scriptInSourceRootWarning
+            })
+            Assert.assertEquals(ExitCode.OK, exitCode)
+        }
     }
 
     private fun getMainKtsClassPath(): List<File> {
