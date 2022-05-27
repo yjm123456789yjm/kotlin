@@ -50,6 +50,7 @@
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-common</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-compiler-impl</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-compiler</artifactId><version>${project.version}</version></dependency>
+    <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-js</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-scripting-jvm</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-stdlib-jdk7</artifactId><version>${project.version}</version></dependency>
     <dependency><groupId>${project.groupId}</groupId><artifactId>kotlin-stdlib-jdk8</artifactId><version>${project.version}</version></dependency>
