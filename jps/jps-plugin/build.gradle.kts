@@ -22,6 +22,10 @@ dependencies {
         .let { it as List<String> }
         .forEach { implementation(project(it)) }
 
+    rootProject.extra["kotlinJpsPluginMavenDependencies"]
+        .let { it as List<String> }
+        .forEach { implementation(project(it)) }
+
     implementation(project(":jps:jps-common"))
     compileOnly(commonDependency("org.jetbrains.intellij.deps.fastutil:intellij-deps-fastutil"))
     compileOnly(jpsModel())
