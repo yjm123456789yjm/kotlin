@@ -70,7 +70,7 @@ class ReplInterpreter(
         compilationConfiguration = context.baseScriptCompilationConfiguration
         evaluationConfiguration = scriptDefinition?.evaluationConfiguration.with {
             hostConfiguration(this@ReplInterpreter.hostConfiguration)
-            scriptExecutionWrapper { replConfiguration.executionInterceptor.execute(it) }
+            scriptExecutionWrapper<Any> { replConfiguration.executionInterceptor.execute(it) }
             constructorArgs(emptyArray<String>())
         }
 
