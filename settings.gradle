@@ -371,6 +371,10 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-dist-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-common-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-plugin-classpath",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-plugin-tests-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-plugin-testdata-for-ide",
             ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
@@ -505,6 +509,10 @@ if (attachedIntellijVersion == "212") { // Latest available platform in scope of
     intellij "plugins/maven/intellij.maven.iml"
     intellij "jvm-run-configurations/kotlin.jvm-run-configurations.iml"
 }
+
+include ":jps:jps-common",
+        ":jps:jps-plugin",
+        ":jps:jps-platform-api-signatures"
 
 include ":generators:analysis-api-generator",
         ":analysis:low-level-api-fir",
