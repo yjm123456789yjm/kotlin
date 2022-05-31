@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -11,11 +11,12 @@ import org.jetbrains.kotlin.cli.common.CLICompiler
 import org.jetbrains.kotlin.cli.common.ExitCode
 import org.jetbrains.kotlin.cli.js.K2JSCompiler
 import org.jetbrains.kotlin.cli.jvm.K2JVMCompiler
-import org.jetbrains.kotlin.codegen.forTestCompile.ForTestCompileRuntime
 import org.jetbrains.kotlin.preloading.ClassPreloadingUtils
 import org.jetbrains.kotlin.preloading.Preloader
 import org.jetbrains.kotlin.test.KtAssert.assertTrue
 import org.jetbrains.kotlin.test.util.KtTestUtil
+import org.jetbrains.kotlin.utils.KotlinPaths
+import org.jetbrains.kotlin.utils.KotlinPathsFromHomeDir
 import org.jetbrains.kotlin.utils.PathUtil
 import java.io.ByteArrayOutputStream
 import java.io.File
@@ -25,6 +26,9 @@ import java.lang.ref.SoftReference
 import java.util.regex.Pattern
 import java.util.zip.ZipOutputStream
 import kotlin.reflect.KClass
+
+val PathUtil.kotlinPathsForDistDirectoryForTests: KotlinPaths
+    get() = System.getProperty("jps.kotlin.home")?.let(::File)?.let(::KotlinPathsFromHomeDir) ?: kotlinPathsForDistDirectory
 
 object MockLibraryUtil {
     private var compilerClassLoader = SoftReference<ClassLoader>(null)
@@ -105,7 +109,7 @@ object MockLibraryUtil {
         val javaFiles = FileUtil.findFilesByMask(Pattern.compile(".*\\.java"), srcFile)
         if (javaFiles.isNotEmpty()) {
             val classpath = mutableListOf<String>()
-            classpath += ForTestCompileRuntime.runtimeJarForTests().path
+            classpath += PathUtil.kotlinPathsForDistDirectoryForTests.stdlibPath.path
             classpath += extraClasspath
 
             // Probably no kotlin files were present, so dir might not have been created after kotlin compiler
@@ -230,7 +234,7 @@ object MockLibraryUtil {
     @Synchronized
     private fun createCompilerClassLoader(): ClassLoader {
         return ClassPreloadingUtils.preloadClasses(
-            listOf(PathUtil.kotlinPathsForDistDirectory.compilerPath),
+            listOf(PathUtil.kotlinPathsForDistDirectoryForTests.compilerPath),
             Preloader.DEFAULT_CLASS_NUMBER_ESTIMATE, null, null
         )
     }
