@@ -235,6 +235,7 @@ include ":benchmarks",
         ":kotlin-scripting-jvm-host",
         ":kotlin-scripting-intellij",
         ":kotlin-scripting-compiler",
+        ":kotlin-scripting-compiler-js",
         ":kotlin-scripting-compiler-embeddable",
         ":kotlin-scripting-compiler-impl",
         ":kotlin-scripting-compiler-impl-embeddable",
@@ -314,6 +315,8 @@ if (!buildProperties.inJpsBuildIdeaSync) {
             ":prepare:ide-plugin-dependencies:kotlin-compiler-cli-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-dist-for-ide",
             ":prepare:ide-plugin-dependencies:kotlin-gradle-statistics-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-common-for-ide",
+            ":prepare:ide-plugin-dependencies:kotlin-jps-plugin-classpath",
             ":prepare:ide-plugin-dependencies:kotlinx-serialization-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:noarg-compiler-plugin-for-ide",
             ":prepare:ide-plugin-dependencies:sam-with-receiver-compiler-plugin-for-ide",
@@ -438,6 +441,9 @@ if (attachedIntellijVersion == "212") { // Latest available platform in scope of
     intellij "plugins/maven/intellij.maven.iml"
     intellij "jvm-run-configurations/kotlin.jvm-run-configurations.iml"
 }
+
+include ":jps:jps-common",
+        ":jps:jps-plugin"
 
 include ":generators:frontend-api-generator",
         ":idea-frontend-fir:idea-fir-low-level-api",
@@ -600,6 +606,7 @@ project(':kotlin-scripting-jsr223-test').projectDir = "$rootDir/libraries/script
 project(':kotlin-scripting-jsr223').projectDir = "$rootDir/libraries/scripting/jsr223-embeddable" as File
 project(':kotlin-scripting-intellij').projectDir = "$rootDir/libraries/scripting/intellij" as File
 project(':kotlin-scripting-compiler').projectDir = "$rootDir/plugins/scripting/scripting-compiler" as File
+project(':kotlin-scripting-compiler-js').projectDir = "$rootDir/plugins/scripting/scripting-compiler-js" as File
 project(':kotlin-scripting-compiler-embeddable').projectDir = "$rootDir/plugins/scripting/scripting-compiler-embeddable" as File
 project(':kotlin-scripting-compiler-impl').projectDir = "$rootDir/plugins/scripting/scripting-compiler-impl" as File
 project(':kotlin-scripting-compiler-impl-embeddable').projectDir = "$rootDir/plugins/scripting/scripting-compiler-impl-embeddable" as File
