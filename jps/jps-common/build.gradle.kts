@@ -16,6 +16,8 @@ dependencies {
     compileOnly(jpsStandalone()) { includeJars("jps-model") }
 
     testCompile(commonDep("junit:junit"))
+    testImplementation(intellijCoreDep()) { includeJars("jdom") }
+    testImplementation(project(":kotlin-reflect"))
 }
 
 sourceSets {
