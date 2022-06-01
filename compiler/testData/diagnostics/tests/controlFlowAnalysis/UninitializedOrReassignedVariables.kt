@@ -1,3 +1,5 @@
+// WITH_STDLIB
+
 package uninitialized_reassigned_variables
 
 fun doSmth(<!UNUSED_PARAMETER!>s<!>: String) {}
@@ -239,7 +241,7 @@ class Outer() {
     }
 }
 
-class ForwardAccessToBackingField() { //kt-147
+class ForwardAccessToBackingField() { // KT-147
     val a = <!DEBUG_INFO_MISSING_UNRESOLVED, TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM_ERROR!>a<!> // error
     val b = <!UNINITIALIZED_VARIABLE!>c<!> // error
     val c = 1
@@ -345,4 +347,41 @@ fun test(m : M) {
 fun test1(m : M) {
     <!VAL_REASSIGNMENT!>m.x<!>++
     m.y--
+}
+
+class TestPropertyInitAfterException(val param: Boolean) {
+    private val property: Int
+
+    init {
+        if (!param) {
+            throw Exception()
+        }
+        property = 42
+    }
+
+    private val ok = property
+}
+
+class TestAccessToPropertyInsideLazyBlock() {
+    private val property: Int
+
+    init {
+        property= 42
+    }
+
+    private val ok: Int by lazy { property }
+}
+
+class TestPropertyAccessWithPostponedInitializationInAnonymousObject {
+    val executionInterceptor = object {
+        fun execute() {
+            property
+        }
+    }
+
+    val property: Int
+
+    init {
+        property = 42
+    }
 }

@@ -138,6 +138,15 @@ package uninitialized_reassigned_variables {
         public final /*synthesized*/ fun values(): kotlin.Array<uninitialized_reassigned_variables.ProtocolState>
     }
 
+    public final class TestAccessToPropertyInsideLazyBlock {
+        public constructor TestAccessToPropertyInsideLazyBlock()
+        private final val ok: kotlin.Int
+        private final val property: kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+        public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    }
+
     public object TestObjectDeclaration {
         private constructor TestObjectDeclaration()
         public final val x: kotlin.Int
@@ -156,4 +165,24 @@ package uninitialized_reassigned_variables {
         public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
         public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
     }
+
+    public final class TestPropertyAccessWithPostponedInitializationInAnonymousObject {
+        public constructor TestPropertyAccessWithPostponedInitializationInAnonymousObject()
+        public final val executionInterceptor: kotlin.Any
+        public final val property: kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+        public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    }
+
+    public final class TestPropertyInitAfterException {
+        public constructor TestPropertyInitAfterException(/*0*/ param: kotlin.Boolean)
+        private final val ok: kotlin.Int
+        public final val param: kotlin.Boolean
+        private final val property: kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+        public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+        public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+    }
 }
+
