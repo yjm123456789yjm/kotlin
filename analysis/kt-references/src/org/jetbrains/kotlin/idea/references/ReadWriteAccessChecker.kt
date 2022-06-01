@@ -49,16 +49,20 @@ interface ReadWriteAccessChecker {
 
     companion object {
         fun getInstance(): ReadWriteAccessChecker = ApplicationManager.getApplication().getService(ReadWriteAccessChecker::class.java)
+        fun getInstanceIfAny(): ReadWriteAccessChecker? =
+            ApplicationManager.getApplication()?.getService(ReadWriteAccessChecker::class.java)
     }
 }
 
 fun KtExpression.readWriteAccessWithFullExpression(useResolveForReadWrite: Boolean): Pair<ReferenceAccess, KtExpression> =
     ReadWriteAccessChecker.getInstance().readWriteAccessWithFullExpression(this, useResolveForReadWrite)
 
-fun KtExpression.readWriteAccess(useResolveForReadWrite: Boolean): ReferenceAccess =
-    object : ReadWriteAccessChecker {
+fun KtExpression.readWriteAccess(useResolveForReadWrite: Boolean): ReferenceAccess {
+    val readWriteAccessChecker = ReadWriteAccessChecker.getInstanceIfAny() ?: object : ReadWriteAccessChecker {
         override fun readWriteAccessWithFullExpressionByResolve(
             assignment: KtBinaryExpression
         ): Pair<ReferenceAccess, KtExpression>? = null
-    }.readWriteAccessWithFullExpression(this, useResolveForReadWrite).first
+    }
+    return readWriteAccessChecker.readWriteAccessWithFullExpression(this, useResolveForReadWrite).first
+}
 
