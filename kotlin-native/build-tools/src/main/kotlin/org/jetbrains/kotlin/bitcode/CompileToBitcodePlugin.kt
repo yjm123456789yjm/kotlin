@@ -8,12 +8,12 @@ package org.jetbrains.kotlin.bitcode
 import org.gradle.api.Action
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.plugins.BasePlugin
 import org.gradle.api.provider.ListProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.services.BuildService
 import org.gradle.api.services.BuildServiceParameters
 import org.gradle.kotlin.dsl.*
+import org.gradle.language.base.plugins.LifecycleBasePlugin
 import org.jetbrains.kotlin.ExecClang
 import org.jetbrains.kotlin.cpp.CompilationDatabaseExtension
 import org.jetbrains.kotlin.cpp.CompilationDatabasePlugin
@@ -48,10 +48,11 @@ open class CompileToBitcodePlugin : Plugin<Project> {
 open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
 
     private val compilationDatabase = project.extensions.getByType<CompilationDatabaseExtension>()
-    // googleTestExtension is only used if testsGroup is used.
-    private val googleTestExtension by lazy { project.extensions.getByType<GoogleTestExtension>() }
     private val execClang = project.extensions.getByType<ExecClang>()
     private val platformManager = project.extensions.getByType<PlatformManager>()
+
+    // googleTestExtension is only used if testsGroup is used.
+    private val googleTestExtension by lazy { project.extensions.getByType<GoogleTestExtension>() }
 
     // A shared service used to limit parallel execution of test binaries.
     private val runGTestSemaphore = project.gradle.sharedServices.registerIfAbsent("runGTestSemaphore", RunGTestSemaphore::class.java) {
@@ -68,7 +69,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
         targetList.get().associateBy(keySelector = { it }, valueTransform = {
             project.tasks.register("${it}$name") {
                 description = "Build all main modules of $name for $it"
-                group = BasePlugin.BUILD_GROUP
+                group = BUILD_TASK_GROUP
             }
         })
     }
@@ -111,7 +112,10 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
                     headersDirs = srcDirs + project.files(srcRoot.resolve("headers"))
 
                     this.sanitizer = sanitizer
-                    group = BasePlugin.BUILD_GROUP
+                    when (outputGroup) {
+                        "test" -> group = VERIFICATION_BUILD_TASK_GROUP
+                        "main" -> group = BUILD_TASK_GROUP
+                    }
                     description = "Compiles '$name' to bitcode for $targetName${sanitizer.description}"
                     dependsOn(":kotlin-native:dependencies:update")
                     configurationBlock()
@@ -155,6 +159,9 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
                         srcDirs = it.srcDirs
                         headersDirs = it.headersDirs + googleTestExtension.headersDirs
 
+                        group = VERIFICATION_BUILD_TASK_GROUP
+                        description = "Compiles '${it.name}' tests to bitcode for $target${sanitizer.description}"
+
                         this.sanitizer = sanitizer
                         excludeFiles = emptyList()
                         includeFiles = listOf("**/*Test.cpp", "**/*TestSupport.cpp", "**/*Test.mm", "**/*TestSupport.mm")
@@ -179,7 +186,7 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
 
         val compileTask = project.tasks.register<CompileToExecutable>("${testName}Compile") {
             description = "Compile tests group '$testTaskName' for $target${sanitizer.description}"
-            group = VERIFICATION_TASK_GROUP
+            group = VERIFICATION_BUILD_TASK_GROUP
             this.target.set(target)
             this.sanitizer.set(sanitizer)
             this.outputFile.set(project.layout.buildDirectory.file("bin/test/${target}/$testName${target.executableExtension}"))
@@ -232,9 +239,9 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
 
     companion object {
 
-        private const val COMPILATION_DATABASE_TASK_NAME = "CompilationDatabase"
-
-        const val VERIFICATION_TASK_GROUP = "verification"
+        const val BUILD_TASK_GROUP = LifecycleBasePlugin.BUILD_GROUP
+        const val VERIFICATION_TASK_GROUP = LifecycleBasePlugin.VERIFICATION_GROUP
+        const val VERIFICATION_BUILD_TASK_GROUP = "verification build"
 
         @OptIn(ExperimentalStdlibApi::class)
         private val String.capitalized: String

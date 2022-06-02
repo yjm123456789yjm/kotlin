@@ -218,7 +218,7 @@ bitcode {
 
 val hostRuntime by tasks.registering {
     description = "Build all main runtime modules for host"
-    group = BasePlugin.BUILD_GROUP
+    group = CompileToBitcodeExtension.BUILD_TASK_GROUP
     dependsOn("${hostName}Runtime")
 }
 
