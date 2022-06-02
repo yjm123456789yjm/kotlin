@@ -50,9 +50,6 @@ open class CompileToBitcodeExtension @Inject constructor(val project: Project) {
     private val compilationDatabase = project.extensions.getByType<CompilationDatabaseExtension>()
     // googleTestExtension is only used if testsGroup is used.
     private val googleTestExtension by lazy { project.extensions.getByType<GoogleTestExtension>() }
-
-    // TODO: This platformManager and execClang should acquired be from something service-ish.
-    //       But for usefulness this service should be accessible from WorkAction.
     private val execClang = project.extensions.getByType<ExecClang>()
     private val platformManager = project.extensions.getByType<PlatformManager>()
 
