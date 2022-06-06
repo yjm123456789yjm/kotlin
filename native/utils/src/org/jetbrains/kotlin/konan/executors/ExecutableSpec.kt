@@ -9,14 +9,20 @@ import java.io.ByteArrayInputStream
 import java.io.InputStream
 import java.io.OutputStream
 import java.nio.file.Path
-import kotlin.time.*
 
-@OptIn(ExperimentalTime::class)
+/**
+ * Parameters for execution.
+ *
+ * @property executablePath path to the executable
+ * @property args command line arguments
+ * @property stdin stream to feed into executable as standard input
+ * @property stdout stream to feed from executable standard output
+ * @property stderr stream to feed from executable standard error
+ */
 data class ExecutableSpec(
-    var executablePath: Path,
+    val executablePath: Path,
     val args: MutableList<String> = mutableListOf(),
     var stdin: InputStream = ByteArrayInputStream(byteArrayOf()),
     var stdout: OutputStream = System.out,
     var stderr: OutputStream = System.err,
-    var executionTimeout: Duration = Duration.INFINITE,
 )
