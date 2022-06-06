@@ -151,6 +151,19 @@ fun ChangesCollector.getDirtyData(
 
     val sealedParents = HashMap<FqName, MutableSet<FqName>>()
     val notSealedParents = HashSet<FqName>()
+    val sealedSubclasses = HashSet<FqName>()
+
+    fun FqName.isSealed(): Boolean {
+        if (notSealedParents.contains(this)) return false
+        if (sealedParents.containsKey(this)) return true
+        return isSealed(this, caches).also { sealed ->
+            if (sealed) {
+                sealedParents[this] = HashSet()
+            } else {
+                notSealedParents.add(this)
+            }
+        }
+    }
 
     for (change in changes()) {
         reporter.reportVerbose { "Process $change" }
@@ -158,6 +171,10 @@ fun ChangesCollector.getDirtyData(
         if (change is ChangeInfo.SignatureChanged) {
             val fqNames = if (!change.areSubclassesAffected) listOf(change.fqName) else withSubtypes(change.fqName, caches)
             dirtyClassesFqNames.addAll(fqNames)
+
+            if (change.fqName.isSealed()) {
+                sealedSubclasses.addAll(fqNames)
+            }
 
             for (classFqName in fqNames) {
                 assert(!classFqName.isRoot) { "$classFqName is root when processing $change" }
@@ -177,17 +194,6 @@ fun ChangesCollector.getDirtyData(
 
             fqNames.mapTo(dirtyLookupSymbols) { LookupSymbol(SAM_LOOKUP_NAME.asString(), it.asString()) }
         } else if (change is ChangeInfo.ParentsChanged) {
-            fun FqName.isSealed(): Boolean {
-                if (notSealedParents.contains(this)) return false
-                if (sealedParents.containsKey(this)) return true
-                return isSealed(this, caches).also { sealed ->
-                    if (sealed) {
-                        sealedParents[this] = HashSet()
-                    } else {
-                        notSealedParents.add(this)
-                    }
-                }
-            }
             change.parentsChanged.forEach { parent ->
                 if (parent.isSealed()) {
                     sealedParents.getOrPut(parent) { HashSet() }.add(change.fqName)
@@ -202,6 +208,7 @@ fun ChangesCollector.getDirtyData(
         addAll(sealedParents.keys.flatMap { withSubtypes(it, caches) })
         //we should recompile all inheritors with parent sealed class: add new subtypes
         addAll(sealedParents.values.flatten())
+        addAll(sealedSubclasses)
     }
 
     return DirtyData(dirtyLookupSymbols, dirtyClassesFqNames, forceRecompile)

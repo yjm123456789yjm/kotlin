@@ -192,6 +192,11 @@ class DifferenceCalculatorForClass(
         val names = hashSetOf<String>()
         val classIsSealed = newProto.isSealed && oldProto.isSealed
 
+        if (classIsSealed) {
+            isClassAffected = true
+            areSubclassesAffected = true
+        }
+
         fun Int.oldToNames() = names.add(oldNameResolver.getString(this))
         fun Int.newToNames() = names.add(newNameResolver.getString(this))
 
