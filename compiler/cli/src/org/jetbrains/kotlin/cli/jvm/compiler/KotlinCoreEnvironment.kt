@@ -61,7 +61,6 @@ import org.jetbrains.kotlin.cli.common.config.kotlinSourceRoots
 import org.jetbrains.kotlin.cli.common.extensions.ScriptEvaluationExtension
 import org.jetbrains.kotlin.cli.common.extensions.ShellExtension
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity
-import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.ERROR
 import org.jetbrains.kotlin.cli.common.messages.CompilerMessageSeverity.STRONG_WARNING
 import org.jetbrains.kotlin.cli.common.messages.MessageCollector
 import org.jetbrains.kotlin.cli.jvm.compiler.jarfs.FastJarFileSystem
@@ -70,11 +69,12 @@ import org.jetbrains.kotlin.cli.jvm.index.*
 import org.jetbrains.kotlin.cli.jvm.javac.JavacWrapperRegistrar
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleFinder
 import org.jetbrains.kotlin.cli.jvm.modules.CliJavaModuleResolver
-import org.jetbrains.kotlin.cli.jvm.modules.CoreJrtFileSystem
 import org.jetbrains.kotlin.codegen.extensions.ClassBuilderInterceptorExtension
 import org.jetbrains.kotlin.codegen.extensions.ClassFileFactoryFinalizerExtension
 import org.jetbrains.kotlin.codegen.extensions.ExpressionCodegenExtension
 import org.jetbrains.kotlin.compiler.plugin.ComponentRegistrar
+import org.jetbrains.kotlin.compiler.plugin.CompilerPluginRegistrar
+import org.jetbrains.kotlin.compiler.plugin.registerInProject
 import org.jetbrains.kotlin.config.*
 import org.jetbrains.kotlin.extensions.*
 import org.jetbrains.kotlin.extensions.internal.CandidateInterceptor
@@ -650,12 +650,17 @@ class KotlinCoreEnvironment private constructor(
         }
 
         internal fun registerExtensionsFromPlugins(project: MockProject, configuration: CompilerConfiguration) {
+            fun createErrorMessage(extension: Any): String {
+                return "The provided plugin ${extension.javaClass.name} is not compatible with this version of compiler"
+            }
+
             val messageCollector = configuration.get(CLIConfigurationKeys.MESSAGE_COLLECTOR_KEY)
+
             for (registrar in configuration.getList(ComponentRegistrar.PLUGIN_COMPONENT_REGISTRARS)) {
                 try {
                     registrar.registerProjectComponents(project, configuration)
                 } catch (e: AbstractMethodError) {
-                    val message = "The provided plugin ${registrar.javaClass.name} is not compatible with this version of compiler"
+                    val message = createErrorMessage(registrar)
                     // Since the scripting plugin is often discovered in the compiler environment, it is often taken from the incompatible
                     // location, and in many cases this is not a fatal error, therefore strong warning is generated instead of exception
                     if (registrar.javaClass.simpleName == "ScriptingCompilerConfigurationComponentRegistrar") {
@@ -665,8 +670,13 @@ class KotlinCoreEnvironment private constructor(
                     }
                 }
             }
-        }
 
+            val extensionStorage = CompilerPluginRegistrar.ExtensionStorage()
+            for (registrar in configuration.getList(CompilerPluginRegistrar.COMPILER_PLUGIN_REGISTRARS)) {
+                with(registrar) { extensionStorage.registerExtensions(configuration) }
+            }
+            extensionStorage.registerInProject(project) { createErrorMessage(it) }
+        }
 
         private fun registerApplicationServicesForCLI(applicationEnvironment: KotlinCoreApplicationEnvironment) {
             // ability to get text from annotations xml files
