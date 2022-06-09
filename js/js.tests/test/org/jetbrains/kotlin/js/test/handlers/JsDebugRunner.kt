@@ -73,7 +73,7 @@ class JsDebugRunner(testServices: TestServices) : AbstractJsArtifactsCollector(t
         val (testFileWithBoxFunction, boxFunctionStartLine) = getBoxFunctionStartLocation(mainModule)
         val originalFileWithBoxFunction = testFileWithBoxFunction.originalFile
 
-        System.out.println(originalFileWithBoxFunction.absoluteFile.normalize()) // TODO: Remove
+        System.err.println(originalFileWithBoxFunction.absoluteFile.normalize()) // TODO: Remove
 
         val boxFunctionLineInGeneratedFile =
             sourceMap.breakpointLineInGeneratedFile(originalFileWithBoxFunction, boxFunctionStartLine)

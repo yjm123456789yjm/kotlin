@@ -29,6 +29,7 @@ class JsSourceMapPathRewriter(testServices: TestServices) : AbstractJsArtifactsC
         )
         val testModules = testServices.moduleStructure.modules
         val allTestFiles = testModules.flatMap { it.files }
+        System.err.println("allTestFiles:\n${allTestFiles.joinToString(separator = "\n") { it.name }}")
         for (module in testModules) {
             for (mode in supportedTranslationModes) {
                 val sourceMapFile =
@@ -37,14 +38,17 @@ class JsSourceMapPathRewriter(testServices: TestServices) : AbstractJsArtifactsC
 
                 val dependencies = JsEnvironmentConfigurator.getAllRecursiveDependenciesFor(module, testServices)
                 SourceMap.replaceSources(sourceMapFile) { path ->
-                    allTestFiles.find { it.name == path }?.originalFile?.absolutePath?.let {
+                    allTestFiles.find { it.name == path }?.originalFile?.absoluteFile?.normalize()?.path?.let {
+                        System.err.println("test file: $path -> $it")
                         return@replaceSources it
                     }
 
                     tryToMapLibrarySourceFile(dependencies, path)?.let {
+                        System.err.println("library file: $path -> $it")
                         return@replaceSources it
                     }
 
+                    System.err.println("couldn't map: $path")
                     path
                 }
             }
