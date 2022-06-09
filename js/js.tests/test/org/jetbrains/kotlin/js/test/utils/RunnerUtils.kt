@@ -208,7 +208,7 @@ fun getBoxFunction(testServices: TestServices): KtNamedFunction? {
 
     return ktFiles.mapNotNull { ktFile ->
         ktFile.declarations.filterIsInstanceAnd<KtNamedFunction> { it.name == TEST_FUNCTION }.firstOrNull()
-    }.single()
+    }.singleOrNull()
 }
 
 fun extractTestPackage(testServices: TestServices): String? =

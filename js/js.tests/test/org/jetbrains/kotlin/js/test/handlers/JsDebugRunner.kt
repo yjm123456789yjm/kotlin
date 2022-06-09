@@ -70,10 +70,10 @@ class JsDebugRunner(testServices: TestServices) : AbstractJsArtifactsCollector(t
         mainModule: TestModule,
     ) {
         val (testFileWithBoxFunction, boxFunctionStartLine) = getBoxFunctionStartLocation(mainModule)
-        val originalFileWithBoxFunctionAbsolutePath = testFileWithBoxFunction.originalFile.absolutePath
+        val originalFileWithBoxFunction = testFileWithBoxFunction.originalFile
 
         val boxFunctionLineInGeneratedFile =
-            sourceMap.breakpointLineInGeneratedFile(originalFileWithBoxFunctionAbsolutePath, boxFunctionStartLine)
+            sourceMap.breakpointLineInGeneratedFile(originalFileWithBoxFunction, boxFunctionStartLine)
 
         if (boxFunctionLineInGeneratedFile < 0)
             error("Could not find the location of the 'box' function in the generated file")
@@ -83,7 +83,6 @@ class JsDebugRunner(testServices: TestServices) : AbstractJsArtifactsCollector(t
         val loggedItems = mutableListOf<SteppingTestLoggedData>()
         debuggerFacade.run {
             with(debuggerFacade) {
-                waitForPauseEvent { it.reason == Debugger.PauseReason.BREAK_ON_START }
                 val boxFunctionBreakpoint = debugger.setBreakpointByUrl(boxFunctionLineInGeneratedFile, "file://$jsFilePath")
                 debugger.resume()
                 waitForResumeEvent()
@@ -145,11 +144,13 @@ class JsDebugRunner(testServices: TestServices) : AbstractJsArtifactsCollector(t
      * to map the location of the breakpoint in the source file to a location in the generated file. Here we use a simplified
      * algorithm for that.
      */
-    private fun SourceMap.breakpointLineInGeneratedFile(sourceFileAbsolutePath: String, sourceLine: Int): Int {
+    private fun SourceMap.breakpointLineInGeneratedFile(sourceFile: File, sourceLine: Int): Int {
+        val sourceFileAbsolutePath = sourceFile.absoluteFile.normalize()
         var candidateSegment: Pair<Int, SourceMapSegment>? = null
         for ((generatedLineNumber, group) in groups.withIndex()) {
             for (segment in group.segments) {
-                if (segment.sourceFileName != sourceFileAbsolutePath || segment.sourceLineNumber != sourceLine)
+                if (segment.sourceFileName?.let { File(it).absoluteFile.normalize() } != sourceFileAbsolutePath ||
+                    segment.sourceLineNumber != sourceLine)
                     continue
                 if (candidateSegment == null)
                     candidateSegment = generatedLineNumber to segment

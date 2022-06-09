@@ -13,6 +13,7 @@ import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.utils.addToStdlib.cast
+import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.coroutines.*
 
@@ -99,6 +100,13 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
     ).start()
 
     private val logger = Logger.getLogger(this::class.java.name)
+
+    init { // TODO: Remove this
+        val consoleHandler = java.util.logging.ConsoleHandler()
+        consoleHandler.level = Level.ALL
+        logger.level = Level.ALL
+        logger.addHandler(consoleHandler)
+    }
 
     /**
      * The WebSocket address to connect to.
