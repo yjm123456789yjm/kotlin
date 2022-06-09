@@ -22,9 +22,8 @@ import org.jetbrains.kotlin.psi.ValueArgument
 import org.jetbrains.kotlin.resolve.DescriptorToSourceUtils
 import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemBuilderImpl
 import org.jetbrains.kotlin.resolve.calls.model.DefaultValueArgument
-import org.jetbrains.kotlin.resolve.calls.model.MutableResolvedCall
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall
-import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCallImpl
+import org.jetbrains.kotlin.resolve.calls.model.VariableAsFunctionResolvedCall
 import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.util.CancellationChecker
@@ -68,7 +67,7 @@ fun createOverloadingConflictResolver(
     ResolvedCall<*>::getResultingDescriptor,
     ConstraintSystemBuilderImpl.Companion::forSpecificity,
     ResolvedCall<*>::createFlatSignature,
-    { (it as? VariableAsFunctionResolvedCallImpl)?.variableCall },
+    { (it as? VariableAsFunctionResolvedCall)?.variableCall },
     { DescriptorToSourceUtils.descriptorToDeclaration(it) != null },
     null,
     kotlinTypeRefiner
