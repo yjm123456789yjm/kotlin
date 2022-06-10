@@ -20,6 +20,7 @@ class SourceFilePathResolver(sourceRoots: List<File>, outputDir: File? = null) {
         var path = cache[file]
         if (path == null) {
             path = calculatePathRelativeToSourceRoots(file)
+            System.err.println("getPathRelativeToSourceRoots: ${file.path} -> $path")
             cache[file] = path
         }
         return path
