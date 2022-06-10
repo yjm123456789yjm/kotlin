@@ -16,6 +16,8 @@
 
 package org.jetbrains.kotlin.resolve.calls.inference
 
+import org.jetbrains.kotlin.resolve.calls.commonSuperType
+import org.jetbrains.kotlin.resolve.calls.commonSuperTypeForNonDenotableTypes
 import org.jetbrains.kotlin.resolve.calls.inference.TypeBounds.Bound
 import org.jetbrains.kotlin.resolve.calls.inference.TypeBounds.BoundKind
 import org.jetbrains.kotlin.resolve.calls.inference.TypeBounds.BoundKind.*
@@ -101,9 +103,9 @@ class TypeBoundsImpl(override val typeVariable: TypeVariable) : TypeBounds {
         values.addAll(exactBounds)
 
         val (numberLowerBounds, generalLowerBounds) =
-                filterBounds(bounds, LOWER_BOUND, values).partition { it.constructor is IntegerValueTypeConstructor }
+            filterBounds(bounds, LOWER_BOUND, values).partition { it.constructor is IntegerValueTypeConstructor }
 
-        val superTypeOfLowerBounds = CommonSupertypes.commonSupertypeForNonDenotableTypes(generalLowerBounds)
+        val superTypeOfLowerBounds = commonSuperTypeForNonDenotableTypes(generalLowerBounds)
         if (tryPossibleAnswer(bounds, superTypeOfLowerBounds)) {
             return setOf(superTypeOfLowerBounds!!)
         }
@@ -121,13 +123,13 @@ class TypeBoundsImpl(override val typeVariable: TypeVariable) : TypeBounds {
 
         if (superTypeOfLowerBounds != null && superTypeOfNumberLowerBounds != null) {
             val superTypeOfAllLowerBounds =
-                CommonSupertypes.commonSupertypeForNonDenotableTypes(listOf(superTypeOfLowerBounds, superTypeOfNumberLowerBounds))
+                commonSuperTypeForNonDenotableTypes(listOf(superTypeOfLowerBounds, superTypeOfNumberLowerBounds))
             if (tryPossibleAnswer(bounds, superTypeOfAllLowerBounds)) {
                 return setOf(superTypeOfAllLowerBounds!!)
             }
         }
 
-        val upperBounds = filterBounds(bounds, TypeBounds.BoundKind.UPPER_BOUND, values)
+        val upperBounds = filterBounds(bounds, UPPER_BOUND, values)
         if (upperBounds.isNotEmpty()) {
             val intersectionOfUpperBounds = TypeIntersector.intersectTypes(upperBounds)
             if (intersectionOfUpperBounds != null && tryPossibleAnswer(bounds, intersectionOfUpperBounds)) {
@@ -135,7 +137,7 @@ class TypeBoundsImpl(override val typeVariable: TypeVariable) : TypeBounds {
             }
         }
 
-        values.addAll(filterBounds(bounds, TypeBounds.BoundKind.UPPER_BOUND))
+        values.addAll(filterBounds(bounds, UPPER_BOUND))
 
         if (values.size == 1 && typeVariable.hasOnlyInputTypesAnnotation() && !tryPossibleAnswer(bounds, values.first())) return listOf()
 
@@ -184,10 +186,10 @@ class TypeBoundsImpl(override val typeVariable: TypeVariable) : TypeBounds {
         return true
     }
 
-    private fun commonSupertypeForNumberTypes(numberLowerBounds: Collection<KotlinType>): KotlinType? {
+    private fun commonSupertypeForNumberTypes(numberLowerBounds: List<KotlinType>): KotlinType? {
         if (numberLowerBounds.isEmpty()) return null
         val intersectionOfSupertypes = getIntersectionOfSupertypes(numberLowerBounds)
-        return TypeUtils.getDefaultPrimitiveNumberType(intersectionOfSupertypes) ?: CommonSupertypes.commonSupertype(numberLowerBounds)
+        return TypeUtils.getDefaultPrimitiveNumberType(intersectionOfSupertypes) ?: commonSuperType(numberLowerBounds)
     }
 
     private fun getIntersectionOfSupertypes(types: Collection<KotlinType>): Set<KotlinType> {

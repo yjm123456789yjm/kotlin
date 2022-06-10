@@ -31,8 +31,8 @@ import org.jetbrains.kotlin.psi.KtPsiFactoryKt;
 import org.jetbrains.kotlin.psi.KtTypeReference;
 import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.BindingTraceContext;
-import org.jetbrains.kotlin.resolve.TypeResolutionContext;
 import org.jetbrains.kotlin.resolve.TypeResolver;
+import org.jetbrains.kotlin.resolve.calls.CommonSuperTypeUtilsKt;
 import org.jetbrains.kotlin.resolve.calls.components.InferenceSession;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfoFactory;
 import org.jetbrains.kotlin.resolve.lazy.JvmResolveUtil;
@@ -181,13 +181,13 @@ public class KotlinTypeCheckerTest extends KotlinTestWithEnvironment {
         assertCommonSupertype("Base_T<in Int>", "Base_T<Int>", "Base_T<in Int>");
         assertCommonSupertype("Base_T<in Int>", "Derived_T<Int>", "Base_T<in Int>");
         assertCommonSupertype("Base_T<in Int>", "Derived_T<in Int>", "Base_T<Int>");
-        assertCommonSupertype("Base_T<out Any?>", "Base_T<Int>", "Base_T<*>");
+        assertCommonSupertype("Base_T<*>", "Base_T<Int>", "Base_T<*>");
 
         assertCommonSupertype("Base_T<out Parent>", "Base_T<A>", "Base_T<B>");
     }
 
     public void testCommonSupertypesForRecursive() {
-        assertCommonSupertype("Rec<out Rec<out Rec<out Rec<out Rec<*>>>>>", "ARec", "BRec");
+        assertCommonSupertype("Rec<*>", "ARec", "BRec");
     }
 
     public void testIntersect() {
@@ -514,11 +514,11 @@ public class KotlinTypeCheckerTest extends KotlinTestWithEnvironment {
     }
 
     private void assertCommonSupertype(String expected, String... types) {
-        Collection<KotlinType> subtypes = new ArrayList<>();
+        List<KotlinType> subtypes = new ArrayList<>();
         for (String type : types) {
             subtypes.add(makeType(type));
         }
-        KotlinType result = CommonSupertypes.commonSupertype(subtypes);
+        KotlinType result = CommonSuperTypeUtilsKt.commonSuperType(subtypes);
         assertEquals(result + " != " + expected, makeType(expected), result);
     }
 
