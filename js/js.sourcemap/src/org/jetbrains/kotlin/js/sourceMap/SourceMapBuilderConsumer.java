@@ -104,13 +104,9 @@ public class SourceMapBuilderConsumer implements SourceLocationConsumer {
             Supplier<Reader> contentSupplier = provideExternalModuleContent ? location.getSourceProvider()::invoke : () -> null;
             String path;
 
-            System.err.println("addMapping location.getFile(): " + location.getFile());
-
             File absFile = new File(location.getFile()).isAbsolute() ?
                            new File(location.getFile()) :
                            new File(sourceBaseDir, location.getFile());
-
-            System.err.println("addMapping absFile: " + absFile.getPath());
             if (absFile.isAbsolute()) {
                 try {
                     path = pathResolver.getPathRelativeToSourceRoots(absFile);
@@ -121,7 +117,6 @@ public class SourceMapBuilderConsumer implements SourceLocationConsumer {
                 }
             }
             else {
-                System.err.println("addMapping absFile is relative: " + absFile.getPath());
                 path = location.getFile();
             }
             mappingConsumer.addMapping(path, location.getIdentityObject(), contentSupplier,

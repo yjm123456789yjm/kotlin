@@ -29,7 +29,7 @@ class JsSourceMapPathRewriter(testServices: TestServices) : AbstractJsArtifactsC
         )
         val testModules = testServices.moduleStructure.modules
         val allTestFiles = testModules.flatMap { it.files }
-        System.err.println("allTestFiles: ${allTestFiles.joinToString { it.name }}")
+        System.err.println("allTestFiles: ${allTestFiles.joinToString { it.relativePath }}")
         for (module in testModules) {
             for (mode in supportedTranslationModes) {
                 val sourceMapFile =
