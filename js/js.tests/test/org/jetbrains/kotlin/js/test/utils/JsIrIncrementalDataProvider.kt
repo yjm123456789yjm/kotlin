@@ -76,6 +76,7 @@ class JsIrIncrementalDataProvider(private val testServices: TestServices) : Test
         for (testFile in module.files) {
             if (JsEnvironmentConfigurationDirectives.RECOMPILE in testFile.directives) {
                 val fileName = "/${testFile.name}"
+                System.err.println("getCacheForModule: $fileName")
                 oldBinaryAsts[fileName] = moduleCache.getAst(fileName) ?: error("No AST found for $fileName")
                 moduleCache.invalidateForFile(fileName)
             }

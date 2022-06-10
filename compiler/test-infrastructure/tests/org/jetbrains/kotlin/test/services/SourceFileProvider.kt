@@ -93,7 +93,9 @@ fun SourceFileProvider.getKtFileForSourceFile(testFile: TestFile, project: Proje
         testFile.name,
         getContentOfSourceFile(testFile),
         project
-    )
+    ).also {
+        System.err.println("SourceFileProvider.getKtFileForSourceFile: $it")
+    }
 }
 
 fun SourceFileProvider.getKtFilesForSourceFiles(testFiles: Collection<TestFile>, project: Project): Map<TestFile, KtFile> {

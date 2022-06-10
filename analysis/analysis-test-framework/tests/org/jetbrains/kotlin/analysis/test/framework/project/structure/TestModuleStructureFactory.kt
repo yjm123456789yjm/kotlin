@@ -227,7 +227,9 @@ object TestModuleStructureFactory {
             when {
                 testFile.isKtFile -> {
                     val fileText = testServices.sourceFileProvider.getContentOfSourceFile(testFile)
-                    KtTestUtil.createFile(testFile.name, fileText, project)
+                    KtTestUtil.createFile(testFile.name, fileText, project).also {
+                        System.err.println("createSourcePsiFiles: $it")
+                    }
                 }
 
                 testFile.isJavaFile -> {
