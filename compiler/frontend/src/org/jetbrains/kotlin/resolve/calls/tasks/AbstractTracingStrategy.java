@@ -273,28 +273,12 @@ public abstract class AbstractTracingStrategy implements TracingStrategy {
                 return TYPE_INFERENCE_EXPECTED_TYPE_MISMATCH.on(call.getCallElement(), data.expectedType, substitutedReturnType);
             }
         }
-        else if (status.hasCannotCaptureTypesError()) {
-            return TYPE_INFERENCE_CANNOT_CAPTURE_TYPES.on(reference, data);
-        }
-        else if (status.hasViolatedUpperBound()) {
-            return TYPE_INFERENCE_UPPER_BOUND_VIOLATED.on(reference, data);
-        }
-        else if (status.hasParameterConstraintError()) {
-            return TYPE_INFERENCE_PARAMETER_CONSTRAINT_ERROR.on(reference, data);
-        }
-        else if (status.hasConflictingConstraints()) {
-            return TYPE_INFERENCE_CONFLICTING_SUBSTITUTIONS.on(reference, data);
-        }
         else if (status.hasTypeInferenceIncorporationError()) {
             return TYPE_INFERENCE_INCORPORATION_ERROR.on(reference);
         }
         else if (status.hasTypeParameterWithUnsatisfiedOnlyInputTypesError()) {
             //todo
             return TYPE_INFERENCE_ONLY_INPUT_TYPES.getErrorFactory().on(reference, data.descriptor.getTypeParameters().get(0));
-        }
-        else {
-            assert status.hasUnknownParameters();
-            return TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER.on(reference, data);
         }
 
         return null;

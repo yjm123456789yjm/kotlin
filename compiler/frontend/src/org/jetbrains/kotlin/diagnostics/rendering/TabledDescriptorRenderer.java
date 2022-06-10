@@ -18,20 +18,13 @@ package org.jetbrains.kotlin.diagnostics.rendering;
 
 import com.google.common.collect.Lists;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.descriptors.CallableDescriptor;
 import org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TableRenderer.DescriptorRow;
-import org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TableRenderer.FunctionArgumentsRow;
 import org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TableRenderer.TableRow;
 import org.jetbrains.kotlin.diagnostics.rendering.TabledDescriptorRenderer.TextRenderer.TextElement;
-import org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPosition;
-import org.jetbrains.kotlin.types.KotlinType;
-import org.jetbrains.kotlin.types.TypeProjection;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
 
 public class TabledDescriptorRenderer {
     public interface TableOrTextRenderer {}
@@ -48,33 +41,10 @@ public class TabledDescriptorRenderer {
             }
         }
 
-        public static class FunctionArgumentsRow implements TableRow {
-            public final KotlinType receiverType;
-            public final List<KotlinType> argumentTypes;
-            public final Predicate<ConstraintPosition> isErrorPosition;
-
-            public FunctionArgumentsRow(KotlinType receiverType, List<KotlinType> argumentTypes, Predicate<ConstraintPosition> isErrorPosition) {
-                this.receiverType = receiverType;
-                this.argumentTypes = argumentTypes;
-                this.isErrorPosition = isErrorPosition;
-            }
-        }
-
         public final List<TableRow> rows = Lists.newArrayList();
 
         public TableRenderer descriptor(CallableDescriptor descriptor) {
             rows.add(new DescriptorRow(descriptor));
-            return this;
-        }
-
-        public TableRenderer functionArgumentTypeList(@Nullable KotlinType receiverType, @NotNull List<KotlinType> argumentTypes) {
-            return functionArgumentTypeList(receiverType, argumentTypes, position -> false);
-        }
-
-        public TableRenderer functionArgumentTypeList(@Nullable KotlinType receiverType,
-                @NotNull List<KotlinType> argumentTypes,
-                @NotNull Predicate<ConstraintPosition> isErrorPosition) {
-            rows.add(new FunctionArgumentsRow(receiverType, argumentTypes, isErrorPosition));
             return this;
         }
 
@@ -112,11 +82,6 @@ public class TabledDescriptorRenderer {
             elements.add(new TextElement(TextElementType.ERROR, text.toString()));
             return this;
         }
-
-        public TextRenderer strong(@NotNull Object text) {
-            elements.add(new TextElement(TextElementType.STRONG, text.toString()));
-            return this;
-        }
     }
 
     protected final List<TableOrTextRenderer> renderers = Lists.newArrayList();
@@ -131,12 +96,8 @@ public class TabledDescriptorRenderer {
         return this;
     }
 
-    public static TextRenderer newText() {
+    private static TextRenderer newText() {
         return new TextRenderer();
-    }
-
-    public static TableRenderer newTable() {
-        return new TableRenderer();
     }
 
     @Override
@@ -153,23 +114,13 @@ public class TabledDescriptorRenderer {
         return result.toString();
     }
 
-    @NotNull
-    public DiagnosticParameterRenderer<KotlinType> getTypeRenderer() {
-        return Renderers.RENDER_TYPE;
-    }
-
-    @NotNull
-    public DiagnosticParameterRenderer<TypeProjection> getTypeProjectionRenderer() {
-        return Renderers.TYPE_PROJECTION;
-    }
-
-    protected void renderText(TextRenderer textRenderer, StringBuilder result) {
+    private static void renderText(TextRenderer textRenderer, StringBuilder result) {
         for (TextElement element : textRenderer.elements) {
             result.append(element.text);
         }
     }
 
-    protected void renderTable(TableRenderer table, StringBuilder result) {
+    private static void renderTable(TableRenderer table, StringBuilder result) {
         if (table.rows.isEmpty()) return;
 
         RenderingContext context = computeRenderingContext(table);
@@ -180,65 +131,22 @@ public class TabledDescriptorRenderer {
             if (row instanceof DescriptorRow) {
                 result.append(Renderers.COMPACT.render(((DescriptorRow) row).descriptor, context));
             }
-            if (row instanceof FunctionArgumentsRow) {
-                FunctionArgumentsRow functionArgumentsRow = (FunctionArgumentsRow) row;
-                renderFunctionArguments(functionArgumentsRow.receiverType, functionArgumentsRow.argumentTypes, result, context);
-            }
             result.append("\n");
         }
-    }
-
-    private void renderFunctionArguments(
-            @Nullable KotlinType receiverType,
-            @NotNull List<KotlinType> argumentTypes,
-            StringBuilder result,
-            @NotNull RenderingContext context
-    ) {
-        boolean hasReceiver = receiverType != null;
-        if (hasReceiver) {
-            result.append("receiver: ");
-            result.append(getTypeRenderer().render(receiverType, context));
-            result.append("  arguments: ");
-        }
-        if (argumentTypes.isEmpty()) {
-            result.append("()");
-            return;
-        }
-
-        result.append("(");
-        for (Iterator<KotlinType> iterator = argumentTypes.iterator(); iterator.hasNext(); ) {
-            KotlinType argumentType = iterator.next();
-            if (argumentType == null) {
-                result.append("<unknown>");
-            }
-            else {
-                String renderedArgument = getTypeRenderer().render(argumentType, context);
-                result.append(renderedArgument);
-            }
-
-            if (iterator.hasNext()) {
-                result.append(",");
-            }
-        }
-        result.append(")");
     }
 
     public static TabledDescriptorRenderer create() {
         return new TabledDescriptorRenderer();
     }
 
-    public static enum TextElementType { STRONG, ERROR, DEFAULT }
+    public enum TextElementType { STRONG, ERROR, DEFAULT }
 
     @NotNull
-    protected static RenderingContext computeRenderingContext(@NotNull TableRenderer table) {
+    private static RenderingContext computeRenderingContext(@NotNull TableRenderer table) {
         ArrayList<Object> toRender = new ArrayList<>();
         for (TableRow row : table.rows) {
             if (row instanceof DescriptorRow) {
                 toRender.add(((DescriptorRow) row).descriptor);
-            }
-            else if (row instanceof FunctionArgumentsRow) {
-                toRender.add(((FunctionArgumentsRow) row).receiverType);
-                toRender.addAll(((FunctionArgumentsRow) row).argumentTypes);
             }
             else if (row instanceof TextRenderer) {
 
