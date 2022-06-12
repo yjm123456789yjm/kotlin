@@ -1,0 +1,57 @@
+KtFile: CallsInWhen_ERR.kt
+  PACKAGE_DIRECTIVE
+    <empty list>
+  IMPORT_LIST
+    <empty list>
+  FUN
+    PsiElement(fun)('fun')
+    PsiWhiteSpace(' ')
+    PsiElement(IDENTIFIER)('foo')
+    VALUE_PARAMETER_LIST
+      PsiElement(LPAR)('(')
+      PsiElement(RPAR)(')')
+    PsiWhiteSpace(' ')
+    BLOCK
+      PsiElement(LBRACE)('{')
+      PsiWhiteSpace('\n  ')
+      WHEN
+        PsiElement(when)('when')
+        PsiWhiteSpace(' ')
+        PsiElement(LPAR)('(')
+        REFERENCE_EXPRESSION
+          PsiElement(IDENTIFIER)('a')
+        PsiElement(RPAR)(')')
+        PsiWhiteSpace(' ')
+        PsiElement(LBRACE)('{')
+        PsiWhiteSpace('\n    ')
+        WHEN_ENTRY
+          WHEN_CONDITION_WITH_EXPRESSION
+            BINARY_EXPRESSION
+              BINARY_EXPRESSION
+                DOT_QUALIFIED_EXPRESSION
+                  REFERENCE_EXPRESSION
+                    PsiElement(IDENTIFIER)('a')
+                  PsiElement(DOT)('.')
+                  REFERENCE_EXPRESSION
+                    PsiElement(IDENTIFIER)('foo')
+                  TYPE_ARGUMENT_LIST_LIKE_EXPRESSION
+                    <empty list>
+                TYPE_ARGUMENT_LIST_LIKE_EXPRESSION
+                  <empty list>
+                OPERATION_REFERENCE
+                  PsiElement(LT)('<')
+                REFERENCE_EXPRESSION
+                  PsiElement(IDENTIFIER)('T')
+              OPERATION_REFERENCE
+                PsiElement(GT)('>')
+              PsiErrorElement:Expecting an element
+                <empty list>
+          PsiWhiteSpace(' ')
+          PsiElement(ARROW)('->')
+          PsiWhiteSpace(' ')
+          REFERENCE_EXPRESSION
+            PsiElement(IDENTIFIER)('a')
+        PsiWhiteSpace('\n  ')
+        PsiElement(RBRACE)('}')
+      PsiWhiteSpace('\n')
+      PsiElement(RBRACE)('}')
