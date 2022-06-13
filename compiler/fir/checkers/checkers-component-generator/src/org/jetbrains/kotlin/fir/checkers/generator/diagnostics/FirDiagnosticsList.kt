@@ -48,7 +48,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
         val UNSUPPORTED_FEATURE by error<PsiElement> {
             parameter<Pair<LanguageFeature, LanguageVersionSettings>>("unsupportedFeature")
         }
-        val NEW_INFERENCE_ERROR by error<PsiElement> {
+        val TYPE_INFERENCE_ERROR by error<PsiElement> {
             parameter<String>("error")
         }
     }
@@ -498,7 +498,7 @@ object DIAGNOSTICS_LIST : DiagnosticList("FirErrors") {
 
         val MANY_LAMBDA_EXPRESSION_ARGUMENTS by error<KtValueArgument>()
 
-        val NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER by error<KtElement> {
+        val TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER by error<KtElement> {
             parameter<String>("name")
         }
 

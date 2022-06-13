@@ -81,8 +81,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.NEW_INFERENCE_ERROR) { firDiagnostic ->
-        NewInferenceErrorImpl(
+    add(FirErrors.TYPE_INFERENCE_ERROR) { firDiagnostic ->
+        TypeInferenceErrorImpl(
             firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
@@ -1504,8 +1504,8 @@ internal val KT_DIAGNOSTIC_CONVERTER = KtDiagnosticConverterBuilder.buildConvert
             token,
         )
     }
-    add(FirErrors.NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER) { firDiagnostic ->
-        NewInferenceNoInformationForParameterImpl(
+    add(FirErrors.TYPE_INFERENCE_NO_INFORMATION_FOR_PARAMETER) { firDiagnostic ->
+        TypeInferenceNoInformationForParameterImpl(
             firDiagnostic.a,
             firDiagnostic as KtPsiDiagnostic,
             token,
