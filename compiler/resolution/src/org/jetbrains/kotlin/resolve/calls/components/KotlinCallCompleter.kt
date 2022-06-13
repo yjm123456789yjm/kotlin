@@ -13,7 +13,7 @@ import org.jetbrains.kotlin.descriptors.synthetic.SyntheticMemberDescriptor
 import org.jetbrains.kotlin.resolve.calls.components.candidate.ResolutionCandidate
 import org.jetbrains.kotlin.resolve.calls.components.candidate.CallableReferenceResolutionCandidate
 import org.jetbrains.kotlin.resolve.calls.components.candidate.SimpleResolutionCandidate
-import org.jetbrains.kotlin.resolve.calls.inference.NewConstraintSystem
+import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystem
 import org.jetbrains.kotlin.resolve.calls.inference.addEqualityConstraintIfCompatible
 import org.jetbrains.kotlin.resolve.calls.inference.components.*
 import org.jetbrains.kotlin.resolve.calls.inference.model.ConstraintStorage.Empty.hasContradiction
@@ -243,7 +243,7 @@ class KotlinCallCompleter(
         resolvedCallAtom: ResolvedCallAtom,
         completionMode: ConstraintSystemCompletionMode,
         diagnosticsHolder: KotlinDiagnosticsHolder,
-        constraintSystem: NewConstraintSystem,
+        constraintSystem: ConstraintSystem,
         resolutionCallbacks: KotlinResolutionCallbacks,
         collectAllCandidatesMode: Boolean = false
     ) {
