@@ -24443,6 +24443,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("paramGenericSignature.kt")
+            public void testParamGenericSignature() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/paramGenericSignature.kt");
+            }
+
+            @Test
             @TestMetadata("primitive.kt")
             public void testPrimitive() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/primitive.kt");

@@ -19957,6 +19957,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/arrayIC.kt");
             }
 
+            @TestMetadata("paramGenericSignature.kt")
+            public void ignoreParamGenericSignature() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/paramGenericSignature.kt");
+            }
+
             @TestMetadata("primitive.kt")
             public void ignorePrimitive() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/primitive.kt");
