@@ -3,8 +3,9 @@ plugins {
 }
 
 @Suppress("UNCHECKED_CAST")
-val compilerComponents = rootProject.extra["compilerModulesForJps"] as List<String>
+val compilerComponents = (rootProject.extra["kotlinJpsPluginEmbeddedDependencies"] as List<String>) +
+    (rootProject.extra["kotlinJpsPluginMavenDependencies"] as List<String>) +
+    listOf(":jps:jps-common") -
+    listOf(":kotlin-reflect")
 
-val otherProjects = listOf(":kotlin-daemon-client")
-
-publishJarsForIde(compilerComponents + otherProjects)
+publishJarsForIde(compilerComponents)
