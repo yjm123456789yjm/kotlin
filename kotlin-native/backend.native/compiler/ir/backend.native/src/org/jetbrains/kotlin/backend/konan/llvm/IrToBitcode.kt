@@ -2979,6 +2979,7 @@ internal fun Context.generateRuntimeConstantsModule() : LLVMModuleRef {
     setRuntimeConstGlobal("Kotlin_freezingEnabled", Int32(if (config.freezing.enableFreezeAtRuntime) 1 else 0))
     setRuntimeConstGlobal("Kotlin_freezingChecksEnabled", Int32(if (config.freezing.enableFreezeChecks) 1 else 0))
     setRuntimeConstGlobal("Kotlin_gcSchedulerType", Int32(config.gcSchedulerType.value))
+    setRuntimeConstGlobal("Kotlin_markSingleThreaded", Int32(if (config.gcMarkSingleThreaded) 1 else 0))
 
     return llvmModule
 }
