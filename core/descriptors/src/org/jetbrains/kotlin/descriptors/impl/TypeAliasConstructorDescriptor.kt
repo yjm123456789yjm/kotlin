@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.resolve.scopes.receivers.ImplicitContextReceiver
 import org.jetbrains.kotlin.storage.StorageManager
 import org.jetbrains.kotlin.storage.getValue
 import org.jetbrains.kotlin.types.*
+import org.jetbrains.kotlin.types.util.lowerIfFlexible
 
 interface TypeAliasConstructorDescriptor : ConstructorDescriptor, DescriptorDerivedFromTypeAlias {
     val underlyingConstructorDescriptor: ClassConstructorDescriptor
