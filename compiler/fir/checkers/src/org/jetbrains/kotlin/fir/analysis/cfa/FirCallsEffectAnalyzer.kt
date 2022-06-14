@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.expressions.toResolvedCallableSymbol
 import org.jetbrains.kotlin.fir.references.FirReference
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.references.FirThisReference
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolve.isInvoke
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
@@ -41,7 +42,8 @@ import kotlin.contracts.contract
 
 object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
-    override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
+    override fun analyze(graphReference: FirControlFlowGraphReferenceImpl, reporter: DiagnosticReporter, context: CheckerContext) {
+        val graph = graphReference.controlFlowGraph
         val session = context.session
         val function = (graph.declaration as? FirFunction) ?: return
         if (function !is FirContractDescriptionOwner) return

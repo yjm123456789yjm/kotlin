@@ -23,8 +23,8 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.BlockExitNode
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.NormalPath
 import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
@@ -98,14 +98,15 @@ object FirMemberPropertiesChecker : FirClassChecker() {
             mutableMapOf<FirConstructorSymbol, PropertyInitializationInfo>().withDefault { PropertyInitializationInfo.EMPTY }
 
         fun collectInfoFromGraph(
-            graph: ControlFlowGraph,
+            graphReference: FirControlFlowGraphReferenceImpl,
             map: MutableMap<FirPropertySymbol, EventOccurrencesRange>,
             acc: (EventOccurrencesRange, EventOccurrencesRange) -> EventOccurrencesRange,
             delegatedConstructor: FirConstructorSymbol? = null,
         ) {
+            val graph = graphReference.controlFlowGraph
             val delegatedInfo = delegatedConstructor?.let { constructorToData.getValue(it) } ?: PropertyInitializationInfo.EMPTY
 
-            val data = PropertyInitializationInfoCollector(memberPropertySymbols).getData(graph)
+            val data = PropertyInitializationInfoCollector(graphReference, memberPropertySymbols).getData()
             val infoAtExitNode = data[graph.exitNode]?.get(NormalPath) ?: PropertyInitializationInfo.EMPTY
 
             // NB: it's not [merge], which is conducted at merging points, such as loop condition or when conditions.
@@ -121,37 +122,37 @@ object FirMemberPropertiesChecker : FirClassChecker() {
                 if (item != null) {
                     // Accumulation:
                     //   range join for class constructors, range plus for class's anonymous initializers and property initializations
-                    map[propertySymbol] = acc.invoke(item, info[propertySymbol] ?: EventOccurrencesRange.ZERO)
+                    map[propertySymbol] = acc.invoke(item, info.getInfoBySymbol(propertySymbol) ?: EventOccurrencesRange.ZERO)
                 } else {
                     // Initial assignment.
                     // NB: we should not use `acc` here to not weaken ranges. For example, if we visit one and only constructor where
                     // a property of interest is correctly initialized (a.k.a. [EXACTLY_ONCE]), and if `acc` is ...Range::or,
                     // merging with the default [ZERO] makes the result [AT_MOST_ONCE], which will be regarded as uninitialized.
-                    map[propertySymbol] = info[propertySymbol] ?: EventOccurrencesRange.ZERO
+                    map[propertySymbol] = info.getInfoBySymbol(propertySymbol) ?: EventOccurrencesRange.ZERO
                 }
             }
         }
 
         val constructorGraphs = klass.constructorsSortedByDelegation(session).mapNotNull {
-            it.resolvedControlFlowGraphReference?.controlFlowGraph
+            it.resolvedControlFlowGraphReference as? FirControlFlowGraphReferenceImpl
         }
-        for (graph in constructorGraphs) {
+        for (graphReference in constructorGraphs) {
             collectInfoFromGraph(
-                graph,
+                graphReference,
                 initializedInConstructor,
                 EventOccurrencesRange::or,
-                (graph.declaration as? FirConstructor)?.symbol?.delegatedThisConstructor
+                (graphReference.controlFlowGraph.declaration as? FirConstructor)?.symbol?.delegatedThisConstructor
             )
         }
 
-        val initGraphs = klass.anonymousInitializers.mapNotNull { it.controlFlowGraphReference?.controlFlowGraph }
-        for (graph in initGraphs) {
-            collectInfoFromGraph(graph, initializedInInitOrOtherProperty, EventOccurrencesRange::plus)
+        val initGraphs = klass.anonymousInitializers.mapNotNull { it.controlFlowGraphReference as? FirControlFlowGraphReferenceImpl }
+        for (graphReference in initGraphs) {
+            collectInfoFromGraph(graphReference, initializedInInitOrOtherProperty, EventOccurrencesRange::plus)
         }
 
-        val propertyInitGraphs = memberPropertySymbols.mapNotNull { it.controlFlowGraphReference?.controlFlowGraph }
-        for (graph in propertyInitGraphs) {
-            collectInfoFromGraph(graph, initializedInInitOrOtherProperty, EventOccurrencesRange::plus)
+        val propertyInitGraphs = memberPropertySymbols.mapNotNull { it.controlFlowGraphReference as? FirControlFlowGraphReferenceImpl }
+        for (graphReference in propertyInitGraphs) {
+            collectInfoFromGraph(graphReference, initializedInInitOrOtherProperty, EventOccurrencesRange::plus)
         }
     }
 

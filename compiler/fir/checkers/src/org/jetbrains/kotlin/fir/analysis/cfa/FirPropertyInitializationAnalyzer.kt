@@ -19,32 +19,25 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.isLateInit
 import org.jetbrains.kotlin.fir.declarations.utils.referredPropertySymbol
-import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
-import org.jetbrains.kotlin.fir.expressions.FirSafeCallExpression
-import org.jetbrains.kotlin.fir.expressions.FirThisReceiverExpression
-import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
+import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.resolve.dfa.*
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
-import org.jetbrains.kotlin.fir.resolve.dfa.popOrNull
-import org.jetbrains.kotlin.fir.resolve.dfa.stackOf
-import org.jetbrains.kotlin.fir.resolve.dfa.topOrNull
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
-import org.jetbrains.kotlin.fir.types.coneType
-import org.jetbrains.kotlin.fir.types.toSymbol
 
 @OptIn(SymbolInternals::class)
 object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChecker() {
     override fun analyze(
-        graph: ControlFlowGraph,
+        graphReference: FirControlFlowGraphReferenceImpl,
         reporter: DiagnosticReporter,
         data: PropertyInitializationInfoData,
         properties: Set<FirPropertySymbol>,
         capturedWrites: Set<FirVariableAssignment>,
         context: CheckerContext
     ) {
-        val reporterVisitor = PropertyReporter(data, properties, capturedWrites, reporter, context)
-        graph.traverse(TraverseDirection.Forward, reporterVisitor)
+        val reporterVisitor = PropertyReporter(data, properties, capturedWrites, reporter, context, graphReference.dataFlowInfo)
+        graphReference.controlFlowGraph.traverse(TraverseDirection.Forward, reporterVisitor)
     }
 
     private class PropertyReporter(
@@ -52,7 +45,8 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
         val properties: Set<FirPropertySymbol>,
         val capturedWrites: Set<FirVariableAssignment>,
         val reporter: DiagnosticReporter,
-        val context: CheckerContext
+        val context: CheckerContext,
+        val dataFlowInfo: DataFlowInfo?
     ) : ControlFlowGraphVisitorVoid() {
         val classes = stackOf<FirClassSymbol<out FirClass>?>()
         val propertiesInClassInitializer = mutableSetOf<FirPropertySymbol>()
@@ -126,9 +120,12 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
                 return
             }
 
-            if (symbol.hasInitializer ||
-                !symbol.isLocal && symbol.dispatchReceiverType?.toSymbol(context.session) != classes.topOrNull()
-            ) {
+            val dataFlowVariableResult = node.getDataFlowVariable(dataFlowInfo)
+            if (!dataFlowVariableResult.isFlowOnNodeExist) {
+                return
+            }
+            val dataFlowVariable = dataFlowVariableResult.variable
+            if (symbol.hasInitializer || !symbol.isLocal && !dataFlowVariable.hasThisReceiver()) {
                 reporter.reportOn(node.fir.lValue.source, FirErrors.VAL_REASSIGNMENT, symbol, context)
                 return
             }
@@ -142,7 +139,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
             val pathAwareInfo = propertyInitializationInfoData.getValue(node)
             for (label in pathAwareInfo.keys) {
                 val info = pathAwareInfo.getValue(label)
-                val kind = info[symbol] ?: EventOccurrencesRange.ZERO
+                val kind = info[dataFlowVariable] ?: EventOccurrencesRange.ZERO
                 if (kind.canBeRevisited()) {
                     reporter.reportOn(node.fir.lValue.source, FirErrors.VAL_REASSIGNMENT, symbol, context)
                     return
@@ -153,10 +150,15 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
         override fun visitQualifiedAccessNode(node: QualifiedAccessNode) {
             val symbol = getPropertySymbol(node) ?: return
             if (symbol.fir.isLateInit || symbol !in properties) return
+            val dataFlowVariableResult = node.getDataFlowVariable(dataFlowInfo)
+            if (!dataFlowVariableResult.isFlowOnNodeExist) {
+                return
+            }
+            val dataFlowVariable = dataFlowVariableResult.variable
             if (symbol.isLocal) {
                 if (symbol.hasInitializer || symbol.hasDelegate) return
             } else {
-                if (insideLambdaOrAnonymous.topOrNull() == true || !isSymbolFromContainingDeclaration(node, symbol)) {
+                if (insideLambdaOrAnonymous.topOrNull() == true || !dataFlowVariable.hasThisReceiver()) {
                     return
                 }
 
@@ -176,7 +178,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
             val pathAwareInfo = propertyInitializationInfoData.getValue(node)
             for ((edgeLabel, info) in pathAwareInfo.entries) {
                 if (symbol.isLocal || edgeLabel !is UncaughtExceptionPath) {
-                    val kind = info[symbol] ?: EventOccurrencesRange.ZERO
+                    val kind = info[dataFlowVariable] ?: EventOccurrencesRange.ZERO
                     if (!kind.isDefinitelyVisited()) {
                         reporter.reportOn(node.fir.source, FirErrors.UNINITIALIZED_VARIABLE, symbol, context)
                         return
@@ -185,23 +187,10 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
             }
         }
 
-        private fun isSymbolFromContainingDeclaration(node: QualifiedAccessNode, symbol: FirPropertySymbol) : Boolean {
-            val dispatchReceiverSymbol = symbol.dispatchReceiverType?.toSymbol(context.session) ?: return false
-
-            if (dispatchReceiverSymbol != classes.topOrNull()) return false
-
-            val previousNode = node.previousNodes.firstOrNull() ?: return true
-
-            if (previousNode !is QualifiedAccessNode && previousNode !is EnterSafeCallNode) return true
-
-            if ((previousNode.fir as? FirThisReceiverExpression)?.typeRef?.coneType == symbol.dispatchReceiverType) return true
-
-            val previousNodeFir = if (previousNode is QualifiedAccessNode)
-                previousNode.fir
-            else
-                (previousNode.fir as FirSafeCallExpression).checkedSubjectRef.value
-
-            return node.fir.dispatchReceiver != previousNodeFir
+        private fun DataFlowVariable?.hasThisReceiver(): Boolean {
+            if (this !is RealVariable) return false
+            val dispatchReceiver = this.identifier.dispatchReceiver ?: return true
+            return (dispatchReceiver as? RealVariable)?.isThisReference == true
         }
 
         private fun getPropertySymbol(node: CFGNode<*>): FirPropertySymbol? {

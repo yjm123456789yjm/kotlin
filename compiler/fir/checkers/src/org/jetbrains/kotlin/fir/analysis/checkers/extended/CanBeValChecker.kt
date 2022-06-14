@@ -20,13 +20,15 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.cfa.PropertyInitializationInfoData
 import org.jetbrains.kotlin.fir.expressions.FirVariableAssignment
+import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowInfo
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
     override fun analyze(
-        graph: ControlFlowGraph,
+        graphReference: FirControlFlowGraphReferenceImpl,
         reporter: DiagnosticReporter,
         data: PropertyInitializationInfoData,
         properties: Set<FirPropertySymbol>,
@@ -36,8 +38,9 @@ object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
         val unprocessedProperties = mutableSetOf<FirPropertySymbol>()
         val propertiesCharacteristics = mutableMapOf<FirPropertySymbol, EventOccurrencesRange>()
 
-        val reporterVisitor = UninitializedPropertyReporter(data, properties, unprocessedProperties, propertiesCharacteristics)
-        graph.traverse(TraverseDirection.Forward, reporterVisitor)
+        val reporterVisitor = UninitializedPropertyReporter(
+            data, properties, unprocessedProperties, propertiesCharacteristics, graphReference.dataFlowInfo)
+        graphReference.controlFlowGraph.traverse(TraverseDirection.Forward, reporterVisitor)
 
         for (property in unprocessedProperties) {
             val source = property.source
@@ -81,7 +84,8 @@ object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
         val data: PropertyInitializationInfoData,
         val localProperties: Set<FirPropertySymbol>,
         val unprocessedProperties: MutableSet<FirPropertySymbol>,
-        val propertiesCharacteristics: MutableMap<FirPropertySymbol, EventOccurrencesRange>
+        val propertiesCharacteristics: MutableMap<FirPropertySymbol, EventOccurrencesRange>,
+        val dataFlowInfo: DataFlowInfo?
     ) : ControlFlowGraphVisitorVoid() {
         override fun visitNode(node: CFGNode<*>) {}
 
@@ -92,7 +96,8 @@ object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
 
             val currentCharacteristic = propertiesCharacteristics.getOrDefault(symbol, EventOccurrencesRange.ZERO)
             val info = data.getValue(node)
-            propertiesCharacteristics[symbol] = currentCharacteristic.or(info.infoAtNormalPath[symbol] ?: EventOccurrencesRange.ZERO)
+            val dataFlowVariable = node.getDataFlowVariable(dataFlowInfo).variable
+            propertiesCharacteristics[symbol] = currentCharacteristic.or(info.infoAtNormalPath[dataFlowVariable] ?: EventOccurrencesRange.ZERO)
         }
 
         override fun visitVariableDeclarationNode(node: VariableDeclarationNode) {

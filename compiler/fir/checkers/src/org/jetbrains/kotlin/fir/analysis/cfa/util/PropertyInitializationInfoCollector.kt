@@ -10,13 +10,23 @@ import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
 import org.jetbrains.kotlin.fir.declarations.utils.referredPropertySymbol
 import org.jetbrains.kotlin.fir.expressions.FirStatement
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 class PropertyInitializationInfoCollector(
+    private val graphReference: FirControlFlowGraphReferenceImpl,
     private val localProperties: Set<FirPropertySymbol>,
     private val declaredVariableCollector: DeclaredVariableCollector = DeclaredVariableCollector(),
 ) : ControlFlowGraphVisitor<PathAwarePropertyInitializationInfo, Collection<Pair<EdgeLabel, PathAwarePropertyInitializationInfo>>>() {
+    fun getData() =
+        graphReference.controlFlowGraph.collectDataForNode(
+            TraverseDirection.Forward,
+            PathAwarePropertyInitializationInfo.EMPTY,
+            this
+        )
+
     override fun visitNode(
         node: CFGNode<*>,
         data: Collection<Pair<EdgeLabel, PathAwarePropertyInitializationInfo>>
@@ -35,10 +45,11 @@ class PropertyInitializationInfoCollector(
     ): PathAwarePropertyInitializationInfo {
         val dataForNode = visitNode(node, data)
         val symbol = node.fir.referredPropertySymbol ?: return dataForNode
+
         return if (symbol !in localProperties) {
             dataForNode
         } else {
-            processVariableWithAssignment(dataForNode, symbol)
+            processVariableWithAssignment(dataForNode, node/*, symbol = symbol*/)
         }
     }
 
@@ -49,28 +60,26 @@ class PropertyInitializationInfoCollector(
         val dataForNode = visitNode(node, data)
         return processVariableWithAssignment(
             dataForNode,
-            node.fir.symbol,
-            overwriteRange = node.fir.initializer == null && node.fir.delegate == null
+            node,
+            overwriteRange = node.fir.initializer == null && node.fir.delegate == null,
         )
     }
 
-    fun getData(graph: ControlFlowGraph) =
-        graph.collectDataForNode(
-            TraverseDirection.Forward,
-            PathAwarePropertyInitializationInfo.EMPTY,
-            this
-        )
-
     private fun processVariableWithAssignment(
         dataForNode: PathAwarePropertyInitializationInfo,
-        symbol: FirPropertySymbol,
+        node: CFGNode<*>,
         overwriteRange: Boolean = false,
     ): PathAwarePropertyInitializationInfo {
         assert(dataForNode.keys.isNotEmpty())
+
+        val dataFlowInfo = graphReference.dataFlowInfo
+        val flow = dataFlowInfo.flowOnNodes[node] ?: return dataForNode
+        val variable = dataFlowInfo.variableStorage.getVariable(flow, node.fir) ?: return dataForNode
+
         return if (overwriteRange)
-            overwriteRange(dataForNode, symbol, EventOccurrencesRange.ZERO, ::PathAwarePropertyInitializationInfo)
+            overwriteRange(dataForNode, variable, EventOccurrencesRange.ZERO, ::PathAwarePropertyInitializationInfo)
         else
-            addRange(dataForNode, symbol, EventOccurrencesRange.EXACTLY_ONCE, ::PathAwarePropertyInitializationInfo)
+            addRange(dataForNode, variable, EventOccurrencesRange.EXACTLY_ONCE, ::PathAwarePropertyInitializationInfo)
     }
 
     // --------------------------------------------------
@@ -129,7 +138,15 @@ class PropertyInitializationInfoCollector(
         for (variableSymbol in declaredVariableSymbolsInCapturedScope) {
             filteredData = filteredData.map { (label, pathAwareInfo) ->
                 label to if (label is LoopBackPath) {
-                    removeRange(pathAwareInfo, variableSymbol, ::PathAwarePropertyInitializationInfo)
+                    val flow = graphReference.dataFlowInfo.flowOnNodes[node]!!
+
+                    @OptIn(SymbolInternals::class)
+                    val realVariable = graphReference.dataFlowInfo.variableStorage.getRealVariableWithoutUnwrappingAlias(
+                        flow,
+                        variableSymbol,
+                        variableSymbol.fir
+                    )!!
+                    removeRange(pathAwareInfo, realVariable, ::PathAwarePropertyInitializationInfo)
                 } else {
                     pathAwareInfo
                 }

@@ -25,6 +25,7 @@ import org.jetbrains.kotlin.fir.expressions.FirAnnotation
 import org.jetbrains.kotlin.fir.expressions.FirAnnotationCall
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 import org.jetbrains.kotlin.fir.expressions.FirQualifiedAccess
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.resolved
 import org.jetbrains.kotlin.fir.resolvedSymbol
@@ -36,7 +37,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.coneType
 
 object UnusedChecker : FirControlFlowChecker() {
-    override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
+    override fun analyze(graphReference: FirControlFlowGraphReferenceImpl, reporter: DiagnosticReporter, context: CheckerContext) {
+        val graph = graphReference.controlFlowGraph
         if (graph.declaration?.getContainingClassSymbol(context.session)?.takeIf { !it.isLocal } != null) return
         val (properties, _) = PropertyAndCapturedWriteCollector.collect(graph, onlyLocal = true)
         if (properties.isEmpty()) return

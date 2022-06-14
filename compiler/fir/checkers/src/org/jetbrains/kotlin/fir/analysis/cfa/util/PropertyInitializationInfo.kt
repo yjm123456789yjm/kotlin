@@ -8,6 +8,8 @@ package org.jetbrains.kotlin.fir.analysis.cfa.util
 import kotlinx.collections.immutable.PersistentMap
 import kotlinx.collections.immutable.persistentMapOf
 import org.jetbrains.kotlin.contracts.description.EventOccurrencesRange
+import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowVariable
+import org.jetbrains.kotlin.fir.resolve.dfa.RealVariable
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.EdgeLabel
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.NormalPath
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
@@ -41,17 +43,27 @@ abstract class EventOccurrencesRangeInfo<E : EventOccurrencesRangeInfo<E, K>, K 
 }
 
 class PropertyInitializationInfo(
-    map: PersistentMap<FirPropertySymbol, EventOccurrencesRange> = persistentMapOf()
-) : EventOccurrencesRangeInfo<PropertyInitializationInfo, FirPropertySymbol>(map) {
+    map: PersistentMap<DataFlowVariable, EventOccurrencesRange> = persistentMapOf()
+) : EventOccurrencesRangeInfo<PropertyInitializationInfo, DataFlowVariable>(map) {
     companion object {
         val EMPTY = PropertyInitializationInfo()
     }
 
-    override val constructor: (PersistentMap<FirPropertySymbol, EventOccurrencesRange>) -> PropertyInitializationInfo =
+    override val constructor: (PersistentMap<DataFlowVariable, EventOccurrencesRange>) -> PropertyInitializationInfo =
         ::PropertyInitializationInfo
 
     override val empty: () -> PropertyInitializationInfo =
         ::EMPTY
+
+    fun getInfoBySymbol(symbol: FirPropertySymbol): EventOccurrencesRange? {
+        return map.firstNotNullOfOrNull {
+            if ((it.key as? RealVariable)?.identifier?.symbol == symbol) {
+                it.value
+            } else {
+                null
+            }
+        }
+    }
 }
 
 class PathAwarePropertyInitializationInfo(

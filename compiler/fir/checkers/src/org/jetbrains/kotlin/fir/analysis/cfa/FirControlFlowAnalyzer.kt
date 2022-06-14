@@ -17,8 +17,8 @@ import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNode
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 class FirControlFlowAnalyzer(
@@ -30,57 +30,57 @@ class FirControlFlowAnalyzer(
 
     // Currently, declaration in analyzeXXX is not used, but it may be useful in future
     @Suppress("UNUSED_PARAMETER")
-    fun analyzeClassInitializer(klass: FirClass, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (graph.owner != null) return
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        runAssignmentCfaCheckers(graph, reporter, context)
+    fun analyzeClassInitializer(klass: FirClass, graphReference: FirControlFlowGraphReferenceImpl, context: CheckerContext, reporter: DiagnosticReporter) {
+        if (graphReference.controlFlowGraph.owner != null) return
+        cfaCheckers.forEach { it.analyze(graphReference, reporter, context) }
+        runAssignmentCfaCheckers(graphReference, reporter, context)
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun analyzeFunction(function: FirFunction, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (graph.owner != null) return
+    fun analyzeFunction(function: FirFunction, graphReference: FirControlFlowGraphReferenceImpl, context: CheckerContext, reporter: DiagnosticReporter) {
+        if (graphReference.controlFlowGraph.owner != null) return
 
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
+        cfaCheckers.forEach { it.analyze(graphReference, reporter, context) }
         if (context.containingDeclarations.any { it is FirProperty || it is FirFunction }) return
-        runAssignmentCfaCheckers(graph, reporter, context)
+        runAssignmentCfaCheckers(graphReference, reporter, context)
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun analyzePropertyInitializer(property: FirProperty, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (graph.owner != null) return
+    fun analyzePropertyInitializer(property: FirProperty, graphReference: FirControlFlowGraphReferenceImpl, context: CheckerContext, reporter: DiagnosticReporter) {
+        if (graphReference.controlFlowGraph.owner != null) return
 
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        runAssignmentCfaCheckers(graph, reporter, context)
+        cfaCheckers.forEach { it.analyze(graphReference, reporter, context) }
+        runAssignmentCfaCheckers(graphReference, reporter, context)
     }
 
     @Suppress("UNUSED_PARAMETER")
     fun analyzePropertyAccessor(
         accessor: FirPropertyAccessor,
-        graph: ControlFlowGraph,
+        graphReference: FirControlFlowGraphReferenceImpl,
         context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
-        if (graph.owner != null) return
+        if (graphReference.controlFlowGraph.owner != null) return
 
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        runAssignmentCfaCheckers(graph, reporter, context)
+        cfaCheckers.forEach { it.analyze(graphReference, reporter, context) }
+        runAssignmentCfaCheckers(graphReference, reporter, context)
     }
 
     private fun runAssignmentCfaCheckers(
-        graph: ControlFlowGraph,
+        graphReference: FirControlFlowGraphReferenceImpl,
         reporter: DiagnosticReporter,
         context: CheckerContext
     ) {
-        val (properties, capturedWrites) = PropertyAndCapturedWriteCollector.collect(graph)
+        val (properties, capturedWrites) = PropertyAndCapturedWriteCollector.collect(graphReference.controlFlowGraph)
         if (properties.isEmpty()) return
-        val data = PropertyInitializationInfoData(properties, graph)
-        variableAssignmentCheckers.forEach { it.analyze(graph, reporter, data, properties, capturedWrites, context) }
+        val data = PropertyInitializationInfoData(properties, graphReference)
+        variableAssignmentCheckers.forEach { it.analyze(graphReference, reporter, data, properties, capturedWrites, context) }
     }
 }
 
-class PropertyInitializationInfoData(properties: Set<FirPropertySymbol>, graph: ControlFlowGraph) {
+class PropertyInitializationInfoData(properties: Set<FirPropertySymbol>, graphReference: FirControlFlowGraphReferenceImpl) {
     private val data by lazy(LazyThreadSafetyMode.NONE) {
-        PropertyInitializationInfoCollector(properties).getData(graph)
+        PropertyInitializationInfoCollector(graphReference, properties).getData()
     }
 
     fun getValue(node: CFGNode<*>): PathAwarePropertyInitializationInfo {

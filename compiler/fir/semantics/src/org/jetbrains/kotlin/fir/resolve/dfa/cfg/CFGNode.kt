@@ -11,10 +11,11 @@ import org.jetbrains.kotlin.KtSourceElement
 import org.jetbrains.kotlin.fir.FirElement
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
+import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowInfo
+import org.jetbrains.kotlin.fir.resolve.dfa.DataFlowVariable
 import org.jetbrains.kotlin.fir.resolve.dfa.controlFlowGraph
 import org.jetbrains.kotlin.fir.visitors.FirTransformer
 import org.jetbrains.kotlin.fir.visitors.FirVisitor
-import org.jetbrains.kotlin.utils.addIfNotNull
 import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 @RequiresOptIn
@@ -124,6 +125,14 @@ sealed class CFGNode<out E : FirElement>(val owner: ControlFlowGraph, val level:
     abstract val fir: E
     var isDead: Boolean = false
         protected set
+
+    fun getDataFlowVariable(dataFlowInfo: DataFlowInfo?): DataFlowVariableResult {
+        dataFlowInfo ?: return DataFlowVariableResult(false, null)
+        val flow = dataFlowInfo.flowOnNodes[this] ?: return DataFlowVariableResult(false, null)
+        return DataFlowVariableResult(true, dataFlowInfo.variableStorage.getVariable(flow, fir))
+    }
+
+    data class DataFlowVariableResult(val isFlowOnNodeExist: Boolean, val variable: DataFlowVariable?)
 
     @CfgInternals
     fun updateDeadStatus() {

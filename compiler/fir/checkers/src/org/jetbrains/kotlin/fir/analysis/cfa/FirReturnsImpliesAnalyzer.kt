@@ -24,7 +24,6 @@ import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.resolve.dfa.*
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.BlockExitNode
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.CFGNode
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.JumpNode
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.SymbolInternals
@@ -36,11 +35,12 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
-    override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
+    override fun analyze(graphReference: FirControlFlowGraphReferenceImpl, reporter: DiagnosticReporter, context: CheckerContext) {
+        val graph = graphReference.controlFlowGraph
         val function = graph.declaration as? FirFunction ?: return
         val graphRef = function.controlFlowGraphReference as FirControlFlowGraphReferenceImpl
         val dataFlowInfo = graphRef.dataFlowInfo
-        if (function !is FirContractDescriptionOwner || dataFlowInfo == null) return
+        if (function !is FirContractDescriptionOwner) return
 
         val effects = (function.contractDescription as? FirResolvedContractDescription)?.coneEffects
             ?.filter { it is ConeConditionalEffectDeclaration && it.effect is ConeReturnsEffectDeclaration }

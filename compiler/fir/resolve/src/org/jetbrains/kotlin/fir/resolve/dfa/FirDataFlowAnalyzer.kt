@@ -163,6 +163,10 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
     @PrivateForInline
     var ignoreFunctionCalls: Boolean = false
 
+    fun getDataFlowInfo(): DataFlowInfo {
+        return DataFlowInfo(context.variableStorage, context.flowOnNodes)
+    }
+
     // ----------------------------------- Requests -----------------------------------
 
     fun isAccessToUnstableLocalVariable(expression: FirExpression): Boolean {
@@ -296,7 +300,7 @@ abstract class FirDataFlowAnalyzer<FLOW : Flow>(
         postponedLambdaExitNode?.mergeIncomingFlow()
         functionExitNode.mergeIncomingFlow()
         logicSystem.updateAllReceivers(graph.enterNode.computeIncomingFlow().first)
-        return FirControlFlowGraphReferenceImpl(graph)
+        return FirControlFlowGraphReferenceImpl(graph, getDataFlowInfo())
     }
 
     fun visitPostponedAnonymousFunction(anonymousFunctionExpression: FirAnonymousFunctionExpression) {

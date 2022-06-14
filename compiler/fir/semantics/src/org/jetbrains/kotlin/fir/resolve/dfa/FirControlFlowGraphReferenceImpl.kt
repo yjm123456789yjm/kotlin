@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.fir.visitors.FirVisitor
 
 class FirControlFlowGraphReferenceImpl(
     val controlFlowGraph: ControlFlowGraph,
-    val dataFlowInfo: DataFlowInfo? = null
+    val dataFlowInfo: DataFlowInfo
 ) : FirControlFlowGraphReference() {
     override val source: KtSourceElement? get() = null
 

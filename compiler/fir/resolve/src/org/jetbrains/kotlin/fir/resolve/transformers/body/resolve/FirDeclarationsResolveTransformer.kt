@@ -26,18 +26,20 @@ import org.jetbrains.kotlin.fir.expressions.builder.buildReturnExpression
 import org.jetbrains.kotlin.fir.expressions.builder.buildUnitExpression
 import org.jetbrains.kotlin.fir.expressions.impl.FirLazyBlock
 import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
-import org.jetbrains.kotlin.fir.resolve.*
+import org.jetbrains.kotlin.fir.resolve.ResolutionMode
 import org.jetbrains.kotlin.fir.resolve.calls.FirNamedReferenceWithCandidate
-import org.jetbrains.kotlin.fir.resolve.calls.candidate
+import org.jetbrains.kotlin.fir.resolve.constructFunctionalTypeRef
 import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.unwrapSmartcastExpression
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeLocalVariableNoTypeOrInitializer
 import org.jetbrains.kotlin.fir.resolve.inference.FirStubTypeTransformer
 import org.jetbrains.kotlin.fir.resolve.inference.ResolvedLambdaAtom
 import org.jetbrains.kotlin.fir.resolve.inference.extractLambdaInfoFromFunctionalType
+import org.jetbrains.kotlin.fir.resolve.mode
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.createTypeSubstitutorByTypeConstructor
 import org.jetbrains.kotlin.fir.resolve.transformers.*
+import org.jetbrains.kotlin.fir.resolve.withExpectedType
 import org.jetbrains.kotlin.fir.scopes.impl.FirMemberTypeParameterScope
 import org.jetbrains.kotlin.fir.symbols.constructStarProjectedType
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
@@ -187,7 +189,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                     property.transformBackingField(transformer, withExpectedType(property.returnTypeRef))
                 }
                 dataFlowAnalyzer.exitProperty(property)?.let {
-                    property.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(it))
+                    property.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(it, dataFlowAnalyzer.getDataFlowInfo()))
                 }
             }
             property
@@ -216,7 +218,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
                 storeVariableReturnType(field)
             }
             dataFlowAnalyzer.exitField(field)?.let {
-                field.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(it))
+                field.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(it, dataFlowAnalyzer.getDataFlowInfo()))
             }
             field
         }
@@ -499,7 +501,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
 
         if (!implicitTypeOnly) {
             val controlFlowGraph = dataFlowAnalyzer.exitRegularClass(result)
-            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph))
+            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(controlFlowGraph, dataFlowAnalyzer.getDataFlowInfo()))
         } else {
             dataFlowAnalyzer.exitClass()
         }
@@ -530,7 +532,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         }
         if (!implicitTypeOnly && result.controlFlowGraphReference == null) {
             val graph = dataFlowAnalyzer.exitAnonymousObject(result)
-            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
+            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph, dataFlowAnalyzer.getDataFlowInfo()))
         } else {
             dataFlowAnalyzer.exitClass()
         }
@@ -695,7 +697,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
             val result =
                 transformDeclarationContent(anonymousInitializer, ResolutionMode.ContextIndependent) as FirAnonymousInitializer
             val graph = dataFlowAnalyzer.exitInitBlock(result)
-            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
+            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph, dataFlowAnalyzer.getDataFlowInfo()))
             result
         }
     }
@@ -719,7 +721,7 @@ open class FirDeclarationsResolveTransformer(transformer: FirBodyResolveTransfor
         }
 
         dataFlowAnalyzer.exitValueParameter(result)?.let { graph ->
-            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph))
+            result.replaceControlFlowGraphReference(FirControlFlowGraphReferenceImpl(graph, dataFlowAnalyzer.getDataFlowInfo()))
         }
 
         return result

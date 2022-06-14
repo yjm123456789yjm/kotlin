@@ -7,8 +7,8 @@ package org.jetbrains.kotlin.fir.analysis.checkers.cfa
 
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
-import org.jetbrains.kotlin.fir.resolve.dfa.cfg.ControlFlowGraph
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 
 abstract class FirControlFlowChecker {
-    abstract fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext)
+    abstract fun analyze(graphReference: FirControlFlowGraphReferenceImpl, reporter: DiagnosticReporter, context: CheckerContext)
 }

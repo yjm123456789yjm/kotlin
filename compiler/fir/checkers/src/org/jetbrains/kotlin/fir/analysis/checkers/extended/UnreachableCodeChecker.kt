@@ -12,13 +12,14 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.resolve.dfa.FirControlFlowGraphReferenceImpl
 import org.jetbrains.kotlin.fir.resolve.dfa.cfg.*
 import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 
 object UnreachableCodeChecker : FirControlFlowChecker() {
 
-    override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
-        val nodes = graph.allNodes()
+    override fun analyze(graphReference: FirControlFlowGraphReferenceImpl, reporter: DiagnosticReporter, context: CheckerContext) {
+        val nodes = graphReference.controlFlowGraph.allNodes()
         val (unreachableNodes, reachableNodes) = nodes.filterNot { it.skipNode() }.partition { it.isDead }
         if (unreachableNodes.isEmpty()) return
         val unreachableSources = unreachableNodes.mapNotNull { it.fir.source }.toSet()
