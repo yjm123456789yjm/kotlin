@@ -1672,7 +1672,7 @@ public external interface ExternalEnum {
 }
 
 /*∆*/ public external interface ExternalEnum {
-}
+/*∆*/ }
 /*∆*/
 public final class Float : kotlin.Number, kotlin.Comparable<kotlin.Float> {
 /*∆*/     @kotlin.internal.IntrinsicConstEvaluation
