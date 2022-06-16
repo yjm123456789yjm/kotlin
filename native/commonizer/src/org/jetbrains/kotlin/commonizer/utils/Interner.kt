@@ -5,10 +5,10 @@
 
 package org.jetbrains.kotlin.commonizer.utils
 
-import com.intellij.util.containers.OpenTHashSet
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet
 
 class Interner<T : Any> {
-    private val pool = OpenTHashSet<T>()
+    private val pool = ObjectOpenHashSet<T>()
 
-    fun intern(value: T): T = pool.getOrAdd(value)
+    fun intern(value: T): T = pool.addOrGet(value)
 }

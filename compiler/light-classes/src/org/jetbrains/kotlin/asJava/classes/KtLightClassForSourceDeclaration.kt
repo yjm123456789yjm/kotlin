@@ -420,7 +420,7 @@ interface LightClassInheritanceHelper {
 
     companion object {
         fun getService(project: Project): LightClassInheritanceHelper =
-            ServiceManager.getService(project, LightClassInheritanceHelper::class.java) ?: NoHelp
+            project.getService(LightClassInheritanceHelper::class.java) ?: NoHelp
     }
 }
 

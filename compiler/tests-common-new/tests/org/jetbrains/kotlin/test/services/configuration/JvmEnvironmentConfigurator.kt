@@ -6,8 +6,8 @@
 package org.jetbrains.kotlin.test.services.configuration
 
 import com.intellij.ide.highlighter.JavaFileType
-import com.intellij.openapi.util.SystemInfo
 import com.intellij.psi.PsiJavaModule.MODULE_INFO_FILE
+import com.intellij.util.lang.JavaVersion
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.jvm.jvmPhases
 import org.jetbrains.kotlin.cli.common.CLIConfigurationKeys
@@ -44,10 +44,10 @@ import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.DISABLE_C
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.DISABLE_PARAM_ASSERTIONS
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.EMIT_JVM_TYPE_ANNOTATIONS
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.ENABLE_JVM_PREVIEW
+import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.JDK_RELEASE
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.NO_OPTIMIZED_CALLABLE_REFERENCES
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.NO_UNIFIED_NULL_CHECKS
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.PARAMETERS_METADATA
-import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.JDK_RELEASE
 import org.jetbrains.kotlin.test.directives.LanguageSettingsDirectives.USE_TYPE_TABLE
 import org.jetbrains.kotlin.test.directives.model.DirectivesContainer
 import org.jetbrains.kotlin.test.directives.model.RegisteredDirectives
@@ -134,7 +134,7 @@ class JvmEnvironmentConfigurator(testServices: TestServices) : EnvironmentConfig
             TestJdkKind.FULL_JDK_6 -> File(System.getenv("JDK_16") ?: error("Environment variable JDK_16 is not set"))
             TestJdkKind.FULL_JDK_11 -> KtTestUtil.getJdk11Home()
             TestJdkKind.FULL_JDK_17 -> KtTestUtil.getJdk17Home()
-            TestJdkKind.FULL_JDK -> if (SystemInfo.IS_AT_LEAST_JAVA9) File(System.getProperty("java.home")) else null
+            TestJdkKind.FULL_JDK -> if (JavaVersion.current().feature >= 9) File(System.getProperty("java.home")) else null
             TestJdkKind.ANDROID_API -> null
         }
 
