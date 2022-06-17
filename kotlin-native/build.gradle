@@ -14,7 +14,6 @@
  * limitations under the License.
  */
 
-import kotlin.text.Regex
 import org.jetbrains.kotlin.konan.target.*
 import org.jetbrains.kotlin.konan.util.*
 import org.jetbrains.kotlin.CopySamples
@@ -637,44 +636,6 @@ task 'tc-dist'(type: (isWindows()) ? Zip : Tar) {
         archiveExtension.set('tar.gz')
         compression = Compression.GZIP
     }
-}
-
-task samples {
-    dependsOn 'samplesZip', 'samplesTar'
-}
-
-task samplesZip(type: Zip)
-task samplesTar(type: Tar) {
-    extension = 'tar.gz'
-    compression = Compression.GZIP
-}
-
-configure([samplesZip, samplesTar]) {
-    baseName "kotlin-native-samples-$konanVersionFull"
-    destinationDir = projectDir
-    into(baseName)
-
-    from(file('samples')) {
-        // Process properties files separately.
-        exclude '**/gradle.properties'
-    }
-
-    from(project.projectDir) {
-        include 'licenses/**'
-    }
-
-    from(file('samples')) {
-        include '**/gradle.properties'
-        filter {
-            it.startsWith('org.jetbrains.kotlin.native.home=') || it.startsWith('# Use custom Kotlin/Native home:') ? null : it
-        }
-    }
-
-    // Exclude build artifacts.
-    exclude '**/build'
-    exclude '**/.gradle'
-    exclude '**/.idea'
-    exclude '**/*.kt.bc-build/'
 }
 
 project.tasks.register("copy_samples") {
