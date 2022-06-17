@@ -42,7 +42,6 @@ val konanVersion: String by rootProperties
 val slackApiVersion: String by rootProperties
 val ktorVersion: String by rootProperties
 val shadowVersion: String by rootProperties
-val metadataVersion: String by rootProperties
 
 group = "org.jetbrains.kotlin"
 version = konanVersion
