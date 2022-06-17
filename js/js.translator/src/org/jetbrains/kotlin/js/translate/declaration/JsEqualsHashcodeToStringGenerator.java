@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.js.translate.context.TranslationContext;
 import org.jetbrains.kotlin.js.translate.utils.JsAstUtils;
 import org.jetbrains.kotlin.js.translate.utils.UtilsKt;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
+import org.jetbrains.kotlin.psi.KtObjectDeclaration;
 import org.jetbrains.kotlin.psi.KtParameter;
 import org.jetbrains.kotlin.resolve.source.PsiSourceElementKt;
 
@@ -35,6 +36,11 @@ abstract class JsEqualsHashcodeToStringGenerator extends DataClassMethodGenerato
 
     @Override
     public void generateToStringMethod(@NotNull FunctionDescriptor function, @NotNull List<? extends PropertyDescriptor> classProperties) {
+        if (getDeclaration() instanceof KtObjectDeclaration) {
+            generateJsMethod(function).getBody().getStatements().add(new JsReturn(new JsStringLiteral(getDeclaration().getName())));
+            return;
+        }
+
         // TODO: relax this limitation, with the data generation logic fixed.
         assert !classProperties.isEmpty();
         JsFunction functionObj = generateJsMethod(function);

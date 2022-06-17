@@ -10081,6 +10081,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("dataObjects.kt")
+            public void testDataObjects() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/toString/dataObjects.kt");
+            }
+
+            @Test
             @TestMetadata("genericParam.kt")
             public void testGenericParam() throws Exception {
                 runTest("compiler/testData/codegen/box/dataClasses/toString/genericParam.kt");

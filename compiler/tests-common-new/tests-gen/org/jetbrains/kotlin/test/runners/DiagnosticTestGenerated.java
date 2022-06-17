@@ -6957,6 +6957,12 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
+            @TestMetadata("companionDataObject.kt")
+            public void testCompanionDataObject() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/dataClasses/companionDataObject.kt");
+            }
+
+            @Test
             @TestMetadata("componentNamedComponent1.kt")
             public void testComponentNamedComponent1() throws Exception {
                 runTest("compiler/testData/diagnostics/tests/dataClasses/componentNamedComponent1.kt");
@@ -7029,9 +7035,21 @@ public class DiagnosticTestGenerated extends AbstractDiagnosticTest {
             }
 
             @Test
-            @TestMetadata("dataObject.kt")
-            public void testDataObject() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/dataClasses/dataObject.kt");
+            @TestMetadata("dataObjectDisabled.kt")
+            public void testDataObjectDisabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectDisabled.kt");
+            }
+
+            @Test
+            @TestMetadata("dataObjectEnabled.kt")
+            public void testDataObjectEnabled() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectEnabled.kt");
+            }
+
+            @Test
+            @TestMetadata("dataObjectliteral.kt")
+            public void testDataObjectliteral() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectliteral.kt");
             }
 
             @Test

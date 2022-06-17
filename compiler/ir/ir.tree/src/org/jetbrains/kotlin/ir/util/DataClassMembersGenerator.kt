@@ -186,6 +186,10 @@ abstract class DataClassMembersGenerator(
         }
 
         fun generateToStringMethodBody(properties: List<IrProperty>) {
+            if (properties.isEmpty() && irClass.kind == ClassKind.OBJECT) {
+                +irReturn(irString(irClass.name.asString()))
+                return
+            }
             val irConcat = irConcat()
             irConcat.addArgument(irString(irClass.classNameForToString() + "("))
             var first = true

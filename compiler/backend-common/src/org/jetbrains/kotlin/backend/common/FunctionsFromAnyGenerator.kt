@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor
 import org.jetbrains.kotlin.descriptors.ValueParameterDescriptor
 import org.jetbrains.kotlin.psi.KtClass
 import org.jetbrains.kotlin.psi.KtClassOrObject
+import org.jetbrains.kotlin.psi.KtObjectDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.BindingContextUtils
@@ -21,8 +22,10 @@ abstract class FunctionsFromAnyGenerator(protected val declaration: KtClassOrObj
 
     open fun generate() {
         val properties = primaryConstructorProperties
-        if (properties.isNotEmpty()) {
+        if (properties.isNotEmpty() || declaration is KtObjectDeclaration) {
             generateToStringIfNeeded(properties)
+        }
+        if (properties.isNotEmpty()) {
             generateHashCodeIfNeeded(properties)
             generateEqualsIfNeeded(properties)
         }

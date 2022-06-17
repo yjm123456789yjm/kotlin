@@ -10911,6 +10911,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/dataClasses/toString/changingVarParam.kt");
             }
 
+            @TestMetadata("dataObjects.kt")
+            public void testDataObjects() throws Exception {
+                runTest("compiler/testData/codegen/box/dataClasses/toString/dataObjects.kt");
+            }
+
             @TestMetadata("genericParam.kt")
             public void testGenericParam() throws Exception {
                 runTest("compiler/testData/codegen/box/dataClasses/toString/genericParam.kt");

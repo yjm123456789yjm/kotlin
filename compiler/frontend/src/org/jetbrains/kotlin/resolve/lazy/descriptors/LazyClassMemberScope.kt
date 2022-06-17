@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.types.KotlinType
 import org.jetbrains.kotlin.types.TypeRefinement
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeCheckerImpl
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.flatMapToNullable
 
 open class LazyClassMemberScope(
@@ -319,7 +320,7 @@ open class LazyClassMemberScope(
         location: LookupLocation,
         fromSupertypes: List<SimpleFunctionDescriptor>
     ) {
-        if (!thisDescriptor.isData) return
+        if (!thisDescriptor.isData || (thisDescriptor.kind != ClassKind.CLASS && name != OperatorNameConventions.TO_STRING)) return
 
         val constructor = getPrimaryConstructor() ?: return
         val primaryConstructorParameters = declarationProvider.primaryConstructorParameters
@@ -482,7 +483,7 @@ open class LazyClassMemberScope(
     }
 
     private fun addDataClassMethods(result: MutableCollection<DeclarationDescriptor>, location: LookupLocation) {
-        if (!thisDescriptor.isData) return
+        if (!thisDescriptor.isData || thisDescriptor.kind != ClassKind.CLASS) return
 
         if (getPrimaryConstructor() == null) return
 
