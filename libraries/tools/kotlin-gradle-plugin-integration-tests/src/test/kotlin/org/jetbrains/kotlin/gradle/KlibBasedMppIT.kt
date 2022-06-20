@@ -101,7 +101,8 @@ class KlibBasedMppIT : BaseGradleIT() {
 
     @Test
     fun testBuildWithPublishedDependency() = testBuildWithDependency {
-        publishProjectDepAndAddDependency(validateHostSpecificPublication = true)
+        // macOS is the only host OS that has host-specific targets.
+        publishProjectDepAndAddDependency(validateHostSpecificPublication = HostManager.hostIsMac)
     }
 
     private fun Project.publishProjectDepAndAddDependency(validateHostSpecificPublication: Boolean) {
@@ -192,6 +193,9 @@ class KlibBasedMppIT : BaseGradleIT() {
         }
     }
 
+    /**
+     * Note that embeddedMain and windowsMain are not actually host-specific.
+     */
     private val hostSpecificSourceSet = when {
         HostManager.hostIsMac -> "iosMain"
         HostManager.hostIsLinux -> "embeddedMain"
@@ -224,8 +228,8 @@ class KlibBasedMppIT : BaseGradleIT() {
 
         val hostSpecificTargets = when {
             HostManager.hostIsMac -> listOf("iosArm64", "iosX64")
-            HostManager.hostIsLinux -> listOf("linuxMips32", "linuxMipsel32")
-            HostManager.hostIsMingw -> listOf("mingwX64", "mingwX86")
+            HostManager.hostIsLinux -> emptyList()
+            HostManager.hostIsMingw -> emptyList()
             else -> error("unexpected host")
         }
 
