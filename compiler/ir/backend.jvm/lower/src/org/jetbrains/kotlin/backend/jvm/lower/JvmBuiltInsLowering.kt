@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.backend.common.IrElementTransformerVoidWithContext
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
+import org.jetbrains.kotlin.backend.jvm.coerceInlineClass
 import org.jetbrains.kotlin.backend.jvm.ir.createJvmIrBuilder
 import org.jetbrains.kotlin.backend.jvm.ir.irArrayOf
 import org.jetbrains.kotlin.config.JvmTarget
@@ -118,10 +119,6 @@ class JvmBuiltInsLowering(val context: JvmBackendContext) : FileLoweringPass {
         return if (fromJvmType != toJvmType)
             null
         else
-            IrCallImpl.fromSymbolOwner(startOffset, endOffset, toType, context.ir.symbols.unsafeCoerceIntrinsic).also { call ->
-                call.putTypeArgument(0, type)
-                call.putTypeArgument(1, toType)
-                call.putValueArgument(0, this)
-            }
+            context.coerceInlineClass(this, type, toType)
     }
 }

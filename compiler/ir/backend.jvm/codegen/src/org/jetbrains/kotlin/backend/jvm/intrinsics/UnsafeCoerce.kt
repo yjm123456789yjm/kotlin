@@ -5,7 +5,12 @@
 
 package org.jetbrains.kotlin.backend.jvm.intrinsics
 
-import org.jetbrains.kotlin.backend.jvm.codegen.*
+import org.jetbrains.kotlin.backend.jvm.codegen.BlockInfo
+import org.jetbrains.kotlin.backend.jvm.codegen.ExpressionCodegen
+import org.jetbrains.kotlin.backend.jvm.codegen.PromisedValue
+import org.jetbrains.kotlin.backend.jvm.codegen.materializeAt
+import org.jetbrains.kotlin.backend.jvm.ir.shouldUseUnderlyingTypeOfInlineClass
+import org.jetbrains.kotlin.backend.jvm.mapping.IrTypeMapper
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.org.objectweb.asm.Type
@@ -21,8 +26,8 @@ object UnsafeCoerce : IntrinsicMethod() {
     override fun invoke(expression: IrFunctionAccessExpression, codegen: ExpressionCodegen, data: BlockInfo): PromisedValue {
         val from = expression.getTypeArgument(0)!!
         val to = expression.getTypeArgument(1)!!
-        val fromType = codegen.typeMapper.mapType(from)
-        val toType = codegen.typeMapper.mapType(to)
+        val fromType = codegen.typeMapper.mapUnderlyingTypeOfInlineClassIfNeeded(from)
+        val toType = codegen.typeMapper.mapUnderlyingTypeOfInlineClassIfNeeded(to)
         require(fromType == toType) {
             "Inline class types should have the same representation: $fromType != $toType"
         }
@@ -39,4 +44,8 @@ object UnsafeCoerce : IntrinsicMethod() {
             }
         }
     }
+
+    private fun IrTypeMapper.mapUnderlyingTypeOfInlineClassIfNeeded(type: IrType) =
+        if (type.shouldUseUnderlyingTypeOfInlineClass()) mapUnderlyingTypeOfInlineClass(type)
+        else mapType(type)
 }

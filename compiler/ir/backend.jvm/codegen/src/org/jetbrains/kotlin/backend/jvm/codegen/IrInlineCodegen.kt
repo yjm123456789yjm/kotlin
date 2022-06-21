@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.jvm.codegen
 
+import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineOnly
 import org.jetbrains.kotlin.backend.jvm.ir.isInlineParameter
 import org.jetbrains.kotlin.backend.jvm.ir.unwrapInlineLambda
@@ -208,7 +209,7 @@ class IrExpressionLambdaImpl(
         val freeAsmParameters = asmMethod.argumentTypes.let { it.take(captureStart) + it.drop(captureEnd) }
         // The return type, on the other hand, should be the original type if this is a suspend lambda that returns
         // an unboxed inline class value so that the inliner will box it (FunctionN.invoke should return a boxed value).
-        val unboxedReturnType = function.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass()
+        val unboxedReturnType = function.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass(codegen.context)
         val unboxedAsmReturnType = unboxedReturnType?.let(codegen.typeMapper::mapType)
         invokeMethod = Method(asmMethod.name, unboxedAsmReturnType ?: asmMethod.returnType, freeAsmParameters.toTypedArray())
         invokeMethodParameters = freeParameters.map { it.type.toIrBasedKotlinType() }

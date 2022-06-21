@@ -521,7 +521,7 @@ class ExpressionCodegen(
 
         callGenerator.genCall(callable, this, expression, isInsideCondition)
 
-        val unboxedInlineClassIrType = callee.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass()
+        val unboxedInlineClassIrType = callee.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass(context)
 
         if (suspensionPointKind != SuspensionPointKind.NEVER) {
             addSuspendMarker(mv, isStartNotEnd = false, suspensionPointKind == SuspensionPointKind.NOT_INLINE)
@@ -882,7 +882,7 @@ class ExpressionCodegen(
     }
 
     private fun IrFunction.returnAsmAndIrTypes(): Pair<Type, IrType> {
-        val unboxedInlineClass = originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass()
+        val unboxedInlineClass = originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass(context)
         // In case of non-boxing delegation, the return type of the tail call was considered to be `Object`,
         // so that's also what we'll return here to avoid casts/unboxings/etc.
         if (unboxedInlineClass != null && !isNonBoxingSuspendDelegation()) {
@@ -905,7 +905,8 @@ class ExpressionCodegen(
 
         val (returnType, returnIrType) = owner.returnAsmAndIrTypes()
         val afterReturnLabel = Label()
-        expression.value.accept(this, data).materializeAt(returnType, returnIrType)
+        val value = expression.value.accept(this, data)
+        value.materializeAt(returnType, returnIrType)
         generateFinallyBlocksIfNeeded(returnType, afterReturnLabel, data, null)
         expression.markLineNumber(startOffset = true)
         if (isNonLocalReturn) {

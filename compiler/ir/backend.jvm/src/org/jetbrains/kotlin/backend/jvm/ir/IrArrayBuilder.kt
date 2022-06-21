@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.jvm.ir
 
+import org.jetbrains.kotlin.backend.jvm.coerceInlineClass
 import org.jetbrains.kotlin.backend.jvm.unboxInlineClass
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
@@ -28,7 +29,7 @@ class IrArrayBuilder(val builder: JvmIrBuilder, val arrayType: IrType) {
     // We build unboxed arrays for inline classes (UIntArray, etc) by first building
     // an unboxed array of the underlying primitive type, then coercing the result
     // to the correct type.
-    val unwrappedArrayType = arrayType.unboxInlineClass()
+    val unwrappedArrayType = arrayType.unboxInlineClass(builder.backendContext)
 
     // Check if the array type is an inline class wrapper (UIntArray, etc.)
     val isUnboxedInlineClassArray
@@ -157,10 +158,6 @@ class IrArrayBuilder(val builder: JvmIrBuilder, val arrayType: IrType) {
     // Coerce expression to irType if we are working with an inline class array type
     private fun coerce(expression: IrExpression, irType: IrType): IrExpression =
         if (isUnboxedInlineClassArray)
-            builder.irCall(builder.irSymbols.unsafeCoerceIntrinsic, irType).apply {
-                putTypeArgument(0, expression.type)
-                putTypeArgument(1, irType)
-                putValueArgument(0, expression)
-            }
+            builder.backendContext.coerceInlineClass(expression, from = expression.type, to = irType)
         else expression
 }

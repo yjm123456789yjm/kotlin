@@ -7,6 +7,8 @@ package org.jetbrains.kotlin.backend.jvm.mapping
 
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
+import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
+import org.jetbrains.kotlin.backend.jvm.ir.isInlineClassType
 import org.jetbrains.kotlin.backend.jvm.ir.representativeUpperBound
 import org.jetbrains.kotlin.builtins.functions.BuiltInFunctionArity
 import org.jetbrains.kotlin.codegen.AsmUtil
@@ -123,6 +125,16 @@ class IrTypeMapper(private val context: JvmBackendContext) : KotlinTypeMapperBas
         }
         val type = AbstractTypeMapper.mapType(this, irType)
         return AsmUtil.boxPrimitiveType(type) ?: type
+    }
+
+    fun mapUnderlyingTypeOfInlineClass(type: IrType): Type {
+        require(type.isInlineClassType()) {
+            "${type.render()} is not inline class type"
+        }
+        val underlyingType = type.erasedUpperBound.inlineClassRepresentation!!.underlyingType
+        return if (underlyingType.isInlineClassType() && !underlyingType.isNullable())
+            mapUnderlyingTypeOfInlineClass(underlyingType)
+        else mapType(underlyingType)
     }
 
     fun mapType(

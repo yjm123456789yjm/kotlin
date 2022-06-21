@@ -85,7 +85,7 @@ class JvmBackendContext(
 
     override val ir = JvmIr(irModuleFragment, this.symbolTable)
 
-    override val sharedVariablesManager = JvmSharedVariablesManager(state.module, ir.symbols, irBuiltIns, irFactory)
+    override val sharedVariablesManager = JvmSharedVariablesManager(state.module, ir.symbols, irBuiltIns, irFactory, this)
 
     lateinit var getIntrinsic: (IrFunctionSymbol) -> IntrinsicMarker?
 
@@ -246,7 +246,7 @@ class JvmBackendContext(
         override val symbols = JvmSymbols(this@JvmBackendContext, symbolTable)
 
         override fun unfoldInlineClassType(irType: IrType): IrType? {
-            return InlineClassAbi.unboxType(irType)
+            return InlineClassAbi.unboxType(irType, this@JvmBackendContext)
         }
 
         override fun shouldGenerateHandlerParameterForDefaultBodyFun() = true

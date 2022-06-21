@@ -18,10 +18,20 @@ import org.jetbrains.kotlin.codegen.optimization.fixStack.*
 import org.jetbrains.kotlin.codegen.optimization.nullCheck.isCheckParameterIsNotNull
 import org.jetbrains.kotlin.codegen.optimization.temporaryVals.TemporaryVariablesEliminationTransformer
 import org.jetbrains.kotlin.codegen.pseudoInsns.PseudoInsn
+import org.jetbrains.kotlin.codegen.state.StaticTypeMapperForOldBackend
 import org.jetbrains.kotlin.config.LanguageFeature
+import org.jetbrains.kotlin.descriptors.ClassDescriptor
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.load.java.JvmAbi
+import org.jetbrains.kotlin.resolve.descriptorUtil.inlineClassRepresentation
+import org.jetbrains.kotlin.resolve.isInlineClassType
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.AsmTypes.OBJECT_TYPE
+import org.jetbrains.kotlin.types.KotlinType
+import org.jetbrains.kotlin.types.isNullable
+import org.jetbrains.kotlin.types.typeUtil.isAny
+import org.jetbrains.kotlin.types.typeUtil.isAnyOrNullableAny
+import org.jetbrains.kotlin.types.typeUtil.representativeUpperBound
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.kotlin.utils.SmartSet
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
@@ -255,7 +265,19 @@ class MethodInliner(
                     var valueParamShift = max(nextLocalIndex, markerShift) + expectedParameters.sumOf { it.size }
                     for (index in argumentCount - 1 downTo 0) {
                         val type = expectedParameters[index]
-                        StackValue.coerce(AsmTypes.OBJECT_TYPE, nullableAnyType, type, expectedKotlinParameters[index], this)
+                        // If inline class is generic and mapped to Any, we need to unbox the inline class first,
+                        // since otherwise, the inliner generates CHECKCAST of boxed inline class to type argument (for example, String)
+                        // The issue does not arise with other types, since codegen unboxes the inline class
+                        // if the inline class is mapped to anything other than Any.
+                        if (expectedKotlinParameters[index]?.isGenericInlineClassMappedToAny() == true) {
+                            StackValue.coerceInlineClasses(
+                                AsmTypes.OBJECT_TYPE, nullableAnyType, AsmTypes.OBJECT_TYPE, expectedKotlinParameters[index],
+                                this, StaticTypeMapperForOldBackend
+                            )
+                            StackValue.coerce(AsmTypes.OBJECT_TYPE, type, this)
+                        } else {
+                            StackValue.coerce(AsmTypes.OBJECT_TYPE, nullableAnyType, type, expectedKotlinParameters[index], this)
+                        }
                         valueParamShift -= type.size
                         store(valueParamShift, type)
                     }
@@ -381,12 +403,40 @@ class MethodInliner(
                 lambdasFinallyBlocks = resultNode.tryCatchBlocks.size
                 super.visitMaxs(stack, locals)
             }
+
+            override fun visitInsn(opcode: Int) {
+                if (opcode != Opcodes.ARETURN) {
+                    return super.visitInsn(opcode)
+                }
+                if (inliningContext.lambdaInfo?.invokeMethodReturnType?.isGenericInlineClassMappedToAny() == true) {
+                    inliningContext.root.sourceCompilerForInline.boxInlineClass(inliningContext.lambdaInfo, this)
+                }
+                return super.visitInsn(opcode)
+            }
         }
 
         node.accept(lambdaInliner)
 
         surroundInvokesWithSuspendMarkersIfNeeded(resultNode)
         return resultNode
+    }
+
+    private fun KotlinType.isGenericInlineClassMappedToAny(): Boolean {
+        if (!isInlineClassType()) return false
+
+        val underlyingType =
+            (constructor.declarationDescriptor as? ClassDescriptor)?.inlineClassRepresentation?.underlyingType ?: return false
+
+        val typeParameter =
+            underlyingType.constructor.declarationDescriptor as? TypeParameterDescriptor ?: return false
+
+        val upperBound = typeParameter.representativeUpperBound
+
+        return if (isNullable()) {
+            !underlyingType.isNullable() && upperBound.isAny()
+        } else {
+            upperBound.isAnyOrNullableAny()
+        }
     }
 
     private fun prepareNode(node: MethodNode, finallyDeepShift: Int): MethodNode {

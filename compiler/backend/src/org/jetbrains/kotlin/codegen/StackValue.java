@@ -586,7 +586,7 @@ public abstract class StackValue {
         }
     }
 
-    private static boolean coerceInlineClasses(
+    public static boolean coerceInlineClasses(
             @NotNull Type fromType,
             @Nullable KotlinType fromKotlinType,
             @NotNull Type toType,

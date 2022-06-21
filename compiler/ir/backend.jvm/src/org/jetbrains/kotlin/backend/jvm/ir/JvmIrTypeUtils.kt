@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.backend.jvm.ir
 
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
+import org.jetbrains.kotlin.backend.jvm.coerceInlineClass
 import org.jetbrains.kotlin.backend.jvm.unboxInlineClass
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.declarations.*
@@ -20,7 +21,9 @@ import org.jetbrains.kotlin.ir.types.impl.IrSimpleTypeImpl
 import org.jetbrains.kotlin.ir.types.impl.IrStarProjectionImpl
 import org.jetbrains.kotlin.ir.types.impl.makeTypeProjection
 import org.jetbrains.kotlin.ir.util.isLocal
+import org.jetbrains.kotlin.ir.util.isTypeParameter
 import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 /**
@@ -49,7 +52,21 @@ fun IrType.eraseTypeParameters(): IrType = when (this) {
                     upperBound.symbol,
                     isNullable(),
                     // Should not affect JVM signature, but may result in an invalid type object
-                    List(upperBound.typeParameters.size) { IrStarProjectionImpl },
+                    // But for inline classes, we should map to upper bound, otherwise, it would be mapped to Any?
+                    List(upperBound.typeParameters.size) { index ->
+                        if (upperBound.isSingleFieldValueClass) {
+                            if (owner.representativeUpperBound.shouldUseUnderlyingTypeOfInlineClass()) {
+                                (owner.representativeUpperBound as IrSimpleType).arguments[index]
+                            } else {
+                                makeTypeProjection(
+                                    owner.representativeUpperBound,
+                                    Variance.INVARIANT
+                                )
+                            }
+                        } else {
+                            IrStarProjectionImpl
+                        }
+                    },
                     owner.annotations
                 )
             }
@@ -59,6 +76,11 @@ fun IrType.eraseTypeParameters(): IrType = when (this) {
         this
     else -> error("Unknown IrType kind: $this")
 }
+
+fun IrType.shouldUseUnderlyingTypeOfInlineClass(): Boolean =
+    isInlineClassType() && (!isNullable() ||
+            classOrNull?.owner?.inlineClassRepresentation?.underlyingType
+                ?.let { it.getPrimitiveType() != null || it.isNullable() } == false)
 
 private fun IrTypeArgument.eraseTypeParameters(): IrTypeArgument = when (this) {
     is IrStarProjection -> this
@@ -108,13 +130,12 @@ fun IrType.defaultValue(startOffset: Int, endOffset: Int, context: JvmBackendCon
     if (this !is IrSimpleType || this.isMarkedNullable() || classOrNull?.owner?.isSingleFieldValueClass != true)
         return IrConstImpl.defaultValueForType(startOffset, endOffset, this)
 
-    val underlyingType = unboxInlineClass()
-    val defaultValueForUnderlyingType = IrConstImpl.defaultValueForType(startOffset, endOffset, underlyingType)
-    return IrCallImpl.fromSymbolOwner(startOffset, endOffset, this, context.ir.symbols.unsafeCoerceIntrinsic).also {
-        it.putTypeArgument(0, underlyingType) // from
-        it.putTypeArgument(1, this) // to
-        it.putValueArgument(0, defaultValueForUnderlyingType)
+    var underlyingType = unboxInlineClass(context)
+    while (underlyingType.isTypeParameter()) {
+        underlyingType = underlyingType.upperBound
     }
+    val defaultValueForUnderlyingType = IrConstImpl.defaultValueForType(startOffset, endOffset, underlyingType)
+    return context.coerceInlineClass(defaultValueForUnderlyingType, from = underlyingType, to = this)
 }
 
 fun IrType.isInlineClassType(): Boolean =

@@ -100,7 +100,7 @@ private fun JvmIrBuilder.normalizeArgument(expression: IrExpression): IrExpressi
 
 
 private fun JvmIrBuilder.lowerInlineClassArgument(expression: IrExpression): IrExpression? {
-    if (InlineClassAbi.unboxType(expression.type) == null)
+    if (InlineClassAbi.unboxType(expression.type, backendContext) == null)
         return null
     val toStringFunction = expression.type.classOrNull?.owner?.toStringFunction
         ?.let { (it as? IrAttributeContainer)?.attributeOwnerId as? IrFunction ?: it }

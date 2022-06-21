@@ -30,6 +30,7 @@ class JvmSharedVariablesManager(
     val symbols: JvmSymbols,
     val irBuiltIns: IrBuiltIns,
     irFactory: IrFactory,
+    val backendContext: JvmBackendContext,
 ) : SharedVariablesManager {
     private val jvmInternalPackage = IrExternalPackageFragmentImpl.createEmptyExternalPackageFragment(
         module, FqName("kotlin.jvm.internal")
@@ -83,7 +84,7 @@ class JvmSharedVariablesManager(
 
     override fun declareSharedVariable(originalDeclaration: IrVariable): IrVariable {
         val valueType = originalDeclaration.type
-        val provider = getProvider(InlineClassAbi.unboxType(valueType) ?: valueType)
+        val provider = getProvider(InlineClassAbi.unboxType(valueType, backendContext) ?: valueType)
         val typeArguments = provider.refClass.typeParameters.map { valueType }
         val refType = provider.refClass.typeWith(typeArguments)
         val refConstructorCall = IrConstructorCallImpl.fromSymbolOwner(
@@ -122,26 +123,19 @@ class JvmSharedVariablesManager(
         }
     }
 
-    private fun unsafeCoerce(value: IrExpression, from: IrType, to: IrType): IrExpression =
-        IrCallImpl.fromSymbolOwner(value.startOffset, value.endOffset, to, symbols.unsafeCoerceIntrinsic).apply {
-            putTypeArgument(0, from)
-            putTypeArgument(1, to)
-            putValueArgument(0, value)
-        }
-
     override fun getSharedValue(sharedVariableSymbol: IrValueSymbol, originalGet: IrGetValue): IrExpression =
         with(originalGet) {
-            val unboxedType = InlineClassAbi.unboxType(symbol.owner.type)
+            val unboxedType = InlineClassAbi.unboxType(symbol.owner.type, backendContext)
             val provider = getProvider(unboxedType ?: symbol.owner.type)
             val receiver = IrGetValueImpl(startOffset, endOffset, sharedVariableSymbol)
             val unboxedRead = IrGetFieldImpl(startOffset, endOffset, provider.elementField.symbol, unboxedType ?: type, receiver, origin)
-            unboxedType?.let { unsafeCoerce(unboxedRead, it, symbol.owner.type) } ?: unboxedRead
+            unboxedType?.let { backendContext.coerceInlineClass(unboxedRead, it, symbol.owner.type) } ?: unboxedRead
         }
 
     override fun setSharedValue(sharedVariableSymbol: IrValueSymbol, originalSet: IrSetValue): IrExpression =
         with(originalSet) {
-            val unboxedType = InlineClassAbi.unboxType(symbol.owner.type)
-            val unboxedValue = unboxedType?.let { unsafeCoerce(value, symbol.owner.type, it) } ?: value
+            val unboxedType = InlineClassAbi.unboxType(symbol.owner.type, backendContext)
+            val unboxedValue = unboxedType?.let { backendContext.coerceInlineClass(value, symbol.owner.type, it) } ?: value
             val provider = getProvider(unboxedType ?: symbol.owner.type)
             val receiver = IrGetValueImpl(startOffset, endOffset, sharedVariableSymbol)
             IrSetFieldImpl(startOffset, endOffset, provider.elementField.symbol, receiver, unboxedValue, type, origin)
@@ -149,7 +143,7 @@ class JvmSharedVariablesManager(
 
     @Suppress("MemberVisibilityCanBePrivate") // Used by FragmentSharedVariablesLowering
     fun getIrType(originalType: IrType): IrType {
-        val provider = getProvider(InlineClassAbi.unboxType(originalType) ?: originalType)
+        val provider = getProvider(InlineClassAbi.unboxType(originalType, backendContext) ?: originalType)
         val typeArguments = provider.refClass.typeParameters.map { originalType }
         return provider.refClass.typeWith(typeArguments)
     }

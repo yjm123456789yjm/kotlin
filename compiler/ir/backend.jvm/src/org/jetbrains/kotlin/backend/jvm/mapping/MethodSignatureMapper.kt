@@ -322,7 +322,7 @@ class MethodSignatureMapper(private val context: JvmBackendContext) {
         if (irFunction.isFromJava()) return false
         if (irFunction.valueParameters.size != 1) return false
         val valueParameterType = irFunction.valueParameters[0].type
-        if (!valueParameterType.unboxInlineClass().isInt()) return false
+        if (!valueParameterType.unboxInlineClass(context).isInt()) return false
         return irFunction.allOverridden(false).any { it.parent.kotlinFqName == StandardNames.FqNames.mutableCollection }
     }
 

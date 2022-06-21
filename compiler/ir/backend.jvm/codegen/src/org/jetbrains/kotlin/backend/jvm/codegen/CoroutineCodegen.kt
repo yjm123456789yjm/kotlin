@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.backend.jvm.codegen
 
 import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.jvm.InlineClassAbi
+import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
 import org.jetbrains.kotlin.backend.jvm.ir.*
 import org.jetbrains.kotlin.backend.jvm.unboxInlineClass
@@ -109,18 +110,18 @@ internal fun IrFunction.continuationClass(): IrClass? =
 internal fun IrExpression?.isReadOfInlineLambda(): Boolean = isReadOfCrossinline() ||
         (this is IrGetValue && origin == IrStatementOrigin.VARIABLE_AS_FUNCTION && (symbol.owner as? IrValueParameter)?.isNoinline == false)
 
-internal fun IrFunction.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass(): IrType? {
+internal fun IrFunction.originalReturnTypeOfSuspendFunctionReturningUnboxedInlineClass(context: JvmBackendContext): IrType? {
     if (this !is IrSimpleFunction || !isSuspend) return null
     // Unlike `suspendFunctionOriginal()`, this also maps `$default` stubs to the original function.
     val original = attributeOwnerId as IrSimpleFunction
-    val unboxedReturnType = InlineClassAbi.unboxType(original.returnType) ?: return null
+    val unboxedReturnType = InlineClassAbi.unboxType(original.returnType, context) ?: return null
     // 1. Can't unbox into a primitive, since suspend functions have to return a reference type.
     // 2. Force boxing if the function overrides function with different type modulo nullability ignoring type parameters
-    if (unboxedReturnType.isPrimitiveType() || original.overridesReturningDifferentType(original.returnType)) return null
+    if (unboxedReturnType.isPrimitiveType() || original.overridesReturningDifferentType(original.returnType, context)) return null
     return original.returnType
 }
 
-private fun IrSimpleFunction.overridesReturningDifferentType(returnType: IrType): Boolean {
+private fun IrSimpleFunction.overridesReturningDifferentType(returnType: IrType, context: JvmBackendContext): Boolean {
     val visited = hashSetOf<IrSimpleFunction>()
 
     fun dfs(function: IrSimpleFunction): Boolean {
@@ -133,7 +134,7 @@ private fun IrSimpleFunction.overridesReturningDifferentType(returnType: IrType)
             if (!overriddenReturnType.erasedUpperBound.isSingleFieldValueClass) return true
 
             if (overriddenReturnType.isNullable() &&
-                overriddenReturnType.makeNotNull().unboxInlineClass().isNullable()
+                overriddenReturnType.makeNotNull().unboxInlineClass(context).isNullable()
             ) return true
 
             if (overriddenReturnType.classOrNull != returnType.classOrNull) return true

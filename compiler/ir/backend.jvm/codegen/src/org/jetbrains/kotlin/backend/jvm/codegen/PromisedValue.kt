@@ -33,11 +33,13 @@ abstract class PromisedValue(val codegen: ExpressionCodegen, val type: Type, val
         val erasedTargetType = irTarget.eraseTypeParameters()
 
         // Coerce inline classes
-        val isFromTypeUnboxed = InlineClassAbi.unboxType(erasedSourceType)?.let(typeMapper::mapType) == type
-        val isToTypeUnboxed = InlineClassAbi.unboxType(erasedTargetType)?.let(typeMapper::mapType) == target
+        val isFromTypeUnboxed = InlineClassAbi.unboxType(erasedSourceType, codegen.context)?.let(typeMapper::mapType) == type
+        val isToTypeUnboxed = InlineClassAbi.unboxType(erasedTargetType, codegen.context)?.let(typeMapper::mapType) == target
         if (isFromTypeUnboxed && !isToTypeUnboxed) {
             val boxed = typeMapper.mapType(erasedSourceType, TypeMappingMode.CLASS_DECLARATION)
-            StackValue.boxInlineClass(type, boxed, erasedSourceType.isNullable(), mv)
+            val unboxed = typeMapper.mapUnderlyingTypeOfInlineClass(erasedSourceType)
+            StackValue.coerce(type, unboxed, mv)
+            StackValue.boxInlineClass(unboxed, boxed, erasedSourceType.isNullable(), mv)
             return
         }
         if (!isFromTypeUnboxed && isToTypeUnboxed) {
@@ -47,7 +49,9 @@ abstract class PromisedValue(val codegen: ExpressionCodegen, val type: Type, val
                 // Use getfield instead of unbox-impl inside inline classes
                 codegen.mv.getfield(boxed.internalName, irClass.inlineClassFieldName.asString(), target.descriptor)
             } else {
-                StackValue.unboxInlineClass(type, boxed, target, erasedTargetType.isNullable(), mv)
+                val unboxed = typeMapper.mapUnderlyingTypeOfInlineClass(erasedTargetType)
+                StackValue.unboxInlineClass(type, boxed, unboxed, erasedTargetType.isNullable(), mv)
+                StackValue.coerce(unboxed, target, mv)
             }
             return
         }

@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.backend.common.lower.parents
 import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
+import org.jetbrains.kotlin.backend.jvm.coerceInlineClass
 import org.jetbrains.kotlin.backend.jvm.ir.hasChild
 import org.jetbrains.kotlin.backend.jvm.ir.isReadOfCrossinline
 import org.jetbrains.kotlin.codegen.coroutines.COROUTINE_LABEL_FIELD_NAME
@@ -332,14 +333,14 @@ private class SuspendLambdaLowering(context: JvmBackendContext) : SuspendLowerin
     }
 
     private fun IrBlockBodyBuilder.callInvokeSuspend(invokeSuspend: IrSimpleFunction, lambda: IrExpression): IrExpression =
-        irCallOp(invokeSuspend.symbol, invokeSuspend.returnType, lambda, irCall(
-            this@SuspendLambdaLowering.context.ir.symbols.unsafeCoerceIntrinsic,
-            this@SuspendLambdaLowering.context.ir.symbols.resultOfAnyType
-        ).apply {
-            putTypeArgument(0, context.irBuiltIns.anyNType)
-            putTypeArgument(1, type)
-            putValueArgument(0, irUnit())
-        })
+        irCallOp(
+            invokeSuspend.symbol, invokeSuspend.returnType, lambda,
+            this@SuspendLambdaLowering.context.coerceInlineClass(
+                irUnit(),
+                context.irBuiltIns.anyNType,
+                this@SuspendLambdaLowering.context.ir.symbols.resultOfAnyType
+            )
+        )
 
     private fun IrClass.addPrimaryConstructorForLambda(superClass: IrClass, arity: Int): IrConstructor =
         addConstructor {

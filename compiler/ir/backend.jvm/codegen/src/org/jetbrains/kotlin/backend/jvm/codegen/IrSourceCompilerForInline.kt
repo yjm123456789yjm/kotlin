@@ -9,6 +9,8 @@ import com.intellij.openapi.util.TextRange
 import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.backend.jvm.hasMangledReturnType
 import org.jetbrains.kotlin.backend.jvm.ir.*
+import org.jetbrains.kotlin.backend.jvm.mapping.mapClass
+import org.jetbrains.kotlin.codegen.StackValue
 import org.jetbrains.kotlin.codegen.inline.*
 import org.jetbrains.kotlin.codegen.state.GenerationState
 import org.jetbrains.kotlin.diagnostics.DiagnosticUtils
@@ -20,8 +22,11 @@ import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.ir.descriptors.toIrBasedDescriptor
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.IrLoop
+import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.psi.doNotAnalyze
+import org.jetbrains.kotlin.resolve.jvm.AsmTypes
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmBackendErrors
 import org.jetbrains.kotlin.resolve.jvm.jvmSignature.JvmMethodSignature
 import org.jetbrains.org.objectweb.asm.Label
@@ -130,6 +135,25 @@ class IrSourceCompilerForInline(
         codegen.context.ktDiagnosticReporter
             .at(callElement.symbol.owner as IrDeclaration)
             .report(JvmBackendErrors.SUSPENSION_POINT_INSIDE_MONITOR, stackTraceElement)
+    }
+
+    override fun unboxInlineClass(lambdaInfo: LambdaInfo, argumentIndex: Int, mv: InstructionAdapter) {
+        val parameters = (lambdaInfo as? IrExpressionLambdaImpl)?.function?.valueParameters ?: return
+        val irType = parameters[argumentIndex].type
+        require(irType.isInlineClassType()) {
+            "${irType.render()} in not an inline class type"
+        }
+        val type = codegen.typeMapper.mapClass(irType.classOrNull!!.owner)
+        val underlyingType = codegen.typeMapper.mapUnderlyingTypeOfInlineClass(irType)
+        StackValue.unboxInlineClass(AsmTypes.OBJECT_TYPE, type, underlyingType, irType.isNullable(), mv)
+    }
+
+    override fun boxInlineClass(lambdaInfo: LambdaInfo, mv: InstructionAdapter) {
+        val returnType = (lambdaInfo as? IrExpressionLambdaImpl)?.function?.returnType ?: return
+        val boxedType = codegen.typeMapper.mapClass(returnType.classOrNull!!.owner)
+        val underlyingType = codegen.typeMapper.mapUnderlyingTypeOfInlineClass(returnType)
+        StackValue.coerce(AsmTypes.OBJECT_TYPE, underlyingType, mv)
+        StackValue.boxInlineClass(underlyingType, boxedType, returnType.isNullable(), mv)
     }
 }
 

@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.backend.common.pop
 import org.jetbrains.kotlin.backend.common.push
 import org.jetbrains.kotlin.backend.jvm.JvmBackendContext
 import org.jetbrains.kotlin.backend.jvm.JvmLoweredDeclarationOrigin
+import org.jetbrains.kotlin.backend.jvm.coerceInlineClass
 import org.jetbrains.kotlin.backend.jvm.ir.*
 import org.jetbrains.kotlin.backend.jvm.unboxInlineClass
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
@@ -428,12 +429,8 @@ private class TypeOperatorLowering(private val backendContext: JvmBackendContext
             val downcastArg =
                 if (expectedType.isInlineClassType()) {
                     // Inline class type arguments are stored as their underlying representation.
-                    val unboxedType = expectedType.unboxInlineClass()
-                    irCall(backendContext.ir.symbols.unsafeCoerceIntrinsic).also { coercion ->
-                        coercion.putTypeArgument(0, unboxedType)
-                        coercion.putTypeArgument(1, expectedType)
-                        coercion.putValueArgument(0, capturedArg)
-                    }
+                    val unboxedType = expectedType.unboxInlineClass(this@TypeOperatorLowering.backendContext)
+                    backendContext.coerceInlineClass(capturedArg, unboxedType, expectedType)
                 } else {
                     irAs(capturedArg, expectedType)
                 }

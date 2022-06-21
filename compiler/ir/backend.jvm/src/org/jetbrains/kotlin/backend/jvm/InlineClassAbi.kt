@@ -12,8 +12,13 @@ import org.jetbrains.kotlin.codegen.state.InfoForMangling
 import org.jetbrains.kotlin.codegen.state.collectFunctionSignatureForManglingSuffix
 import org.jetbrains.kotlin.codegen.state.md5base64
 import org.jetbrains.kotlin.ir.declarations.*
+import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrStatementOriginImpl
-import org.jetbrains.kotlin.ir.types.*
+import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.isNullable
+import org.jetbrains.kotlin.ir.types.isPrimitiveType
+import org.jetbrains.kotlin.ir.types.makeNullable
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqNameUnsafe
@@ -22,7 +27,7 @@ import org.jetbrains.kotlin.name.Name
 /**
  * Replace inline classes by their underlying types.
  */
-fun IrType.unboxInlineClass() = InlineClassAbi.unboxType(this) ?: this
+fun IrType.unboxInlineClass(context: JvmBackendContext) = InlineClassAbi.unboxType(this, context) ?: this
 
 object InlineClassAbi {
     /**
@@ -37,20 +42,30 @@ object InlineClassAbi {
      * Unwraps inline class types to their underlying representation.
      * Returns null if the type cannot be unboxed.
      */
-    fun unboxType(type: IrType): IrType? {
-        val klass = type.classOrNull?.owner ?: return null
-        val representation = klass.inlineClassRepresentation ?: return null
+    fun unboxType(type: IrType, context: JvmBackendContext): IrType? {
+        if (!type.isInlineClassType()) return null
 
-        // TODO: Apply type substitutions
-        var underlyingType = representation.underlyingType.unboxInlineClass()
-        if (!underlyingType.isNullable() && underlyingType.isTypeParameter()) {
-            underlyingType = underlyingType.erasedUpperBound.defaultType
+        val unsubstitutedUnderlyingType = with(context.typeSystem) {
+            type.getUnsubstitutedUnderlyingType() as? IrType
+        } ?: return null
+
+        val substitutedUnderlyingType = with(context.typeSystem) {
+            type.getSubstitutedUnderlyingType() as? IrType
+        } ?: return null
+
+        if (!type.isNullable()) {
+            return if (unsubstitutedUnderlyingType.isNullable() && substitutedUnderlyingType.isInlineClassType()) {
+                unsubstitutedUnderlyingType
+            } else {
+                unboxType(substitutedUnderlyingType, context) ?: substitutedUnderlyingType
+            }
         }
-        if (!type.isNullable())
-            return underlyingType
-        if (underlyingType.isNullable() || underlyingType.isPrimitiveType())
-            return null
-        return underlyingType.makeNullable()
+
+        if (substitutedUnderlyingType.isNullable() ||
+            substitutedUnderlyingType.isPrimitiveType()
+        ) return null
+
+        return substitutedUnderlyingType.makeNullable()
     }
 
     /**
@@ -155,3 +170,27 @@ val IrFunction.isMultiFieldValueClassFieldGetter: Boolean
                     ?: error("Multi-field value class must have multiFieldValueClassRepresentation: ${parentAsClass.render()}")
                 it.owner.getter == this && multiFieldValueClassRepresentation.containsPropertyWithName(it.owner.name)
             } == true
+
+fun JvmBackendContext.coerceInlineClass(value: IrExpression, from: IrType, to: IrType, skipCast: Boolean = false): IrExpression =
+    IrCallImpl.fromSymbolOwner(value.startOffset, value.endOffset, to, ir.symbols.unsafeCoerceIntrinsic).apply {
+        val fromUnderlyingType = from.erasedUpperBound.inlineClassRepresentation?.underlyingType
+        val toUnderlyingType = to.erasedUpperBound.inlineClassRepresentation?.underlyingType
+
+        when {
+            fromUnderlyingType?.isTypeParameter() == true && !skipCast -> {
+                putTypeArgument(0, from)
+                putTypeArgument(1, fromUnderlyingType)
+            }
+
+            toUnderlyingType?.isTypeParameter() == true && !skipCast -> {
+                putTypeArgument(0, toUnderlyingType)
+                putTypeArgument(1, to)
+            }
+
+            else -> {
+                putTypeArgument(0, from)
+                putTypeArgument(1, to)
+            }
+        }
+        putValueArgument(0, value)
+    }

@@ -1,6 +1,6 @@
 // CHECK_BYTECODE_LISTING
 // LANGUAGE: -JvmInlineValueClasses, +GenericInlineClassParameter
-// IGNORE_BACKED: JVM
+// IGNORE_BACKEND: JVM
 
 inline class ICAny<T: Any>(val value: T?)
 

@@ -12,12 +12,10 @@ import org.jetbrains.kotlin.backend.common.phaser.makeIrFilePhase
 import org.jetbrains.kotlin.backend.common.pop
 import org.jetbrains.kotlin.backend.common.push
 import org.jetbrains.kotlin.backend.jvm.*
-import org.jetbrains.kotlin.backend.jvm.ir.erasedUpperBound
 import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.descriptors.DescriptorVisibilities
 import org.jetbrains.kotlin.ir.IrStatement
-import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.addConstructor
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
@@ -25,7 +23,6 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.*
 import org.jetbrains.kotlin.ir.transformStatement
-import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classOrNull
 import org.jetbrains.kotlin.ir.types.isNullable
 import org.jetbrains.kotlin.ir.types.makeNotNull
@@ -96,8 +93,10 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
                 // names at this point.
                 replacement.isGetter ->
                     Name.identifier(JvmAbi.getterName(replacement.correspondingPropertySymbol!!.owner.name.asString()))
+
                 replacement.isSetter ->
                     Name.identifier(JvmAbi.setterName(replacement.correspondingPropertySymbol!!.owner.name.asString()))
+
                 else ->
                     function.name
             }
@@ -265,27 +264,8 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         }
     }
 
-    private fun coerceInlineClasses(argument: IrExpression, from: IrType, to: IrType, skipCast: Boolean = false): IrExpression {
-        return IrCallImpl.fromSymbolOwner(UNDEFINED_OFFSET, UNDEFINED_OFFSET, to, context.ir.symbols.unsafeCoerceIntrinsic).apply {
-            val underlyingType = from.erasedUpperBound.inlineClassRepresentation?.underlyingType
-            if (underlyingType?.isTypeParameter() == true && !skipCast) {
-                putTypeArgument(0, from)
-                putTypeArgument(1, underlyingType)
-                putValueArgument(
-                    0, IrTypeOperatorCallImpl(
-                        UNDEFINED_OFFSET, UNDEFINED_OFFSET, to, IrTypeOperator.IMPLICIT_CAST, underlyingType, argument
-                    )
-                )
-            } else {
-                putTypeArgument(0, from)
-                putTypeArgument(1, to)
-                putValueArgument(0, argument)
-            }
-        }
-    }
-
     private fun IrExpression.coerceToUnboxed() =
-        coerceInlineClasses(this, this.type, this.type.unboxInlineClass())
+        context.coerceInlineClass(this, type, type.unboxInlineClass(context))
 
     // Precondition: left has an inline class type, but may not be unboxed
     private fun IrBuilderWithScope.specializeEqualsCall(left: IrExpression, right: IrExpression): IrExpression? {
@@ -294,8 +274,8 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
             return null
 
         // We don't specialize calls when both arguments are boxed.
-        val leftIsUnboxed = left.type.unboxInlineClass() != left.type
-        val rightIsUnboxed = right.type.unboxInlineClass() != right.type
+        val leftIsUnboxed = left.type.unboxInlineClass(this@JvmInlineClassLowering.context) != left.type
+        val rightIsUnboxed = right.type.unboxInlineClass(this@JvmInlineClassLowering.context) != right.type
         if (!leftIsUnboxed && !rightIsUnboxed)
             return null
 
@@ -354,7 +334,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
             // since the underlying representations are the same.
             expression.symbol.owner.isInlineClassFieldGetter -> {
                 val arg = expression.dispatchReceiver!!.transform(this, null)
-                coerceInlineClasses(arg, expression.symbol.owner.dispatchReceiverParameter!!.type, expression.type)
+                context.coerceInlineClass(arg, expression.symbol.owner.dispatchReceiverParameter!!.type, expression.type)
             }
             // Specialize calls to equals when the left argument is a value of inline class type.
             expression.isSpecializedInlineClassEqEq -> {
@@ -363,6 +343,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
                     .specializeEqualsCall(expression.getValueArgument(0)!!, expression.getValueArgument(1)!!)
                     ?: expression
             }
+
             else ->
                 super.visitCall(expression)
         }
@@ -393,7 +374,7 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
             val receiver = expression.receiver!!.transform(this, null)
             // If we get the field of nullable variable, we can be sure, that type is not null,
             // since we first generate null check.
-            return coerceInlineClasses(receiver, receiver.type.makeNotNull(), field.type)
+            return context.coerceInlineClass(receiver, receiver.type.makeNotNull(), field.type)
         }
         return super.visitGetField(expression)
     }
@@ -451,7 +432,11 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         function.valueParameters.forEach { it.transformChildrenVoid() }
         function.body = context.createIrBuilder(function.symbol).irBlockBody {
             val argument = function.valueParameters[0]
-            val thisValue = irTemporary(coerceInlineClasses(irGet(argument), argument.type, function.returnType, skipCast = true))
+            val thisValue = irTemporary(
+                this@JvmInlineClassLowering.context.coerceInlineClass(
+                    irGet(argument), argument.type, function.returnType, skipCast = true
+                )
+            )
             valueMap[valueClass.thisReceiver!!.symbol] = thisValue
             for (initBlock in initBlocks) {
                 for (stmt in initBlock.body.statements) {
@@ -498,13 +483,13 @@ private class JvmInlineClassLowering(context: JvmBackendContext) : JvmValueClass
         val function = context.inlineClassReplacements.getSpecializedEqualsMethod(valueClass, context.irBuiltIns)
         val left = function.valueParameters[0]
         val right = function.valueParameters[1]
-        val type = left.type.unboxInlineClass()
+        val type = left.type.unboxInlineClass(context)
 
         function.body = context.createIrBuilder(valueClass.symbol).run {
             irExprBody(
                 irEquals(
-                    coerceInlineClasses(irGet(left), left.type, type),
-                    coerceInlineClasses(irGet(right), right.type, type)
+                    this@JvmInlineClassLowering.context.coerceInlineClass(irGet(left), left.type, type, skipCast = true),
+                    this@JvmInlineClassLowering.context.coerceInlineClass(irGet(right), right.type, type, skipCast = true)
                 )
             )
         }
