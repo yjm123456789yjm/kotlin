@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.FirAnalyzerFacade
 import org.jetbrains.kotlin.fir.checkers.registerExtendedCommonCheckers
 import org.jetbrains.kotlin.fir.extensions.FirExtensionRegistrar
-import org.jetbrains.kotlin.fir.session.FirSessionFactory
+import org.jetbrains.kotlin.fir.session.*
 import org.jetbrains.kotlin.ir.backend.js.jsResolveLibraries
 import org.jetbrains.kotlin.ir.backend.js.toResolverLogger
 import org.jetbrains.kotlin.ir.util.IrMessageLogger
@@ -96,6 +96,7 @@ class FirFrontendFacade(
         }
 
         val isCommonOrJvm = module.targetPlatform.isJvm() || module.targetPlatform.isCommon()
+        val factory = if (isCommonOrJvm) FirSessionFactory else FirJsSessionFactory
 
         val dependencyList: DependencyListForCliModule = buildDependencyList(module, moduleName, moduleInfoProvider, analyzerServices) {
             if (isCommonOrJvm) {
@@ -107,7 +108,7 @@ class FirFrontendFacade(
 
         val projectEnvironment: VfsBasedProjectEnvironment?
 
-        if (isCommonOrJvm) {
+        val librarySessionParams = if (isCommonOrJvm) {
             val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
             projectEnvironment = VfsBasedProjectEnvironment(
                 project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
@@ -115,28 +116,29 @@ class FirFrontendFacade(
             val projectFileSearchScope = PsiBasedProjectFileSearchScope(ProjectScope.getLibrariesScope(project))
             val packagePartProvider = projectEnvironment.getPackagePartProvider(projectFileSearchScope)
 
-            FirSessionFactory.createCommonOrJvmLibrarySession(
+            CommonOrJvmLibraryParams(
                 moduleName,
                 moduleInfoProvider.firSessionProvider,
                 dependencyList,
+                languageVersionSettings,
                 projectEnvironment,
                 projectFileSearchScope,
                 packagePartProvider,
-                languageVersionSettings,
             )
         } else {
             projectEnvironment = null
 
-            FirJsSessionFactory.createJsLibrarySession(
+            JsLibrarySessionParams(
                 moduleName,
                 moduleInfoProvider.firSessionProvider,
                 dependencyList,
+                languageVersionSettings,
                 module,
                 testServices,
                 configuration,
-                languageVersionSettings,
             )
         }
+        factory.createLibrarySession(librarySessionParams)
 
         val mainModuleData = FirModuleDataImpl(
             moduleName,
@@ -147,35 +149,31 @@ class FirFrontendFacade(
             dependencyList.analyzerServices
         )
 
-        val session = when {
+        val moduleBasedParams = when {
             isCommonOrJvm -> {
-                FirSessionFactory.createJavaModuleBasedSession(
+                CommonOrJvmModuleBasedParams(
                     mainModuleData,
                     moduleInfoProvider.firSessionProvider,
+                    extensionRegistrars,
                     PsiBasedProjectFileSearchScope(TopDownAnalyzerFacadeForJVM.newModuleSearchScope(project, ktFiles)),
                     projectEnvironment!!,
-                    incrementalCompilationContext = null,
-                    extensionRegistrars,
                     languageVersionSettings,
-                    lookupTracker = null,
-                    enumWhenTracker = null,
-                    needRegisterJavaElementFinder = true,
-                    sessionConfigurator,
+                    init = sessionConfigurator
                 )
             }
             module.targetPlatform.isJs() -> {
-                FirJsSessionFactory.createJsModuleBasedSession(
+                JsLibraryModuleBasedParams(
                     mainModuleData,
                     moduleInfoProvider.firSessionProvider,
                     extensionRegistrars,
                     languageVersionSettings,
-                    null,
-                    sessionConfigurator,
+                    init = sessionConfigurator
                 )
             }
             else -> error("Unsupported")
         }
 
+        val session = factory.createModuleBasedSession(moduleBasedParams)
         moduleInfoProvider.registerModuleData(module, session.moduleData)
 
         val enablePluginPhases = FirDiagnosticsDirectives.ENABLE_PLUGIN_PHASES in module.directives
