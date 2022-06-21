@@ -103,42 +103,46 @@ public class FunctionsFromAnyGeneratorImpl extends FunctionsFromAnyGenerator {
 
         mv.visitCode();
 
-        StringConcatGenerator generator = StringConcatGenerator.Companion.create(generationState, iv);
-        generator.genStringBuilderConstructorIfNeded();
-        boolean first = true;
+        if (properties.isEmpty()) {
+           iv.aconst(classDescriptor.getName().asString());
+        } else {
+            StringConcatGenerator generator = StringConcatGenerator.Companion.create(generationState, iv);
+            generator.genStringBuilderConstructorIfNeded();
+            boolean first = true;
 
-        for (PropertyDescriptor propertyDescriptor : properties) {
-            if (first) {
-                generator.addStringConstant(classDescriptor.getName() + "(" + propertyDescriptor.getName().asString() + "=");
-                first = false;
-            }
-            else {
-                generator.addStringConstant(", " + propertyDescriptor.getName().asString() + "=");
-            }
-
-            JvmKotlinType type = genOrLoadOnStack(iv, context, propertyDescriptor, 0);
-            Type asmType = type.getType();
-            KotlinType kotlinType = type.getKotlinType();
-
-            if (asmType.getSort() == Type.ARRAY) {
-                Type elementType = correctElementType(asmType);
-                if (elementType.getSort() == Type.OBJECT || elementType.getSort() == Type.ARRAY) {
-                    iv.invokestatic("java/util/Arrays", "toString", "([Ljava/lang/Object;)Ljava/lang/String;", false);
-                    asmType = JAVA_STRING_TYPE;
-                    kotlinType = DescriptorUtilsKt.getBuiltIns(function).getStringType();
+            for (PropertyDescriptor propertyDescriptor : properties) {
+                if (first) {
+                    generator.addStringConstant(classDescriptor.getName() + "(" + propertyDescriptor.getName().asString() + "=");
+                    first = false;
                 }
-                else if (elementType.getSort() != Type.CHAR) {
-                    iv.invokestatic("java/util/Arrays", "toString", "(" + asmType.getDescriptor() + ")Ljava/lang/String;", false);
-                    asmType = JAVA_STRING_TYPE;
-                    kotlinType = DescriptorUtilsKt.getBuiltIns(function).getStringType();
+                else {
+                    generator.addStringConstant(", " + propertyDescriptor.getName().asString() + "=");
                 }
+
+                JvmKotlinType type = genOrLoadOnStack(iv, context, propertyDescriptor, 0);
+                Type asmType = type.getType();
+                KotlinType kotlinType = type.getKotlinType();
+
+                if (asmType.getSort() == Type.ARRAY) {
+                    Type elementType = correctElementType(asmType);
+                    if (elementType.getSort() == Type.OBJECT || elementType.getSort() == Type.ARRAY) {
+                        iv.invokestatic("java/util/Arrays", "toString", "([Ljava/lang/Object;)Ljava/lang/String;", false);
+                        asmType = JAVA_STRING_TYPE;
+                        kotlinType = DescriptorUtilsKt.getBuiltIns(function).getStringType();
+                    }
+                    else if (elementType.getSort() != Type.CHAR) {
+                        iv.invokestatic("java/util/Arrays", "toString", "(" + asmType.getDescriptor() + ")Ljava/lang/String;", false);
+                        asmType = JAVA_STRING_TYPE;
+                        kotlinType = DescriptorUtilsKt.getBuiltIns(function).getStringType();
+                    }
+                }
+                genInvokeAppendMethod(generator, asmType, kotlinType, typeMapper, StackValue.onStack(asmType));
             }
-            genInvokeAppendMethod(generator, asmType, kotlinType, typeMapper, StackValue.onStack(asmType));
+
+            generator.addStringConstant(")");
+
+            generator.genToString();
         }
-
-        generator.addStringConstant(")");
-
-        generator.genToString();
         iv.areturn(JAVA_STRING_TYPE);
 
         FunctionCodegen.endVisit(mv, toStringMethodName, getDeclaration());

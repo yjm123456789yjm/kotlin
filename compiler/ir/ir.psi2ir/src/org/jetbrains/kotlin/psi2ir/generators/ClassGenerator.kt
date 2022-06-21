@@ -18,6 +18,7 @@ package org.jetbrains.kotlin.psi2ir.generators
 
 import org.jetbrains.kotlin.backend.common.CodegenUtil
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.descriptors.*
 import org.jetbrains.kotlin.ir.ObsoleteDescriptorBasedAPI
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
@@ -51,6 +52,7 @@ import org.jetbrains.kotlin.psi.synthetics.findClassDescriptor
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.DelegationResolver
 import org.jetbrains.kotlin.resolve.DescriptorUtils
+import org.jetbrains.kotlin.resolve.descriptorUtil.isObjectDeclaration
 import org.jetbrains.kotlin.resolve.descriptorUtil.propertyIfAccessor
 import org.jetbrains.kotlin.resolve.descriptorUtil.setSingleOverridden
 import org.jetbrains.kotlin.resolve.scopes.DescriptorKindFilter
@@ -124,6 +126,12 @@ class ClassGenerator(
 
             if (DescriptorUtils.isEnumClass(classDescriptor)) {
                 generateAdditionalMembersForEnumClass(irClass)
+            }
+
+            if (context.languageVersionSettings.supportsFeature(LanguageFeature.PrettyToStringForObjects)
+                && irClass.descriptor.isObjectDeclaration
+            ) {
+                generateAdditionalMembersForObjectDeclaration(irClass)
             }
 
             irClass.sealedSubclasses = classDescriptor.sealedSubclasses.map { context.symbolTable.referenceClass(it) }
@@ -437,6 +445,10 @@ class ClassGenerator(
 
     private fun generateAdditionalMembersForEnumClass(irClass: IrClass) {
         EnumClassMembersGenerator(declarationGenerator).generateSpecialMembers(irClass)
+    }
+
+    private fun generateAdditionalMembersForObjectDeclaration(irClass: IrClass) {
+        ObjectClassMembersGenerator(declarationGenerator).generateSpecialMembers(irClass)
     }
 
     private fun generateFieldsForContextReceivers(irClass: IrClass, classDescriptor: ClassDescriptor) {

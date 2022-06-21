@@ -11,9 +11,11 @@ import org.jetbrains.kotlin.backend.common.extensions.IrGenerationExtension
 import org.jetbrains.kotlin.backend.common.extensions.IrPluginContext
 import org.jetbrains.kotlin.backend.common.ir.BuiltinSymbolsBase
 import org.jetbrains.kotlin.config.AnalysisFlags
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersionSettings
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.ModuleDescriptor
-import org.jetbrains.kotlin.fir.FirSession
+import org.jetbrains.kotlin.fir.*
 import org.jetbrains.kotlin.fir.backend.generators.*
 import org.jetbrains.kotlin.fir.backend.generators.DataClassMembersGenerator
 import org.jetbrains.kotlin.fir.declarations.*
@@ -24,9 +26,6 @@ import org.jetbrains.kotlin.fir.extensions.declarationGenerators
 import org.jetbrains.kotlin.fir.extensions.extensionService
 import org.jetbrains.kotlin.fir.extensions.generatedMembers
 import org.jetbrains.kotlin.fir.extensions.generatedNestedClassifiers
-import org.jetbrains.kotlin.fir.moduleData
-import org.jetbrains.kotlin.fir.packageFqName
-import org.jetbrains.kotlin.fir.psi
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.signaturer.FirBasedSignatureComposer
 import org.jetbrains.kotlin.fir.signaturer.FirMangler
@@ -44,6 +43,7 @@ import org.jetbrains.kotlin.ir.symbols.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
@@ -266,6 +266,12 @@ class Fir2IrConverter(
                 allDeclarations += dataClassMembersGenerator.generateDataClassMembers(regularClass, irClass)
             }
             declarationStorage.leaveScope(irConstructor)
+        }
+
+        if (moduleDescriptor.session.languageVersionSettings.supportsFeature(LanguageFeature.PrettyToStringForObjects)
+            && irClass.kind == ClassKind.OBJECT && !irClass.isCompanion && irClass.name != SpecialNames.NO_NAME_PROVIDED
+        ) {
+            allDeclarations += DataClassMembersGenerator(components).generateObjectToString(regularClass, irClass)
         }
         with(fakeOverrideGenerator) {
             irClass.addFakeOverrides(regularClass, allDeclarations)

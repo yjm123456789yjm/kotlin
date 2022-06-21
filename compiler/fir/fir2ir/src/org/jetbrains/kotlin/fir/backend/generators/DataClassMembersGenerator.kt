@@ -70,6 +70,9 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
     fun generateDataClassMembers(klass: FirClass, irClass: IrClass): List<FirDeclaration> =
         MyDataClassMethodsGenerator(irClass, klass.symbol.toLookupTag(), IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER).generate(klass)
 
+    fun generateObjectToString(klass: FirClass, irClass: IrClass): List<FirDeclaration> =
+        MyDataClassMethodsGenerator(irClass, klass.symbol.toLookupTag(), IrDeclarationOrigin.OBJECT_TO_STRING).generate(klass)
+
     fun generateDataClassComponentBody(irFunction: IrFunction, lookupTag: ConeClassLikeLookupTag) =
         MyDataClassMethodsGenerator(irFunction.parentAsClass, lookupTag, IrDeclarationOrigin.GENERATED_DATA_CLASS_MEMBER)
             .generateComponentBody(irFunction)
@@ -183,7 +186,7 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
         fun generate(klass: FirClass): List<FirDeclaration> {
             val propertyParametersCount = irClass.primaryConstructor?.explicitParameters?.size ?: 0
             val properties = irClass.properties.filter { it.backingField != null }.take(propertyParametersCount).toList()
-            if (properties.isEmpty()) {
+            if (properties.isEmpty() && klass.classKind != ClassKind.OBJECT) {
                 return emptyList()
             }
 
@@ -215,27 +218,29 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
                     }
                 }
 
-            val equalsContributedFunction = contributedFunctionsInSupertypes[EQUALS]
-            if (equalsContributedFunction != null) {
-                result.add(equalsContributedFunction)
-                val equalsFunction = createSyntheticIrFunction(
-                    EQUALS,
-                    components.irBuiltIns.booleanType,
-                    otherParameterNeeded = true
-                )
-                irDataClassMembersGenerator.generateEqualsMethod(equalsFunction, properties)
-                irClass.declarations.add(equalsFunction)
-            }
+            if (properties.isNotEmpty()) {
+                val equalsContributedFunction = contributedFunctionsInSupertypes[EQUALS]
+                if (equalsContributedFunction != null) {
+                    result.add(equalsContributedFunction)
+                    val equalsFunction = createSyntheticIrFunction(
+                        EQUALS,
+                        components.irBuiltIns.booleanType,
+                        otherParameterNeeded = true
+                    )
+                    irDataClassMembersGenerator.generateEqualsMethod(equalsFunction, properties)
+                    irClass.declarations.add(equalsFunction)
+                }
 
-            val hashcodeNameContributedFunction = contributedFunctionsInSupertypes[HASHCODE_NAME]
-            if (hashcodeNameContributedFunction != null) {
-                result.add(hashcodeNameContributedFunction)
-                val hashCodeFunction = createSyntheticIrFunction(
-                    HASHCODE_NAME,
-                    components.irBuiltIns.intType,
-                )
-                irDataClassMembersGenerator.generateHashCodeMethod(hashCodeFunction, properties)
-                irClass.declarations.add(hashCodeFunction)
+                val hashcodeNameContributedFunction = contributedFunctionsInSupertypes[HASHCODE_NAME]
+                if (hashcodeNameContributedFunction != null) {
+                    result.add(hashcodeNameContributedFunction)
+                    val hashCodeFunction = createSyntheticIrFunction(
+                        HASHCODE_NAME,
+                        components.irBuiltIns.intType,
+                    )
+                    irDataClassMembersGenerator.generateHashCodeMethod(hashCodeFunction, properties)
+                    irClass.declarations.add(hashCodeFunction)
+                }
             }
 
             val toStringContributedFunction = contributedFunctionsInSupertypes[TO_STRING]

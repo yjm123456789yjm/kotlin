@@ -15,10 +15,7 @@ import org.jetbrains.kotlin.descriptors.annotations.AnnotationDescriptor
 import org.jetbrains.kotlin.descriptors.annotations.KotlinRetention
 import org.jetbrains.kotlin.descriptors.impl.DescriptorDerivedFromTypeAlias
 import org.jetbrains.kotlin.incremental.components.LookupLocation
-import org.jetbrains.kotlin.name.ClassId
-import org.jetbrains.kotlin.name.FqName
-import org.jetbrains.kotlin.name.FqNameUnsafe
-import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.name.*
 import org.jetbrains.kotlin.platform.TargetPlatform
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.DescriptorUtils.getContainingClass
@@ -166,6 +163,9 @@ fun ClassDescriptor.getSuperInterfaces(): List<ClassDescriptor> =
 
 val ClassDescriptor.secondaryConstructors: List<ClassConstructorDescriptor>
     get() = constructors.filterNot { it.isPrimary }
+
+val ClassDescriptor.isObjectDeclaration: Boolean
+    get() = kind == OBJECT && !isCompanionObject && name != SpecialNames.NO_NAME_PROVIDED
 
 val DeclarationDescriptor.builtIns: KotlinBuiltIns
     get() = module.builtIns

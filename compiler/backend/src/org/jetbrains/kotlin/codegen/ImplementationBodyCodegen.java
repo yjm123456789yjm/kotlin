@@ -13,7 +13,9 @@ import kotlin.collections.CollectionsKt;
 import kotlin.jvm.functions.Function2;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.kotlin.backend.common.CodegenUtil;
 import org.jetbrains.kotlin.backend.common.DataClassMethodGenerator;
+import org.jetbrains.kotlin.backend.common.FunctionsFromAnyGenerator;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap;
 import org.jetbrains.kotlin.builtins.jvm.JavaToKotlinClassMap.PlatformMutabilityMapping;
@@ -36,6 +38,7 @@ import org.jetbrains.kotlin.metadata.ProtoBuf;
 import org.jetbrains.kotlin.name.ClassId;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.name.Name;
+import org.jetbrains.kotlin.name.SpecialNames;
 import org.jetbrains.kotlin.psi.*;
 import org.jetbrains.kotlin.psi.synthetics.SyntheticClassOrObjectDescriptor;
 import org.jetbrains.kotlin.resolve.*;
@@ -433,6 +436,8 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
 
         generateFunctionsForDataClasses();
 
+        generateFunctionsForObjects();
+
         generateFunctionsFromAnyForInlineClasses();
 
         if (state.getClassBuilderMode() != ClassBuilderMode.LIGHT_CLASSES) {
@@ -558,6 +563,15 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
         if (!descriptor.isData()) return;
         if (!(myClass instanceof KtClassOrObject)) return;
         new DataClassMethodGeneratorImpl((KtClassOrObject)myClass, bindingContext).generate();
+    }
+
+    private void generateFunctionsForObjects() {
+        if (!state.getLanguageVersionSettings().supportsFeature(LanguageFeature.PrettyToStringForObjects)) return;
+        if (descriptor.getKind() != ClassKind.OBJECT) return;
+        if (descriptor.isCompanionObject()) return;
+        if (SpecialNames.NO_NAME_PROVIDED.equals(descriptor.getName())) return;
+
+        new ObjectClassMembersGeneratorImpl((KtObjectDeclaration)myClass, bindingContext).generate();
     }
 
     private void generateFunctionsFromAnyForInlineClasses() {
@@ -720,6 +734,54 @@ public class ImplementationBodyCodegen extends ClassBodyCodegen {
                     },
                     null
             );
+        }
+    }
+
+    private class ObjectClassMembersGeneratorImpl extends FunctionsFromAnyGenerator {
+
+        private final FunctionsFromAnyGeneratorImpl functionsFromAnyGenerator;
+
+        public ObjectClassMembersGeneratorImpl(@NotNull KtClassOrObject klass, @NotNull BindingContext bindingContext) {
+            super(klass, bindingContext);
+            this.functionsFromAnyGenerator = new FunctionsFromAnyGeneratorImpl(
+                    klass, bindingContext, descriptor, classAsmType, ImplementationBodyCodegen.this.context, v, state
+            );
+        }
+
+        @Override
+        public void generate() {
+            generateToStringIfNeeded();
+        }
+
+        private void generateToStringIfNeeded() {
+            FunctionDescriptor function = CodegenUtil.INSTANCE.getMemberToGenerate(
+                    this.getClassDescriptor(), "toString",
+                    KotlinBuiltIns::isString, List::isEmpty
+            );
+            if (function != null) {
+                generateToStringMethod(function, Collections.emptyList());
+            }
+        }
+
+        @Override
+        protected void generateToStringMethod(
+                @NotNull FunctionDescriptor function,
+                @NotNull List<? extends PropertyDescriptor> properties
+        ) {
+            functionsFromAnyGenerator.generateToStringMethod(function, properties);
+        }
+
+        @Override
+        protected void generateHashCodeMethod(
+                @NotNull FunctionDescriptor function,
+                @NotNull List<? extends PropertyDescriptor> properties
+        ) {
+
+        }
+
+        @Override
+        protected void generateEqualsMethod(@NotNull FunctionDescriptor function, @NotNull List<? extends PropertyDescriptor> properties) {
+
         }
     }
 
