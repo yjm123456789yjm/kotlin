@@ -166,7 +166,7 @@ open class KJvmReplCompilerBase<AnalyzerT : ReplCodeAnalyzerBase>(
                     sourceFiles.first(),
                     sourceDependencies
                 ) { ktFile ->
-                    dependenciesProvider?.getScriptConfiguration(ktFile)?.configuration
+                    dependenciesProvider?.getScriptConfigurationResult(ktFile, context.baseScriptCompilationConfiguration)?.valueOrNull()?.configuration
                         ?: context.baseScriptCompilationConfiguration
                 }.onSuccess { compiledScript ->
 
