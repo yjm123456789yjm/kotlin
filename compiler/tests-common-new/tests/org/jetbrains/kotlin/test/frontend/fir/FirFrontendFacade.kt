@@ -96,10 +96,14 @@ class FirFrontendFacade(
         }
 
         val isCommonOrJvm = module.targetPlatform.isJvm() || module.targetPlatform.isCommon()
-        val factory = if (isCommonOrJvm) FirSessionFactory else FirJsSessionFactory
+        val factory = when {
+            isCommonOrJvm -> FirSessionFactory
+            module.targetPlatform.isNative() -> FirNativeSessionFactory
+            else -> FirJsSessionFactory
+        }
 
         val dependencyList: DependencyListForCliModule = buildDependencyList(module, moduleName, moduleInfoProvider, analyzerServices) {
-            if (isCommonOrJvm) {
+            if (isCommonOrJvm || module.targetPlatform.isNative()) {
                 configureJvmDependencies(configuration)
             } else {
                 configureJsDependencies(module, testServices)
@@ -108,35 +112,47 @@ class FirFrontendFacade(
 
         val projectEnvironment: VfsBasedProjectEnvironment?
 
-        val librarySessionParams = if (isCommonOrJvm) {
-            val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
-            projectEnvironment = VfsBasedProjectEnvironment(
-                project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
-            ) { packagePartProviderFactory.invoke(it) }
-            val projectFileSearchScope = PsiBasedProjectFileSearchScope(ProjectScope.getLibrariesScope(project))
-            val packagePartProvider = projectEnvironment.getPackagePartProvider(projectFileSearchScope)
+        val librarySessionParams = when {
+            isCommonOrJvm -> {
+                val packagePartProviderFactory = compilerConfigurationProvider.getPackagePartProviderFactory(module)
+                projectEnvironment = VfsBasedProjectEnvironment(
+                    project, VirtualFileManager.getInstance().getFileSystem(StandardFileSystems.FILE_PROTOCOL),
+                ) { packagePartProviderFactory.invoke(it) }
+                val projectFileSearchScope = PsiBasedProjectFileSearchScope(ProjectScope.getLibrariesScope(project))
+                val packagePartProvider = projectEnvironment.getPackagePartProvider(projectFileSearchScope)
 
-            CommonOrJvmLibraryParams(
-                moduleName,
-                moduleInfoProvider.firSessionProvider,
-                dependencyList,
-                languageVersionSettings,
-                projectEnvironment,
-                projectFileSearchScope,
-                packagePartProvider,
-            )
-        } else {
-            projectEnvironment = null
-
-            JsLibrarySessionParams(
-                moduleName,
-                moduleInfoProvider.firSessionProvider,
-                dependencyList,
-                languageVersionSettings,
-                module,
-                testServices,
-                configuration,
-            )
+                CommonOrJvmLibraryParams(
+                    moduleName,
+                    moduleInfoProvider.firSessionProvider,
+                    dependencyList,
+                    languageVersionSettings,
+                    projectEnvironment,
+                    projectFileSearchScope,
+                    packagePartProvider,
+                )
+            }
+            module.targetPlatform.isJs() -> {
+                projectEnvironment = null
+                JsLibrarySessionParams(
+                    moduleName,
+                    moduleInfoProvider.firSessionProvider,
+                    dependencyList,
+                    languageVersionSettings,
+                    module,
+                    testServices,
+                    configuration,
+                )
+            }
+            module.targetPlatform.isNative() -> {
+                projectEnvironment = null
+                NativeLibrarySessionParams(
+                    moduleName,
+                    moduleInfoProvider.firSessionProvider,
+                    dependencyList,
+                    languageVersionSettings,
+                )
+            }
+            else -> error("Unsupported")
         }
         factory.createLibrarySession(librarySessionParams)
 
@@ -162,7 +178,16 @@ class FirFrontendFacade(
                 )
             }
             module.targetPlatform.isJs() -> {
-                JsLibraryModuleBasedParams(
+                JsModuleBasedParams(
+                    mainModuleData,
+                    moduleInfoProvider.firSessionProvider,
+                    extensionRegistrars,
+                    languageVersionSettings,
+                    init = sessionConfigurator
+                )
+            }
+            module.targetPlatform.isNative() -> {
+                NativeModuleBasedParams(
                     mainModuleData,
                     moduleInfoProvider.firSessionProvider,
                     extensionRegistrars,
