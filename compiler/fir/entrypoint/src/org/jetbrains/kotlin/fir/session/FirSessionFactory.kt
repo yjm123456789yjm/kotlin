@@ -9,11 +9,6 @@ import org.jetbrains.annotations.TestOnly
 import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.config.LanguageVersionSettingsImpl
 import org.jetbrains.kotlin.fir.*
-import org.jetbrains.kotlin.fir.analysis.checkers.declaration.DeclarationCheckers
-import org.jetbrains.kotlin.fir.analysis.checkers.expression.ExpressionCheckers
-import org.jetbrains.kotlin.fir.analysis.checkers.type.TypeCheckers
-import org.jetbrains.kotlin.fir.analysis.checkersComponent
-import org.jetbrains.kotlin.fir.analysis.extensions.additionalCheckers
 import org.jetbrains.kotlin.fir.checkers.registerJvmCheckers
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
 import org.jetbrains.kotlin.fir.deserialization.SingleModuleDataProvider
@@ -38,43 +33,8 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 
-@OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
+@OptIn(PrivateSessionConstructor::class)
 object FirSessionFactory : FirAbstractSessionFactory<CommonOrJvmLibraryParams, CommonOrJvmModuleBasedParams>() {
-    class FirSessionConfigurator(private val session: FirSession) {
-        private val registeredExtensions: MutableList<BunchOfRegisteredExtensions> = mutableListOf(BunchOfRegisteredExtensions.empty())
-
-        fun registerExtensions(extensions: BunchOfRegisteredExtensions) {
-            registeredExtensions += extensions
-        }
-
-        fun useCheckers(checkers: ExpressionCheckers) {
-            session.checkersComponent.register(checkers)
-        }
-
-        fun useCheckers(checkers: DeclarationCheckers) {
-            session.checkersComponent.register(checkers)
-        }
-
-        fun useCheckers(checkers: TypeCheckers) {
-            session.checkersComponent.register(checkers)
-        }
-
-        @SessionConfiguration
-        fun configure() {
-            session.extensionService.registerExtensions(registeredExtensions.reduce(BunchOfRegisteredExtensions::plus))
-            session.extensionService.additionalCheckers.forEach(session.checkersComponent::register)
-        }
-    }
-
-    data class IncrementalCompilationContext(
-        // assuming that providers here do not intersect with the one being built from precompiled binaries
-        // (maybe easiest way to achieve is to delete libraries
-        // TODO: consider passing something more abstract instead of precompiler component, in order to avoid file ops here
-        val previousFirSessionsSymbolProviders: Collection<FirSymbolProvider>,
-        val precompiledBinariesPackagePartProvider: PackagePartProvider?,
-        val precompiledBinariesFileScope: AbstractProjectFileSearchScope?
-    )
-
     override fun registerExtraComponentsForLibrary(session: FirSession, params: CommonOrJvmLibraryParams) {
         session.registerCommonJavaComponents(params.projectEnvironment.getJavaModuleResolver())
     }
@@ -260,7 +220,7 @@ open class CommonOrJvmModuleBasedParams(
     lookupTracker: LookupTracker? = null,
     enumWhenTracker: EnumWhenTracker? = null,
     val needRegisterJavaElementFinder: Boolean = true,
-    val incrementalCompilationContext: FirSessionFactory.IncrementalCompilationContext? = null,
-    init: FirSessionFactory.FirSessionConfigurator.() -> Unit = {}
+    val incrementalCompilationContext: IncrementalCompilationContext? = null,
+    init: FirSessionConfigurator.() -> Unit = {}
 ) : ModuleBasedParams(moduleData, sessionProvider, extensionRegistrars, languageVersionSettings, lookupTracker, enumWhenTracker, init)
 

@@ -58,7 +58,7 @@ class FirFrontendFacade(
     // Separate constructor is needed for creating callable references to it
     constructor(testServices: TestServices) : this(testServices, additionalSessionConfiguration = null)
 
-    fun interface SessionConfiguration : (FirSessionFactory.FirSessionConfigurator) -> Unit
+    fun interface SessionConfiguration : (FirSessionConfigurator) -> Unit
 
     override val additionalServices: List<ServiceRegistrationData>
         get() = listOf(service(::FirModuleInfoProvider))
@@ -88,7 +88,7 @@ class FirFrontendFacade(
         val configuration = compilerConfigurationProvider.getCompilerConfiguration(module)
         val extensionRegistrars = FirExtensionRegistrar.getInstances(project)
 
-        val sessionConfigurator: FirSessionFactory.FirSessionConfigurator.() -> Unit = {
+        val sessionConfigurator: FirSessionConfigurator.() -> Unit = {
             if (FirDiagnosticsDirectives.WITH_EXTENDED_CHECKERS in module.directives) {
                 registerExtendedCommonCheckers()
             }

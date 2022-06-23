@@ -102,7 +102,7 @@ abstract class FirAbstractSessionFactory<P1 : LibrarySessionParams, P2 : ModuleB
             val firProvider = FirProviderImpl(this, kotlinScopeProvider)
             register(FirProvider::class, firProvider)
 
-            FirSessionFactory.FirSessionConfigurator(this).apply {
+            FirSessionConfigurator(this).apply {
                 registerCommonCheckers()
                 registerExtraCheckers(this@apply)
 
@@ -166,5 +166,5 @@ open class ModuleBasedParams(
     val languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
     val lookupTracker: LookupTracker? = null,
     val enumWhenTracker: EnumWhenTracker? = null,
-    val init: FirSessionFactory.FirSessionConfigurator.() -> Unit = {}
+    val init: FirSessionConfigurator.() -> Unit = {}
 )

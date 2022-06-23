@@ -30,6 +30,7 @@ import org.jetbrains.kotlin.fir.java.FirJavaFacadeForSource
 import org.jetbrains.kotlin.fir.java.JavaSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.FirSymbolProvider
 import org.jetbrains.kotlin.fir.resolve.providers.impl.FirCompositeSymbolProvider
+import org.jetbrains.kotlin.fir.session.FirSessionConfigurator
 import org.jetbrains.kotlin.fir.session.FirSessionFactory
 import org.jetbrains.kotlin.load.java.createJavaClassFinder
 
@@ -48,7 +49,7 @@ internal inline fun createCompositeSymbolProvider(
 
 @SessionConfiguration
 internal fun FirSession.registerCompilerPluginExtensions(project: Project) {
-    FirSessionFactory.FirSessionConfigurator(this).apply {
+    FirSessionConfigurator(this).apply {
         for (extensionRegistrar in FirExtensionRegistrar.getInstances(project)) {
             registerExtensions(extensionRegistrar.configure())
         }

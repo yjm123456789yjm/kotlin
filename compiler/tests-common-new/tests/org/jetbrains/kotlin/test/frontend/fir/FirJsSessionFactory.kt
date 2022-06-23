@@ -53,7 +53,7 @@ object FirJsSessionFactory : FirAbstractSessionFactory<JsLibrarySessionParams, J
         session.register(FirOverridesBackwardCompatibilityHelper::class, FirOverridesBackwardCompatibilityHelper.Default())
     }
 
-    override fun registerExtraCheckers(configurator: FirSessionFactory.FirSessionConfigurator) {
+    override fun registerExtraCheckers(configurator: FirSessionConfigurator) {
         configurator.registerJsCheckers()
     }
 
@@ -90,7 +90,7 @@ class JsModuleBasedParams(
     languageVersionSettings: LanguageVersionSettings = LanguageVersionSettingsImpl.DEFAULT,
     lookupTracker: LookupTracker? = null,
     enumWhenTracker: EnumWhenTracker? = null,
-    init: FirSessionFactory.FirSessionConfigurator.() -> Unit = {}
+    init: FirSessionConfigurator.() -> Unit = {}
 ) : ModuleBasedParams(
     moduleData, sessionProvider, extensionRegistrars, languageVersionSettings, lookupTracker, enumWhenTracker, init
 )
