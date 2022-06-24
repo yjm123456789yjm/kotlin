@@ -10544,17 +10544,17 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestDataPath("$PROJECT_ROOT")
             @RunWith(JUnit3RunnerWithInners.class)
             public static class Cleanup extends AbstractLightAnalysisModeTest {
+                @TestMetadata("backEdge.kt")
+                public void ignoreBackEdge() throws Exception {
+                    runTest("compiler/testData/codegen/box/coroutines/varSpilling/cleanup/backEdge.kt");
+                }
+
                 private void runTest(String testDataFilePath) throws Exception {
                     KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
                 }
 
                 public void testAllFilesPresentInCleanup() throws Exception {
                     KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/coroutines/varSpilling/cleanup"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM, true);
-                }
-
-                @TestMetadata("backEdge.kt")
-                public void testBackEdge() throws Exception {
-                    runTest("compiler/testData/codegen/box/coroutines/varSpilling/cleanup/backEdge.kt");
                 }
 
                 @TestMetadata("if.kt")
