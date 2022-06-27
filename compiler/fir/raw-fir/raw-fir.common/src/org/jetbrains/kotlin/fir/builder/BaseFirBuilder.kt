@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.fir.builder
 import com.intellij.psi.tree.IElementType
 import org.jetbrains.kotlin.*
 import org.jetbrains.kotlin.KtNodeTypes.*
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.fir.*
@@ -1079,7 +1080,7 @@ abstract class BaseFirBuilder<T>(val baseSession: FirSession, val context: Conte
         private val createParameterTypeRefWithSourceKind: (FirProperty, KtFakeSourceElementKind) -> FirTypeRef,
     ) {
         fun generate() {
-            if (source !is KtObjectDeclaration) {
+            if (classBuilder.classKind != ClassKind.OBJECT) {
                 generateComponentFunctions()
                 generateCopyFunction()
             }

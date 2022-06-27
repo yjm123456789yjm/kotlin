@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.resolve.calls.util.isOrOverridesSynthesized
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeCheckerImpl
+import org.jetbrains.kotlin.types.typeUtil.isNullableAny
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import java.util.*
@@ -902,8 +903,19 @@ class OverrideResolver(
                     reportError.varOverriddenByVal(memberDescriptor, overridden)
                 }
 
-                if (((DescriptorToSourceUtils.getSourceFromDescriptor(memberDescriptor.containingDeclaration) as? KtObjectDeclaration)?.isData() == true)
-                    && (memberDescriptor.name == OperatorNameConventions.EQUALS || memberDescriptor.name == OperatorNameConventions.HASH_CODE)) {
+                if ((DescriptorToSourceUtils.getSourceFromDescriptor(memberDescriptor.containingDeclaration) as? KtObjectDeclaration)?.isData() == true) {
+                    if (memberDescriptor.name == OperatorNameConventions.HASH_CODE && overridden.valueParameters.isEmpty()) {
+                        reportError.overridingFinalMember(overridden, memberDescriptor)
+                    }
+                    if (memberDescriptor.name == OperatorNameConventions.EQUALS && overridden.valueParameters.singleOrNull()?.type?.isNullableAny() == true) {
+                        reportError.overridingFinalMember(overridden, memberDescriptor)
+                    }
+                }
+
+                if ((overridden.name == OperatorNameConventions.EQUALS || memberDescriptor.name == OperatorNameConventions.HASH_CODE)
+                    && overridden.valueParameters.isEmpty()
+                    && ((DescriptorToSourceUtils.getSourceFromDescriptor(memberDescriptor.containingDeclaration) as? KtObjectDeclaration)?.isData() == true)
+                ) {
                     reportError.overridingFinalMember(overridden, memberDescriptor)
                 }
             }

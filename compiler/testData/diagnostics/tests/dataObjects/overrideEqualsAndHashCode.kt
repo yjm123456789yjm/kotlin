@@ -1,3 +1,4 @@
+// FIR_IDENTICAL
 // LANGUAGE: +DataObjects
 
 
@@ -11,7 +12,11 @@ data object Override {
     }
 }
 
-data object NoOverride {
+open class Base {
+    open fun hashCode(x: Int) = x
+}
+
+data object NoOverride: Base() {
     fun equals(other: Any?, tag: Int): Boolean {
         return true
     }
@@ -19,6 +24,8 @@ data object NoOverride {
     fun hashCode(param: String): Int {
         return 1
     }
+
+    override fun hashCode(x: Int) = x + 1
 }
 
 open class Super {
