@@ -19977,6 +19977,16 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
                 runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/simple2.kt");
             }
 
+            @TestMetadata("twoGenericParameters.kt")
+            public void ignoreTwoGenericParameters() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/twoGenericParameters.kt");
+            }
+
+            @TestMetadata("twoGenericParameters2.kt")
+            public void ignoreTwoGenericParameters2() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/twoGenericParameters2.kt");
+            }
+
             private void runTest(String testDataFilePath) throws Exception {
                 KotlinTestUtils.runTest(this::doTest, TargetBackend.JVM, testDataFilePath);
             }
@@ -19993,6 +20003,11 @@ public class LightAnalysisModeTestGenerated extends AbstractLightAnalysisModeTes
             @TestMetadata("paramGenericSignature.kt")
             public void testParamGenericSignature() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/paramGenericSignature.kt");
+            }
+
+            @TestMetadata("twoGenericParameters3.kt")
+            public void testTwoGenericParameters3() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/twoGenericParameters3.kt");
             }
 
             @TestMetadata("upperBound.kt")

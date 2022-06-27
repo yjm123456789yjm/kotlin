@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.descriptors.annotations.Annotations
 import org.jetbrains.kotlin.resolve.DescriptorUtils
 import org.jetbrains.kotlin.resolve.calls.inference.isCaptured
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
+import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.*
 import org.jetbrains.kotlin.types.error.ErrorType
@@ -30,6 +31,7 @@ import org.jetbrains.kotlin.types.model.TypeArgumentMarker
 import org.jetbrains.kotlin.types.model.TypeVariableTypeConstructorMarker
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 import org.jetbrains.kotlin.types.error.ErrorUtils
+import org.jetbrains.kotlin.utils.addToStdlib.popLast
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
@@ -307,6 +309,32 @@ val TypeParameterDescriptor.representativeUpperBound: KotlinType
             val classDescriptor = it.constructor.declarationDescriptor as? ClassDescriptor ?: return@firstOrNull false
             classDescriptor.kind != ClassKind.INTERFACE && classDescriptor.kind != ClassKind.ANNOTATION_CLASS
         } ?: upperBounds.first()
+    }
+
+val TypeParameterDescriptor.nonTypeParameterUpperBound: KotlinType
+    get() {
+        assert(upperBounds.isNotEmpty()) { "Upper bounds should not be empty: $this" }
+
+        val stack = mutableListOf<KotlinType>(*upperBounds.toTypedArray())
+        val processed = mutableListOf<KotlinType>()
+
+        while (stack.isNotEmpty()) {
+            val current = stack.popLast()
+            if (!processed.add(current)) continue
+
+            val declarationDescriptor = current.constructor.declarationDescriptor
+            if (declarationDescriptor !is ClassDescriptor || declarationDescriptor.kind == ClassKind.INTERFACE ||
+                declarationDescriptor.kind == ClassKind.ANNOTATION_CLASS
+            ) {
+                if (declarationDescriptor is TypeParameterDescriptor) {
+                    stack += declarationDescriptor.upperBounds
+                }
+            } else {
+                return current
+            }
+        }
+
+        return module.builtIns.nullableAnyType
     }
 
 fun KotlinType.expandIntersectionTypeIfNecessary(): Collection<KotlinType> {

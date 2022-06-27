@@ -23879,6 +23879,24 @@ public class BlackBoxCodegenTestGenerated extends AbstractBlackBoxCodegenTest {
             }
 
             @Test
+            @TestMetadata("twoGenericParameters.kt")
+            public void testTwoGenericParameters() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/twoGenericParameters.kt");
+            }
+
+            @Test
+            @TestMetadata("twoGenericParameters2.kt")
+            public void testTwoGenericParameters2() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/twoGenericParameters2.kt");
+            }
+
+            @Test
+            @TestMetadata("twoGenericParameters3.kt")
+            public void testTwoGenericParameters3() throws Exception {
+                runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/twoGenericParameters3.kt");
+            }
+
+            @Test
             @TestMetadata("upperBound.kt")
             public void testUpperBound() throws Exception {
                 runTest("compiler/testData/codegen/box/inlineClasses/genericUnderlyingValue/upperBound.kt");
