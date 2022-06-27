@@ -262,6 +262,7 @@ enum class LanguageFeature(
     ReportNonVarargSpreadOnGenericCalls(KOTLIN_1_8, kind = BUG_FIX), // KT-48162
     RefineTypeCheckingOnAssignmentsToJavaFields(KOTLIN_1_8, kind = BUG_FIX),
     RangeUntilOperator(KOTLIN_1_8), // KT-15613
+    DataObjects(KOTLIN_1_8), // KT-4107
 
     // 1.9
 

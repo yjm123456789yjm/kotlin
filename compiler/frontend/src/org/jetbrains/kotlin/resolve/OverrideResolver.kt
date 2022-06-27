@@ -42,6 +42,7 @@ import org.jetbrains.kotlin.resolve.calls.util.isOrOverridesSynthesized
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.checker.KotlinTypeRefiner
 import org.jetbrains.kotlin.types.checker.NewKotlinTypeCheckerImpl
+import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.assertedCast
 import java.util.*
 
@@ -899,6 +900,11 @@ class OverrideResolver(
 
                 if (checkPropertyKind(overridden, true) && checkPropertyKind(memberDescriptor, false)) {
                     reportError.varOverriddenByVal(memberDescriptor, overridden)
+                }
+
+                if (((DescriptorToSourceUtils.getSourceFromDescriptor(memberDescriptor.containingDeclaration) as? KtObjectDeclaration)?.isData() == true)
+                    && (memberDescriptor.name == OperatorNameConventions.EQUALS || memberDescriptor.name == OperatorNameConventions.HASH_CODE)) {
+                    reportError.overridingFinalMember(overridden, memberDescriptor)
                 }
             }
         }

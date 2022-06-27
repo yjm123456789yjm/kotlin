@@ -75,7 +75,8 @@ class DataClassMembersGenerator(
     ) : DataClassMethodGenerator(ktClassOrObject, declarationGenerator.context.bindingContext) {
 
         private val irDataClassMembersGenerator =
-            object : DataClassMembersGenerator(context, context.symbolTable, irClass, origin, generateBodies = generateBodies) {
+            object : DataClassMembersGenerator(context, context.symbolTable, irClass, ktClassOrObject.fqName, origin, generateBodies = generateBodies) {
+
             override fun declareSimpleFunction(startOffset: Int, endOffset: Int, functionDescriptor: FunctionDescriptor): IrFunction =
                 declareSimpleFunction(startOffset, endOffset, origin, functionDescriptor)
 
