@@ -20,6 +20,7 @@ import org.jetbrains.kotlin.descriptors.PropertyDescriptor;
 import org.jetbrains.kotlin.name.FqName;
 import org.jetbrains.kotlin.psi.KtClassOrObject;
 import org.jetbrains.kotlin.resolve.BindingContext;
+import org.jetbrains.kotlin.resolve.DescriptorUtils;
 import org.jetbrains.kotlin.resolve.InlineClassesUtilsKt;
 import org.jetbrains.kotlin.resolve.descriptorUtil.DescriptorUtilsKt;
 import org.jetbrains.kotlin.resolve.jvm.diagnostics.JvmDeclarationOrigin;
@@ -181,8 +182,7 @@ public class FunctionsFromAnyGeneratorImpl extends FunctionsFromAnyGenerator {
 
         mv.visitCode();
         if (properties.isEmpty()) {
-            FqName fqName = getDeclaration().getFqName();
-            iv.iconst(fqName != null ? fqName.hashCode() : 0);
+            iv.iconst(DescriptorUtils.getFqNameSafe(classDescriptor).asString().hashCode());
         } else {
             boolean first = true;
             for (PropertyDescriptor propertyDescriptor : properties) {

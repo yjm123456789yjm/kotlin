@@ -10,8 +10,10 @@ data object DataObject {
 }
 
 fun box(): String {
-    assertEquals("com.example.DataObject".hashCode(), DataObject.hashCode())
-    assertEquals("com.example.DataObject.Inner".hashCode(), DataObject.Inner.hashCode())
+    assertEquals(DataObject.hashCode(), DataObject.hashCode())
+    assertNotEquals(DataObject.hashCode(), DataObject.Inner.hashCode())
+    assertNotEquals(0, DataObject.hashCode())
+    assertNotEquals(0, DataObject.Inner.hashCode())
 
-    return  "OK"
+    return "OK"
 }

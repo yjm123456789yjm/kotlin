@@ -1,1 +1,2 @@
-<!UNSUPPORTED_FEATURE!>data<!> object Object<!CONSTRUCTOR_IN_OBJECT!>(val x: Int, val y: Int)<!>
+// LANGUAGE: -DataObjects
+<!UNSUPPORTED_FEATURE!>data<!> object Object

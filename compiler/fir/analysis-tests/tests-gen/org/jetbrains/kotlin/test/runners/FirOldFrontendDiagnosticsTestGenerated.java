@@ -7047,9 +7047,9 @@ public class FirOldFrontendDiagnosticsTestGenerated extends AbstractFirDiagnosti
             }
 
             @Test
-            @TestMetadata("dataObjectliteral.kt")
-            public void testDataObjectliteral() throws Exception {
-                runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectliteral.kt");
+            @TestMetadata("dataObjectLiteral.kt")
+            public void testDataObjectLiteral() throws Exception {
+                runTest("compiler/testData/diagnostics/tests/dataClasses/dataObjectLiteral.kt");
             }
 
             @Test

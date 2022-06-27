@@ -17,12 +17,6 @@ data object Declared {
     override fun toString() = "Overriden"
 }
 
-open class A {
-    override fun toString() = "A"
-}
-
-data object B: A()
-
 open class WithFinalToString {
     final override fun toString() = "FinalToString"
 }
@@ -50,7 +44,6 @@ fun box(): String {
     assertEquals("Nested", DataObject.Nested.toString())
     assertEquals("Inner", Foo.Inner.toString())
     assertEquals("Overriden", Declared.toString())
-    assertEquals("B", B.toString())
     assertEquals("FinalToString", InheritedFromClassWithFinalToString.toString())
     assertEquals("InheritedFromClassWithOpenToString", InheritedFromClassWithOpenToString.toString())
     assertEquals("InheritedFromClassWithAbstractToString", InheritedFromClassWithAbstractToString.toString())

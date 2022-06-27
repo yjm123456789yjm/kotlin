@@ -141,9 +141,9 @@ abstract class DataClassMembersGenerator(
             +irReturnTrue()
         }
 
-        fun generateHashCodeMethodBody(properties: List<IrProperty>, constHashCode: Int?) {
+        fun generateHashCodeMethodBody(properties: List<IrProperty>, constHashCode: Int) {
             if (properties.isEmpty()) {
-                +irReturn(irInt(constHashCode ?: 0))
+                +irReturn(irInt(constHashCode))
                 return
             } else if (properties.size == 1) {
                 +irReturn(getHashCodeOfProperty(properties[0]))
@@ -361,7 +361,10 @@ abstract class DataClassMembersGenerator(
     // Entry for fir2ir
     fun generateHashCodeMethod(irFunction: IrFunction, properties: List<IrProperty>) {
         buildMember(irFunction) {
-            generateHashCodeMethodBody(properties, if (irClass.kind == ClassKind.OBJECT && irClass.isData) fqName.hashCode() else 0)
+            generateHashCodeMethodBody(
+                properties,
+                if (irClass.kind == ClassKind.OBJECT && irClass.isData) fqName.hashCode() else 0
+            )
         }
     }
 

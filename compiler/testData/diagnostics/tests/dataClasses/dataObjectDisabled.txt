@@ -1,9 +1,7 @@
 package
 
 public data object Object {
-    private constructor Object(/*0*/ x: kotlin.Int, /*1*/ y: kotlin.Int)
-    public final val x: kotlin.Int
-    public final val y: kotlin.Int
+    private constructor Object()
     public open override /*1*/ /*synthesized*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
     public open override /*1*/ /*synthesized*/ fun hashCode(): kotlin.Int
     public open override /*1*/ /*synthesized*/ fun toString(): kotlin.String

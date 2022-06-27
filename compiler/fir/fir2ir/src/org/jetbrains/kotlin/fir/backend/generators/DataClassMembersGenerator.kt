@@ -184,9 +184,6 @@ class DataClassMembersGenerator(val components: Fir2IrComponents) : Fir2IrCompon
         fun generate(klass: FirClass): List<FirDeclaration> {
             val propertyParametersCount = irClass.primaryConstructor?.explicitParameters?.size ?: 0
             val properties = irClass.properties.filter { it.backingField != null }.take(propertyParametersCount).toList()
-            if (properties.isEmpty() && klass.classKind != ClassKind.OBJECT) {
-                return emptyList()
-            }
 
             val result = mutableListOf<FirDeclaration>()
 
