@@ -54,10 +54,10 @@ object FirNativeSessionFactory : FirAbstractSessionFactory<NativeLibrarySessionP
     @OptIn(SessionConfiguration::class)
     override fun registerExtraComponentsForModuleBased(session: FirSession, params: NativeModuleBasedParams) {
         session.register(FirVisibilityChecker::class, FirVisibilityChecker.Default)
-        session.register(ConeCallConflictResolverFactory::class, JvmCallConflictResolverFactory)
+        session.register(ConeCallConflictResolverFactory::class, NativeCallConflictResolverFactory)
         session.register(FirPlatformClassMapper::class, FirPlatformClassMapper.Default)
-        session.register(FirSyntheticNamesProvider::class, FirJavaSyntheticNamesProvider)
-        session.register(FirOverridesBackwardCompatibilityHelper::class, FirJvmOverridesBackwardCompatibilityHelper)
+        session.register(FirSyntheticNamesProvider::class, FirNativeSyntheticNamesProvider)
+        session.register(FirOverridesBackwardCompatibilityHelper::class, FirOverridesBackwardCompatibilityHelper.Default())
     }
 }
 
