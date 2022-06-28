@@ -37,6 +37,11 @@ val SourceSet.projectDefault: Project.() -> Unit
         }
     }
 
+val SourceSet.generatedDir: Project.() -> Unit
+    get() = {
+        java.srcDir("gen")
+    }
+
 val SourceSet.generatedTestDir: Project.() -> Unit
     get() = {
         val generationRoot = projectDir.resolve("tests-gen")
