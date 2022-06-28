@@ -27,7 +27,6 @@ import org.jetbrains.kotlin.resolve.PlatformDependentAnalyzerServices
 
 @OptIn(PrivateSessionConstructor::class, SessionConfiguration::class)
 abstract class FirAbstractSessionFactory<P1 : LibrarySessionParams, P2 : ModuleBasedParams> {
-    @Suppress("UNCHECKED_CAST")
     fun createLibrarySession(params: LibrarySessionParams): FirSession {
         return FirCliSession(params.sessionProvider, FirSession.Kind.Library).apply session@{
             val moduleDataProvider = params.dependencyList.moduleDataProvider
@@ -38,6 +37,7 @@ abstract class FirAbstractSessionFactory<P1 : LibrarySessionParams, P2 : ModuleB
 
             registerCliCompilerOnlyComponents()
             registerCommonComponents(params.languageVersionSettings)
+            @Suppress("UNCHECKED_CAST")
             registerExtraComponentsForLibrary(this, params as P1)
 
             val kotlinScopeProvider = createKotlinScopeProvider()
@@ -85,7 +85,6 @@ abstract class FirAbstractSessionFactory<P1 : LibrarySessionParams, P2 : ModuleB
         )
     }
 
-    @Suppress("UNCHECKED_CAST")
     fun createModuleBasedSession(params: ModuleBasedParams): FirSession {
         return FirCliSession(params.sessionProvider, FirSession.Kind.Source).apply session@{
             params.moduleData.bindSession(this@session)
@@ -94,6 +93,7 @@ abstract class FirAbstractSessionFactory<P1 : LibrarySessionParams, P2 : ModuleB
             registerCliCompilerOnlyComponents()
             registerCommonComponents(params.languageVersionSettings)
             registerResolveComponents(params.lookupTracker, params.enumWhenTracker)
+            @Suppress("UNCHECKED_CAST")
             registerExtraComponentsForModuleBased(this, params as P2)
 
             val kotlinScopeProvider = createKotlinScopeProvider()
