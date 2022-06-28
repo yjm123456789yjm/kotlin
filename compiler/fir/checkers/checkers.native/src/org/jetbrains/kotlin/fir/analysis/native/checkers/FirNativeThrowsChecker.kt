@@ -34,13 +34,13 @@ object FirNativeThrowsChecker : FirBasicDeclarationChecker() {
 
     private val cancellationExceptionFqName = FqName("kotlin.coroutines.cancellation.CancellationException")
 
-    private val cancellationExceptionAndSupersClassIds = sequenceOf(
-        StandardNames.FqNames.throwable,
-        FqName("kotlin.Exception"),
-        FqName("kotlin.RuntimeException"),
-        FqName("kotlin.IllegalStateException"),
-        cancellationExceptionFqName
-    ).map { ClassId.topLevel(it) }.toSet()
+    private val cancellationExceptionAndSupersClassIds = setOf(
+        ClassId.topLevel(StandardNames.FqNames.throwable),
+        ClassId.topLevel(FqName("kotlin.Exception")),
+        ClassId.topLevel(FqName("kotlin.RuntimeException")),
+        ClassId.topLevel(FqName("kotlin.IllegalStateException")),
+        ClassId.topLevel(cancellationExceptionFqName)
+    )
 
     override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
         val throwsAnnotation = declaration.getAnnotationByClassId(throwsFqName) as? FirAnnotationCall
