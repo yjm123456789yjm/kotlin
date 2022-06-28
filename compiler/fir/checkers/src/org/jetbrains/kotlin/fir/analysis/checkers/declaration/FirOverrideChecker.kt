@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.fir.analysis.checkers.declaration
 
 import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtRealSourceElementKind
-import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.descriptors.Visibilities
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
@@ -22,7 +21,10 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.analysis.overridesBackwardCompatibilityHelper
 import org.jetbrains.kotlin.fir.containingClass
 import org.jetbrains.kotlin.fir.declarations.*
-import org.jetbrains.kotlin.fir.declarations.utils.*
+import org.jetbrains.kotlin.fir.declarations.utils.isFinal
+import org.jetbrains.kotlin.fir.declarations.utils.isOverride
+import org.jetbrains.kotlin.fir.declarations.utils.modality
+import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.originalOrSelf
 import org.jetbrains.kotlin.fir.resolve.substitution.substitutorByMap
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -37,7 +39,6 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.visibilityChecker
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 import org.jetbrains.kotlin.types.TypeCheckerState
-import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object FirOverrideChecker : FirClassChecker() {
     override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
@@ -290,10 +291,6 @@ object FirOverrideChecker : FirClassChecker() {
             reporter.reportOverridingFinalMember(member, it, context)
         }
 
-        if (containingClass.classKind == ClassKind.OBJECT && containingClass.status.isData && (member.isEquals() || member.isHashCode())) {
-            reporter.reportOverridingFinalMember(member, overriddenMemberSymbols.first().originalOrSelf(), context)
-        }
-
         if (member is FirPropertySymbol) {
             member.checkMutability(overriddenMemberSymbols)?.let {
                 reporter.reportVarOverriddenByVal(member, it, context)
@@ -320,12 +317,6 @@ object FirOverrideChecker : FirClassChecker() {
             }
         }
     }
-
-    private fun FirCallableSymbol<*>.isEquals() =
-        name == OperatorNameConventions.EQUALS && (this as? FirFunctionSymbol<*>)?.valueParameterSymbols?.firstOrNull()?.resolvedReturnTypeRef?.isNullableAny == true
-
-    private fun FirCallableSymbol<*>.isHashCode() =
-        name == OperatorNameConventions.HASH_CODE && (this as? FirFunctionSymbol<*>)?.valueParameterSymbols?.size == 0
 
     @OptIn(SymbolInternals::class)
     private fun checkOverriddenExperimentalities(

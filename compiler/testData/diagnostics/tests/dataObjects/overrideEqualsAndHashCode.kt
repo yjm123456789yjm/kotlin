@@ -1,13 +1,12 @@
 // FIR_IDENTICAL
 // LANGUAGE: +DataObjects
 
-
 data object Override {
-    <!OVERRIDING_FINAL_MEMBER!>override<!> fun equals(other: Any?): Boolean {
+    <!DATA_OBJECT_CUSTOM_EQUALS_OR_HASH_CODE!>override<!> fun equals(other: Any?): Boolean {
         return true
     }
 
-    <!OVERRIDING_FINAL_MEMBER!>override<!> fun hashCode(): Int {
+    <!DATA_OBJECT_CUSTOM_EQUALS_OR_HASH_CODE!>override<!> fun hashCode(): Int {
         return 1
     }
 }
@@ -39,7 +38,7 @@ open class Super {
 }
 
 data object OverridenInSuper: Super() {
-    <!OVERRIDING_FINAL_MEMBER!>override<!> fun equals(other: Any?): Boolean {
+    <!DATA_OBJECT_CUSTOM_EQUALS_OR_HASH_CODE!>override<!> fun equals(other: Any?): Boolean {
         return super.equals(other)
     }
 }
