@@ -725,6 +725,9 @@ private fun shouldDeclarationBeExported(declaration: IrDeclarationWithName, cont
     if (context.additionalExportedDeclarations.contains(declaration))
         return true
 
+    if (declaration.isJsNotExport())
+        return false
+
     if (declaration is IrOverridableDeclaration<*>) {
         val overriddenNonEmpty = declaration
             .overriddenSymbols
