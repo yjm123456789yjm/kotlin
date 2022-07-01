@@ -50,6 +50,7 @@ import org.jetbrains.kotlin.ir.types.IrErrorType
 import org.jetbrains.kotlin.ir.types.IrSimpleType
 import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.util.*
+import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
@@ -74,11 +75,15 @@ class Fir2IrDeclarationStorage(
 
     private val functionCache = ConcurrentHashMap<FirFunction, IrSimpleFunction>()
 
+    private val overriddenFunctionCache = ConcurrentHashMap<Pair<FirFunction, ClassId>, IrSimpleFunction>()
+
     private val constructorCache = ConcurrentHashMap<FirConstructor, IrConstructor>()
 
     private val initializerCache = ConcurrentHashMap<FirAnonymousInitializer, IrAnonymousInitializer>()
 
     private val propertyCache = ConcurrentHashMap<FirProperty, IrProperty>()
+
+    private val overriddenPropertyCache = ConcurrentHashMap<Pair<FirProperty, ClassId>, IrProperty>()
 
     // interface A { /* $1 */ fun foo() }
     // interface B : A {
@@ -448,7 +453,9 @@ class Fir2IrDeclarationStorage(
         if (function.visibility == Visibilities.Local) {
             return localStorage.getLocalFunction(function)
         }
-        return getCachedIrCallable(function, dispatchReceiverLookupTag, functionCache, signatureCalculator) { signature ->
+        return getCachedIrCallable(
+            function, dispatchReceiverLookupTag, functionCache, overriddenFunctionCache, signatureCalculator
+        ) { signature ->
             symbolTable.referenceSimpleFunctionIfAny(signature)?.owner
         }
     }
@@ -962,7 +969,9 @@ class Fir2IrDeclarationStorage(
         dispatchReceiverLookupTag: ConeClassLikeLookupTag?,
         signatureCalculator: () -> IdSignature?
     ): IrProperty? {
-        return getCachedIrCallable(property, dispatchReceiverLookupTag, propertyCache, signatureCalculator) { signature ->
+        return getCachedIrCallable(
+            property, dispatchReceiverLookupTag, propertyCache, overriddenPropertyCache, signatureCalculator
+        ) { signature ->
             symbolTable.referencePropertyIfAny(signature)?.owner
         }
     }
@@ -971,17 +980,22 @@ class Fir2IrDeclarationStorage(
         declaration: FC,
         dispatchReceiverLookupTag: ConeClassLikeLookupTag?,
         cache: MutableMap<FC, IC>,
+        overriddenCache: MutableMap<Pair<FC, ClassId>, IC>,
         signatureCalculator: () -> IdSignature?,
         referenceIfAny: (IdSignature) -> IC?
     ): IC? {
         val isFakeOverride = dispatchReceiverLookupTag != null && dispatchReceiverLookupTag != declaration.containingClass()
         if (!isFakeOverride) {
             cache[declaration]?.let { return it }
+        } else {
+            overriddenCache[declaration to dispatchReceiverLookupTag?.classId]?.let { return it }
         }
         return signatureCalculator()?.let { signature ->
             referenceIfAny(signature)?.let { irDeclaration ->
                 if (!isFakeOverride) {
                     cache[declaration] = irDeclaration
+                } else {
+                    overriddenCache[declaration to dispatchReceiverLookupTag!!.classId] = irDeclaration
                 }
                 irDeclaration
             }
