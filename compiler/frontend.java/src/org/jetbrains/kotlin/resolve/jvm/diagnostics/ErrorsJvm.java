@@ -210,6 +210,8 @@ public interface ErrorsJvm {
     DiagnosticFactoryForDeprecation0<PsiElement> ENUM_DECLARING_CLASS_DEPRECATED =
             DiagnosticFactoryForDeprecation0.create(LanguageFeature.ProhibitEnumDeclaringClass);
 
+    DiagnosticFactory0<KtElement> BAD_JVM_SERIALIZABLE_LAMBDA = DiagnosticFactory0.create(ERROR);
+
     @SuppressWarnings("UnusedDeclaration")
     Object _initializer = new Object() {
         {

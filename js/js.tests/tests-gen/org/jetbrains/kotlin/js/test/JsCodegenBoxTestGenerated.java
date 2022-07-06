@@ -2791,6 +2791,12 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             }
 
             @Test
+            @TestMetadata("jvmSerializableLambdaGetArityViaFunctionImpl.kt")
+            public void testJvmSerializableLambdaGetArityViaFunctionImpl() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/function/jvmSerializableLambdaGetArityViaFunctionImpl.kt");
+            }
+
+            @Test
             @TestMetadata("kt21787.kt")
             public void testKt21787() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/function/kt21787.kt");
@@ -13721,6 +13727,24 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
         @TestMetadata("infixRecursiveCall.kt")
         public void testInfixRecursiveCall() throws Exception {
             runTest("compiler/testData/codegen/box/functions/infixRecursiveCall.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdaToString.kt")
+        public void testJvmSerializableLambdaToString() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToString.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdaToStringGeneric.kt")
+        public void testJvmSerializableLambdaToStringGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToStringGeneric.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdaToStringNoReflect.kt")
+        public void testJvmSerializableLambdaToStringNoReflect() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToStringNoReflect.kt");
         }
 
         @Test
@@ -30990,6 +31014,16 @@ public class JsCodegenBoxTestGenerated extends AbstractJsCodegenBoxTest {
             @Test
             public void testAllFilesPresentInIsInstance() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/isInstance"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/reflection/jvmSerializableLambdas")
+        @TestDataPath("$PROJECT_ROOT")
+        public class JvmSerializableLambdas {
+            @Test
+            public void testAllFilesPresentInJvmSerializableLambdas() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/jvmSerializableLambdas"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JS, true);
             }
         }
 

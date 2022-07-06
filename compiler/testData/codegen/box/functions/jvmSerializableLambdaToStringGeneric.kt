@@ -1,27 +1,22 @@
-// IGNORE_BACKEND: WASM
-// WASM_MUTE_REASON: IGNORED_IN_JS
-// IGNORE_BACKEND: JS_IR
-// IGNORE_BACKEND: JS_IR_ES6
-// TODO: muted automatically, investigate should it be ran for JS or not
-// IGNORE_BACKEND: JS, NATIVE
-// LAMBDAS: CLASS
-
+// LAMBDAS: INDY
+// WITH_STDLIB
 // WITH_REFLECT
 
+import kotlin.jvm.JvmSerializableLambda
 import kotlin.test.assertEquals
 
 fun <T> bar(): String {
-    return { t: T -> t }.toString()
+    return (@JvmSerializableLambda { t: T -> t }).toString()
 }
 
 class Baz<T, V> {
     fun <V : T> baz(v: V): String {
-        return (fun(t: List<T>): V = v).toString()
+        return (@JvmSerializableLambda fun(t: List<T>): V = v).toString()
     }
 }
 
 open class Foo<T, U : List<T>>(val lambda: (T) -> U)
-class Bar<T> : Foo<T, List<T>>({ listOf(it) })
+class Bar<T> : Foo<T, List<T>>(@JvmSerializableLambda { listOf(it) })
 
 fun box(): String {
     assertEquals("(T) -> T", bar<String>())

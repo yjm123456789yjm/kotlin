@@ -1,12 +1,14 @@
 // !OPT_IN: kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
-// TARGET_BACKEND: JVM
+// LAMBDAS: INDY
+// TARGET_BACKEND: JVM_IR
+
+// WITH_STDLIB
 // WITH_REFLECT
-// LAMBDAS: CLASS
 
 import kotlin.reflect.jvm.reflect
 
 class C {
-    val x = { OK: String -> }
+    val x: suspend (String) -> Unit = { OK: String -> }
 }
 
 fun box(): String {

@@ -2,6 +2,7 @@
 // TARGET_BACKEND: JVM
 // WITH_REFLECT
 // WITH_COROUTINES
+// LAMBDAS: CLASS
 // FILE: a.kt
 
 import helpers.*

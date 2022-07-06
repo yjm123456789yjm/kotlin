@@ -303,6 +303,11 @@ class JvmSymbols(
         }
     }
 
+    val jvmSerializableLambdaClass: IrClassSymbol =
+        createClass(FqName("kotlin.jvm.JvmSerializableLambda"), classKind = ClassKind.ANNOTATION_CLASS) { klass ->
+            klass.addConstructor { isPrimary = true }
+        }
+
     val suspendLambdaClass: IrClassSymbol =
         createClass(FqName("kotlin.coroutines.jvm.internal.SuspendLambda"), classModality = Modality.ABSTRACT) { klass ->
             addSuspendLambdaInterfaceFunctions(klass)

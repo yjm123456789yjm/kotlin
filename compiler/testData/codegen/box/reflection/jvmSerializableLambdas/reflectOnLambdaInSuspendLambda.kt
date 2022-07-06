@@ -1,20 +1,20 @@
 // !OPT_IN: kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
-// TARGET_BACKEND: JVM
+// LAMBDAS: INDY
+// TARGET_BACKEND: JVM_IR
+// WITH_STDLIB
 // WITH_REFLECT
 // WITH_COROUTINES
-// LAMBDAS: CLASS
 // FILE: a.kt
 
+import kotlin.jvm.JvmSerializableLambda
 import helpers.*
 import kotlin.coroutines.*
 import kotlin.reflect.jvm.reflect
 
-suspend fun f() = { OK: String -> }
-
 fun box(): String {
     lateinit var x: (String) -> Unit
     suspend {
-        x = f()
+        x = @JvmSerializableLambda { OK: String -> }
     }.startCoroutine(EmptyContinuation)
     return x.reflect()?.parameters?.singleOrNull()?.name ?: "null"
 }

@@ -1,14 +1,7 @@
-// IGNORE_BACKEND: WASM
-// WASM_MUTE_REASON: IGNORED_IN_JS
-// IGNORE_BACKEND: JS_IR
-// IGNORE_BACKEND: JS_IR_ES6
-// TODO: muted automatically, investigate should it be ran for JS or not
-// IGNORE_BACKEND: JS, NATIVE
-// IGNORE_LIGHT_ANALYSIS
-// LAMBDAS: CLASS
-
+// LAMBDAS: INDY
 // WITH_STDLIB
 
+import kotlin.jvm.JvmSerializableLambda
 import kotlin.test.assertEquals
 import kotlin.jvm.internal.FunctionBase
 
@@ -32,10 +25,10 @@ fun box(): String {
     fun local(x: Int) {}
     test(::local, 1)
 
-    test(fun(s: String) = s, 1)
-    test(fun(){}, 0)
-    test({}, 0)
-    test({x: Int -> x}, 1)
+    test(@JvmSerializableLambda fun(s: String) = s, 1)
+    test(@JvmSerializableLambda fun(){}, 0)
+    test(@JvmSerializableLambda {}, 0)
+    test(@JvmSerializableLambda {x: Int -> x}, 1)
 
     return "OK"
 }

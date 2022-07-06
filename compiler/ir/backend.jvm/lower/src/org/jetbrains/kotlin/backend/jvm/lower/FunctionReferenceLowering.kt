@@ -39,6 +39,7 @@ import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.load.java.JvmAnnotationNames
 import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
+import org.jetbrains.kotlin.resolve.jvm.annotations.JVM_SERIALIZABLE_LAMBDA_ANNOTATION_FQ_NAME
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 internal val functionReferencePhase = makeIrFilePhase(
@@ -525,7 +526,10 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
 
     private inner class FunctionReferenceBuilder(val irFunctionReference: IrFunctionReference, val samSuperType: IrType? = null) {
         private val isLambda = irFunctionReference.origin.isLambda
-
+        private val isLightweightLambda = isLambda
+                && shouldGenerateIndyLambdas
+                && !irFunctionReference.symbol.owner.hasAnnotation(JVM_SERIALIZABLE_LAMBDA_ANNOTATION_FQ_NAME)
+        private val isHeavyweightLambda = isLambda && !isLightweightLambda
         private val callee = irFunctionReference.symbol.owner
 
         // Only function references can bind a receiver and even then we can only bind either an extension or a dispatch receiver.
@@ -605,7 +609,8 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
         private val superType =
             samSuperType
                 ?: when {
-                    isLambda -> context.ir.symbols.lambdaClass
+                    isLightweightLambda -> context.ir.symbols.any
+                    isHeavyweightLambda -> context.ir.symbols.lambdaClass
                     isFunInterfaceConstructorReference -> context.ir.symbols.funInterfaceConstructorReferenceClass
                     useOptimizedSuperClass -> when {
                         isAdaptedReference -> context.ir.symbols.adaptedFunctionReference
@@ -642,7 +647,7 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
             }
             createImplicitParameterDeclarationWithWrappedDescriptor()
             copyAttributes(irFunctionReference)
-            if (isLambda) {
+            if (!isLightweightLambda) {
                 metadata = irFunctionReference.symbol.owner.metadata
             }
         }
@@ -773,7 +778,8 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
                             context.irBuiltIns.anyClass.owner.constructors.single()
                         else -> {
                             val expectedArity =
-                                if (isLambda && !isAdaptedReference) 1
+                                if (isLightweightLambda && !isAdaptedReference) 0
+                                else if (isHeavyweightLambda && !isAdaptedReference) 1
                                 else 1 + (if (boundReceiver != null) 1 else 0) + (if (useOptimizedSuperClass) 4 else 0)
                             superType.getClass()!!.constructors.single {
                                 it.valueParameters.size == expectedArity
@@ -803,7 +809,9 @@ internal class FunctionReferenceLowering(private val context: JvmBackendContext)
                 call.putValueArgument(0, funInterfaceJavaClassRef)
             } else {
                 var index = 0
-                call.putValueArgument(index++, irInt(argumentTypes.size + if (irFunctionReference.isSuspend) 1 else 0))
+                if (!isLightweightLambda) {
+                    call.putValueArgument(index++, irInt(argumentTypes.size + if (irFunctionReference.isSuspend) 1 else 0))
+                }
                 if (boundReceiver != null) {
                     call.putValueArgument(index++, generateBoundReceiver())
                 }

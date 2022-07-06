@@ -2513,6 +2513,11 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
                 runTest("compiler/testData/codegen/box/callableReference/function/innerConstructorFromTopLevelOneStringArg.kt");
             }
 
+            @TestMetadata("jvmSerializableLambdaGetArityViaFunctionImpl.kt")
+            public void testJvmSerializableLambdaGetArityViaFunctionImpl() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/function/jvmSerializableLambdaGetArityViaFunctionImpl.kt");
+            }
+
             @TestMetadata("kt21787.kt")
             public void testKt21787() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/function/kt21787.kt");
@@ -12233,6 +12238,21 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
         @TestMetadata("infixRecursiveCall.kt")
         public void testInfixRecursiveCall() throws Exception {
             runTest("compiler/testData/codegen/box/functions/infixRecursiveCall.kt");
+        }
+
+        @TestMetadata("jvmSerializableLambdaToString.kt")
+        public void testJvmSerializableLambdaToString() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToString.kt");
+        }
+
+        @TestMetadata("jvmSerializableLambdaToStringGeneric.kt")
+        public void testJvmSerializableLambdaToStringGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToStringGeneric.kt");
+        }
+
+        @TestMetadata("jvmSerializableLambdaToStringNoReflect.kt")
+        public void testJvmSerializableLambdaToStringNoReflect() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToStringNoReflect.kt");
         }
 
         @TestMetadata("kt1038.kt")
@@ -27815,6 +27835,19 @@ public class IrCodegenBoxWasmTestGenerated extends AbstractIrCodegenBoxWasmTest 
 
             public void testAllFilesPresentInIsInstance() throws Exception {
                 KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/isInstance"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
+            }
+        }
+
+        @TestMetadata("compiler/testData/codegen/box/reflection/jvmSerializableLambdas")
+        @TestDataPath("$PROJECT_ROOT")
+        @RunWith(JUnit3RunnerWithInners.class)
+        public static class JvmSerializableLambdas extends AbstractIrCodegenBoxWasmTest {
+            private void runTest(String testDataFilePath) throws Exception {
+                KotlinTestUtils.runTest0(this::doTest, TargetBackend.WASM, testDataFilePath);
+            }
+
+            public void testAllFilesPresentInJvmSerializableLambdas() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/jvmSerializableLambdas"), Pattern.compile("^([^_](.+))\\.kt$"), null, TargetBackend.WASM, true);
             }
         }
 

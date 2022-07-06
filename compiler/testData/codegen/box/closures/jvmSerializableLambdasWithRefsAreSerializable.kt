@@ -1,7 +1,9 @@
 // TARGET_BACKEND: JVM
-// LAMBDAS: CLASS
+// LAMBDAS: INDY
+// WITH_STDLIB
 
 import java.io.*
+import kotlin.jvm.*
 
 fun box(): String {
     var o = ""
@@ -14,7 +16,7 @@ fun box(): String {
     var c = '1'
     var z = true
 
-    val lambda = fun(): String {
+    val lambda = @JvmSerializableLambda fun(): String {
         o = "OK"
         b++; d++; f++; i++; j++; s++; c++
         z = false

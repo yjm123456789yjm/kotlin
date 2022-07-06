@@ -166,3 +166,10 @@ public expect annotation class Synchronized()
 @SinceKotlin("1.2")
 @OptionalExpectation
 internal expect annotation class JvmPackageName(val name: String)
+
+@Target(EXPRESSION)
+@Retention(AnnotationRetention.SOURCE)
+@MustBeDocumented
+@SinceKotlin("1.7")
+@OptionalExpectation
+public expect annotation class JvmSerializableLambda

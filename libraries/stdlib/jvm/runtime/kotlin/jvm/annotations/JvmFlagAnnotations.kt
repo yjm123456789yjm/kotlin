@@ -44,3 +44,8 @@ public actual annotation class Strictfp
 @Retention(AnnotationRetention.SOURCE)
 @MustBeDocumented
 public actual annotation class Synchronized
+
+@Target(EXPRESSION)
+@Retention(AnnotationRetention.SOURCE)
+@MustBeDocumented
+public actual annotation class JvmSerializableLambda

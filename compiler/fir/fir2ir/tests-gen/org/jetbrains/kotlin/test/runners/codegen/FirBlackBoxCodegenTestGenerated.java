@@ -4075,6 +4075,18 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             }
 
             @Test
+            @TestMetadata("jvmSerializableLambdaGetArityViaFunctionImpl.kt")
+            public void testJvmSerializableLambdaGetArityViaFunctionImpl() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/function/jvmSerializableLambdaGetArityViaFunctionImpl.kt");
+            }
+
+            @Test
+            @TestMetadata("jvmSerializableLambdaParameterNamesAndAvailability.kt")
+            public void testJvmSerializableLambdaParameterNamesAndAvailability() throws Exception {
+                runTest("compiler/testData/codegen/box/callableReference/function/jvmSerializableLambdaParameterNamesAndAvailability.kt");
+            }
+
+            @Test
             @TestMetadata("kt21787.kt")
             public void testKt21787() throws Exception {
                 runTest("compiler/testData/codegen/box/callableReference/function/kt21787.kt");
@@ -6099,6 +6111,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("extensionClosure.kt")
         public void testExtensionClosure() throws Exception {
             runTest("compiler/testData/codegen/box/closures/extensionClosure.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdasWithRefsAreSerializable.kt")
+        public void testJvmSerializableLambdasWithRefsAreSerializable() throws Exception {
+            runTest("compiler/testData/codegen/box/closures/jvmSerializableLambdasWithRefsAreSerializable.kt");
         }
 
         @Test
@@ -18255,6 +18273,24 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         @TestMetadata("infixRecursiveCall.kt")
         public void testInfixRecursiveCall() throws Exception {
             runTest("compiler/testData/codegen/box/functions/infixRecursiveCall.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdaToString.kt")
+        public void testJvmSerializableLambdaToString() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToString.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdaToStringGeneric.kt")
+        public void testJvmSerializableLambdaToStringGeneric() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToStringGeneric.kt");
+        }
+
+        @Test
+        @TestMetadata("jvmSerializableLambdaToStringNoReflect.kt")
+        public void testJvmSerializableLambdaToStringNoReflect() throws Exception {
+            runTest("compiler/testData/codegen/box/functions/jvmSerializableLambdaToStringNoReflect.kt");
         }
 
         @Test
@@ -41902,6 +41938,70 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
             @TestMetadata("isInstanceCastAndSafeCast.kt")
             public void testIsInstanceCastAndSafeCast() throws Exception {
                 runTest("compiler/testData/codegen/box/reflection/isInstance/isInstanceCastAndSafeCast.kt");
+            }
+        }
+
+        @Nested
+        @TestMetadata("compiler/testData/codegen/box/reflection/jvmSerializableLambdas")
+        @TestDataPath("$PROJECT_ROOT")
+        public class JvmSerializableLambdas {
+            @Test
+            public void testAllFilesPresentInJvmSerializableLambdas() throws Exception {
+                KtTestUtil.assertAllTestsPresentByMetadataWithExcluded(this.getClass(), new File("compiler/testData/codegen/box/reflection/jvmSerializableLambdas"), Pattern.compile("^(.+)\\.kt$"), null, TargetBackend.JVM_IR, true);
+            }
+
+            @Test
+            @TestMetadata("parameterNamesAndNullability.kt")
+            public void testParameterNamesAndNullability() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/parameterNamesAndNullability.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnDefaultWithInlineClassArgument.kt")
+            public void testReflectOnDefaultWithInlineClassArgument() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnDefaultWithInlineClassArgument.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnLambdaInArrayConstructor.kt")
+            public void testReflectOnLambdaInArrayConstructor() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnLambdaInArrayConstructor.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnLambdaInConstructor.kt")
+            public void testReflectOnLambdaInConstructor() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnLambdaInConstructor.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnLambdaInField.kt")
+            public void testReflectOnLambdaInField() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnLambdaInField.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnLambdaInStaticField.kt")
+            public void testReflectOnLambdaInStaticField() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnLambdaInStaticField.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnLambdaInSuspend.kt")
+            public void testReflectOnLambdaInSuspend() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnLambdaInSuspend.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnLambdaInSuspendLambda.kt")
+            public void testReflectOnLambdaInSuspendLambda() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnLambdaInSuspendLambda.kt");
+            }
+
+            @Test
+            @TestMetadata("reflectOnSuspendLambdaInField.kt")
+            public void testReflectOnSuspendLambdaInField() throws Exception {
+                runTest("compiler/testData/codegen/box/reflection/jvmSerializableLambdas/reflectOnSuspendLambdaInField.kt");
             }
         }
 

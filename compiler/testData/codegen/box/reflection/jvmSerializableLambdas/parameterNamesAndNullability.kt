@@ -1,7 +1,11 @@
 // !OPT_IN: kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
-// TARGET_BACKEND: JVM
+// LAMBDAS: INDY
+// TARGET_BACKEND: JVM_IR
+
+// WITH_STDLIB
 // WITH_REFLECT
-// LAMBDAS: CLASS
+
+import kotlin.jvm.JvmSerializableLambda
 
 import kotlin.reflect.KParameter
 import kotlin.reflect.jvm.reflect
@@ -9,7 +13,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertNull
 
 fun lambda() {
-    val f = { x: Int, y: String? -> }
+    val f = @JvmSerializableLambda { x: Int, y: String? -> }
 
     val g = f.reflect()!!
 
@@ -20,7 +24,7 @@ fun lambda() {
 }
 
 fun funExpr() {
-    val f = fun(x: Int, y: String?) {}
+    val f = @JvmSerializableLambda fun(x: Int, y: String?) {}
 
     val g = f.reflect()!!
 
@@ -31,7 +35,7 @@ fun funExpr() {
 }
 
 fun extensionFunExpr() {
-    val f = fun String.(): String = this
+    val f = @JvmSerializableLambda fun String.(): String = this
 
     val g = f.reflect()!!
 

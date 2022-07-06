@@ -1,13 +1,16 @@
 // !OPT_IN: kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
-// TARGET_BACKEND: JVM
-// WITH_REFLECT
-// LAMBDAS: CLASS
+// LAMBDAS: INDY
+// TARGET_BACKEND: JVM_IR
 
+// WITH_STDLIB
+// WITH_REFLECT
+
+import kotlin.jvm.JvmSerializableLambda
 import kotlin.reflect.jvm.reflect
 
 class C {
-    val o = { O: String -> }
-    val k = { K: String -> }
+    val o = @JvmSerializableLambda { O: String -> }
+    val k = @JvmSerializableLambda { K: String -> }
 
     constructor(y: Int)
     constructor(y: String)

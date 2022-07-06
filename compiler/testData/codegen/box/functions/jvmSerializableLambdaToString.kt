@@ -1,12 +1,8 @@
-// IGNORE_BACKEND: WASM
-// WASM_MUTE_REASON: IGNORED_IN_JS
-// IGNORE_BACKEND: JS_IR
-// IGNORE_BACKEND: JS_IR_ES6
-// TODO: muted automatically, investigate should it be ran for JS or not
-// IGNORE_BACKEND: JS, NATIVE
-// LAMBDAS: CLASS
-
+// LAMBDAS: INDY
+// WITH_STDLIB
 // WITH_REFLECT
+
+import kotlin.jvm.JvmSerializableLambda
 
 fun check(expected: String, obj: Any?) {
     val actual = obj.toString()
@@ -16,28 +12,28 @@ fun check(expected: String, obj: Any?) {
 
 fun box(): String {
     check("() -> kotlin.Unit",
-          { -> })
+          @JvmSerializableLambda { -> })
     check("() -> kotlin.Int",
-          { -> 42 })
+          @JvmSerializableLambda { -> 42 })
     check("(kotlin.String) -> kotlin.Long",
-          fun (s: String) = 42.toLong())
+          @JvmSerializableLambda fun (s: String) = 42.toLong())
     check("(kotlin.Int, kotlin.Int) -> kotlin.Unit",
-          { x: Int, y: Int -> })
+          @JvmSerializableLambda { x: Int, y: Int -> })
 
     check("kotlin.Int.() -> kotlin.Unit",
-          fun Int.() {})
+          @JvmSerializableLambda fun Int.() {})
     check("kotlin.Unit.() -> kotlin.Int?",
-          fun Unit.(): Int? = 42)
+          @JvmSerializableLambda fun Unit.(): Int? = 42)
     check("kotlin.String.(kotlin.String?) -> kotlin.Long",
-          fun String.(s: String?): Long = 42.toLong())
+          @JvmSerializableLambda fun String.(s: String?): Long = 42.toLong())
     check("kotlin.collections.List<kotlin.String>.(kotlin.collections.MutableSet<*>, kotlin.Nothing) -> kotlin.Unit",
-          fun List<String>.(x: MutableSet<*>, y: Nothing) {})
+          @JvmSerializableLambda fun List<String>.(x: MutableSet<*>, y: Nothing) {})
 
     check("(kotlin.IntArray, kotlin.ByteArray, kotlin.ShortArray, kotlin.CharArray, kotlin.LongArray, kotlin.BooleanArray, kotlin.FloatArray, kotlin.DoubleArray) -> kotlin.Array<kotlin.Int>",
-          fun (ia: IntArray, ba: ByteArray, sa: ShortArray, ca: CharArray, la: LongArray, za: BooleanArray, fa: FloatArray, da: DoubleArray): Array<Int> = null!!)
+          @JvmSerializableLambda fun (ia: IntArray, ba: ByteArray, sa: ShortArray, ca: CharArray, la: LongArray, za: BooleanArray, fa: FloatArray, da: DoubleArray): Array<Int> = null!!)
 
     check("(kotlin.Array<kotlin.Array<kotlin.Array<kotlin.collections.List<kotlin.String>>>>) -> kotlin.Comparable<kotlin.String>",
-          fun (a: Array<Array<Array<List<String>>>>): Comparable<String> = null!!)
+          @JvmSerializableLambda fun (a: Array<Array<Array<List<String>>>>): Comparable<String> = null!!)
 
     return "OK"
 }

@@ -1,11 +1,15 @@
 // !OPT_IN: kotlin.reflect.jvm.ExperimentalReflectionOnLambdas
-// TARGET_BACKEND: JVM
+// LANGUAGE: +GenerateIndyLambdasOnJvmByDefault
+// TARGET_BACKEND: JVM_IR
+
+// WITH_STDLIB
 // WITH_REFLECT
-// LAMBDAS: CLASS
+
+import kotlin.jvm.JvmSerializableLambda
 
 import kotlin.reflect.jvm.reflect
 
-val x = { OK: String -> }
+val x = @JvmSerializableLambda { OK: String -> }
 
 fun box(): String {
     return x.reflect()?.parameters?.singleOrNull()?.name ?: "null"
