@@ -598,7 +598,8 @@ internal class DescriptorRendererImpl(
 
     override fun render(declarationDescriptor: DeclarationDescriptor): String {
         return buildString {
-            declarationDescriptor.accept(RenderDeclarationDescriptorVisitor(), this)
+            val renderDeclarationDescriptorVisitor = RenderDeclarationDescriptorVisitor()
+            declarationDescriptor.accept(renderDeclarationDescriptorVisitor, this)
 
             if (withDefinedIn) {
                 appendDefinedIn(declarationDescriptor)
@@ -678,7 +679,7 @@ internal class DescriptorRendererImpl(
     }
 
     /* FUNCTIONS */
-    private fun renderFunction(function: FunctionDescriptor, builder: StringBuilder) {
+    private fun renderFunction(function: FunctionDescriptor, builder: StringBuilder) { // here
         if (!startFromName) {
             if (!startFromDeclarationKeyword) {
                 builder.renderAnnotations(function)

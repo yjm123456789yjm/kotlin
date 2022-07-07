@@ -204,6 +204,10 @@ class MemberDeserializer(private val c: DeserializationContext) {
             ProtoEnumFlags.memberKind(Flags.MEMBER_KIND.get(flags)), proto, c.nameResolver, c.typeTable, versionRequirementTable,
             c.containerSource
         )
+        if (function.toString().contains("infix fun and")) {
+            println("---- DeserializedSimpleFunctionDescriptor init function")
+            "".hashCode()
+        }
 
         val local = c.childContext(function, proto.typeParameterList)
 
