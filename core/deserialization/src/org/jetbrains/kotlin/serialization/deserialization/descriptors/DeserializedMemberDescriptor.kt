@@ -56,6 +56,13 @@ class DeserializedSimpleFunctionDescriptor(
         source ?: SourceElement.NO_SOURCE
     ) {
 
+    init {
+        if (toString().contains("infix fun and")) {
+            "".hashCode()
+            println("---- DeserializedSimpleFunctionDescriptor init")
+        }
+    }
+
     override fun createSubstitutedCopy(
         newOwner: DeclarationDescriptor,
         original: FunctionDescriptor?,
@@ -68,6 +75,10 @@ class DeserializedSimpleFunctionDescriptor(
             newOwner, original as SimpleFunctionDescriptor?, annotations, newName ?: name, kind,
             proto, nameResolver, typeTable, versionRequirementTable, containerSource, source
         ).also {
+            if (it.toString().contains("infix fun and")) {
+                "".hashCode()
+                println("---- DeserializedSimpleFunctionDescriptor init also")
+            }
             it.setHasStableParameterNames(hasStableParameterNames())
         }
     }

@@ -42,6 +42,10 @@ public final class ClassId {
     private final boolean local;
 
     public ClassId(@NotNull FqName packageFqName, @NotNull FqName relativeClassName, boolean local) {
+        if (relativeClassName.toString().contains("ExperimentalStdlibApi")) {
+            System.out.println("---------- ClassId ExperimentalStdlibApi");
+            "".hashCode();
+        }
         this.packageFqName = packageFqName;
         assert !relativeClassName.isRoot() :
                 "Class name must not be root: " + packageFqName + (local ? " (local)" : "");
