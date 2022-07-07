@@ -31,7 +31,6 @@ public class Boolean private constructor() : Comparable<Boolean> {
      * Performs a logical `and` operation between this Boolean and the [other] one. Unlike the `&&` operator,
      * this function does not perform short-circuit evaluation. Both `this` and [other] will always be evaluated.
      */
-    // hi
     @kotlin.internal.IntrinsicConstEvaluation
     public infix fun and(other: Boolean): Boolean
 

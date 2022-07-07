@@ -66,9 +66,6 @@ class ClassDeserializer(private val components: DeserializationComponents) {
             )
         }
 
-        if (classId.toString().contains("ExperimentalStdlibApi")) {
-            "".hashCode()
-        }
         return DeserializedClassDescriptor(outerContext, classProto, nameResolver, metadataVersion, sourceElement)
     }
 

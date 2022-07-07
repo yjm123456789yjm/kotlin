@@ -21,10 +21,6 @@ class DecompiledTextIndex(private val indexers: Collection<DecompiledTextIndexer
     private val indexerToMap: Map<DecompiledTextIndexer<*>, MutableMap<Any, TextRange>> = indexers.keysToMap { hashMapOf<Any, TextRange>() }
 
     fun addToIndex(descriptor: DeclarationDescriptor, textRange: TextRange) {
-//        println("---- DecompiledTextIndex.addToIndex")
-        if (descriptor.toString().contains("ExperimentalStdlibApi")) {
-            "".hashCode()
-        }
         indexers.forEach { mapper ->
             val correspondingMap = indexerToMap.getValue(mapper)
             mapper.indexDescriptor(descriptor).forEach { key ->
