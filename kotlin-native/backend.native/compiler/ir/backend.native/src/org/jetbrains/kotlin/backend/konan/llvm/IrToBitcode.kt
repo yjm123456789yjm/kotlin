@@ -17,8 +17,6 @@ import org.jetbrains.kotlin.backend.konan.lower.*
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
-import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER
-import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
@@ -499,9 +497,6 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                             .filter { !context.useLazyFileInitializers() || it.shouldBeInitializedEagerly }
                             .filterNot { it.storageKind(context) == FieldStorageKind.THREAD_LOCAL }
                             .forEach { initGlobalField(it) }
-                    context.llvm.initializersGenerationState.moduleGlobalInitializers.forEach {
-                        evaluateSimpleFunctionCall(it, emptyList(), Lifetime.IRRELEVANT)
-                    }
                     ret(null)
                 }
 
@@ -515,9 +510,6 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                             .filter { !context.useLazyFileInitializers() || it.shouldBeInitializedEagerly }
                             .filter { it.storageKind(context) == FieldStorageKind.THREAD_LOCAL }
                             .forEach { initThreadLocalField(it) }
-                    context.llvm.initializersGenerationState.moduleThreadLocalInitializers.forEach {
-                        evaluateSimpleFunctionCall(it, emptyList(), Lifetime.IRRELEVANT, null)
-                    }
                     ret(null)
                 }
 
@@ -816,16 +808,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             context.llvm.initializersGenerationState.threadLocalInitFunction = declaration
             context.llvm.initializersGenerationState.threadLocalInitState = getThreadLocalInitStateFor(declaration.parent as IrFile)
         }
-        if (declaration.origin == DECLARATION_ORIGIN_MODULE_GLOBAL_INITIALIZER) {
-            require(declaration.valueParameters.isEmpty()) { "Module initializer must be a parameterless function" }
-            require(declaration.returnsUnit()) { "Module initializer must return Unit" }
-            context.llvm.initializersGenerationState.moduleGlobalInitializers.add(declaration)
-        }
-        if (declaration.origin == DECLARATION_ORIGIN_MODULE_THREAD_LOCAL_INITIALIZER) {
-            require(declaration.valueParameters.isEmpty()) { "Module initializer must be a parameterless function" }
-            require(declaration.returnsUnit()) { "Module initializer must return Unit" }
-            context.llvm.initializersGenerationState.moduleThreadLocalInitializers.add(declaration)
-        }
+
 
         if ((declaration as? IrSimpleFunction)?.modality == Modality.ABSTRACT
                 || declaration.isExternal
