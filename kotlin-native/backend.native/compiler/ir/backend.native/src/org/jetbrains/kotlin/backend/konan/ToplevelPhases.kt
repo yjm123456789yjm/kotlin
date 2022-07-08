@@ -522,7 +522,7 @@ internal val bitcodePhase = NamedCompilerPhase(
                 buildDFGPhase then
                 devirtualizationAnalysisPhase then
                 dcePhase then
-                removeRedundantCallsToFileInitializersPhase then
+                removeRedundantCallsToStaticInitializersPhase then
                 devirtualizationPhase then
                 propertyAccessorInlinePhase then // Have to run after link dependencies phase, because fields
                                                  // from dependencies can be changed during lowerings.
@@ -638,12 +638,12 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         disableUnless(propertyAccessorInlinePhase, config.optimizationsEnabled)
         disableUnless(inlineClassPropertyAccessorsPhase, config.optimizationsEnabled)
         disableUnless(dcePhase, config.optimizationsEnabled)
-        disableUnless(removeRedundantCallsToFileInitializersPhase, config.optimizationsEnabled)
+        disableUnless(removeRedundantCallsToStaticInitializersPhase, config.optimizationsEnabled)
         disableUnless(ghaPhase, config.optimizationsEnabled)
         disableUnless(verifyBitcodePhase, config.needCompilerVerification || getBoolean(KonanConfigKeys.VERIFY_BITCODE))
 
         disableUnless(fileInitializersPhase, config.propertyLazyInitialization)
-        disableUnless(removeRedundantCallsToFileInitializersPhase, config.propertyLazyInitialization)
+        disableUnless(removeRedundantCallsToStaticInitializersPhase, config.propertyLazyInitialization)
 
         disableUnless(removeRedundantSafepointsPhase, config.memoryModel == MemoryModel.EXPERIMENTAL)
 

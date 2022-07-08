@@ -408,9 +408,9 @@ internal val expressionBodyTransformPhase = makeKonanFileLoweringPhase(
 )
 
 internal val fileInitializersPhase = makeKonanFileLoweringPhase(
-        ::FileInitializersLowering,
-        name = "FileInitializers",
-        description = "Add calls to file initializers",
+        ::StaticInitializersLowering,
+        name = "StaticInitializers",
+        description = "Add calls to static initializers",
         prerequisite = setOf(expressionBodyTransformPhase)
 )
 

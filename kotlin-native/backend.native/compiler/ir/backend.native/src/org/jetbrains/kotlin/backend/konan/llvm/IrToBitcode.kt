@@ -14,9 +14,9 @@ import org.jetbrains.kotlin.backend.konan.descriptors.*
 import org.jetbrains.kotlin.backend.konan.ir.*
 import org.jetbrains.kotlin.backend.konan.llvm.coverage.LLVMCoverageInstrumentation
 import org.jetbrains.kotlin.backend.konan.lower.*
-import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER
-import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER
-import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
+import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_STATIC_GLOBAL_INITIALIZER
+import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_STATIC_STANDALONE_THREAD_LOCAL_INITIALIZER
+import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_STATIC_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.builtins.UnsignedType
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
@@ -791,7 +791,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
 
         val body = declaration.body
 
-        if (declaration.origin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER) {
+        if (declaration.origin == DECLARATION_ORIGIN_STATIC_GLOBAL_INITIALIZER) {
             require(context.llvm.initializersGenerationState.globalInitFunction == null) { "There can only be at most one global file initializer" }
             require(body == null) { "The body of file initializer should be null" }
             require(declaration.valueParameters.isEmpty()) { "File initializer must be parameterless" }
@@ -799,8 +799,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             context.llvm.initializersGenerationState.globalInitFunction = declaration
             context.llvm.initializersGenerationState.globalInitState = getGlobalInitStateFor(declaration.parent as IrFile)
         }
-        if (declaration.origin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER
-                || declaration.origin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER) {
+        if (declaration.origin == DECLARATION_ORIGIN_STATIC_THREAD_LOCAL_INITIALIZER
+                || declaration.origin == DECLARATION_ORIGIN_STATIC_STANDALONE_THREAD_LOCAL_INITIALIZER) {
             require(context.llvm.initializersGenerationState.threadLocalInitFunction == null) { "There can only be at most one thread local file initializer" }
             require(body == null) { "The body of file initializer should be null" }
             require(declaration.valueParameters.isEmpty()) { "File initializer must be parameterless" }
@@ -2389,9 +2389,9 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         return when {
             function.isTypedIntrinsic -> intrinsicGenerator.evaluateCall(callee, args, resultSlot)
             function.isBuiltInOperator -> evaluateOperatorCall(callee, argsWithContinuationIfNeeded)
-            function.origin == DECLARATION_ORIGIN_FILE_GLOBAL_INITIALIZER -> evaluateFileGlobalInitializerCall(function)
-            function.origin == DECLARATION_ORIGIN_FILE_THREAD_LOCAL_INITIALIZER -> evaluateFileThreadLocalInitializerCall(function)
-            function.origin == DECLARATION_ORIGIN_FILE_STANDALONE_THREAD_LOCAL_INITIALIZER -> evaluateFileStandaloneThreadLocalInitializerCall(function)
+            function.origin == DECLARATION_ORIGIN_STATIC_GLOBAL_INITIALIZER -> evaluateFileGlobalInitializerCall(function)
+            function.origin == DECLARATION_ORIGIN_STATIC_THREAD_LOCAL_INITIALIZER -> evaluateFileThreadLocalInitializerCall(function)
+            function.origin == DECLARATION_ORIGIN_STATIC_STANDALONE_THREAD_LOCAL_INITIALIZER -> evaluateFileStandaloneThreadLocalInitializerCall(function)
             else -> evaluateSimpleFunctionCall(function, argsWithContinuationIfNeeded, resultLifetime, callee.superQualifierSymbol?.owner, resultSlot)
         }
     }

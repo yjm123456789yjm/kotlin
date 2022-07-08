@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.backend.konan.llvm
 
 import llvm.*
-import org.jetbrains.kotlin.backend.common.LoggingContext
 import org.jetbrains.kotlin.backend.common.phaser.CompilerPhase
 import org.jetbrains.kotlin.backend.common.phaser.PhaseConfig
 import org.jetbrains.kotlin.backend.common.phaser.PhaserState
@@ -26,7 +25,6 @@ import org.jetbrains.kotlin.ir.util.isFunction
 import org.jetbrains.kotlin.ir.util.isReal
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.ir.visitors.*
-import org.jetbrains.kotlin.konan.target.Architecture
 import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.cast
 
@@ -231,9 +229,9 @@ internal val dcePhase = makeKonanModuleOpPhase(
         }
 )
 
-internal val removeRedundantCallsToFileInitializersPhase = makeKonanModuleOpPhase(
-        name = "RemoveRedundantCallsToFileInitializersPhase",
-        description = "Redundant file initializers calls removal",
+internal val removeRedundantCallsToStaticInitializersPhase = makeKonanModuleOpPhase(
+        name = "RemoveRedundantCallsToStaticInitializersPhase",
+        description = "Redundant static initializers calls removal",
         prerequisite = setOf(devirtualizationAnalysisPhase),
         op = { context, _ ->
             val moduleDFG = context.moduleDFG!!
@@ -250,7 +248,7 @@ internal val removeRedundantCallsToFileInitializersPhase = makeKonanModuleOpPhas
                     .mapNotNull { it.irFunction }
                     .toSet()
 
-            FileInitializersOptimization.removeRedundantCalls(context, callGraph, rootSet)
+            StaticInitializersOptimization.removeRedundantCalls(context, callGraph, rootSet)
         }
 )
 
