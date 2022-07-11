@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_STATIC_GLOBAL
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_STATIC_STANDALONE_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.backend.konan.lower.DECLARATION_ORIGIN_STATIC_THREAD_LOCAL_INITIALIZER
 import org.jetbrains.kotlin.builtins.UnsignedType
+import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.Modality
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
@@ -91,7 +92,7 @@ internal fun IrField.isGlobalNonPrimitive(context: Context) = when  {
 internal fun IrField.shouldBeFrozen(context: Context): Boolean =
         this.storageKind(context) == FieldStorageKind.SHARED_FROZEN
 
-internal class RTTIGeneratorVisitor(context: Context) : IrElementVisitorVoid {
+internal class RTTIGeneratorVisitor(val context: Context) : IrElementVisitorVoid {
     val generator = RTTIGenerator(context)
 
     val kotlinObjCClassInfoGenerator = KotlinObjCClassInfoGenerator(context)
@@ -362,15 +363,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }
     }
 
-    private fun runAndProcessInitializers(konanLibrary: KotlinLibrary?, f: () -> Unit) {
-        // TODO: collect those two in one place.
-        context.llvm.fileUsesThreadLocalObjects = false
-        context.llvm.globalSharedObjects.clear()
-
-        context.llvm.initializersGenerationState.reset()
-
-        f()
-
+    private fun buildInitializerFunctions() {
         context.llvm.initializersGenerationState.globalInitFunction?.let { fileInitFunction ->
             generateFunction(codegen, fileInitFunction, fileInitFunction.location(start = true), fileInitFunction.location(start = false)) {
                 using(FunctionScope(fileInitFunction, this)) {
@@ -404,7 +397,18 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
                 }
             }
         }
+    }
 
+    private fun runAndProcessInitializers(konanLibrary: KotlinLibrary?, f: () -> Unit) {
+        // TODO: collect those two in one place.
+        context.llvm.fileUsesThreadLocalObjects = false
+        context.llvm.globalSharedObjects.clear()
+
+        context.llvm.initializersGenerationState.reset()
+
+        f()
+
+        buildInitializerFunctions()
         if (!context.llvm.fileUsesThreadLocalObjects && context.llvm.globalSharedObjects.isEmpty()
                 && context.llvm.initializersGenerationState.isEmpty()) {
             return
@@ -774,16 +778,16 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
         }.toMap()
     }
 
-    private fun getGlobalInitStateFor(file: IrFile): LLVMValueRef =
-            context.llvm.initializersGenerationState.fileGlobalInitStates.getOrPut(file) {
-                codegen.addGlobal("state_global$${file.fileEntry.name}", int32Type, false).also {
+    private fun getGlobalInitStateFor(container: IrDeclarationContainer): LLVMValueRef =
+            context.llvm.initializersGenerationState.fileGlobalInitStates.getOrPut(container) {
+                codegen.addGlobal("state_global$${container.fqNameForIrSerialization}", int32Type, false).also {
                     LLVMSetInitializer(it, Int32(FILE_NOT_INITIALIZED).llvm)
                 }
             }
 
-    private fun getThreadLocalInitStateFor(file: IrFile): AddressAccess =
-            context.llvm.initializersGenerationState.fileThreadLocalInitStates.getOrPut(file) {
-                codegen.addKotlinThreadLocal("state_thread_local$${file.fileEntry.name}", int32Type)
+    private fun getThreadLocalInitStateFor(container: IrDeclarationContainer): AddressAccess =
+            context.llvm.initializersGenerationState.fileThreadLocalInitStates.getOrPut(container) {
+                codegen.addKotlinThreadLocal("state_thread_local$${container.fqNameForIrSerialization}", int32Type)
             }
 
     override fun visitFunction(declaration: IrFunction) {
@@ -797,7 +801,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             require(declaration.valueParameters.isEmpty()) { "File initializer must be parameterless" }
             require(declaration.returnsUnit()) { "File initializer must return Unit" }
             context.llvm.initializersGenerationState.globalInitFunction = declaration
-            context.llvm.initializersGenerationState.globalInitState = getGlobalInitStateFor(declaration.parent as IrFile)
+            context.llvm.initializersGenerationState.globalInitState = getGlobalInitStateFor(declaration.parent as IrDeclarationContainer)
         }
         if (declaration.origin == DECLARATION_ORIGIN_STATIC_THREAD_LOCAL_INITIALIZER
                 || declaration.origin == DECLARATION_ORIGIN_STATIC_STANDALONE_THREAD_LOCAL_INITIALIZER) {
@@ -806,7 +810,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             require(declaration.valueParameters.isEmpty()) { "File initializer must be parameterless" }
             require(declaration.returnsUnit()) { "File initializer must return Unit" }
             context.llvm.initializersGenerationState.threadLocalInitFunction = declaration
-            context.llvm.initializersGenerationState.threadLocalInitState = getThreadLocalInitStateFor(declaration.parent as IrFile)
+            context.llvm.initializersGenerationState.threadLocalInitState = getThreadLocalInitStateFor(declaration.parent as IrDeclarationContainer)
         }
 
 
@@ -880,12 +884,27 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
             return
         }
         using(ClassScope(declaration)) {
+            //TODO: this is hack
+            val init = context.llvm.initializersGenerationState
+            var topLevelFields = init.topLevelFields
+            var globalInitFunction = init.globalInitFunction
+            var globalInitState = init.globalInitState
+            var threadLocalInitFunction = init.threadLocalInitFunction
+            var threadLocalInitState = init.threadLocalInitState
+            init.reset()
             declaration.declarations.forEach {
                 it.acceptVoid(this)
             }
+            buildInitializerFunctions()
+            init.topLevelFields = topLevelFields
+            init.globalInitFunction = globalInitFunction
+            init.globalInitState = globalInitState
+            init.threadLocalInitFunction = threadLocalInitFunction
+            init.threadLocalInitState = threadLocalInitState
+
         }
 
-        if (declaration.kind.isSingleton && !declaration.isUnit()) {
+        if (declaration.kind == ClassKind.ENUM_ENTRY) {
             val singleton = context.llvmDeclarations.forSingleton(declaration)
             val access = singleton.instanceStorage
             if (access is GlobalAddressAccess) {
@@ -2397,7 +2416,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     }
 
     private fun evaluateFileGlobalInitializerCall(fileInitializer: IrFunction) = with(functionGenerationContext) {
-        val statePtr = getGlobalInitStateFor(fileInitializer.parent as IrFile)
+        val statePtr = getGlobalInitStateFor(fileInitializer.parent as IrDeclarationContainer)
         val initializerPtr = with(codegen) { fileInitializer.llvmFunction.llvmValue }
 
         val bbInit = basicBlock("label_init", null)
@@ -2417,8 +2436,8 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     }
 
     private fun evaluateFileThreadLocalInitializerCall(fileInitializer: IrFunction) = with(functionGenerationContext) {
-        val globalStatePtr = getGlobalInitStateFor(fileInitializer.parent as IrFile)
-        val localState = getThreadLocalInitStateFor(fileInitializer.parent as IrFile)
+        val globalStatePtr = getGlobalInitStateFor(fileInitializer.parent as IrDeclarationContainer)
+        val localState = getThreadLocalInitStateFor(fileInitializer.parent as IrDeclarationContainer)
         val localStatePtr = localState.getAddress(functionGenerationContext)
         val initializerPtr = with(codegen) { fileInitializer.llvmFunction.llvmValue }
 
@@ -2444,7 +2463,7 @@ internal class CodeGeneratorVisitor(val context: Context, val lifetimes: Map<IrE
     }
 
     private fun evaluateFileStandaloneThreadLocalInitializerCall(fileInitializer: IrFunction) = with(functionGenerationContext) {
-        val state = getThreadLocalInitStateFor(fileInitializer.parent as IrFile)
+        val state = getThreadLocalInitStateFor(fileInitializer.parent as IrDeclarationContainer)
         val statePtr = state.getAddress(functionGenerationContext)
         val initializerPtr = with(codegen) { fileInitializer.llvmFunction.llvmValue }
 

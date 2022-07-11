@@ -302,6 +302,7 @@ internal val allLoweringsPhase = NamedCompilerPhase(
                         coroutinesPhase,
                         typeOperatorPhase,
                         expressionBodyTransformPhase,
+                        objectClassesPhase,
                         fileInitializersPhase,
                         bridgesPhase,
                         autoboxPhase,

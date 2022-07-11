@@ -212,11 +212,7 @@ private class DeclarationsGeneratorVisitor(override val context: Context) :
         if (declaration.isUnit() || declaration.isKotlinArray())
             createUniqueDeclarations(declaration, typeInfoPtr, bodyType)
 
-        val singletonDeclarations = if (declaration.kind.isSingleton) {
-            createSingletonDeclarations(declaration)
-        } else {
-            null
-        }
+        val singletonDeclarations = null
 
         val objCDeclarations = if (declaration.isKotlinObjCClass()) {
             createKotlinObjCClassDeclarations(declaration)
@@ -305,7 +301,7 @@ private class DeclarationsGeneratorVisitor(override val context: Context) :
         super.visitField(declaration)
 
         val containingClass = declaration.parent as? IrClass
-        if (containingClass != null) {
+        if (containingClass != null && !declaration.isStatic) {
             if (!containingClass.requiresRtti()) return
             val classDeclarations = (containingClass.metadata as? CodegenClassMetadata)?.llvm
                     ?: error(containingClass.descriptor.toString())

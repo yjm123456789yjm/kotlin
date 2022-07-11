@@ -234,17 +234,17 @@ internal val FqName.localHash: LocalHash
     get() = this.toString().localHash
 
 internal class InitializersGenerationState {
-    val fileGlobalInitStates = mutableMapOf<IrFile, LLVMValueRef>()
-    val fileThreadLocalInitStates = mutableMapOf<IrFile, AddressAccess>()
+    val fileGlobalInitStates = mutableMapOf<IrDeclarationContainer, LLVMValueRef>()
+    val fileThreadLocalInitStates = mutableMapOf<IrDeclarationContainer, AddressAccess>()
 
-    val topLevelFields = mutableListOf<IrField>()
+    var topLevelFields = mutableListOf<IrField>()
     var globalInitFunction: IrFunction? = null
     var globalInitState: LLVMValueRef? = null
     var threadLocalInitFunction: IrFunction? = null
     var threadLocalInitState: AddressAccess? = null
 
     fun reset() {
-        topLevelFields.clear()
+        topLevelFields = mutableListOf<IrField>()
         globalInitFunction = null
         globalInitState = null
         threadLocalInitFunction = null

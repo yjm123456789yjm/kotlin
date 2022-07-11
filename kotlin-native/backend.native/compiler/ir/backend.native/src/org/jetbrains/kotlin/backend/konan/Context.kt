@@ -46,6 +46,7 @@ import org.jetbrains.kotlin.backend.konan.serialization.SerializedClassFields
 import org.jetbrains.kotlin.backend.konan.serialization.SerializedInlineFunctionReference
 import org.jetbrains.kotlin.ir.declarations.lazy.IrLazyClass
 import org.jetbrains.kotlin.ir.deepCopyWithVariables
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.ir.symbols.impl.IrFieldSymbolImpl
@@ -329,7 +330,7 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
     var coroutineCount = 0
 
     fun needGlobalInit(field: IrField): Boolean {
-        if (field.descriptor.containingDeclaration !is PackageFragmentDescriptor) return false
+        if (field.descriptor.containingDeclaration !is PackageFragmentDescriptor) return field.isStatic
         // TODO: add some smartness here. Maybe if package of the field is in never accessed
         // assume its global init can be actually omitted.
         return true
@@ -527,6 +528,8 @@ internal class Context(config: KonanConfig) : KonanBackendContext(config) {
             }
         }
     }
+
+    val objectInstanceMethods = mutableMapOf<IrClassSymbol, IrFunction>()
 }
 
 private fun MemberScope.getContributedClassifier(name: String) =
