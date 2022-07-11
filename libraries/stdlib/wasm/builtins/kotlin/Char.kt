@@ -93,7 +93,7 @@ public class Char private constructor(public val value: Char) : Comparable<Char>
         this.toInt().toDouble()
 
     override fun toString(): String =
-        String.unsafeFromCharArray(WasmCharArray(1).also { it.set(0, this) })
+        String(WasmCharArray(1).also { it.set(0, this) })
 
     override fun hashCode(): Int =
         this.toInt().hashCode()
