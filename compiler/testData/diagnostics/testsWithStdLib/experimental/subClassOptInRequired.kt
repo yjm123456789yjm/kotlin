@@ -34,3 +34,18 @@ fun test() {
     val d3 = DerivedThird()
     val d4 = DerivedFourth()
 }
+
+fun test2(b: Base, g: Generic<Base>) {
+    object : <!OPT_IN_USAGE_ERROR!>Base<!>() {}
+}
+
+open class Generic<T>
+
+class DerivedGeneric : Generic<Base>()
+
+@SubclassOptInRequired(Marker::class)
+interface BaseInterface
+
+interface DerivedInterface : <!OPT_IN_USAGE_ERROR!>BaseInterface<!>
+
+class Delegated(val bi: BaseInterface) : <!OPT_IN_USAGE_ERROR!>BaseInterface<!> by bi
