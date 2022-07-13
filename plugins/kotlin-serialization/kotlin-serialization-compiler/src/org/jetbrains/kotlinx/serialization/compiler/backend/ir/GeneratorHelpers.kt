@@ -66,19 +66,32 @@ interface IrBuilderExtension {
         return throwMissedFieldExceptionFunc != null && throwMissedFieldExceptionArrayFunc != null
     }
 
-    fun IrClass.contributeFunction(descriptor: FunctionDescriptor, ignoreWhenMissing: Boolean = false, bodyGen: IrBlockBodyBuilder.(IrFunction) -> Unit) {
+    fun IrClass.contributeSyntheticFunction(
+        descriptor: FunctionDescriptor,
+        ignoreWhenMissing: Boolean = false,
+        bodyGen: IrBlockBodyBuilder.(IrFunction) -> Unit
+    ) = contributeFunction(descriptor, ignoreWhenMissing, SERIALIZABLE_PLUGIN_ORIGIN, bodyGen)
+
+    fun IrClass.contributeFunction(
+        descriptor: FunctionDescriptor,
+        ignoreWhenMissing: Boolean = false,
+        origin: IrDeclarationOrigin? = null,
+        bodyGen: IrBlockBodyBuilder.(IrFunction) -> Unit
+    ) {
         val f: IrSimpleFunction = searchForDeclaration(descriptor)
             ?: (if (ignoreWhenMissing) return else compilerContext.symbolTable.referenceSimpleFunction(descriptor).owner)
         f.body = DeclarationIrBuilder(compilerContext, f.symbol, this.startOffset, this.endOffset).irBlockBody(
             this.startOffset,
             this.endOffset
         ) { bodyGen(f) }
+        origin?.let { f.origin = it }
     }
 
     fun IrClass.contributeConstructor(
         descriptor: ClassConstructorDescriptor,
         declareNew: Boolean = true,
         overwriteValueParameters: Boolean = false,
+        origin: IrDeclarationOrigin? = null,
         bodyGen: IrBlockBodyBuilder.(IrConstructor) -> Unit
     ) {
         val c: IrConstructor = searchForDeclaration(descriptor) ?: compilerContext.symbolTable.referenceConstructor(descriptor).owner
@@ -86,6 +99,7 @@ interface IrBuilderExtension {
             this.startOffset,
             this.endOffset
         ) { bodyGen(c) }
+        origin?.let { c.origin = it }
     }
 
     fun IrClass.createLambdaExpression(

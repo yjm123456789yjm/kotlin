@@ -571,6 +571,7 @@ open class SerializerIrGenerator(
                 else -> SerializerIrGenerator(irClass, context, bindingContext, metadataPlugin, serialInfoJvmGenerator)
             }
             generator.generate()
+            irClass.origin = SERIALIZABLE_PLUGIN_ORIGIN
             irClass.patchDeclarationParents(irClass.parent)
         }
     }

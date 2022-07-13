@@ -35,13 +35,6 @@ import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.ty
 
 object KSerializerDescriptorResolver {
 
-    fun createDeprecatedHiddenAnnotation(module: ModuleDescriptor): AnnotationDescriptor {
-        return module.builtIns.createDeprecatedAnnotation(
-            "This synthesized declaration should not be used directly",
-            level = "HIDDEN"
-        )
-    }
-
     fun isSerialInfoImpl(thisDescriptor: ClassDescriptor): Boolean {
         return thisDescriptor.name == IMPL_NAME
                 && thisDescriptor.containingDeclaration is LazyClassDescriptor
@@ -94,7 +87,7 @@ object KSerializerDescriptorResolver {
             scope,
             Modality.FINAL,
             DescriptorVisibilities.PUBLIC,
-            Annotations.create(listOf(createDeprecatedHiddenAnnotation(interfaceDesc.module))),
+            Annotations.EMPTY,
             primaryCtorVisibility,
             ClassKind.CLASS,
             false
@@ -118,7 +111,7 @@ object KSerializerDescriptorResolver {
             thisDescriptor, SERIALIZER_CLASS_NAME, thisDescriptor.source,
             scope,
             Modality.FINAL, DescriptorVisibilities.PUBLIC,
-            Annotations.create(listOf(createDeprecatedHiddenAnnotation(thisDescriptor.module))),
+            Annotations.EMPTY,
             DescriptorVisibilities.PRIVATE,
             serializerKind, false
         )
@@ -333,7 +326,7 @@ object KSerializerDescriptorResolver {
 
         val functionDescriptor = ClassConstructorDescriptorImpl.createSynthesized(
             classDescriptor,
-            Annotations.create(listOf(createDeprecatedHiddenAnnotation(classDescriptor.module))),
+            Annotations.EMPTY,
             false,
             SourceElement.NO_SOURCE
         )
@@ -385,7 +378,7 @@ object KSerializerDescriptorResolver {
     ): ClassConstructorDescriptor {
         val constrDesc = ClassConstructorDescriptorImpl.createSynthesized(
             classDescriptor,
-            Annotations.create(listOf(createDeprecatedHiddenAnnotation(classDescriptor.module))),
+            Annotations.EMPTY,
             false,
             classDescriptor.source
         )

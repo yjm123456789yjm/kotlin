@@ -55,7 +55,9 @@ class SerialInfoImplJvmIrGenerator(
     fun getImplClass(serialInfoAnnotationClass: IrClass): IrClass =
         annotationToImpl.getOrPut(serialInfoAnnotationClass) {
             val implClassSymbol = context.referenceClass(serialInfoAnnotationClass.kotlinFqName.child(SerialEntityNames.IMPL_NAME))
-            implClassSymbol!!.owner.apply(this::generate)
+            val owner = implClassSymbol!!.owner
+            owner.origin = SERIALIZABLE_PLUGIN_ORIGIN
+            owner.apply(this::generate)
         }
 
     fun generate(irClass: IrClass) {

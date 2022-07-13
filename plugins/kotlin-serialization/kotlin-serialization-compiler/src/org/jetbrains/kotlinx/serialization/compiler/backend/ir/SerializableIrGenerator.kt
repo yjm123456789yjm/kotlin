@@ -69,7 +69,7 @@ class SerializableIrGenerator(
     private val IrClass.isInternalSerializable: Boolean get() = kind == ClassKind.CLASS && hasSerializableOrMetaAnnotationWithoutArgs()
 
     override fun generateInternalConstructor(constructorDescriptor: ClassConstructorDescriptor) =
-        irClass.contributeConstructor(constructorDescriptor) { ctor ->
+        irClass.contributeConstructor(constructorDescriptor, origin = SERIALIZABLE_PLUGIN_ORIGIN) { ctor ->
             val thiz = irClass.thisReceiver!!
             val serializableProperties = properties.serializableProperties
 
@@ -302,7 +302,7 @@ class SerializableIrGenerator(
     }
 
     override fun generateWriteSelfMethod(methodDescriptor: FunctionDescriptor) {
-        irClass.contributeFunction(methodDescriptor, ignoreWhenMissing = true) { writeSelfFunction ->
+        irClass.contributeSyntheticFunction(methodDescriptor, ignoreWhenMissing = true) { writeSelfFunction ->
             val objectToSerialize = writeSelfFunction.valueParameters[0]
             val localOutput = writeSelfFunction.valueParameters[1]
             val localSerialDesc = writeSelfFunction.valueParameters[2]
