@@ -36,14 +36,18 @@ internal fun reportingSettings(rootProject: Project): ReportingSettings {
     } else {
         null
     }
-    val metricsOutputFile = properties.singleBuildMetricsFile
+
+    val singleOutputFile = if (buildReportOutputTypes.contains(BuildReportType.SINGLE_FILE)) {
+        properties.buildReportSingleFile ?: properties.singleBuildMetricsFile //temporary support old property
+    } else null
+
     return ReportingSettings(
-        metricsOutputFile = metricsOutputFile,
         buildReportMode = buildReportMode,
         buildReportLabel = properties.buildReportLabel,
         fileReportSettings = fileReportSettings,
         httpReportSettings = httpReportSettings,
-        buildReportOutputs = buildReportOutputTypes
+        buildReportOutputs = buildReportOutputTypes,
+        singleOutputFile = singleOutputFile,
     )
 }
 

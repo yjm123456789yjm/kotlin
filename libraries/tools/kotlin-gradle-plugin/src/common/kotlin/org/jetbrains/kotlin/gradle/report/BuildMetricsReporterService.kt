@@ -134,10 +134,7 @@ abstract class BuildMetricsReporterService : BuildService<BuildMetricsReporterSe
             }
 
             val reportingSettings = reportingSettings(project.rootProject)
-            if (reportingSettings.buildReportOutputs.isEmpty()
-                && reportingSettings.fileReportSettings == null
-                && reportingSettings.metricsOutputFile == null
-            ) {
+            if (reportingSettings.buildReportOutputs.isEmpty()) {
                 return null
             }
 
