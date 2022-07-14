@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.extractArgumentsTypeRefAndSource
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.toSymbol
@@ -26,7 +27,9 @@ object FirClassVarianceChecker : FirClassChecker() {
         checkTypeParameters(declaration.typeParameters, Variance.OUT_VARIANCE, context, reporter)
 
         for (superTypeRef in declaration.superTypeRefs) {
-            checkVarianceConflict(superTypeRef, Variance.OUT_VARIANCE, context, reporter)
+            withSuppressedDiagnostics(superTypeRef, context) { ctx ->
+                checkVarianceConflict(superTypeRef, Variance.OUT_VARIANCE, ctx, reporter)
+            }
         }
 
         for (member in declaration.declarations) {
@@ -41,7 +44,9 @@ object FirClassVarianceChecker : FirClassChecker() {
             }
 
             if (member is FirCallableDeclaration) {
-                checkCallableDeclaration(member, context, reporter)
+                withSuppressedDiagnostics(member, context) { ctx ->
+                    checkCallableDeclaration(member, ctx, reporter)
+                }
             }
         }
     }
@@ -55,7 +60,9 @@ object FirClassVarianceChecker : FirClassChecker() {
         if (member is FirSimpleFunction) {
             if (memberSource != null && memberSource.kind !is KtFakeSourceElementKind) {
                 for (param in member.valueParameters) {
-                    checkVarianceConflict(param.returnTypeRef, Variance.IN_VARIANCE, context, reporter)
+                    withSuppressedDiagnostics(param, context) { ctx ->
+                        checkVarianceConflict(param.returnTypeRef, Variance.IN_VARIANCE, ctx, reporter)
+                    }
                 }
             }
         }
@@ -70,11 +77,15 @@ object FirClassVarianceChecker : FirClassChecker() {
             }
         }
 
-        checkVarianceConflict(member.returnTypeRef, returnTypeVariance, context, reporter, returnSource)
+        withSuppressedDiagnostics(member.returnTypeRef, context) { ctx ->
+            checkVarianceConflict(member.returnTypeRef, returnTypeVariance, ctx, reporter, returnSource)
+        }
 
         val receiverTypeRef = member.receiverTypeRef
         if (receiverTypeRef != null) {
-            checkVarianceConflict(receiverTypeRef, Variance.IN_VARIANCE, context, reporter)
+            withSuppressedDiagnostics(receiverTypeRef, context) { ctx ->
+                checkVarianceConflict(receiverTypeRef, Variance.IN_VARIANCE, ctx, reporter)
+            }
         }
     }
 
@@ -84,8 +95,12 @@ object FirClassVarianceChecker : FirClassChecker() {
     ) {
         for (typeParameter in typeParameters) {
             if (typeParameter is FirTypeParameter) {
-                for (bound in typeParameter.symbol.resolvedBounds) {
-                    checkVarianceConflict(bound, variance, context, reporter)
+                withSuppressedDiagnostics(typeParameter, context) { tpContext ->
+                    for (bound in typeParameter.symbol.resolvedBounds) {
+                        withSuppressedDiagnostics(bound, tpContext) { ctx ->
+                            checkVarianceConflict(bound, variance, ctx, reporter)
+                        }
+                    }
                 }
             }
         }

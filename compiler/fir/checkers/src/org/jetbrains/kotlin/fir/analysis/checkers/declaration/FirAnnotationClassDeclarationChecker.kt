@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.descriptors.ClassKind.ENUM_CLASS
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.hasValOrVar
-import org.jetbrains.kotlin.diagnostics.hasVar
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.*
@@ -42,14 +41,16 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
         }
 
         for (member in declaration.declarations) {
-            checkAnnotationClassMember(member, context, reporter)
+            withSuppressedDiagnostics(member, context) { ctx ->
+                checkAnnotationClassMember(member, ctx, reporter)
+            }
         }
 
         if (declaration.getRetention() != AnnotationRetention.SOURCE &&
             KotlinTarget.EXPRESSION in declaration.getAllowedAnnotationTargets()
         ) {
             val target = declaration.getRetentionAnnotation() ?: declaration.getTargetAnnotation() ?: declaration
-            reporter.reportOn(target.source, FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, context)
+            reporter.reportOnWithSuppression(target, FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, context)
         }
 
         checkCyclesInParameters(declaration.symbol, context, reporter)
@@ -60,26 +61,28 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
             member is FirConstructor && member.isPrimary -> {
                 for (parameter in member.valueParameters) {
                     val source = parameter.source ?: continue
-                    if (!source.hasValOrVar()) {
-                        reporter.reportOn(source, FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER, context)
-                    } else if (source.hasVar()) {
-                        reporter.reportOn(source, FirErrors.VAR_ANNOTATION_PARAMETER, context)
-                    }
+                    reporter.reportOnWithSuppression(
+                        parameter,
+                        if (!source.hasValOrVar()) FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER else FirErrors.VAR_ANNOTATION_PARAMETER,
+                        context
+                    )
                     val defaultValue = parameter.defaultValue
                     if (defaultValue != null && checkConstantArguments(defaultValue, context.session) != null) {
-                        reporter.reportOn(defaultValue.source, FirErrors.ANNOTATION_PARAMETER_DEFAULT_VALUE_MUST_BE_CONSTANT, context)
+                        reporter.reportOnWithSuppression(
+                            defaultValue, FirErrors.ANNOTATION_PARAMETER_DEFAULT_VALUE_MUST_BE_CONSTANT, context
+                        )
                     }
 
                     val typeRef = parameter.returnTypeRef
-                    val coneType = typeRef.coneTypeSafe<ConeLookupTagBasedType>()
-                    val classId = coneType?.classId
+                    val coneType = typeRef.coneTypeSafe<ConeLookupTagBasedType>() ?: return
+                    val classId = coneType.classId
 
-                    if (coneType != null) when {
+                    when {
                         classId == ClassId.fromString("<error>") -> {
                             // TODO: replace with UNRESOLVED_REFERENCE check
                         }
                         coneType.isNullable -> {
-                            reporter.reportOn(typeRef.source, FirErrors.NULLABLE_TYPE_OF_ANNOTATION_MEMBER, context)
+                            reporter.reportOnWithSuppression(typeRef, FirErrors.NULLABLE_TYPE_OF_ANNOTATION_MEMBER, context)
                         }
                         coneType.isPrimitiveOrNullablePrimitive -> {
                             // DO NOTHING: primitives are allowed as annotation class parameter
@@ -100,14 +103,15 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
                             // DO NOTHING: arrays of unsigned types are allowed
                         }
                         classId == StandardClassIds.Array -> {
-                            if (!isAllowedArray(typeRef, context.session))
-                                reporter.reportOn(typeRef.source, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, context)
+                            if (!isAllowedArray(typeRef, context.session)) {
+                                reporter.reportOnWithSuppression(typeRef, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, context)
+                            }
                         }
                         isAllowedClassKind(coneType, context.session) -> {
                             // DO NOTHING: annotation or enum classes are allowed
                         }
                         else -> {
-                            reporter.reportOn(typeRef.source, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, context)
+                            reporter.reportOnWithSuppression(typeRef, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, context)
                         }
                     }
                 }

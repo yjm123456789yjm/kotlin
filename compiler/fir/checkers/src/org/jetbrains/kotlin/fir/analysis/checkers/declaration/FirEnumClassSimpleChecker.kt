@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.findNonInterfaceSupertype
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
 
@@ -19,8 +20,8 @@ object FirEnumClassSimpleChecker : FirRegularClassChecker() {
             return
         }
 
-        declaration.findNonInterfaceSupertype(context)?.let {
-            reporter.reportOn(it.source, FirErrors.CLASS_IN_SUPERTYPE_FOR_ENUM, context)
+        declaration.findNonInterfaceSupertype(context)?.let { superTypeRef ->
+            reporter.reportOnWithSuppression(superTypeRef, FirErrors.CLASS_IN_SUPERTYPE_FOR_ENUM, context)
         }
 
         if (declaration.typeParameters.isNotEmpty()) {

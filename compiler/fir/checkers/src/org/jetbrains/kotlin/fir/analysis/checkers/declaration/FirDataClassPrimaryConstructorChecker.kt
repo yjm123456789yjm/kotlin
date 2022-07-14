@@ -12,6 +12,8 @@ import org.jetbrains.kotlin.diagnostics.hasValOrVar
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isData
 import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
@@ -29,16 +31,18 @@ object FirDataClassPrimaryConstructorChecker : FirRegularClassChecker() {
             return
         }
 
-        val valueParameters = primaryConstructor.valueParameterSymbols
-        if (valueParameters.isEmpty()) {
-            reporter.reportOn(primaryConstructor.source, FirErrors.DATA_CLASS_WITHOUT_PARAMETERS, context)
-        }
-        for (parameter in valueParameters) {
-            if (parameter.isVararg) {
-                reporter.reportOn(parameter.source, FirErrors.DATA_CLASS_VARARG_PARAMETER, context)
+        withSuppressedDiagnostics(primaryConstructor, context) { ctx ->
+            val valueParameters = primaryConstructor.valueParameterSymbols
+            if (valueParameters.isEmpty()) {
+                reporter.reportOn(primaryConstructor.source, FirErrors.DATA_CLASS_WITHOUT_PARAMETERS, ctx)
             }
-            if (parameter.source?.hasValOrVar() != true) {
-                reporter.reportOn(parameter.source, FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER, context)
+            for (parameter in valueParameters) {
+                if (parameter.isVararg) {
+                    reporter.reportOnWithSuppression(parameter, FirErrors.DATA_CLASS_VARARG_PARAMETER, ctx)
+                }
+                if (parameter.source?.hasValOrVar() != true) {
+                    reporter.reportOnWithSuppression(parameter, FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER, ctx)
+                }
             }
         }
     }

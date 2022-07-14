@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.resolve.substitution.AbstractConeSubstitutor
 import org.jetbrains.kotlin.fir.resolve.substitution.ConeSubstitutor
@@ -66,11 +67,13 @@ fun checkUpperBoundViolated(
         TypeArgumentWithSourceInfo(projection, argTypeRef, source)
     }
 
-    return checkUpperBoundViolated(
-        context, reporter, typeParameterSymbols, typeArgumentsWithSourceInfo, substitutor,
-        isAbbreviatedType,
-        isIgnoreTypeParameters,
-    )
+    return withSuppressedDiagnostics(typeRef, context) { ctx ->
+        checkUpperBoundViolated(
+            ctx, reporter, typeParameterSymbols, typeArgumentsWithSourceInfo, substitutor,
+            isAbbreviatedType,
+            isIgnoreTypeParameters,
+        )
+    }
 }
 
 private class FE10LikeConeSubstitutor(

@@ -13,37 +13,39 @@ import org.jetbrains.kotlin.fir.analysis.checkers.isUnderscore
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirUserTypeRef
 
 object FirReservedUnderscoreDeclarationChecker : FirBasicDeclarationChecker() {
     override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (
-            declaration is FirRegularClass ||
-            declaration is FirTypeParameter ||
-            declaration is FirProperty ||
-            declaration is FirTypeAlias
-        ) {
-            reportIfUnderscore(declaration, context, reporter)
-        } else if (declaration is FirFunction) {
-            if (declaration is FirSimpleFunction) {
+        when (declaration) {
+            is FirRegularClass, is FirTypeParameter, is FirProperty, is FirTypeAlias -> {
                 reportIfUnderscore(declaration, context, reporter)
             }
-
-            val isSingleUnderscoreAllowed = declaration is FirAnonymousFunction || declaration is FirPropertyAccessor
-            for (parameter in declaration.valueParameters) {
-                reportIfUnderscore(
-                    parameter,
-                    context,
-                    reporter,
-                    isSingleUnderscoreAllowed = isSingleUnderscoreAllowed
-                )
+            is FirFunction -> {
+                if (declaration is FirSimpleFunction) {
+                    reportIfUnderscore(declaration, context, reporter)
+                }
+                val isSingleUnderscoreAllowed = declaration is FirAnonymousFunction || declaration is FirPropertyAccessor
+                for (parameter in declaration.valueParameters) {
+                    withSuppressedDiagnostics(parameter, context) { ctx ->
+                        reportIfUnderscore(
+                            parameter,
+                            ctx,
+                            reporter,
+                            isSingleUnderscoreAllowed = isSingleUnderscoreAllowed
+                        )
+                    }
+                }
             }
-        } else if (declaration is FirFile) {
-            for (import in declaration.imports) {
-                checkUnderscoreDiagnostics(import.aliasSource, context, reporter, isExpression = false)
+            is FirFile -> {
+                for (import in declaration.imports) {
+                    checkUnderscoreDiagnostics(import.aliasSource, context, reporter, isExpression = false)
+                }
             }
+            else -> return
         }
     }
 

@@ -11,6 +11,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.diagnostics.ConeSimpleDiagnostic
 import org.jetbrains.kotlin.fir.diagnostics.DiagnosticKind
@@ -37,11 +38,10 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
         //  compiler/testData/diagnostics/tests/delegatedProperty/inference/differentDelegatedExpressions.fir.kt, no delegate issues are
         //  reported due to the inference issue.
         if (delegateType is ConeErrorType) {
-            val delegateSource = delegate.source
             // Implicit recursion type is not reported since the type ref does not have a real source.
-            if (delegateSource != null && (delegateType.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.RecursionInImplicitTypes) {
+            if ((delegateType.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.RecursionInImplicitTypes) {
                 // skip reporting other issues in this case
-                reporter.reportOn(delegateSource, FirErrors.RECURSION_IN_IMPLICIT_TYPES, context)
+                reporter.reportOnWithSuppression(delegate, FirErrors.RECURSION_IN_IMPLICIT_TYPES, context)
             }
             return
         }

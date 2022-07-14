@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.*
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.fir.analysis.checkers.context.findClosest
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.hasBackingField
@@ -68,10 +69,14 @@ object FirAnnotationChecker : FirBasicDeclarationChecker() {
             checkRepeatedAnnotationsInProperty(declaration, context, reporter)
         } else if (declaration is FirCallableDeclaration) {
             if (declaration.source?.kind !is KtFakeSourceElementKind) {
-                checkRepeatedAnnotations(declaration.returnTypeRef.coneTypeSafe(), context, reporter)
+                withSuppressedDiagnostics(declaration.returnTypeRef, context) { ctx ->
+                    checkRepeatedAnnotationsInType(declaration.returnTypeRef.coneTypeSafe(), ctx, reporter)
+                }
             }
         } else if (declaration is FirTypeAlias) {
-            checkRepeatedAnnotations(declaration.expandedTypeRef.coneType, context, reporter)
+            withSuppressedDiagnostics(declaration.expandedTypeRef, context) { ctx ->
+                checkRepeatedAnnotationsInType(declaration.expandedTypeRef.coneType, ctx, reporter)
+            }
         }
     }
 
@@ -225,7 +230,7 @@ object FirAnnotationChecker : FirBasicDeclarationChecker() {
         checkRepeatedAnnotation(annotationContainer, annotationContainer.annotations, context, reporter)
     }
 
-    private fun checkRepeatedAnnotations(
+    private fun checkRepeatedAnnotationsInType(
         type: ConeKotlinType?,
         context: CheckerContext,
         reporter: DiagnosticReporter
@@ -235,7 +240,7 @@ object FirAnnotationChecker : FirBasicDeclarationChecker() {
         checkRepeatedAnnotation(null, fullyExpandedType.attributes.customAnnotations, context, reporter)
         for (typeArgument in fullyExpandedType.typeArguments) {
             if (typeArgument is ConeKotlinType) {
-                checkRepeatedAnnotations(typeArgument, context, reporter)
+                checkRepeatedAnnotationsInType(typeArgument, context, reporter)
             }
         }
     }
@@ -264,7 +269,7 @@ object FirAnnotationChecker : FirBasicDeclarationChecker() {
             if (annotation.annotationTypeRef.coneType in existingAnnotations && !annotation.isRepeatable(context.session)) {
                 val factory = if (isError) FirErrors.REPEATED_ANNOTATION else FirErrors.REPEATED_ANNOTATION_WARNING
                 if (annotation.source?.kind !is KtFakeSourceElementKind) {
-                    reporter.reportOn(annotation.source, factory, context)
+                    reporter.reportOnWithSuppression(annotation, factory, context)
                 }
             }
         }

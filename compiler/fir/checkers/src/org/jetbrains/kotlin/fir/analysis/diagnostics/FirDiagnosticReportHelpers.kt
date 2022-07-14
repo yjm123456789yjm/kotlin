@@ -8,10 +8,35 @@ package org.jetbrains.kotlin.fir.analysis.diagnostics
 import org.jetbrains.kotlin.diagnostics.*
 import org.jetbrains.kotlin.fir.FirAnnotationContainer
 import org.jetbrains.kotlin.fir.analysis.collectors.AbstractDiagnosticCollector
+import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
+import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 
 fun DiagnosticReporter.reportOnWithSuppression(
     element: FirAnnotationContainer,
     factory: KtDiagnosticFactory0,
+    context: MutableDiagnosticContext,
+    positioningStrategy: SourceElementPositioningStrategy? = null
+) {
+    withSuppressedDiagnostics(element, context) {
+        reportOn(element.source, factory, it, positioningStrategy)
+    }
+}
+
+@OptIn(SymbolInternals::class)
+fun DiagnosticReporter.reportOnWithSuppression(
+    symbol: FirBasedSymbol<*>,
+    factory: KtDiagnosticFactory0,
+    context: MutableDiagnosticContext,
+    positioningStrategy: SourceElementPositioningStrategy? = null
+) {
+    withSuppressedDiagnostics(symbol.fir, context) {
+        reportOn(symbol.source, factory, it, positioningStrategy)
+    }
+}
+
+fun DiagnosticReporter.reportOnWithSuppression(
+    element: FirAnnotationContainer,
+    factory: KtDiagnosticFactoryForDeprecation0,
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
@@ -73,6 +98,13 @@ fun <A : Any, B : Any, C : Any, D : Any> DiagnosticReporter.reportOnWithSuppress
         reportOn(element.source, factory, a, b, c, d, it, positioningStrategy)
     }
 }
+
+@OptIn(SymbolInternals::class)
+inline fun <reified C : MutableDiagnosticContext> withSuppressedDiagnostics(
+    symbol: FirBasedSymbol<*>,
+    context: C,
+    f: (C) -> Unit
+) = withSuppressedDiagnostics(symbol.fir, context, f)
 
 inline fun <reified C : MutableDiagnosticContext> withSuppressedDiagnostics(
     annotationContainer: FirAnnotationContainer,

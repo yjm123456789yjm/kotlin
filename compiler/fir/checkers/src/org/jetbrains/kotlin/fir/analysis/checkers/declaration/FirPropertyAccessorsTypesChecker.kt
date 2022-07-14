@@ -105,9 +105,6 @@ object FirPropertyAccessorsTypesChecker : FirPropertyChecker() {
             }
 
             val setterReturnType = setter.returnTypeRef.coneType
-            if (propertyType is ConeErrorType || valueSetterType is ConeErrorType) {
-                return
-            }
 
             if (!setterReturnType.isUnit) {
                 withSuppressedDiagnostics(setter.returnTypeRef, ctx) {

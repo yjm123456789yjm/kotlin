@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirBackingField
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
@@ -35,25 +36,25 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
         }
 
         if (backingField.isLateInit && declaration.isVal) {
-            reporter.reportOn(backingField.source, FirErrors.LATEINIT_FIELD_IN_VAL_PROPERTY, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_FIELD_IN_VAL_PROPERTY, context)
         }
 
         if (backingField.initializer == null && !backingField.isLateInit) {
-            reporter.reportOn(backingField.source, FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER, context)
         } else if (backingField.initializer != null && backingField.isLateInit) {
-            reporter.reportOn(backingField.source, FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER, context)
         }
 
         if (backingField.isLateInit && backingField.isNullable) {
-            reporter.reportOn(backingField.source, FirErrors.LATEINIT_NULLABLE_BACKING_FIELD, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_NULLABLE_BACKING_FIELD, context)
         }
 
         if (declaration.delegate != null) {
-            reporter.reportOn(backingField.source, FirErrors.BACKING_FIELD_FOR_DELEGATED_PROPERTY, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.BACKING_FIELD_FOR_DELEGATED_PROPERTY, context)
         }
 
         if (backingField.returnTypeRef.coneType == declaration.returnTypeRef.coneType) {
-            reporter.reportOn(backingField.source, FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD, context)
             return
         }
 

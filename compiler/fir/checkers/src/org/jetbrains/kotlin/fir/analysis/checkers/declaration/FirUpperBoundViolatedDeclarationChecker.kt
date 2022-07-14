@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.fir.analysis.checkers.checkUpperBoundViolated
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 
 object FirUpperBoundViolatedDeclarationChecker : FirBasicDeclarationChecker() {
@@ -16,8 +17,10 @@ object FirUpperBoundViolatedDeclarationChecker : FirBasicDeclarationChecker() {
         if (declaration is FirClass) {
             for (typeParameter in declaration.typeParameters) {
                 if (typeParameter is FirTypeParameter) {
-                    for (bound in typeParameter.bounds) {
-                        checkUpperBoundViolated(bound, context, reporter)
+                    withSuppressedDiagnostics(typeParameter, context) { ctx ->
+                        for (bound in typeParameter.bounds) {
+                            checkUpperBoundViolated(bound, ctx, reporter)
+                        }
                     }
                 }
             }

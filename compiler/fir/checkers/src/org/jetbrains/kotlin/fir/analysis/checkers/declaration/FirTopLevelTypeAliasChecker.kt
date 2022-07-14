@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirFile
 import org.jetbrains.kotlin.fir.declarations.FirTypeAlias
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
@@ -45,8 +46,8 @@ object FirTopLevelTypeAliasChecker : FirTypeAliasChecker() {
         val fullyExpandedType = expandedTypeRef.coneType.fullyExpandedType(context.session)
 
         if (containsTypeParameter(fullyExpandedType) || fullyExpandedType is ConeDynamicType) {
-            reporter.reportOn(
-                declaration.expandedTypeRef.source,
+            reporter.reportOnWithSuppression(
+                expandedTypeRef,
                 FirErrors.TYPEALIAS_SHOULD_EXPAND_TO_CLASS,
                 expandedTypeRef.coneType,
                 context

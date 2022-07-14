@@ -14,6 +14,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.getModifier
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.FirProperty
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
@@ -39,14 +41,16 @@ object FirConstPropertyChecker : FirPropertyChecker() {
             return
         }
 
-        val source = declaration.getter?.source
+        val getter = declaration.getter
+        val source = getter?.source
         if (source != null && source.kind !is KtFakeSourceElementKind) {
-            reporter.reportOn(source, FirErrors.CONST_VAL_WITH_GETTER, context)
+            reporter.reportOnWithSuppression(getter, FirErrors.CONST_VAL_WITH_GETTER, context)
             return
         }
 
-        if (declaration.delegate != null) {
-            reporter.reportOn(declaration.delegate?.source, FirErrors.CONST_VAL_WITH_DELEGATE, context)
+        val delegate = declaration.delegate
+        if (delegate != null) {
+            reporter.reportOnWithSuppression(delegate, FirErrors.CONST_VAL_WITH_DELEGATE, context)
             return
         }
 
@@ -62,8 +66,10 @@ object FirConstPropertyChecker : FirPropertyChecker() {
             return
         }
 
-        if (checkConstantArguments(initializer, context.session) != null) {
-            reporter.reportOn(initializer.source, FirErrors.CONST_VAL_WITH_NON_CONST_INITIALIZER, context)
+        withSuppressedDiagnostics(initializer, context) { ctx ->
+            if (checkConstantArguments(initializer, ctx.session) != null) {
+                reporter.reportOn(initializer.source, FirErrors.CONST_VAL_WITH_NON_CONST_INITIALIZER, ctx)
+            }
         }
     }
 }

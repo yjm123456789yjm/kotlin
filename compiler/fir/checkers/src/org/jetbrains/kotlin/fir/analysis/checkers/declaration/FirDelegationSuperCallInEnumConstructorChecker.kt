@@ -9,7 +9,8 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
-import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
@@ -20,13 +21,17 @@ object FirDelegationSuperCallInEnumConstructorChecker : FirRegularClassChecker()
             return
         }
 
-        for (it in declaration.declarations) {
-            if (
-                it is FirConstructor && !it.isPrimary &&
-                it.delegatedConstructor?.isThis == false &&
-                it.delegatedConstructor?.source?.kind !is KtFakeSourceElementKind
-            ) {
-                reporter.reportOn(it.delegatedConstructor?.source, FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR, context)
+        for (constructor in declaration.declarations) {
+            if (constructor !is FirConstructor || constructor.isPrimary) continue
+            withSuppressedDiagnostics(constructor, context) { ctx ->
+                val delegatedConstructor = constructor.delegatedConstructor ?: return@withSuppressedDiagnostics
+                if (!delegatedConstructor.isThis && delegatedConstructor.source?.kind !is KtFakeSourceElementKind) {
+                    reporter.reportOnWithSuppression(
+                        delegatedConstructor,
+                        FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR,
+                        ctx
+                    )
+                }
             }
         }
     }

@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirAnonymousObject
 import org.jetbrains.kotlin.fir.declarations.FirClass
 import org.jetbrains.kotlin.fir.declarations.FirDeclarationOrigin
@@ -49,18 +50,18 @@ object FirSealedSupertypeChecker : FirClassChecker() {
             }
             val superClassPackage = superClass.classId.packageFqName
             if (superClassPackage != subclassPackage) {
-                reporter.reportOn(superTypeRef.source, FirErrors.SEALED_INHERITOR_IN_DIFFERENT_PACKAGE, context)
+                reporter.reportOnWithSuppression(superTypeRef, FirErrors.SEALED_INHERITOR_IN_DIFFERENT_PACKAGE, context)
             }
             if (superClass.moduleData != declaration.moduleData) {
                 // TODO: implement logic like in org.jetbrains.kotlin.resolve.checkers.SealedInheritorInSameModuleChecker for MPP support.
-                reporter.reportOn(superTypeRef.source, FirErrors.SEALED_INHERITOR_IN_DIFFERENT_MODULE, context)
+                reporter.reportOnWithSuppression(superTypeRef, FirErrors.SEALED_INHERITOR_IN_DIFFERENT_MODULE, context)
             }
         }
     }
 
     private fun checkLocalDeclaration(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
-        for (it in declaration.superTypeRefs) {
-            val classId = it.coneType.classId ?: continue
+        for (superTypeRef in declaration.superTypeRefs) {
+            val classId = superTypeRef.coneType.classId ?: continue
 
             if (classId.isLocal) {
                 continue
@@ -70,8 +71,8 @@ object FirSealedSupertypeChecker : FirClassChecker() {
 
             if (superClassSymbol.modality == Modality.SEALED) {
                 val declarationType = if (declaration is FirAnonymousObject) "Anonymous object" else "Local class"
-                reporter.reportOn(
-                    it.source,
+                reporter.reportOnWithSuppression(
+                    superTypeRef,
                     FirErrors.SEALED_SUPERTYPE_IN_LOCAL_CLASS,
                     declarationType,
                     superClassSymbol.classKind,

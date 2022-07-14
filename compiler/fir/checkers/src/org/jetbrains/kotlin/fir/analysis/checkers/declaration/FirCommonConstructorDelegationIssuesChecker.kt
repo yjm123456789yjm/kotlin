@@ -10,6 +10,8 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
@@ -26,14 +28,13 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker() {
         var hasPrimaryConstructor = false
         val isEffectivelyExpect = declaration.isEffectivelyExpect(context.containingDeclarations.lastOrNull() as? FirRegularClass, context)
 
-        // secondary; non-cyclic;
         // candidates for further analysis
-        val otherConstructors = mutableSetOf<FirConstructor>()
+        val secondaryNonCyclicConstructors = mutableSetOf<FirConstructor>()
 
         for (it in declaration.declarations) {
             if (it is FirConstructor) {
                 if (!it.isPrimary) {
-                    otherConstructors += it
+                    secondaryNonCyclicConstructors += it
 
                     it.findCycle(cyclicConstructors)?.let { visited ->
                         cyclicConstructors += visited
@@ -44,34 +45,45 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker() {
             }
         }
 
-        otherConstructors -= cyclicConstructors
+        secondaryNonCyclicConstructors -= cyclicConstructors
 
-        if (hasPrimaryConstructor) {
-            for (it in otherConstructors) {
-                if (!isEffectivelyExpect && it.delegatedConstructor?.isThis != true) {
-                    if (it.delegatedConstructor?.source != null) {
-                        reporter.reportOn(it.delegatedConstructor?.source, FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED, context)
-                    } else {
-                        reporter.reportOn(it.source, FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED, context)
+        for (secondaryNonCyclicConstructor in secondaryNonCyclicConstructors) {
+            withSuppressedDiagnostics(secondaryNonCyclicConstructor, context) { ctx ->
+                val delegatedConstructor = secondaryNonCyclicConstructor.delegatedConstructor
+                if (hasPrimaryConstructor) {
+                    if (!isEffectivelyExpect && delegatedConstructor?.isThis != true) {
+                        if (delegatedConstructor?.source != null) {
+                            reporter.reportOnWithSuppression(
+                                delegatedConstructor,
+                                FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED,
+                                ctx
+                            )
+                        } else {
+                            reporter.reportOn(
+                                secondaryNonCyclicConstructor.source,
+                                FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED,
+                                ctx
+                            )
+                        }
                     }
-                }
-            }
-        } else {
-            for (it in otherConstructors) {
-                val callee = it.delegatedConstructor?.calleeReference
+                } else {
+                    val callee = delegatedConstructor?.calleeReference
 
-                // couldn't find proper super() constructor implicitly
-                if (
-                    callee is FirErrorNamedReference && callee.diagnostic is ConeAmbiguityError &&
-                    it.delegatedConstructor?.source?.kind is KtFakeSourceElementKind
-                ) {
-                    reporter.reportOn(it.source, FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED, context)
+                    // couldn't find proper super() constructor implicitly
+                    if (callee is FirErrorNamedReference &&
+                        callee.diagnostic is ConeAmbiguityError &&
+                        delegatedConstructor.source?.kind is KtFakeSourceElementKind
+                    ) {
+                        reporter.reportOn(secondaryNonCyclicConstructor.source, FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED, ctx)
+                    }
                 }
             }
         }
 
-        cyclicConstructors.forEach {
-            reporter.reportOn(it.delegatedConstructor?.source, FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL, context)
+        for (cyclicConstructor in cyclicConstructors) {
+            withSuppressedDiagnostics(cyclicConstructor, context) { ctx ->
+                reporter.reportOn(cyclicConstructor.delegatedConstructor?.source, FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL, ctx)
+            }
         }
     }
 

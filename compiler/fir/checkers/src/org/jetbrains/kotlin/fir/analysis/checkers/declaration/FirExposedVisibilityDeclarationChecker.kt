@@ -9,10 +9,11 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.descriptors.EffectiveVisibility
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
+import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.*
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
@@ -55,14 +56,16 @@ object FirExposedVisibilityDeclarationChecker : FirBasicDeclarationChecker() {
                 continue
             }
             val (restricting, restrictingVisibility) = supertype.findVisibilityExposure(context, classVisibility) ?: continue
-            reporter.reportOn(
-                supertypeRef.source ?: declaration.source,
-                if (isInterface) FirErrors.EXPOSED_SUPER_INTERFACE else FirErrors.EXPOSED_SUPER_CLASS,
-                classVisibility,
-                restricting,
-                restrictingVisibility,
-                context
-            )
+            withSuppressedDiagnostics(supertypeRef, context) { ctx ->
+                reporter.reportOn(
+                    supertypeRef.source ?: declaration.source,
+                    if (isInterface) FirErrors.EXPOSED_SUPER_INTERFACE else FirErrors.EXPOSED_SUPER_CLASS,
+                    classVisibility,
+                    restricting,
+                    restrictingVisibility,
+                    ctx
+                )
+            }
         }
     }
 
@@ -130,8 +133,8 @@ object FirExposedVisibilityDeclarationChecker : FirBasicDeclarationChecker() {
                 if (i < declaration.valueParameters.size) {
                     val (restricting, restrictingVisibility) = valueParameter.returnTypeRef.coneType
                         .findVisibilityExposure(context, functionVisibility) ?: return@forEachIndexed
-                    reporter.reportOn(
-                        valueParameter.source,
+                    reporter.reportOnWithSuppression(
+                        valueParameter,
                         FirErrors.EXPOSED_PARAMETER_TYPE,
                         functionVisibility,
                         restricting,
@@ -186,8 +189,8 @@ object FirExposedVisibilityDeclarationChecker : FirBasicDeclarationChecker() {
 
         if (memberVisibility == EffectiveVisibility.Local) return
         val (restricting, restrictingVisibility) = receiverParameterType.findVisibilityExposure(context, memberVisibility) ?: return
-        reporter.reportOn(
-            typeRef.source,
+        reporter.reportOnWithSuppression(
+            typeRef,
             FirErrors.EXPOSED_RECEIVER_TYPE,
             memberVisibility,
             restricting,

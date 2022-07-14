@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.KtFakeSourceElementKind
 import org.jetbrains.kotlin.KtNodeTypes
 import org.jetbrains.kotlin.fir.analysis.checkers.SourceNavigator
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
-import org.jetbrains.kotlin.fir.analysis.checkers.toRegularClassSymbol
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isInterface
 import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
@@ -29,7 +29,7 @@ object FirPrimaryConstructorSuperTypeChecker : FirRegularClassChecker() {
             with(SourceNavigator.forElement(declaration)) {
                 for (superTypeRef in declaration.superTypeRefs) {
                     if (superTypeRef.isInConstructorCallee()) {
-                        reporter.reportOn(superTypeRef.source, FirErrors.SUPERTYPE_INITIALIZED_IN_INTERFACE, context)
+                        reporter.reportOnWithSuppression(superTypeRef, FirErrors.SUPERTYPE_INITIALIZED_IN_INTERFACE, context)
                     }
                 }
             }

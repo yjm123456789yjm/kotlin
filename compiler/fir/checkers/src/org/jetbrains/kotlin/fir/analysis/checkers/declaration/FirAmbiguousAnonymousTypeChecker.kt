@@ -17,10 +17,9 @@ import org.jetbrains.kotlin.fir.types.shouldHideLocalType
 import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.types.visibilityForApproximation
 
-object FirAmbiguousAnonymousTypeChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+object FirAmbiguousAnonymousTypeChecker : FirCallableDeclarationChecker() {
+    override fun check(declaration: FirCallableDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
         if (declaration !is FirSimpleFunction && declaration !is FirProperty) return
-        require(declaration is FirCallableDeclaration)
         if (context.containingDeclarations.any { it.isLocalMember || it is FirAnonymousObject }) return
 
         if (!shouldHideLocalType(
