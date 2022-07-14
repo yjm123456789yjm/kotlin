@@ -34,6 +34,9 @@ class BodyGenerator(
 ) : IrElementVisitorVoid {
     val body: WasmExpressionBuilder = context.bodyGen
 
+    internal var whenElseMethodStubIndex: Int = 0
+    internal var whenElseResultType: WasmType? = null
+
     // Shortcuts
     private val backendContext: WasmBackendContext = context.backendContext
     private val wasmSymbols: WasmSymbols = backendContext.wasmSymbols
@@ -241,6 +244,12 @@ class BodyGenerator(
     }
 
     private fun generateCall(call: IrFunctionAccessExpression) {
+        if (call.symbol == wasmSymbols.whenElseMethodStub) {
+            whenElseResultType?.let { generateDefaultInitializerForType(it, body) } //stub value
+            body.buildBr(whenElseMethodStubIndex)
+            return
+        }
+
         // Box intrinsic has an additional klass ID argument.
         // Processing it separately
         if (call.symbol == wasmSymbols.boxIntrinsic) {
@@ -542,6 +551,11 @@ class BodyGenerator(
     }
 
     override fun visitWhen(expression: IrWhen) {
+
+        if (SwitchGenerator(expression, this, context.backendContext.wasmSymbols).generate()) {
+            return
+        }
+
         val resultType = context.transformBlockResultType(expression.type)
         var ifCount = 0
         var seenElse = false
