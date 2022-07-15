@@ -22,26 +22,25 @@ import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.*
 
 object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
-    override fun check(expression: FirEqualityOperatorCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirEqualityOperatorCall, reporter: DiagnosticReporter) {
         val arguments = expression.argumentList.arguments
         if (arguments.size != 2) return
         val lType = arguments[0].typeRef.coneType
         val rType = arguments[1].typeRef.coneType
-        checkCompatibility(lType, rType, context, expression, reporter)
-        checkSensibleness(lType, rType, context, expression, reporter)
+        this.checkCompatibility(lType, rType, expression, reporter)
+        this.checkSensibleness(lType, rType, expression, reporter)
     }
 
-    private fun checkCompatibility(
+    private fun CheckerContext.checkCompatibility(
         lType: ConeKotlinType,
         rType: ConeKotlinType,
-        context: CheckerContext,
         expression: FirEqualityOperatorCall,
         reporter: DiagnosticReporter
     ) {
         // If one of the type is already `Nothing?`, we skip reporting further comparison. This is to allow comparing with `null`, which has
         // type `Nothing?`
         if (lType.isNullableNothing || rType.isNullableNothing) return
-        val inferenceContext = context.session.typeContext
+        val inferenceContext = session.typeContext
 
         val compatibility = try {
             inferenceContext.isCompatible(lType, rType)
@@ -49,7 +48,7 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
             throw IllegalStateException(
                 "Exception while determining type compatibility: lType: $lType, rType: $rType, " +
                         "equality ${expression.render()}, " +
-                        "file ${context.containingDeclarations.filterIsInstance<FirFile>().firstOrNull()?.name}",
+                        "file ${containingDeclarations.filterIsInstance<FirFile>().firstOrNull()?.name}",
                 e
             )
         }
@@ -61,14 +60,13 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
                     // value. So instead, we deterministically output INCOMPATIBLE_ENUM_COMPARISON_ERROR if at least one of the value is an
                     // enum.
                     if (compatibility == ConeTypeCompatibilityChecker.Compatibility.HARD_INCOMPATIBLE &&
-                        (lType.isEnumType(context) || rType.isEnumType(context))
+                        (lType.isEnumType(this) || rType.isEnumType(this))
                     ) {
                         reporter.reportOn(
                             expression.source,
                             FirErrors.INCOMPATIBLE_ENUM_COMPARISON_ERROR,
                             lType,
-                            rType,
-                            context
+                            rType
                         )
                     } else {
                         reporter.reportOn(
@@ -80,8 +78,7 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
                             },
                             expression.operation.operator,
                             lType,
-                            rType,
-                            context
+                            rType
                         )
                     }
                 }
@@ -93,8 +90,7 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
                         FirErrors.INCOMPATIBLE_TYPES_WARNING
                     },
                     lType,
-                    rType,
-                    context
+                    rType
                 )
             }
         }
@@ -108,10 +104,9 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
         return firRegularClassSymbol.isEnumClass
     }
 
-    private fun checkSensibleness(
+    private fun CheckerContext.checkSensibleness(
         lType: ConeKotlinType,
         rType: ConeKotlinType,
-        context: CheckerContext,
         expression: FirEqualityOperatorCall,
         reporter: DiagnosticReporter
     ) {
@@ -122,7 +117,7 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
         }
         if (type is ConeErrorType) return
         val isPositiveCompare = expression.operation == FirOperation.EQ || expression.operation == FirOperation.IDENTITY
-        val compareResult = with(context.session.typeContext) {
+        val compareResult = with(session.typeContext) {
             when {
                 // `null` literal has type `Nothing?`
                 type.isNullableNothing -> isPositiveCompare
@@ -133,9 +128,9 @@ object FirEqualityCompatibilityChecker : FirEqualityOperatorCallChecker() {
         // We only report `SENSELESS_NULL_IN_WHEN` if `lType = type` because `lType` is the type of the when subject. This diagnostic is
         // only intended for cases where the branch condition contains a null.
         if (expression.source?.elementType != KtNodeTypes.BINARY_EXPRESSION && type === lType) {
-            reporter.reportOn(expression.source, FirErrors.SENSELESS_NULL_IN_WHEN, context)
+            reporter.reportOn(expression.source, FirErrors.SENSELESS_NULL_IN_WHEN)
         } else {
-            reporter.reportOn(expression.source, FirErrors.SENSELESS_COMPARISON, expression, compareResult, context)
+            reporter.reportOn(expression.source, FirErrors.SENSELESS_COMPARISON, expression, compareResult)
         }
     }
 }

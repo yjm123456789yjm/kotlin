@@ -20,9 +20,9 @@ import org.jetbrains.kotlin.fir.resolved
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 
 object FirFunInterfaceConstructorReferenceChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         if (expression !is FirCallableReferenceAccess) return
-        if (context.languageVersionSettings.supportsFeature(LanguageFeature.KotlinFunInterfaceConstructorReference)) return
+        if (languageVersionSettings.supportsFeature(LanguageFeature.KotlinFunInterfaceConstructorReference)) return
 
         val reference = expression.calleeReference.resolved ?: return
         val referredSymbol = reference.resolvedSymbol
@@ -30,9 +30,9 @@ object FirFunInterfaceConstructorReferenceChecker : FirQualifiedAccessExpression
         if (referredSymbol is FirNamedFunctionSymbol &&
             referredSymbol.origin == FirDeclarationOrigin.SamConstructor
         ) {
-            val samClassSymbol = referredSymbol.resolvedReturnTypeRef.toRegularClassSymbol(context.session) ?: return
+            val samClassSymbol = referredSymbol.resolvedReturnTypeRef.toRegularClassSymbol(session) ?: return
             if (samClassSymbol.isFun && !samClassSymbol.isJavaOrEnhancement) {
-                reporter.reportOn(reference.source, FUN_INTERFACE_CONSTRUCTOR_REFERENCE, context)
+                reporter.reportOn(reference.source, FUN_INTERFACE_CONSTRUCTOR_REFERENCE)
             }
         }
     }

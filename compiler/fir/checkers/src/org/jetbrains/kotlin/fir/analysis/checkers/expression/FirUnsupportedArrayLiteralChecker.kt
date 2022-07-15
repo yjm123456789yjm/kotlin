@@ -18,15 +18,14 @@ import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.expressions.*
 
 object FirUnsupportedArrayLiteralChecker : FirArrayOfCallChecker() {
-    override fun check(expression: FirArrayOfCall, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (!isInsideAnnotationCall(expression, context) &&
-            (context.qualifiedAccessOrAnnotationCalls.isNotEmpty() || !isInsideAnnotationClass(context))
+    override fun CheckerContext.check(expression: FirArrayOfCall, reporter: DiagnosticReporter) {
+        if (!isInsideAnnotationCall(expression, this) &&
+            (qualifiedAccessOrAnnotationCalls.isNotEmpty() || !isInsideAnnotationClass(this))
         ) {
             reporter.reportOn(
                 expression.source,
                 FirErrors.UNSUPPORTED,
-                "Collection literals outside of annotations",
-                context
+                "Collection literals outside of annotations"
             )
         }
     }

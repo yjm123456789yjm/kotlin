@@ -22,19 +22,19 @@ import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirConstructorAllowedChecker : FirConstructorChecker() {
-    override fun check(declaration: FirConstructor, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingClass = context.containingDeclarations.lastOrNull() as? FirClass ?: return
+    override fun CheckerContext.check(declaration: FirConstructor, reporter: DiagnosticReporter) {
+        val containingClass = containingDeclarations.lastOrNull() as? FirClass ?: return
         val source = declaration.source
         val elementType = source?.elementType
         if (elementType != KtNodeTypes.PRIMARY_CONSTRUCTOR && elementType != KtNodeTypes.SECONDARY_CONSTRUCTOR) {
             return
         }
         when (containingClass.classKind) {
-            ClassKind.OBJECT -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT, context)
-            ClassKind.INTERFACE -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_INTERFACE, context)
-            ClassKind.ENUM_ENTRY -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT, context)
+            ClassKind.OBJECT -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT)
+            ClassKind.INTERFACE -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_INTERFACE)
+            ClassKind.ENUM_ENTRY -> reporter.reportOn(source, FirErrors.CONSTRUCTOR_IN_OBJECT)
             ClassKind.ENUM_CLASS -> if (declaration.visibility != Visibilities.Private) {
-                reporter.reportOn(source, FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM, context)
+                reporter.reportOn(source, FirErrors.NON_PRIVATE_CONSTRUCTOR_IN_ENUM)
             }
             ClassKind.CLASS -> if (containingClass is FirRegularClass && containingClass.modality == Modality.SEALED) {
                 val modifierList = source.getModifierList() ?: return
@@ -42,7 +42,7 @@ object FirConstructorAllowedChecker : FirConstructorChecker() {
                     it.token != KtTokens.PROTECTED_KEYWORD && it.token != KtTokens.PRIVATE_KEYWORD
                 }
                 if (hasIllegalModifier) {
-                    reporter.reportOn(source, FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED, context)
+                    reporter.reportOn(source, FirErrors.NON_PRIVATE_OR_PROTECTED_CONSTRUCTOR_IN_SEALED)
                 }
             }
             ClassKind.ANNOTATION_CLASS -> {

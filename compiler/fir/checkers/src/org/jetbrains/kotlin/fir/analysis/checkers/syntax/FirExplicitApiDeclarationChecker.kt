@@ -23,7 +23,6 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirPrimaryConstructor
 import org.jetbrains.kotlin.fir.declarations.utils.effectiveVisibility
 import org.jetbrains.kotlin.fir.declarations.utils.isData
 import org.jetbrains.kotlin.fir.declarations.utils.isOverride
-import org.jetbrains.kotlin.fir.declarations.utils.visibility
 import org.jetbrains.kotlin.fir.resolve.transformers.publishedApiEffectiveVisibility
 import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.psi.KtDeclaration
@@ -32,10 +31,9 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
     private val codeFragmentTypes =
         setOf(KtNodeTypes.BLOCK_CODE_FRAGMENT, KtNodeTypes.EXPRESSION_CODE_FRAGMENT, KtNodeTypes.TYPE_CODE_FRAGMENT)
 
-    override fun checkPsiOrLightTree(
+    override fun CheckerContext.checkPsiOrLightTree(
         element: FirDeclaration,
         source: KtSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if ((source.kind !is KtRealSourceElementKind && source.kind != KtFakeSourceElementKind.PropertyFromParameter) ||
@@ -43,36 +41,35 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
         ) {
             return
         }
-        val state = context.languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode)
+        val state = languageVersionSettings.getFlag(AnalysisFlags.explicitApiMode)
         if (state == ExplicitApiMode.DISABLED) return
         // Enum entries do not have visibilities
         if (element is FirEnumEntry) return
         if (!element.effectiveVisibility.publicApi && element.publishedApiEffectiveVisibility == null) return
-        val lastDeclaration = context.containingDeclarations.lastOrNull()
+        val lastDeclaration = containingDeclarations.lastOrNull()
         if ((lastDeclaration as? FirMemberDeclaration)?.effectiveVisibility?.publicApi == false) {
             return
         }
 
-        checkVisibilityModifier(state, element, source, context, reporter)
-        checkExplicitReturnType(state, element, source, context, reporter)
+        this.checkVisibilityModifier(state, element, source, reporter)
+        this.checkExplicitReturnType(state, element, source, reporter)
     }
 
-    private fun checkVisibilityModifier(
+    private fun CheckerContext.checkVisibilityModifier(
         state: ExplicitApiMode,
         declaration: FirMemberDeclaration,
         source: KtSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val visibilityModifier = source.getChild(KtNodeTypes.MODIFIER_LIST)?.getChild(KtTokens.VISIBILITY_MODIFIERS)
         if (visibilityModifier != null) return
 
-        if (explicitVisibilityIsNotRequired(declaration, context)) return
+        if (explicitVisibilityIsNotRequired(declaration, this)) return
         val factory = if (state == ExplicitApiMode.STRICT)
             FirErrors.NO_EXPLICIT_VISIBILITY_IN_API_MODE
         else
             FirErrors.NO_EXPLICIT_VISIBILITY_IN_API_MODE_WARNING
-        reporter.reportOn(source, factory, context)
+        reporter.reportOn(source, factory)
     }
 
     /**
@@ -111,24 +108,23 @@ object FirExplicitApiDeclarationChecker : FirDeclarationSyntaxChecker<FirDeclara
         }
     }
 
-    private fun checkExplicitReturnType(
+    private fun CheckerContext.checkExplicitReturnType(
         state: ExplicitApiMode,
         declaration: FirMemberDeclaration,
         source: KtSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (declaration !is FirCallableDeclaration) return
-        if (!returnTypeCheckIsApplicable(source, context)) return
+        if (!returnTypeCheckIsApplicable(source, this)) return
 
-        val shouldReport = returnTypeRequired(declaration, context)
+        val shouldReport = returnTypeRequired(declaration, this)
         if (shouldReport) {
             val factory =
                 if (state == ExplicitApiMode.STRICT)
                     FirErrors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE
                 else
                     FirErrors.NO_EXPLICIT_RETURN_TYPE_IN_API_MODE_WARNING
-            reporter.reportOn(source, factory, context)
+            reporter.reportOn(source, factory)
         }
     }
 

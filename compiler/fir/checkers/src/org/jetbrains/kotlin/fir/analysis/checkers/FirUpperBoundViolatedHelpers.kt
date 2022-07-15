@@ -29,9 +29,8 @@ import kotlin.reflect.KClass
 /**
  * Recursively analyzes type parameters and reports the diagnostic on the given source calculated using typeRef
  */
-fun checkUpperBoundViolated(
+fun CheckerContext.checkUpperBoundViolated(
     typeRef: FirTypeRef?,
-    context: CheckerContext,
     reporter: DiagnosticReporter,
     isIgnoreTypeParameters: Boolean = false
 ) {
@@ -40,10 +39,10 @@ fun checkUpperBoundViolated(
     // Everything should be reported on the typealias expansion
     if (notExpandedType.typeArguments.isEmpty()) return
 
-    val type = notExpandedType.fullyExpandedType(context.session)
+    val type = notExpandedType.fullyExpandedType(session)
     val isAbbreviatedType = notExpandedType !== type
 
-    val prototypeClassSymbol = type.lookupTag.toSymbol(context.session) as? FirRegularClassSymbol ?: return
+    val prototypeClassSymbol = type.lookupTag.toSymbol(session) as? FirRegularClassSymbol ?: return
 
     val typeParameterSymbols = prototypeClassSymbol.typeParameterSymbols
 
@@ -52,7 +51,7 @@ fun checkUpperBoundViolated(
     }
 
     val substitution = typeParameterSymbols.zip(type.typeArguments).toMap()
-    val substitutor = FE10LikeConeSubstitutor(substitution, context.session)
+    val substitutor = FE10LikeConeSubstitutor(substitution, session)
 
     val typeRefAndSourcesForArguments = extractArgumentsTypeRefAndSource(typeRef) ?: return
     val typeArgumentsWithSourceInfo = type.typeArguments.withIndex().map { (index, projection) ->
@@ -67,10 +66,9 @@ fun checkUpperBoundViolated(
         TypeArgumentWithSourceInfo(projection, argTypeRef, source)
     }
 
-    return withSuppressedDiagnostics(typeRef, context) { ctx ->
-        checkUpperBoundViolated(
-            ctx, reporter, typeParameterSymbols, typeArgumentsWithSourceInfo, substitutor,
-            isAbbreviatedType,
+    return withSuppressedDiagnostics(typeRef) {
+        this.checkUpperBoundViolated(
+            reporter, typeParameterSymbols, typeArgumentsWithSourceInfo, substitutor, isAbbreviatedType,
             isIgnoreTypeParameters,
         )
     }
@@ -154,8 +152,7 @@ class TypeArgumentWithSourceInfo(
     val source: KtSourceElement?,
 )
 
-fun checkUpperBoundViolated(
-    context: CheckerContext,
+fun CheckerContext.checkUpperBoundViolated(
     reporter: DiagnosticReporter,
     typeParameters: List<FirTypeParameterSymbol>,
     arguments: List<TypeArgumentWithSourceInfo>,
@@ -164,7 +161,7 @@ fun checkUpperBoundViolated(
     isIgnoreTypeParameters: Boolean = false
 ) {
     val count = minOf(typeParameters.size, arguments.size)
-    val typeSystemContext = context.session.typeContext
+    val typeSystemContext = session.typeContext
 
     for (index in 0 until count) {
         val argument = arguments.getOrNull(index) ?: continue
@@ -187,7 +184,7 @@ fun checkUpperBoundViolated(
                     ) {
                         val factory =
                             if (isAbbreviatedType) FirErrors.UPPER_BOUND_VIOLATED_IN_TYPEALIAS_EXPANSION else FirErrors.UPPER_BOUND_VIOLATED
-                        reporter.reportOn(argumentSource, factory, upperBound, argumentType.type, context)
+                        reporter.reportOn(argumentSource, factory, upperBound, argumentType.type)
                         if (isAbbreviatedType) {
                             return
                         }
@@ -195,7 +192,7 @@ fun checkUpperBoundViolated(
                 }
             }
 
-            checkUpperBoundViolated(argumentTypeRef, context, reporter, isIgnoreTypeParameters = isIgnoreTypeParameters)
+            checkUpperBoundViolated(argumentTypeRef, reporter, isIgnoreTypeParameters = isIgnoreTypeParameters)
         }
     }
 }

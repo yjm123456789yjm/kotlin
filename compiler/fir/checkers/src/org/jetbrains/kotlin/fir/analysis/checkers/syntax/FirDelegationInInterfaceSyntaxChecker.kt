@@ -23,31 +23,29 @@ object FirDelegationInInterfaceSyntaxChecker : FirDeclarationSyntaxChecker<FirRe
 
     override fun isApplicable(element: FirRegularClass, source: KtSourceElement): Boolean = element.isInterface
 
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirRegularClass,
         source: KtPsiSourceElement,
         psi: KtClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         for (superTypeRef in element.superTypeRefs) {
             val superSource = superTypeRef.source ?: continue
             if (superSource.psi?.parent is KtDelegatedSuperTypeEntry) {
-                reporter.reportOn(superSource, FirErrors.DELEGATION_IN_INTERFACE, context)
+                reporter.reportOn(superSource, FirErrors.DELEGATION_IN_INTERFACE)
             }
         }
     }
 
-    override fun checkLightTree(
+    override fun CheckerContext.checkLightTree(
         element: FirRegularClass,
         source: KtLightSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         for (superTypeRef in element.superTypeRefs) {
             val superSource = superTypeRef.source ?: continue
             if (superSource.treeStructure.getParent(superSource.lighterASTNode)?.tokenType == KtNodeTypes.DELEGATED_SUPER_TYPE_ENTRY) {
-                reporter.reportOn(superSource, FirErrors.DELEGATION_IN_INTERFACE, context)
+                reporter.reportOn(superSource, FirErrors.DELEGATION_IN_INTERFACE)
             }
         }
     }

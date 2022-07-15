@@ -7,18 +7,20 @@ package org.jetbrains.kotlin.fir.analysis.checkers.expression
 
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirDeprecationChecker.reportDeprecation
+import org.jetbrains.kotlin.fir.analysis.checkers.expression.FirDeprecationChecker.reportDeprecationIfNeeded
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeDeprecated
 import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 
 object FirDeprecatedQualifierChecker : FirResolvedQualifierChecker() {
-    override fun check(expression: FirResolvedQualifier, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirResolvedQualifier, reporter: DiagnosticReporter) {
         expression.nonFatalDiagnostics.filterIsInstance<ConeDeprecated>().forEach { diagnostic ->
-            FirDeprecationChecker.reportDeprecation(diagnostic.source, diagnostic.symbol, diagnostic.deprecationInfo, reporter, context)
+            this.reportDeprecation(diagnostic.source, diagnostic.symbol, diagnostic.deprecationInfo, reporter)
         }
         if (expression.resolvedToCompanionObject) {
             val companionSymbol = (expression.symbol as? FirRegularClassSymbol)?.companionObjectSymbol ?: return
-            FirDeprecationChecker.reportDeprecationIfNeeded(expression.source, companionSymbol, null, context, reporter)
+            this.reportDeprecationIfNeeded(expression.source, companionSymbol, null, reporter)
         }
     }
 }

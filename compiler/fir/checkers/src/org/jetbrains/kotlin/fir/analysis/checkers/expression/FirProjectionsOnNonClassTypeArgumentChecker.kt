@@ -15,13 +15,13 @@ import org.jetbrains.kotlin.fir.types.FirTypeProjectionWithVariance
 import org.jetbrains.kotlin.types.Variance
 
 object FirProjectionsOnNonClassTypeArgumentChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         for (it in expression.typeArguments) {
             when (it) {
-                is FirStarProjection -> reporter.reportOn(it.source, FirErrors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT, context)
+                is FirStarProjection -> reporter.reportOn(it.source, FirErrors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT)
                 is FirTypeProjectionWithVariance -> {
                     if (it.variance != Variance.INVARIANT) {
-                        reporter.reportOn(it.source, FirErrors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT, context)
+                        reporter.reportOn(it.source, FirErrors.PROJECTION_ON_NON_CLASS_TYPE_ARGUMENT)
                     }
                 }
             }

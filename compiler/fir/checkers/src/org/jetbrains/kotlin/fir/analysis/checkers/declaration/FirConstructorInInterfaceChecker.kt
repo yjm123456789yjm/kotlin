@@ -14,13 +14,13 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isInterface
 
 object FirConstructorInInterfaceChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (!declaration.isInterface) {
             return
         }
 
         if (declaration.source?.hasPrimaryConstructor() == true) {
-            reporter.reportOn(declaration.source, FirErrors.CONSTRUCTOR_IN_INTERFACE, context)
+            reporter.reportOn(declaration.source, FirErrors.CONSTRUCTOR_IN_INTERFACE)
         }
     }
 }

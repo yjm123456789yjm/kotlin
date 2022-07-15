@@ -20,19 +20,19 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirClassSymbol
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirQualifiedSupertypeExtendedByOtherSupertypeChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (context.languageVersionSettings.supportsFeature(LanguageFeature.QualifiedSupertypeMayBeExtendedByOtherSupertype)) return
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
+        if (languageVersionSettings.supportsFeature(LanguageFeature.QualifiedSupertypeMayBeExtendedByOtherSupertype)) return
         // require to be called over a super reference
         val superReference = expression.calleeReference.safeAs<FirSuperReference>()
             ?.takeIf { it.hadExplicitTypeInSource() }
             ?: return
 
         val explicitType = superReference.superTypeRef
-            .toClassLikeSymbol(context.session)
-            ?.fullyExpandedClass(context.session) as? FirClassSymbol<*>
+            .toClassLikeSymbol(session)
+            ?.fullyExpandedClass(session) as? FirClassSymbol<*>
             ?: return
 
-        val surroundingType = context.findClosestClassOrObject()
+        val surroundingType = findClosestClassOrObject()
             ?: return
 
         // how many supertypes of `surroundingType`
@@ -42,11 +42,11 @@ object FirQualifiedSupertypeExtendedByOtherSupertypeChecker : FirQualifiedAccess
         var candidate: FirClassSymbol<*>? = null
 
         for (it in surroundingType.superTypeRefs) {
-            val that = it.toClassLikeSymbol(context.session)
-                ?.fullyExpandedClass(context.session) as? FirClassSymbol<*>
+            val that = it.toClassLikeSymbol(session)
+                ?.fullyExpandedClass(session) as? FirClassSymbol<*>
                 ?: continue
 
-            val isSupertype = explicitType.isSupertypeOf(that, context.session)
+            val isSupertype = explicitType.isSupertypeOf(that, session)
 
             if (explicitType == that || isSupertype) {
                 if (isSupertype) {
@@ -65,8 +65,7 @@ object FirQualifiedSupertypeExtendedByOtherSupertypeChecker : FirQualifiedAccess
             reporter.reportOn(
                 superReference.superTypeRef.source,
                 FirErrors.QUALIFIED_SUPERTYPE_EXTENDED_BY_OTHER_SUPERTYPE,
-                candidate,
-                context
+                candidate
             )
         }
     }

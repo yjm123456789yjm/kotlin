@@ -25,14 +25,14 @@ import org.jetbrains.kotlin.lexer.KtTokens.QUEST
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object FirClassLiteralChecker : FirGetClassCallChecker() {
-    override fun check(expression: FirGetClassCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirGetClassCall, reporter: DiagnosticReporter) {
         val source = expression.source ?: return
         if (source.kind is KtFakeSourceElementKind) return
         val argument = expression.argument
         if (argument is FirResolvedQualifier) {
             val classId = argument.classId
             if (classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID || classId == OptInNames.OPT_IN_CLASS_ID) {
-                reporter.reportOn(argument.source, FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, context)
+                reporter.reportOn(argument.source, FirErrors.OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION)
             }
         }
 
@@ -49,16 +49,15 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
         val isNullable = markedNullable ||
                 (argument as? FirResolvedQualifier)?.isNullableLHSForCallableReference == true ||
                 argument.typeRef.coneType.isMarkedNullable ||
-                argument.typeRef.coneType.isNullableTypeParameter(context.session.typeContext)
+                argument.typeRef.coneType.isNullableTypeParameter(session.typeContext)
         if (isNullable) {
             if (argument.canBeDoubleColonLHSAsType) {
-                reporter.reportOn(source, FirErrors.NULLABLE_TYPE_IN_CLASS_LITERAL_LHS, context)
+                reporter.reportOn(source, FirErrors.NULLABLE_TYPE_IN_CLASS_LITERAL_LHS)
             } else {
                 reporter.reportOn(
                     argument.source,
                     FirErrors.EXPRESSION_OF_NULLABLE_TYPE_IN_CLASS_LITERAL_LHS,
-                    argument.typeRef.coneType,
-                    context
+                    argument.typeRef.coneType
                 )
             }
             return
@@ -67,13 +66,13 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
         argument.safeAsTypeParameterSymbol?.let {
             if (!it.isReified) {
                 // E.g., fun <T: Any> foo(): Any = T::class
-                reporter.reportOn(source, FirErrors.TYPE_PARAMETER_AS_REIFIED, it, context)
+                reporter.reportOn(source, FirErrors.TYPE_PARAMETER_AS_REIFIED, it)
             }
         }
 
         if (argument !is FirResolvedQualifier) return
         // TODO: differentiate RESERVED_SYNTAX_IN_CALLABLE_REFERENCE_LHS
-        if (argument.typeArguments.isNotEmpty() && !argument.typeRef.coneType.isAllowedInClassLiteral(context)) {
+        if (argument.typeArguments.isNotEmpty() && !argument.typeRef.coneType.isAllowedInClassLiteral(this)) {
             val symbol = argument.symbol
             symbol?.ensureResolved(FirResolvePhase.TYPES)
             @OptIn(SymbolInternals::class)
@@ -84,7 +83,7 @@ object FirClassLiteralChecker : FirGetClassCallChecker() {
                 // Will be reported as WRONG_NUMBER_OF_TYPE_ARGUMENTS
                 return
             }
-            reporter.reportOn(source, FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS, context)
+            reporter.reportOn(source, FirErrors.CLASS_LITERAL_LHS_NOT_A_CLASS)
         }
     }
 

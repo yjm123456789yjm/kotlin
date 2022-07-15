@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.name.Name
 
 object FirCyclicTypeBoundsChecker : FirBasicDeclarationChecker() {
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if (declaration !is FirMemberDeclaration) return
         if (declaration is FirConstructor || declaration is FirTypeAlias) return
 
@@ -57,7 +57,7 @@ object FirCyclicTypeBoundsChecker : FirBasicDeclarationChecker() {
                         listOf(param.source)
                     }
                     targets.forEach {
-                        reporter.reportOn(it, FirErrors.CYCLIC_GENERIC_UPPER_BOUND, context)
+                        reporter.reportOn(it, FirErrors.CYCLIC_GENERIC_UPPER_BOUND)
                     }
                 }
         }

@@ -5,7 +5,6 @@
 
 package org.jetbrains.kotlin.fir.analysis.jvm.checkers
 
-import org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirDynamicUnsupportedChecker
 import org.jetbrains.kotlin.fir.analysis.checkers.type.*
 
 object JvmTypeCheckers : TypeCheckers() {

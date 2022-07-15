@@ -22,11 +22,10 @@ object FirUnderscoredTypeArgumentSyntaxChecker : FirExpressionSyntaxChecker<FirF
     override fun isApplicable(element: FirFunctionCall, source: KtSourceElement): Boolean =
         element.typeArguments.isNotEmpty()
 
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirFunctionCall,
         source: KtPsiSourceElement,
         psi: PsiElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         for (typeProjection in element.typeArguments) {
@@ -37,17 +36,17 @@ object FirUnderscoredTypeArgumentSyntaxChecker : FirExpressionSyntaxChecker<FirF
 
             for (annotation in typeReference.annotationEntries) {
                 reporter.reportOn(
-                    annotation.toKtPsiSourceElement(), FirErrors.UNSUPPORTED,
-                    "annotations on an underscored type argument", context
+                    annotation.toKtPsiSourceElement(),
+                    FirErrors.UNSUPPORTED,
+                    "annotations on an underscored type argument"
                 )
             }
         }
     }
 
-    override fun checkLightTree(
+    override fun CheckerContext.checkLightTree(
         element: FirFunctionCall,
         source: KtLightSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
         for (typeProjection in element.typeArguments) {
@@ -59,8 +58,9 @@ object FirUnderscoredTypeArgumentSyntaxChecker : FirExpressionSyntaxChecker<FirF
 
             for (annotation in annotations) {
                 reporter.reportOn(
-                    source.buildChildSourceElement(annotation), FirErrors.UNSUPPORTED,
-                    "annotations on an underscored type argument", context
+                    source.buildChildSourceElement(annotation),
+                    FirErrors.UNSUPPORTED,
+                    "annotations on an underscored type argument"
                 )
             }
         }

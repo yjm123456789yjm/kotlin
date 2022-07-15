@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.getDanglingTypeConstraintsOrE
 
 object FirTypeConstraintsChecker : FirBasicDeclarationChecker() {
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if (declaration !is FirTypeParameterRefsOwner) return
 
         //basically we transfer errors, which were discovered in ast parsers
@@ -24,8 +24,7 @@ object FirTypeConstraintsChecker : FirBasicDeclarationChecker() {
                 constraint.source,
                 FirErrors.NAME_IN_CONSTRAINT_IS_NOT_A_TYPE_PARAMETER,
                 constraint.name,
-                declaration.symbol,
-                context
+                declaration.symbol
             )
         }
     }

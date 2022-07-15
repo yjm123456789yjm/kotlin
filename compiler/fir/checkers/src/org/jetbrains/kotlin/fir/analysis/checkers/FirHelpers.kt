@@ -48,7 +48,6 @@ import org.jetbrains.kotlin.psi.KtParameter.VAL_VAR_TOKEN_SET
 import org.jetbrains.kotlin.resolve.AnnotationTargetList
 import org.jetbrains.kotlin.resolve.AnnotationTargetLists
 import org.jetbrains.kotlin.types.AbstractTypeChecker
-import org.jetbrains.kotlin.types.Variance
 import org.jetbrains.kotlin.types.model.KotlinTypeMarker
 import org.jetbrains.kotlin.types.model.TypeCheckerProviderContext
 import org.jetbrains.kotlin.util.ImplementationStatus
@@ -433,11 +432,10 @@ val Name.isDelegated: Boolean get() = asString().startsWith("<\$\$delegate_")
 
 val ConeTypeProjection.isConflictingOrNotInvariant: Boolean get() = kind != ProjectionKind.INVARIANT || this is ConeKotlinTypeConflictingProjection
 
-fun checkTypeMismatch(
+fun CheckerContext.checkTypeMismatch(
     lValueOriginalType: ConeKotlinType,
     assignment: FirVariableAssignment?,
     rValue: FirExpression,
-    context: CheckerContext,
     source: KtSourceElement,
     reporter: DiagnosticReporter,
     isInitializer: Boolean
@@ -452,12 +450,12 @@ fun checkTypeMismatch(
         }
     }
 
-    val typeContext = context.session.typeContext
+    val typeContext = session.typeContext
 
     if (!isSubtypeForTypeMismatch(typeContext, subtype = rValueType, supertype = lValueType)) {
         if (rValueType is ConeClassLikeType &&
             rValueType.lookupTag.classId == StandardClassIds.Int &&
-            lValueType.fullyExpandedType(context.session).isIntegerTypeOrNullableIntegerTypeOfAnySize &&
+            lValueType.fullyExpandedType(session).isIntegerTypeOrNullableIntegerTypeOfAnySize &&
             rValueType.nullability == ConeNullability.NOT_NULL
         ) {
             // val p: Byte = 42 or similar situation
@@ -473,10 +471,10 @@ fun checkTypeMismatch(
             resolvedSymbol != null && lValueType is ConeCapturedType && lValueType.constructor.projection.kind.let {
                 it == ProjectionKind.STAR || it == ProjectionKind.OUT
             } -> {
-                reporter.reportOn(assignment.source, FirErrors.SETTER_PROJECTED_OUT, resolvedSymbol, context)
+                reporter.reportOn(assignment.source, FirErrors.SETTER_PROJECTED_OUT, resolvedSymbol)
             }
             rValue.isNullLiteral && lValueType.nullability == ConeNullability.NOT_NULL -> {
-                reporter.reportOn(rValue.source, FirErrors.NULL_FOR_NONNULL_TYPE, context)
+                reporter.reportOn(rValue.source, FirErrors.NULL_FOR_NONNULL_TYPE)
             }
             isInitializer -> {
                 reporter.reportOn(
@@ -484,8 +482,7 @@ fun checkTypeMismatch(
                     FirErrors.INITIALIZER_TYPE_MISMATCH,
                     lValueType,
                     rValueType,
-                    context.session.typeContext.isTypeMismatchDueToNullability(rValueType, lValueType),
-                    context
+                    session.typeContext.isTypeMismatchDueToNullability(rValueType, lValueType)
                 )
             }
             source.kind is KtFakeSourceElementKind.DesugaredIncrementOrDecrement -> {
@@ -495,9 +492,9 @@ fun checkTypeMismatch(
                     lValueType = tempType
                 }
                 if (rValueType.isUnit) {
-                    reporter.reportOn(source, FirErrors.INC_DEC_SHOULD_NOT_RETURN_UNIT, context)
+                    reporter.reportOn(source, FirErrors.INC_DEC_SHOULD_NOT_RETURN_UNIT)
                 } else {
-                    reporter.reportOn(source, FirErrors.RESULT_TYPE_MISMATCH, lValueType, rValueType, context)
+                    reporter.reportOn(source, FirErrors.RESULT_TYPE_MISMATCH, lValueType, rValueType)
                 }
             }
             else -> {
@@ -506,25 +503,23 @@ fun checkTypeMismatch(
                     FirErrors.ASSIGNMENT_TYPE_MISMATCH,
                     lValueType,
                     rValueType,
-                    context.session.typeContext.isTypeMismatchDueToNullability(rValueType, lValueType),
-                    context
+                    session.typeContext.isTypeMismatchDueToNullability(rValueType, lValueType)
                 )
             }
         }
     }
 }
 
-internal fun checkCondition(condition: FirExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+internal fun CheckerContext.checkCondition(condition: FirExpression, reporter: DiagnosticReporter) {
     val coneType = condition.typeRef.coneType.lowerBoundIfFlexible()
     if (coneType !is ConeErrorType &&
-        !coneType.isSubtypeOf(context.session.typeContext, context.session.builtinTypes.booleanType.type)
+        !coneType.isSubtypeOf(session.typeContext, session.builtinTypes.booleanType.type)
     ) {
         reporter.reportOn(
             condition.source,
             FirErrors.CONDITION_TYPE_MISMATCH,
             coneType,
-            coneType.isNullableBoolean,
-            context
+            coneType.isNullableBoolean
         )
     }
 }

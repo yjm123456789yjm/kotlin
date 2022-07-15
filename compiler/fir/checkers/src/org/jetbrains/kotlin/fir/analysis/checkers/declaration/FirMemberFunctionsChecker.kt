@@ -22,15 +22,14 @@ import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 // See old FE's [DeclarationsChecker]
 object FirMemberFunctionsChecker : FirSimpleFunctionChecker() {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingDeclaration = context.containingDeclarations.lastIsInstanceOrNull<FirClass>() ?: return
-        checkFunction(containingDeclaration, declaration, context, reporter)
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
+        val containingDeclaration = containingDeclarations.lastIsInstanceOrNull<FirClass>() ?: return
+        checkFunction(containingDeclaration, declaration, reporter)
     }
 
-    private fun checkFunction(
+    private fun CheckerContext.checkFunction(
         containingDeclaration: FirClass,
         function: FirSimpleFunction,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val source = function.source ?: return
@@ -47,30 +46,29 @@ object FirMemberFunctionsChecker : FirSimpleFunctionChecker() {
                     source,
                     FirErrors.ABSTRACT_FUNCTION_IN_NON_ABSTRACT_CLASS,
                     functionSymbol,
-                    containingDeclaration.symbol,
-                    context
+                    containingDeclaration.symbol
                 )
             }
             if (function.hasBody) {
-                reporter.reportOn(source, FirErrors.ABSTRACT_FUNCTION_WITH_BODY, functionSymbol, context)
+                reporter.reportOn(source, FirErrors.ABSTRACT_FUNCTION_WITH_BODY, functionSymbol)
             }
         }
-        val isInsideExpectClass = isInsideExpectClass(containingDeclaration, context)
-        val isInsideExternal = isInsideExternalClass(containingDeclaration, context)
+        val isInsideExpectClass = isInsideExpectClass(containingDeclaration, this)
+        val isInsideExternal = isInsideExternalClass(containingDeclaration, this)
         val hasOpenModifier = KtTokens.OPEN_KEYWORD in modifierList
         if (!function.hasBody) {
             if (containingDeclaration.isInterface) {
                 if (Visibilities.isPrivate(function.visibility)) {
-                    reporter.reportOn(source, FirErrors.PRIVATE_FUNCTION_WITH_NO_BODY, functionSymbol, context)
+                    reporter.reportOn(source, FirErrors.PRIVATE_FUNCTION_WITH_NO_BODY, functionSymbol)
                 }
                 if (!isInsideExpectClass && !hasAbstractModifier && hasOpenModifier) {
-                    reporter.reportOn(source, FirErrors.REDUNDANT_OPEN_IN_INTERFACE, context)
+                    reporter.reportOn(source, FirErrors.REDUNDANT_OPEN_IN_INTERFACE)
                 }
             } else if (!isInsideExpectClass && !hasAbstractModifier && !function.isExternal && !isInsideExternal) {
-                reporter.reportOn(source, FirErrors.NON_ABSTRACT_FUNCTION_WITH_NO_BODY, functionSymbol, context)
+                reporter.reportOn(source, FirErrors.NON_ABSTRACT_FUNCTION_WITH_NO_BODY, functionSymbol)
             }
         }
 
-        checkExpectDeclarationVisibilityAndBody(function, source, reporter, context)
+        checkExpectDeclarationVisibilityAndBody(function, source, reporter)
     }
 }

@@ -15,15 +15,14 @@ import org.jetbrains.kotlin.fir.declarations.impl.FirDefaultPropertyBackingField
 import org.jetbrains.kotlin.fir.languageVersionSettings
 
 object FirExplicitBackingFieldsUnsupportedChecker : FirBackingFieldChecker() {
-    override fun check(declaration: FirBackingField, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirBackingField, reporter: DiagnosticReporter) {
         if (declaration !is FirDefaultPropertyBackingField &&
-            !context.session.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitBackingFields)
+            !session.languageVersionSettings.supportsFeature(LanguageFeature.ExplicitBackingFields)
         ) {
             reporter.reportOn(
                 declaration.source,
                 FirErrors.UNSUPPORTED_FEATURE,
-                LanguageFeature.ExplicitBackingFields to context.session.languageVersionSettings,
-                context
+                LanguageFeature.ExplicitBackingFields to session.languageVersionSettings
             )
         }
     }

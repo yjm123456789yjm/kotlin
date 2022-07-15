@@ -20,8 +20,8 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.coneType
 
 object FirCastOperatorsChecker : FirTypeOperatorCallChecker() {
-    override fun check(expression: FirTypeOperatorCall, context: CheckerContext, reporter: DiagnosticReporter) {
-        val session = context.session
+    override fun CheckerContext.check(expression: FirTypeOperatorCall, reporter: DiagnosticReporter) {
+        val session = session
         val firstArgument = expression.argumentList.arguments[0]
         val actualType = (if (firstArgument is FirExpressionWithSmartcast) {
             firstArgument.originalType.coneType
@@ -33,21 +33,21 @@ object FirCastOperatorsChecker : FirTypeOperatorCallChecker() {
 
         val isSafeAs = expression.operation == FirOperation.SAFE_AS
         if (expression.operation == FirOperation.AS || isSafeAs) {
-            val castType = checkCasting(actualType, targetType, isSafeAs, context)
+            val castType = checkCasting(actualType, targetType, isSafeAs, this)
             if (castType == CastingType.Impossible) {
-                if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-                    reporter.reportOn(expression.source, FirErrors.CAST_NEVER_SUCCEEDS, context)
+                if (languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+                    reporter.reportOn(expression.source, FirErrors.CAST_NEVER_SUCCEEDS)
                 }
             } else if (castType == CastingType.Always) {
-                if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-                    reporter.reportOn(expression.source, FirErrors.USELESS_CAST, context)
+                if (languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+                    reporter.reportOn(expression.source, FirErrors.USELESS_CAST)
                 }
-            } else if (isCastErased(actualType, targetType, context)) {
-                reporter.reportOn(expression.source, FirErrors.UNCHECKED_CAST, actualType, targetType, context)
+            } else if (isCastErased(actualType, targetType, this)) {
+                reporter.reportOn(expression.source, FirErrors.UNCHECKED_CAST, actualType, targetType)
             }
         } else if (expression.operation == FirOperation.IS) {
-            if (isCastErased(actualType, targetType, context)) {
-                reporter.reportOn(conversionTypeRef.source, FirErrors.CANNOT_CHECK_FOR_ERASED, targetType, context)
+            if (isCastErased(actualType, targetType, this)) {
+                reporter.reportOn(conversionTypeRef.source, FirErrors.CANNOT_CHECK_FOR_ERASED, targetType)
             }
         }
     }

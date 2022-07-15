@@ -18,14 +18,15 @@ import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
 import org.jetbrains.kotlin.fir.types.*
 
 object FirNotNullAssertionChecker : FirCheckNotNullCallChecker() {
-    override fun check(expression: FirCheckNotNullCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirCheckNotNullCall, reporter: DiagnosticReporter) {
         val argument = expression.argumentList.arguments.singleOrNull() ?: return
         if (argument is FirAnonymousFunctionExpression && argument.anonymousFunction.isLambda) {
-            reporter.reportOn(expression.source, FirErrors.NOT_NULL_ASSERTION_ON_LAMBDA_EXPRESSION, context)
+            // Note: looks like withSuppression isn't needed here because argument is single
+            reporter.reportOn(expression.source, FirErrors.NOT_NULL_ASSERTION_ON_LAMBDA_EXPRESSION)
             return
         }
         if (argument is FirCallableReferenceAccess) {
-            reporter.reportOn(expression.source, FirErrors.NOT_NULL_ASSERTION_ON_CALLABLE_REFERENCE, context)
+            reporter.reportOn(expression.source, FirErrors.NOT_NULL_ASSERTION_ON_CALLABLE_REFERENCE)
             return
         }
         // TODO: use of Unit is subject to change.
@@ -35,10 +36,10 @@ object FirNotNullAssertionChecker : FirCheckNotNullCallChecker() {
             return
         }
 
-        val type = argument.typeRef.coneType.fullyExpandedType(context.session)
+        val type = argument.typeRef.coneType.fullyExpandedType(session)
 
-        if (!type.canBeNull && context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-            reporter.reportOn(expression.source, FirErrors.UNNECESSARY_NOT_NULL_ASSERTION, type, context)
+        if (!type.canBeNull && languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+            reporter.reportOn(expression.source, FirErrors.UNNECESSARY_NOT_NULL_ASSERTION, type)
         }
     }
 }

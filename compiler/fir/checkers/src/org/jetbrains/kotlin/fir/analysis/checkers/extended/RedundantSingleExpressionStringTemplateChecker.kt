@@ -26,12 +26,12 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.psi.KtStringTemplateExpression
 
 object RedundantSingleExpressionStringTemplateChecker : FirStringConcatenationCallChecker() {
-    override fun check(expression: FirStringConcatenationCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirStringConcatenationCall, reporter: DiagnosticReporter) {
         for (argumentExpression in expression.arguments) {
             if (argumentExpression.typeRef.coneType.classId == StandardClassIds.String &&
                 argumentExpression.stringParentChildrenCount() == 1 // there is no more children in original string template
             ) {
-                reporter.reportOn(argumentExpression.source, REDUNDANT_SINGLE_EXPRESSION_STRING_TEMPLATE, context)
+                reporter.reportOn(argumentExpression.source, REDUNDANT_SINGLE_EXPRESSION_STRING_TEMPLATE)
             }
         }
     }

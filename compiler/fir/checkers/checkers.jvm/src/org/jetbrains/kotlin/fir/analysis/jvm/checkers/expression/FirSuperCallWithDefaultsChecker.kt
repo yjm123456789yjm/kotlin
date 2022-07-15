@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirSuperCallWithDefaultsChecker : FirFunctionCallChecker() {
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         expression.explicitReceiver.safeAs<FirQualifiedAccessExpression>()
             ?.calleeReference.safeAs<FirSuperReference>()
             ?: return
@@ -33,8 +33,7 @@ object FirSuperCallWithDefaultsChecker : FirFunctionCallChecker() {
             reporter.reportOn(
                 expression.calleeReference.source,
                 FirJvmErrors.SUPER_CALL_WITH_DEFAULT_PARAMETERS,
-                functionSymbol.name.asString(),
-                context
+                functionSymbol.name.asString()
             )
         }
     }

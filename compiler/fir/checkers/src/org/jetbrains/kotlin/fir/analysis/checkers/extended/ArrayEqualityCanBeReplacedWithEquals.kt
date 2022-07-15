@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.fir.types.classId
 import org.jetbrains.kotlin.fir.types.coneType
 
 object ArrayEqualityCanBeReplacedWithEquals : FirBasicExpressionChecker() {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirStatement, reporter: DiagnosticReporter) {
         if (expression !is FirEqualityOperatorCall) return
         if (expression.operation != FirOperation.EQ && expression.operation != FirOperation.NOT_EQ) return
         val arguments = expression.arguments
@@ -29,6 +29,6 @@ object ArrayEqualityCanBeReplacedWithEquals : FirBasicExpressionChecker() {
         if (left.typeRef.coneType.classId != StandardClassIds.Array) return
         if (right.typeRef.coneType.classId != StandardClassIds.Array) return
 
-        reporter.reportOn(expression.source, ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS, context)
+        reporter.reportOn(expression.source, ARRAY_EQUALITY_OPERATOR_CAN_BE_REPLACED_WITH_EQUALS)
     }
 }

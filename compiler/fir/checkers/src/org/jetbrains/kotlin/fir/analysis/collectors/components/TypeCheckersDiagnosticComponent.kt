@@ -59,7 +59,7 @@ class TypeCheckersDiagnosticComponent(
         reporter: DiagnosticReporter
     ) {
         for (checker in this) {
-            checker.check(typeRef, context, reporter)
+            with(checker) { context.check(typeRef, reporter) }
         }
     }
 }

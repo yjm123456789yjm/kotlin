@@ -20,20 +20,20 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.coneType
 
 object FirWhenConditionChecker : FirWhenExpressionChecker() {
-    override fun check(expression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirWhenExpression, reporter: DiagnosticReporter) {
         for (branch in expression.branches) {
             val condition = branch.condition
             if (condition is FirElseIfTrueCondition) continue
-            withSuppressedDiagnostics(condition, context) {
-                checkCondition(condition, it, reporter)
+            withSuppressedDiagnostics(condition) {
+                checkCondition(condition, reporter)
             }
         }
         if (expression.subject != null) {
-            checkDuplicatedLabels(expression, context, reporter)
+            checkDuplicatedLabels(expression, reporter)
         }
     }
 
-    private fun checkDuplicatedLabels(expression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkDuplicatedLabels(expression: FirWhenExpression, reporter: DiagnosticReporter) {
         // The second part of each pair indicates whether the `is` check is positive or negated.
         val checkedTypes = hashSetOf<Pair<ConeKotlinType, FirOperation>>()
         val checkedConstants = hashSetOf<Any?>()
@@ -54,13 +54,13 @@ object FirWhenConditionChecker : FirWhenExpressionChecker() {
                             else -> continue
                         }
                         if (!checkedConstants.add(value)) {
-                            reporter.reportOn(condition.source, FirErrors.DUPLICATE_LABEL_IN_WHEN, context)
+                            reporter.reportOn(condition.source, FirErrors.DUPLICATE_LABEL_IN_WHEN)
                         }
                     }
                 }
                 is FirTypeOperatorCall -> {
                     if (!checkedTypes.add(condition.conversionTypeRef.coneType to condition.operation)) {
-                        reporter.reportOn(condition.conversionTypeRef.source, FirErrors.DUPLICATE_LABEL_IN_WHEN, context)
+                        reporter.reportOn(condition.conversionTypeRef.source, FirErrors.DUPLICATE_LABEL_IN_WHEN)
                     }
                 }
             }

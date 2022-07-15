@@ -29,10 +29,10 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 object FirFunInterfaceDeclarationChecker : FirRegularClassChecker() {
 
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (!declaration.isInterface || !declaration.isFun) return
 
-        val scope = declaration.unsubstitutedScope(context)
+        val scope = declaration.unsubstitutedScope(this)
         val classSymbol = declaration.symbol
 
         var abstractFunctionSymbol: FirNamedFunctionSymbol? = null
@@ -46,7 +46,7 @@ object FirFunInterfaceDeclarationChecker : FirRegularClassChecker() {
                     if (abstractFunctionSymbol == null) {
                         abstractFunctionSymbol = function
                     } else {
-                        reporter.reportOn(declaration.source, FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS, context)
+                        reporter.reportOn(declaration.source, FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS)
                     }
                 }
             }
@@ -55,37 +55,35 @@ object FirFunInterfaceDeclarationChecker : FirRegularClassChecker() {
                 val firProperty = property as? FirPropertySymbol ?: continue
                 if (firProperty.isAbstract) {
                     val source =
-                        if (firProperty.getContainingClassSymbol(context.session) != classSymbol)
+                        if (firProperty.getContainingClassSymbol(session) != classSymbol)
                             declaration.source
                         else
                             firProperty.source
 
-                    reporter.reportOn(source, FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES, context)
+                    reporter.reportOn(source, FUN_INTERFACE_CANNOT_HAVE_ABSTRACT_PROPERTIES)
                 }
             }
         }
 
         if (abstractFunctionSymbol == null) {
-            reporter.reportOn(declaration.source, FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS, context)
+            reporter.reportOn(declaration.source, FUN_INTERFACE_WRONG_COUNT_OF_ABSTRACT_MEMBERS)
             return
         }
 
-        val inFunInterface = abstractFunctionSymbol.getContainingClassSymbol(context.session) === classSymbol
+        val inFunInterface = abstractFunctionSymbol.getContainingClassSymbol(session) === classSymbol
 
         when {
             abstractFunctionSymbol.typeParameterSymbols.isNotEmpty() ->
                 reporter.reportOn(
                     if (inFunInterface) abstractFunctionSymbol.source else declaration.source,
-                    FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS,
-                    context
+                    FUN_INTERFACE_ABSTRACT_METHOD_WITH_TYPE_PARAMETERS
                 )
 
             abstractFunctionSymbol.isSuspend ->
-                if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.SuspendFunctionsInFunInterfaces)) {
+                if (!session.languageVersionSettings.supportsFeature(LanguageFeature.SuspendFunctionsInFunInterfaces)) {
                     reporter.reportOn(
                         if (inFunInterface) abstractFunctionSymbol.source else declaration.source,
-                        FUN_INTERFACE_WITH_SUSPEND_FUNCTION,
-                        context
+                        FUN_INTERFACE_WITH_SUSPEND_FUNCTION
                     )
                 }
         }
@@ -94,8 +92,7 @@ object FirFunInterfaceDeclarationChecker : FirRegularClassChecker() {
             if (it.hasDefaultValue) {
                 reporter.reportOn(
                     if (inFunInterface) it.source else declaration.source,
-                    FUN_INTERFACE_ABSTRACT_METHOD_WITH_DEFAULT_VALUE,
-                    context
+                    FUN_INTERFACE_ABSTRACT_METHOD_WITH_DEFAULT_VALUE
                 )
             }
         }

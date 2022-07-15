@@ -28,13 +28,12 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirVariableSymbol
 
 @OptIn(SymbolInternals::class)
 object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChecker() {
-    override fun analyze(
+    override fun CheckerContext.analyze(
         graph: ControlFlowGraph,
         reporter: DiagnosticReporter,
         data: Map<CFGNode<*>, PathAwarePropertyInitializationInfo>,
         properties: Set<FirPropertySymbol>,
-        capturedWrites: Set<FirVariableAssignment>,
-        context: CheckerContext
+        capturedWrites: Set<FirVariableAssignment>
     ) {
         val localData = data.filter {
             val symbolFir = (it.key.fir as? FirVariableSymbol<*>)?.fir
@@ -43,16 +42,16 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
 
         val localProperties = properties.filterTo(mutableSetOf()) { it.fir.initializer == null && it.fir.delegate == null }
 
-        val reporterVisitor = PropertyReporter(localData, localProperties, capturedWrites, reporter, context)
+        val reporterVisitor = PropertyReporter(localData, localProperties, capturedWrites, reporter)
         graph.traverse(TraverseDirection.Forward, reporterVisitor)
     }
 
+    context(CheckerContext)
     private class PropertyReporter(
         val data: Map<CFGNode<*>, PathAwarePropertyInitializationInfo>,
         val localProperties: Set<FirPropertySymbol>,
         val capturedWrites: Set<FirVariableAssignment>,
-        val reporter: DiagnosticReporter,
-        val context: CheckerContext
+        val reporter: DiagnosticReporter
     ) : ControlFlowGraphVisitorVoid() {
         override fun visitNode(node: CFGNode<*>) {}
 
@@ -78,15 +77,15 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
         ): Boolean {
             if (symbol.fir.isVal && node.fir in capturedWrites) {
                 if (symbol.fir.isLocal) {
-                    reporter.reportOn(node.fir.lValue.source, FirErrors.CAPTURED_VAL_INITIALIZATION, symbol, context)
+                    reporter.reportOn(node.fir.lValue.source, FirErrors.CAPTURED_VAL_INITIALIZATION, symbol)
                 } else {
-                    reporter.reportOn(node.fir.lValue.source, FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION, symbol, context)
+                    reporter.reportOn(node.fir.lValue.source, FirErrors.CAPTURED_MEMBER_VAL_INITIALIZATION, symbol)
                 }
                 return true
             }
             val kind = info[symbol] ?: EventOccurrencesRange.ZERO
             if (symbol.fir.isVal && (symbol is FirSyntheticPropertySymbol || kind.canBeRevisited())) {
-                reporter.reportOn(node.fir.lValue.source, FirErrors.VAL_REASSIGNMENT, symbol, context)
+                reporter.reportOn(node.fir.lValue.source, FirErrors.VAL_REASSIGNMENT, symbol)
                 return true
             }
             return false
@@ -112,7 +111,7 @@ object FirPropertyInitializationAnalyzer : AbstractFirPropertyInitializationChec
         ): Boolean {
             val kind = info[symbol] ?: EventOccurrencesRange.ZERO
             if (symbol !is FirSyntheticPropertySymbol && !kind.isDefinitelyVisited()) {
-                reporter.reportOn(node.fir.source, FirErrors.UNINITIALIZED_VARIABLE, symbol, context)
+                reporter.reportOn(node.fir.source, FirErrors.UNINITIALIZED_VARIABLE, symbol)
                 return true
             }
             return false

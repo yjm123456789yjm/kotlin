@@ -15,15 +15,15 @@ import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.FirMemberDeclaration
 
 object FirInfixFunctionDeclarationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if ((declaration as? FirMemberDeclaration)?.status?.isInfix != true) return
         if (declaration is FirSimpleFunction) {
-            if (declaration.valueParameters.size != 1 || !hasExtensionOrDispatchReceiver(declaration, context)) {
-                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_INFIX_MODIFIER, context)
+            if (declaration.valueParameters.size != 1 || !hasExtensionOrDispatchReceiver(declaration, this)) {
+                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_INFIX_MODIFIER)
             }
             return
         }
-        reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_INFIX_MODIFIER, context)
+        reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_INFIX_MODIFIER)
     }
 
     private fun hasExtensionOrDispatchReceiver(

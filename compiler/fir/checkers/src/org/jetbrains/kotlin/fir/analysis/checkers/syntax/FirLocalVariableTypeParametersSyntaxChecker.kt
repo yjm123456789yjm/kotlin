@@ -24,32 +24,30 @@ object FirLocalVariableTypeParametersSyntaxChecker : FirDeclarationSyntaxChecker
     override fun isApplicable(element: FirProperty, source: KtSourceElement): Boolean =
         source.kind !is KtFakeSourceElementKind && element.isLocal
 
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirProperty,
         source: KtPsiSourceElement,
         psi: KtExpression,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (psi is KtProperty && psi.typeParameterList != null) {
             val diagnostic =
-                if (context.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitTypeParametersForLocalVariables))
+                if (languageVersionSettings.supportsFeature(LanguageFeature.ProhibitTypeParametersForLocalVariables))
                     FirErrors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS else FirErrors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING
-            reporter.reportOn(source, diagnostic, context)
+            reporter.reportOn(source, diagnostic)
         }
     }
 
-    override fun checkLightTree(
+    override fun CheckerContext.checkLightTree(
         element: FirProperty,
         source: KtLightSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         source.treeStructure.typeParametersList(source.lighterASTNode)?.let { _ ->
             val diagnostic =
-                if (context.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitTypeParametersForLocalVariables))
+                if (languageVersionSettings.supportsFeature(LanguageFeature.ProhibitTypeParametersForLocalVariables))
                     FirErrors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS else FirErrors.LOCAL_VARIABLE_WITH_TYPE_PARAMETERS_WARNING
-            reporter.reportOn(source, diagnostic, context)
+            reporter.reportOn(source, diagnostic)
 
         }
     }

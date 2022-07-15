@@ -20,19 +20,19 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirSuperclassNotAccessibleFromInterfaceChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         expression.explicitReceiver.safeAs<FirQualifiedAccessExpression>()
             ?.calleeReference.safeAs<FirSuperReference>()
             ?: return
 
-        val closestClass = context.findClosest<FirRegularClass>() ?: return
+        val closestClass = findClosest<FirRegularClass>() ?: return
 
         if (closestClass.classKind == ClassKind.INTERFACE) {
             val containingClassSymbol =
-                expression.toResolvedCallableSymbol()?.getContainingClassSymbol(context.session) as? FirRegularClassSymbol ?: return
+                expression.toResolvedCallableSymbol()?.getContainingClassSymbol(session) as? FirRegularClassSymbol ?: return
 
             if (containingClassSymbol.source != null && containingClassSymbol.classKind == ClassKind.CLASS) {
-                reporter.reportOn(expression.explicitReceiver?.source, FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE, context)
+                reporter.reportOn(expression.explicitReceiver?.source, FirErrors.SUPERCLASS_NOT_ACCESSIBLE_FROM_INTERFACE)
             }
         }
     }

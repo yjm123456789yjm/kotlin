@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 
 // See old FE's [DeclarationsChecker]
 object FirTopLevelFunctionsChecker : FirSimpleFunctionChecker() {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
         // Only report on top level callable declarations
-        if (context.containingDeclarations.size > 1) return
+        if (containingDeclarations.size > 1) return
 
         val source = declaration.source ?: return
         if (source.kind is KtFakeSourceElementKind) return
@@ -30,9 +30,9 @@ object FirTopLevelFunctionsChecker : FirSimpleFunctionChecker() {
         if (declaration.hasModifier(KtTokens.ABSTRACT_KEYWORD)) return
         if (declaration.isExternal) return
         if (!declaration.hasBody && !declaration.isExpect) {
-            reporter.reportOn(source, FirErrors.NON_MEMBER_FUNCTION_NO_BODY, declaration.symbol, context)
+            reporter.reportOn(source, FirErrors.NON_MEMBER_FUNCTION_NO_BODY, declaration.symbol)
         }
 
-        checkExpectDeclarationVisibilityAndBody(declaration, source, reporter, context)
+        checkExpectDeclarationVisibilityAndBody(declaration, source, reporter)
     }
 }

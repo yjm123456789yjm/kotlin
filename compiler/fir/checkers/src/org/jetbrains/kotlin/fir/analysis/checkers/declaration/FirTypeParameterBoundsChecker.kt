@@ -28,62 +28,60 @@ object FirTypeParameterBoundsChecker : FirTypeParameterChecker() {
         ClassKind.OBJECT
     )
 
-    override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
+    override fun CheckerContext.check(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
+        val containingDeclaration = containingDeclarations.lastOrNull() ?: return
         if (containingDeclaration is FirConstructor) return
 
-        checkFinalUpperBounds(declaration, containingDeclaration, context, reporter)
-        checkExtensionFunctionTypeBound(declaration, context, reporter)
+        this.checkFinalUpperBounds(declaration, containingDeclaration, reporter)
+        this.checkExtensionFunctionTypeBound(declaration, reporter)
 
         if (containingDeclaration.safeAs<FirMemberDeclaration>()?.isInlineOnly() != true) {
-            checkOnlyOneTypeParameterBound(declaration, context, reporter)
+            this.checkOnlyOneTypeParameterBound(declaration, reporter)
         }
 
-        checkBoundUniqueness(declaration, context, reporter)
-        checkConflictingBounds(declaration, context, reporter)
-        checkTypeAliasBound(declaration, containingDeclaration, context, reporter)
-        checkDynamicBounds(declaration, context, reporter)
-        checkInconsistentTypeParameterBounds(declaration, context, reporter)
+        this.checkBoundUniqueness(declaration, reporter)
+        this.checkConflictingBounds(declaration, reporter)
+        this.checkTypeAliasBound(declaration, containingDeclaration, reporter)
+        this.checkDynamicBounds(declaration, reporter)
+        checkInconsistentTypeParameterBounds(declaration, this, reporter)
     }
 
-    private fun checkFinalUpperBounds(
+    private fun CheckerContext.checkFinalUpperBounds(
         declaration: FirTypeParameter,
         containingDeclaration: FirDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (containingDeclaration is FirSimpleFunction && containingDeclaration.isOverride) return
         if (containingDeclaration is FirProperty && containingDeclaration.isOverride) return
 
         declaration.symbol.resolvedBounds.forEach { bound ->
-            if (!bound.coneType.canHaveSubtypes(context.session)) {
-                reporter.reportOn(bound.source, FirErrors.FINAL_UPPER_BOUND, bound.coneType, context)
+            if (!bound.coneType.canHaveSubtypes(session)) {
+                reporter.reportOn(bound.source, FirErrors.FINAL_UPPER_BOUND, bound.coneType)
             }
         }
     }
 
-    private fun checkExtensionFunctionTypeBound(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkExtensionFunctionTypeBound(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
         declaration.symbol.resolvedBounds.forEach { bound ->
-            if (bound.isExtensionFunctionType(context.session)) {
-                reporter.reportOn(bound.source, FirErrors.UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE, context)
+            if (bound.isExtensionFunctionType(session)) {
+                reporter.reportOn(bound.source, FirErrors.UPPER_BOUND_IS_EXTENSION_FUNCTION_TYPE)
             }
         }
     }
 
-    private fun checkTypeAliasBound(
+    private fun CheckerContext.checkTypeAliasBound(
         declaration: FirTypeParameter,
         containingDeclaration: FirDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (containingDeclaration is FirTypeAlias) {
             declaration.bounds.filter { it.source?.kind == KtRealSourceElementKind }.forEach { bound ->
-                reporter.reportOn(bound.source, FirErrors.BOUND_ON_TYPE_ALIAS_PARAMETER_NOT_ALLOWED, context)
+                reporter.reportOn(bound.source, FirErrors.BOUND_ON_TYPE_ALIAS_PARAMETER_NOT_ALLOWED)
             }
         }
     }
 
-    private fun checkOnlyOneTypeParameterBound(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkOnlyOneTypeParameterBound(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
         val bounds = declaration.symbol.resolvedBounds.distinctBy { it.coneType }
         val (boundWithParam, otherBounds) = bounds.partition { it.coneType is ConeTypeParameterType }
         if (boundWithParam.size > 1 || (boundWithParam.size == 1 && otherBounds.isNotEmpty())) {
@@ -102,36 +100,36 @@ object FirTypeParameterBoundsChecker : FirTypeParameterChecker() {
                 } else {
                     declaration.source
                 }
-            reporter.reportOn(reportOn, FirErrors.BOUNDS_NOT_ALLOWED_IF_BOUNDED_BY_TYPE_PARAMETER, context)
+            reporter.reportOn(reportOn, FirErrors.BOUNDS_NOT_ALLOWED_IF_BOUNDED_BY_TYPE_PARAMETER)
         }
     }
 
-    private fun checkBoundUniqueness(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkBoundUniqueness(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
         val seenClasses = mutableSetOf<FirRegularClassSymbol>()
         val allNonErrorBounds = declaration.symbol.resolvedBounds.filter { it !is FirErrorTypeRef }
         val uniqueBounds = allNonErrorBounds.distinctBy { it.coneType.classId ?: it.coneType }
 
         uniqueBounds.forEach { bound ->
-            bound.coneType.toRegularClassSymbol(context.session)?.let { symbol ->
+            bound.coneType.toRegularClassSymbol(session)?.let { symbol ->
                 if (classKinds.contains(symbol.classKind) && seenClasses.add(symbol) && seenClasses.size > 1) {
-                    reporter.reportOn(bound.source, FirErrors.ONLY_ONE_CLASS_BOUND_ALLOWED, context)
+                    reporter.reportOn(bound.source, FirErrors.ONLY_ONE_CLASS_BOUND_ALLOWED)
                 }
             }
         }
 
         allNonErrorBounds.minus(uniqueBounds).forEach { bound ->
-            reporter.reportOn(bound.source, FirErrors.REPEATED_BOUND, context)
+            reporter.reportOn(bound.source, FirErrors.REPEATED_BOUND)
         }
     }
 
-    private fun checkConflictingBounds(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkConflictingBounds(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
         if (declaration.bounds.size < 2) return
 
         fun anyConflictingTypes(types: List<ConeKotlinType>): Boolean {
             types.forEach { type ->
-                if (!type.canHaveSubtypes(context.session)) {
+                if (!type.canHaveSubtypes(session)) {
                     types.forEach { otherType ->
-                        if (type != otherType && !type.isRelated(context.session.typeContext, otherType)) {
+                        if (type != otherType && !type.isRelated(session.typeContext, otherType)) {
                             return true
                         }
                     }
@@ -141,14 +139,14 @@ object FirTypeParameterBoundsChecker : FirTypeParameterChecker() {
         }
 
         if (anyConflictingTypes(declaration.symbol.resolvedBounds.map { it.coneType })) {
-            reporter.reportOn(declaration.source, FirErrors.CONFLICTING_UPPER_BOUNDS, declaration.symbol, context)
+            reporter.reportOn(declaration.source, FirErrors.CONFLICTING_UPPER_BOUNDS, declaration.symbol)
         }
     }
 
-    private fun checkDynamicBounds(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkDynamicBounds(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
         declaration.bounds.forEach { bound ->
             if (bound is FirDynamicTypeRef) {
-                reporter.reportOn(bound.source, FirErrors.DYNAMIC_UPPER_BOUND, context)
+                reporter.reportOn(bound.source, FirErrors.DYNAMIC_UPPER_BOUND)
             }
         }
     }
@@ -179,6 +177,6 @@ object FirTypeParameterBoundsChecker : FirTypeParameterChecker() {
             }
         }
 
-        checkInconsistentTypeParameters(firTypeRefClasses, context, reporter, declaration.source, false)
+        context.checkInconsistentTypeParameters(firTypeRefClasses, reporter, declaration.source, false)
     }
 }

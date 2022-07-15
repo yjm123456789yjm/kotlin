@@ -14,7 +14,7 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.expressions.*
 
 object FirBreakOrContinueJumpsAcrossFunctionBoundaryChecker : FirLoopJumpChecker() {
-    override fun check(expression: FirLoopJump, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirLoopJump, reporter: DiagnosticReporter) {
         val errorPathElements = ArrayDeque<FirElement>()
 
         fun findPathAndCheck(element: FirElement?): Boolean {
@@ -32,7 +32,7 @@ object FirBreakOrContinueJumpsAcrossFunctionBoundaryChecker : FirLoopJumpChecker
             when (element) {
                 expression -> {
                     if (errorPathElements.any()) {
-                        reporter.reportOn(expression.source, FirErrors.BREAK_OR_CONTINUE_JUMPS_ACROSS_FUNCTION_BOUNDARY, context)
+                        reporter.reportOn(expression.source, FirErrors.BREAK_OR_CONTINUE_JUMPS_ACROSS_FUNCTION_BOUNDARY)
                     }
                     return true
                 }

@@ -224,14 +224,13 @@ object FirOptInUsageBaseChecker {
         return Experimentality(symbol.classId, level.severity, message, annotatedOwnerClassName)
     }
 
-    fun reportNotAcceptedExperimentalities(
+    fun CheckerContext.reportNotAcceptedExperimentalities(
         experimentalities: Collection<Experimentality>,
         element: FirElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         for ((annotationClassId, severity, message) in experimentalities) {
-            if (!isExperimentalityAcceptableInContext(annotationClassId, context)) {
+            if (!isExperimentalityAcceptableInContext(annotationClassId)) {
                 val (diagnostic, verb) = when (severity) {
                     Experimentality.Severity.WARNING -> FirErrors.OPT_IN_USAGE to "should"
                     Experimentality.Severity.ERROR -> FirErrors.OPT_IN_USAGE_ERROR to "must"
@@ -239,21 +238,20 @@ object FirOptInUsageBaseChecker {
                 val fqName = annotationClassId.asSingleFqName()
                 val reportedMessage = message?.takeIf { it.isNotBlank() }
                     ?: OptInNames.buildDefaultDiagnosticMessage(OptInNames.buildMessagePrefix(verb), fqName.asString())
-                reporter.reportOn(element.source, diagnostic, fqName, reportedMessage, context)
+                reporter.reportOn(element.source, diagnostic, fqName, reportedMessage)
             }
         }
     }
 
     @SymbolInternals
-    fun reportNotAcceptedOverrideExperimentalities(
+    fun CheckerContext.reportNotAcceptedOverrideExperimentalities(
         experimentalities: Collection<Experimentality>,
         symbol: FirCallableSymbol<*>,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         for ((annotationClassId, severity, markerMessage, supertypeName) in experimentalities) {
             if (!symbol.fir.isExperimentalityAcceptable(annotationClassId) &&
-                !isExperimentalityAcceptableInContext(annotationClassId, context)
+                !this.isExperimentalityAcceptableInContext(annotationClassId)
             ) {
                 val (diagnostic, verb) = when (severity) {
                     Experimentality.Severity.WARNING -> FirErrors.OPT_IN_OVERRIDE to "should"
@@ -265,21 +263,18 @@ object FirOptInUsageBaseChecker {
                     verb,
                     markerName = annotationClassId.asFqNameString()
                 )
-                reporter.reportOn(symbol.source, diagnostic, annotationClassId.asSingleFqName(), message, context)
+                reporter.reportOn(symbol.source, diagnostic, annotationClassId.asSingleFqName(), message)
             }
         }
     }
 
-    private fun isExperimentalityAcceptableInContext(
-        annotationClassId: ClassId,
-        context: CheckerContext
-    ): Boolean {
-        val languageVersionSettings = context.session.languageVersionSettings
+    private fun CheckerContext.isExperimentalityAcceptableInContext(annotationClassId: ClassId): Boolean {
+        val languageVersionSettings = session.languageVersionSettings
         val fqNameAsString = annotationClassId.asFqNameString()
         if (fqNameAsString in languageVersionSettings.getFlag(AnalysisFlags.optIn)) {
             return true
         }
-        for (annotationContainer in context.annotationContainers) {
+        for (annotationContainer in annotationContainers) {
             if (annotationContainer.isExperimentalityAcceptable(annotationClassId)) {
                 return true
             }

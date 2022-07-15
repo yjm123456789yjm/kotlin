@@ -25,44 +25,44 @@ import org.jetbrains.kotlin.fir.expressions.FirStatement
  */
 interface FirSyntaxChecker<in D : FirElement, P : PsiElement> {
 
-    fun checkSyntax(element: D, context: CheckerContext, reporter: DiagnosticReporter) {
+    fun CheckerContext.checkSyntax(element: D, reporter: DiagnosticReporter) {
         val source = element.source ?: return
         if (!isApplicable(element, source)) return
         @Suppress("UNCHECKED_CAST")
         when (source) {
-            is KtPsiSourceElement -> checkPsi(element, source, source.psi as P, context, reporter)
-            is KtLightSourceElement -> checkLightTree(element, source, context, reporter)
+            is KtPsiSourceElement -> this.checkPsi(element, source, source.psi as P, reporter)
+            is KtLightSourceElement -> this.checkLightTree(element, source, reporter)
         }
     }
 
     fun isApplicable(element: D, source: KtSourceElement): Boolean = true
 
-    fun checkPsi(element: D, source: KtPsiSourceElement, psi: P, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkPsiOrLightTree(element, source, context, reporter)
+    fun CheckerContext.checkPsi(element: D, source: KtPsiSourceElement, psi: P, reporter: DiagnosticReporter) {
+        this.checkPsiOrLightTree(element, source, reporter)
     }
 
-    fun checkLightTree(element: D, source: KtLightSourceElement, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkPsiOrLightTree(element, source, context, reporter)
+    fun CheckerContext.checkLightTree(element: D, source: KtLightSourceElement, reporter: DiagnosticReporter) {
+        this.checkPsiOrLightTree(element, source, reporter)
     }
 
     /**
      *  By default psi tree should be equivalent to light tree and can be processed the same way.
      */
-    fun checkPsiOrLightTree(element: D, source: KtSourceElement, context: CheckerContext, reporter: DiagnosticReporter) {}
+    fun CheckerContext.checkPsiOrLightTree(element: D, source: KtSourceElement, reporter: DiagnosticReporter) {}
 }
 
 abstract class FirDeclarationSyntaxChecker<in D : FirDeclaration, P : PsiElement> :
     FirDeclarationChecker<D>(),
     FirSyntaxChecker<D, P> {
-    final override fun check(declaration: D, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkSyntax(declaration, context, reporter)
+    final override fun CheckerContext.check(declaration: D, reporter: DiagnosticReporter) {
+        this.checkSyntax(declaration, reporter)
     }
 }
 
 abstract class FirExpressionSyntaxChecker<in E : FirStatement, P : PsiElement> :
     FirExpressionChecker<E>(),
     FirSyntaxChecker<E, P> {
-    final override fun check(expression: E, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkSyntax(expression, context, reporter)
+    final override fun CheckerContext.check(expression: E, reporter: DiagnosticReporter) {
+        this.checkSyntax(expression, reporter)
     }
 }

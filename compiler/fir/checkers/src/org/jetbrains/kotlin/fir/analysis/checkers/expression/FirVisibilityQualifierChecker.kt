@@ -21,37 +21,36 @@ import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.visibilityChecker
 
 object FirVisibilityQualifierChecker : FirResolvedQualifierChecker() {
-    override fun check(expression: FirResolvedQualifier, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkClassLikeSymbol(expression.symbol ?: return, expression, context, reporter)
+    override fun CheckerContext.check(expression: FirResolvedQualifier, reporter: DiagnosticReporter) {
+        checkClassLikeSymbol(expression.symbol ?: return, expression, reporter)
     }
 
     @OptIn(SymbolInternals::class)
-    private fun checkClassLikeSymbol(
+    private fun CheckerContext.checkClassLikeSymbol(
         symbol: FirClassLikeSymbol<*>,
         expression: FirResolvedQualifier,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val firFile = context.containingDeclarations.firstOrNull() as? FirFile ?: return
+        val firFile = containingDeclarations.firstOrNull() as? FirFile ?: return
         val firClassLikeDeclaration = symbol.fir
 
-        if (!context.session.visibilityChecker.isVisible(
-                firClassLikeDeclaration, context.session, firFile, context.containingDeclarations,
+        if (!session.visibilityChecker.isVisible(
+                firClassLikeDeclaration, session, firFile, containingDeclarations,
                 dispatchReceiver = null,
             )
         ) {
-            reporter.reportOn(expression.source, FirErrors.INVISIBLE_REFERENCE, symbol, context)
+            reporter.reportOn(expression.source, FirErrors.INVISIBLE_REFERENCE, symbol)
             return
         }
 
         if (firClassLikeDeclaration is FirTypeAlias) {
-            firClassLikeDeclaration.expandedConeType?.toSymbol(context.session)?.let {
-                checkClassLikeSymbol(it, expression, context, reporter)
+            firClassLikeDeclaration.expandedConeType?.toSymbol(session)?.let { expandedTypeSymbol ->
+                checkClassLikeSymbol(expandedTypeSymbol, expression, reporter)
             }
         }
 
-        symbol.getOwnerLookupTag()?.toSymbol(context.session)?.let {
-            checkClassLikeSymbol(it, expression, context, reporter)
+        symbol.getOwnerLookupTag()?.toSymbol(this@checkClassLikeSymbol.session)?.let { ownerSymbol ->
+            checkClassLikeSymbol(ownerSymbol, expression, reporter)
         }
     }
 }

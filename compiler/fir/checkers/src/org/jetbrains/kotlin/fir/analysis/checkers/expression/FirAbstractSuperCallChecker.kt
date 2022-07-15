@@ -25,34 +25,34 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirAbstractSuperCallChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         // require the receiver to be the super reference
         expression.explicitReceiver.safeAs<FirQualifiedAccessExpression>()
             ?.calleeReference.safeAs<FirSuperReference>()
             ?: return
 
-        val closestClass = context.findClosest<FirRegularClass>()
+        val closestClass = findClosest<FirRegularClass>()
             ?: return
 
         if (closestClass.classKind == ClassKind.CLASS) {
             // handles all the FirSimpleFunction/FirProperty/etc.
             val declarationSymbol = expression.toResolvedCallableSymbol() ?: return
 
-            val containingClassSymbol = declarationSymbol.containingClass()?.toSymbol(context.session) as? FirRegularClassSymbol ?: return
+            val containingClassSymbol = declarationSymbol.containingClass()?.toSymbol(session) as? FirRegularClassSymbol ?: return
 
             if (containingClassSymbol.isAbstract) {
                 if (declarationSymbol.isAbstract) {
-                    reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL, context)
+                    reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL)
                 }
                 if (declarationSymbol is FirIntersectionCallableSymbol) {
                     val symbolFromBaseClass = declarationSymbol.intersections.firstOrNull {
-                        it.containingClass()?.toSymbol(context.session)?.classKind != ClassKind.INTERFACE
+                        it.containingClass()?.toSymbol(session)?.classKind != ClassKind.INTERFACE
                     }
                     if (symbolFromBaseClass?.isAbstract == true) {
-                        if (context.languageVersionSettings.supportsFeature(LanguageFeature.ForbidSuperDelegationToAbstractFakeOverride)) {
-                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL, context)
+                        if (languageVersionSettings.supportsFeature(LanguageFeature.ForbidSuperDelegationToAbstractFakeOverride)) {
+                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL)
                         } else {
-                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL_WARNING, context)
+                            reporter.reportOn(expression.calleeReference.source, FirErrors.ABSTRACT_SUPER_CALL_WARNING)
                         }
                     }
                 }

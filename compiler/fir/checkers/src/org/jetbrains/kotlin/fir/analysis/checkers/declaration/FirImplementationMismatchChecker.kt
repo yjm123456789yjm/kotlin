@@ -38,7 +38,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 object FirImplementationMismatchChecker : FirClassChecker() {
 
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirClass, reporter: DiagnosticReporter) {
         val source = declaration.source ?: return
         val sourceKind = source.kind
         if (sourceKind is KtFakeSourceElementKind && sourceKind != KtFakeSourceElementKind.EnumInitializer) return
@@ -46,28 +46,27 @@ object FirImplementationMismatchChecker : FirClassChecker() {
         val classKind = declaration.classKind
         if (classKind == ClassKind.ANNOTATION_CLASS || classKind == ClassKind.ENUM_CLASS) return
 
-        val typeCheckerState = context.session.typeContext.newTypeCheckerState(
+        val typeCheckerState = session.typeContext.newTypeCheckerState(
             errorTypesEqualToAnything = false,
             stubTypesEqualToAnything = false
         )
-        val classScope = declaration.unsubstitutedScope(context)
+        val classScope = declaration.unsubstitutedScope(this)
         val dedupReporter = reporter.deduplicating()
 
         for (name in classScope.getCallableNames()) {
             classScope.processFunctionsByName(name) {
-                checkInheritanceClash(declaration, context, dedupReporter, typeCheckerState, it, classScope)
+                this.checkInheritanceClash(declaration, dedupReporter, typeCheckerState, it, classScope)
             }
             classScope.processPropertiesByName(name) {
-                checkInheritanceClash(declaration, context, dedupReporter, typeCheckerState, it, classScope)
-                checkValOverridesVar(declaration, context, dedupReporter, it, classScope)
+                this.checkInheritanceClash(declaration, dedupReporter, typeCheckerState, it, classScope)
+                this.checkValOverridesVar(declaration, dedupReporter, it, classScope)
             }
-            checkConflictingMembers(declaration, context, dedupReporter, classScope, name)
+            this.checkConflictingMembers(declaration, dedupReporter, classScope, name)
         }
     }
 
-    private fun checkInheritanceClash(
+    private fun CheckerContext.checkInheritanceClash(
         containingClass: FirClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         typeCheckerState: TypeCheckerState,
         symbol: FirCallableSymbol<*>,
@@ -88,7 +87,7 @@ object FirImplementationMismatchChecker : FirClassChecker() {
                     else FirErrors.RETURN_TYPE_MISMATCH_ON_INHERITANCE
                 }
             }
-            reporter.reportOn(containingClass.source, error, member1, member2, context)
+            reporter.reportOn(containingClass.source, error, member1, member2)
         }
 
         fun canOverride(
@@ -97,7 +96,7 @@ object FirImplementationMismatchChecker : FirClassChecker() {
             baseMember: FirCallableSymbol<*>,
             baseType: ConeKotlinType
         ): Boolean {
-            val inheritedTypeSubstituted = inheritedType.substituteTypeParameters(inheritedMember, baseMember, context)
+            val inheritedTypeSubstituted = inheritedType.substituteTypeParameters(inheritedMember, baseMember, this)
             return if (baseMember is FirPropertySymbol && baseMember.isVar)
                 AbstractTypeChecker.equalTypes(typeCheckerState, inheritedTypeSubstituted, baseType)
             else
@@ -123,7 +122,7 @@ object FirImplementationMismatchChecker : FirClassChecker() {
         }
 
         val withTypes = intersectionSymbols.map {
-            it to context.returnTypeCalculator.tryCalculateReturnType(it).coneType
+            it to returnTypeCalculator.tryCalculateReturnType(it).coneType
         }
 
         if (withTypes.any { it.second is ConeErrorType }) return
@@ -159,7 +158,7 @@ object FirImplementationMismatchChecker : FirClassChecker() {
         if (delegation != null || implementations.isNotEmpty()) {
             //if there are more than one implementation we report nothing because it will be reported differently
             val implementationMember = delegation ?: implementations.singleOrNull() ?: return
-            val implementationType = context.returnTypeCalculator.tryCalculateReturnType(implementationMember).coneType
+            val implementationType = returnTypeCalculator.tryCalculateReturnType(implementationMember).coneType
             val (conflict, _) = withTypes.find { (baseMember, baseType) ->
                 !canOverride(implementationMember, implementationType, baseMember, baseType)
             } ?: return
@@ -168,9 +167,8 @@ object FirImplementationMismatchChecker : FirClassChecker() {
         }
     }
 
-    private fun checkValOverridesVar(
+    private fun CheckerContext.checkValOverridesVar(
         containingClass: FirClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         symbol: FirVariableSymbol<*>,
         classScope: FirTypeScope
@@ -183,13 +181,11 @@ object FirImplementationMismatchChecker : FirClassChecker() {
                 .find { it.isVar }
                 ?: return
 
-        reporter.reportOn(containingClass.source, FirErrors.VAR_OVERRIDDEN_BY_VAL_BY_DELEGATION, symbol, overriddenVar, context)
+        reporter.reportOn(containingClass.source, FirErrors.VAR_OVERRIDDEN_BY_VAL_BY_DELEGATION, symbol, overriddenVar)
     }
 
-    @OptIn(ExperimentalStdlibApi::class)
-    private fun checkConflictingMembers(
+    private fun CheckerContext.checkConflictingMembers(
         containingClass: FirClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         scope: FirTypeScope,
         name: Name
@@ -218,7 +214,7 @@ object FirImplementationMismatchChecker : FirClassChecker() {
         }
 
         clashes.forEach {
-            reporter.reportOn(containingClass.source, FirErrors.CONFLICTING_INHERITED_MEMBERS, containingClass.symbol, it.toList(), context)
+            reporter.reportOn(containingClass.source, FirErrors.CONFLICTING_INHERITED_MEMBERS, containingClass.symbol, it.toList())
         }
     }
 

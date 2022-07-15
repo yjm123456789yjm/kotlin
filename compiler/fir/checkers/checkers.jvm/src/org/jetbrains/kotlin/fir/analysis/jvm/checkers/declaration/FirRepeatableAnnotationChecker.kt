@@ -39,12 +39,12 @@ import org.jetbrains.kotlin.name.StandardClassIds
 object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
     private val REPEATABLE_ANNOTATION_CONTAINER_NAME = Name.identifier(JvmAbi.REPEATABLE_ANNOTATION_CONTAINER_NAME)
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         val annotations = declaration.annotations
         if (annotations.isEmpty()) return
         val annotationsMap = hashMapOf<ConeKotlinType, MutableList<AnnotationUseSiteTarget?>>()
 
-        val session = context.session
+        val session = session
         for (annotation in annotations) {
             val classId = annotation.classId ?: continue
             val annotationClassId = annotation.toAnnotationClassId() ?: continue
@@ -60,8 +60,8 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
                 annotationClass.containsRepeatableAnnotation(session) &&
                 annotationClass.getAnnotationRetention() != AnnotationRetention.SOURCE
             ) {
-                if (context.isJvm6()) {
-                    reporter.reportOn(annotation.source, FirJvmErrors.REPEATED_ANNOTATION_TARGET6, context)
+                if (isJvm6()) {
+                    reporter.reportOn(annotation.source, FirJvmErrors.REPEATED_ANNOTATION_TARGET6)
                 } else if (session.languageVersionSettings.supportsFeature(LanguageFeature.RepeatableAnnotations)) {
                     // It's not allowed to have both a repeated annotation (applied more than once) and its container
                     // on the same element.
@@ -72,12 +72,11 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
                             annotation.source,
                             FirJvmErrors.REPEATED_ANNOTATION_WITH_CONTAINER,
                             classId,
-                            explicitContainer,
-                            context
+                            explicitContainer
                         )
                     }
                 } else {
-                    reporter.reportOn(annotation.source, FirJvmErrors.NON_SOURCE_REPEATED_ANNOTATION, context)
+                    reporter.reportOn(annotation.source, FirJvmErrors.NON_SOURCE_REPEATED_ANNOTATION)
                 }
             }
 
@@ -87,14 +86,14 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
         if (declaration is FirRegularClass) {
             val javaRepeatable = annotations.find { it.classId == StandardClassIds.Annotations.Java.Repeatable }
             if (javaRepeatable != null) {
-                withSuppressedDiagnostics(javaRepeatable, context) {
-                    checkJavaRepeatableAnnotationDeclaration(javaRepeatable, declaration, it, reporter)
+                withSuppressedDiagnostics(javaRepeatable) {
+                    checkJavaRepeatableAnnotationDeclaration(javaRepeatable, declaration, reporter)
                 }
             } else {
                 val kotlinRepeatable = annotations.find { it.classId == StandardClassIds.Annotations.Repeatable }
                 if (kotlinRepeatable != null) {
-                    withSuppressedDiagnostics(kotlinRepeatable, context) {
-                        checkKotlinRepeatableAnnotationDeclaration(kotlinRepeatable, declaration, it, reporter)
+                    withSuppressedDiagnostics(kotlinRepeatable) {
+                        checkKotlinRepeatableAnnotationDeclaration(kotlinRepeatable, declaration, reporter)
                     }
                 }
             }
@@ -120,48 +119,44 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
         return null
     }
 
-    private fun checkJavaRepeatableAnnotationDeclaration(
+    private fun CheckerContext.checkJavaRepeatableAnnotationDeclaration(
         javaRepeatable: FirAnnotation,
         annotationClass: FirRegularClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val containerClassId = javaRepeatable.resolveContainerAnnotation() ?: return
         val containerClassSymbol =
-            context.session.symbolProvider.getClassLikeSymbolByClassId(containerClassId) as? FirRegularClassSymbol ?: return
+            session.symbolProvider.getClassLikeSymbolByClassId(containerClassId) as? FirRegularClassSymbol ?: return
 
-        checkRepeatableAnnotationContainer(annotationClass, containerClassSymbol, javaRepeatable.source, context, reporter)
+        checkRepeatableAnnotationContainer(annotationClass, containerClassSymbol, javaRepeatable.source, reporter)
     }
 
-    private fun checkKotlinRepeatableAnnotationDeclaration(
+    private fun CheckerContext.checkKotlinRepeatableAnnotationDeclaration(
         kotlinRepeatable: FirAnnotation,
         declaration: FirRegularClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val unsubsitutedScope = declaration.unsubstitutedScope(context)
+        val unsubsitutedScope = declaration.unsubstitutedScope(this)
         if (unsubsitutedScope.getSingleClassifier(REPEATABLE_ANNOTATION_CONTAINER_NAME) != null) {
-            reporter.reportOn(kotlinRepeatable.source, FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER, context)
+            reporter.reportOn(kotlinRepeatable.source, FirJvmErrors.REPEATABLE_ANNOTATION_HAS_NESTED_CLASS_NAMED_CONTAINER)
         }
     }
 
-    private fun checkRepeatableAnnotationContainer(
+    private fun CheckerContext.checkRepeatableAnnotationContainer(
         annotationClass: FirRegularClass,
         containerClass: FirRegularClassSymbol,
         annotationSource: KtSourceElement?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        checkContainerParameters(containerClass, annotationClass, annotationSource, context, reporter)
-        checkContainerRetention(containerClass, annotationClass, annotationSource, context, reporter)
-        checkContainerTarget(containerClass, annotationClass, annotationSource, context, reporter)
+        this.checkContainerParameters(containerClass, annotationClass, annotationSource, reporter)
+        this.checkContainerRetention(containerClass, annotationClass, annotationSource, reporter)
+        this.checkContainerTarget(containerClass, annotationClass, annotationSource, reporter)
     }
 
-    private fun checkContainerParameters(
+    private fun CheckerContext.checkContainerParameters(
         containerClass: FirRegularClassSymbol,
         annotationClass: FirRegularClass,
         annotationSource: KtSourceElement?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val containerCtor =
@@ -179,7 +174,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
                 FirJvmErrors.REPEATABLE_CONTAINER_MUST_HAVE_VALUE_ARRAY,
                 containerClass.classId,
                 annotationClass.classId,
-                context
+                this
             )
             return
         }
@@ -190,18 +185,16 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
                 annotationSource,
                 FirJvmErrors.REPEATABLE_CONTAINER_HAS_NON_DEFAULT_PARAMETER,
                 containerClass.classId,
-                otherNonDefault.name,
-                context
+                otherNonDefault.name
             )
             return
         }
     }
 
-    private fun checkContainerRetention(
+    private fun CheckerContext.checkContainerRetention(
         containerClass: FirRegularClassSymbol,
         annotationClass: FirRegularClass,
         annotationSource: KtSourceElement?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val annotationRetention = annotationClass.symbol.getAnnotationRetention()
@@ -213,17 +206,15 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
                 containerClass.classId,
                 containerRetention.name,
                 annotationClass.classId,
-                annotationRetention.name,
-                context
+                annotationRetention.name
             )
         }
     }
 
-    private fun checkContainerTarget(
+    private fun CheckerContext.checkContainerTarget(
         containerClass: FirRegularClassSymbol,
         annotationClass: FirRegularClass,
         annotationSource: KtSourceElement?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val annotationTargets = annotationClass.getAllowedAnnotationTargets()
@@ -249,8 +240,7 @@ object FirRepeatableAnnotationChecker : FirBasicDeclarationChecker() {
                     annotationSource,
                     FirJvmErrors.REPEATABLE_CONTAINER_TARGET_SET_NOT_A_SUBSET,
                     containerClass.classId,
-                    annotationClass.classId,
-                    context
+                    annotationClass.classId
                 )
                 return
             }

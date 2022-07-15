@@ -22,25 +22,24 @@ import org.jetbrains.kotlin.util.OperatorNameConventions
 import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 object FirConventionFunctionCallChecker : FirFunctionCallChecker() {
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         // PROPERTY_AS_OPERATOR can only happen for function calls and it's reported on the receiver expression.
-        checkPropertyAsOperator(expression, expression.dispatchReceiver, context, reporter)
-        checkPropertyAsOperator(expression, expression.extensionReceiver, context, reporter)
+        checkPropertyAsOperator(expression, expression.dispatchReceiver, reporter)
+        checkPropertyAsOperator(expression, expression.extensionReceiver, reporter)
         val calleeReference = expression.calleeReference as? FirErrorNamedReference ?: return
         val diagnostic = calleeReference.diagnostic as? ConeUnresolvedNameError ?: return
 
         if (expression.calleeReference.source?.kind == KtFakeSourceElementKind.ArrayAccessNameReference) {
             when (diagnostic.name) {
-                OperatorNameConventions.GET -> reporter.reportOn(calleeReference.source, FirErrors.NO_GET_METHOD, context)
-                OperatorNameConventions.SET -> reporter.reportOn(calleeReference.source, FirErrors.NO_SET_METHOD, context)
+                OperatorNameConventions.GET -> reporter.reportOn(calleeReference.source, FirErrors.NO_GET_METHOD)
+                OperatorNameConventions.SET -> reporter.reportOn(calleeReference.source, FirErrors.NO_SET_METHOD)
             }
         }
     }
 
-    private fun checkPropertyAsOperator(
+    private fun CheckerContext.checkPropertyAsOperator(
         callExpression: FirFunctionCall,
         receiver: FirExpression,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val sourceKind = callExpression.source?.kind
@@ -54,6 +53,6 @@ object FirConventionFunctionCallChecker : FirFunctionCallChecker() {
         }
         if (unwrapped !is FirPropertyAccessExpression) return
         val diagnostic = unwrapped.nonFatalDiagnostics.firstIsInstanceOrNull<ConePropertyAsOperator>() ?: return
-        reporter.reportOn(callExpression.calleeReference.source, FirErrors.PROPERTY_AS_OPERATOR, diagnostic.symbol, context)
+        reporter.reportOn(callExpression.calleeReference.source, FirErrors.PROPERTY_AS_OPERATOR, diagnostic.symbol)
     }
 }

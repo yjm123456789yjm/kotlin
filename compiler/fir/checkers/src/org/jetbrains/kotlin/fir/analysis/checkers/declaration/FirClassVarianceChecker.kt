@@ -23,12 +23,12 @@ import org.jetbrains.kotlin.types.EnrichedProjectionKind
 import org.jetbrains.kotlin.types.Variance
 
 object FirClassVarianceChecker : FirClassChecker() {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkTypeParameters(declaration.typeParameters, Variance.OUT_VARIANCE, context, reporter)
+    override fun CheckerContext.check(declaration: FirClass, reporter: DiagnosticReporter) {
+        this.checkTypeParameters(declaration.typeParameters, Variance.OUT_VARIANCE, reporter)
 
         for (superTypeRef in declaration.superTypeRefs) {
-            withSuppressedDiagnostics(superTypeRef, context) { ctx ->
-                checkVarianceConflict(superTypeRef, Variance.OUT_VARIANCE, ctx, reporter)
+            withSuppressedDiagnostics(superTypeRef) {
+                checkVarianceConflict(superTypeRef, Variance.OUT_VARIANCE, reporter)
             }
         }
 
@@ -40,28 +40,27 @@ object FirClassVarianceChecker : FirClassChecker() {
             }
 
             if (member is FirTypeParameterRefsOwner && member !is FirClass) {
-                checkTypeParameters(member.typeParameters, Variance.IN_VARIANCE, context, reporter)
+                this.checkTypeParameters(member.typeParameters, Variance.IN_VARIANCE, reporter)
             }
 
             if (member is FirCallableDeclaration) {
-                withSuppressedDiagnostics(member, context) { ctx ->
-                    checkCallableDeclaration(member, ctx, reporter)
+                withSuppressedDiagnostics(member) {
+                    checkCallableDeclaration(member,  reporter)
                 }
             }
         }
     }
 
-    private fun checkCallableDeclaration(
+    private fun CheckerContext.checkCallableDeclaration(
         member: FirCallableDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val memberSource = member.source
         if (member is FirSimpleFunction) {
             if (memberSource != null && memberSource.kind !is KtFakeSourceElementKind) {
                 for (param in member.valueParameters) {
-                    withSuppressedDiagnostics(param, context) { ctx ->
-                        checkVarianceConflict(param.returnTypeRef, Variance.IN_VARIANCE, ctx, reporter)
+                    withSuppressedDiagnostics(param) {
+                        this.checkVarianceConflict(param.returnTypeRef, Variance.IN_VARIANCE, reporter)
                     }
                 }
             }
@@ -77,28 +76,29 @@ object FirClassVarianceChecker : FirClassChecker() {
             }
         }
 
-        withSuppressedDiagnostics(member.returnTypeRef, context) { ctx ->
-            checkVarianceConflict(member.returnTypeRef, returnTypeVariance, ctx, reporter, returnSource)
+        withSuppressedDiagnostics(member.returnTypeRef) {
+            this.checkVarianceConflict(member.returnTypeRef, returnTypeVariance, reporter, returnSource)
         }
 
         val receiverTypeRef = member.receiverTypeRef
         if (receiverTypeRef != null) {
-            withSuppressedDiagnostics(receiverTypeRef, context) { ctx ->
-                checkVarianceConflict(receiverTypeRef, Variance.IN_VARIANCE, ctx, reporter)
+            withSuppressedDiagnostics(receiverTypeRef) {
+                this.checkVarianceConflict(receiverTypeRef, Variance.IN_VARIANCE, reporter)
             }
         }
     }
 
-    private fun checkTypeParameters(
-        typeParameters: List<FirTypeParameterRef>, variance: Variance,
-        context: CheckerContext, reporter: DiagnosticReporter
+    private fun CheckerContext.checkTypeParameters(
+        typeParameters: List<FirTypeParameterRef>,
+        variance: Variance,
+        reporter: DiagnosticReporter
     ) {
         for (typeParameter in typeParameters) {
             if (typeParameter is FirTypeParameter) {
-                withSuppressedDiagnostics(typeParameter, context) { tpContext ->
+                withSuppressedDiagnostics(typeParameter) {
                     for (bound in typeParameter.symbol.resolvedBounds) {
-                        withSuppressedDiagnostics(bound, tpContext) { ctx ->
-                            checkVarianceConflict(bound, variance, ctx, reporter)
+                        withSuppressedDiagnostics(bound) {
+                            checkVarianceConflict(bound, variance, reporter)
                         }
                     }
                 }
@@ -106,26 +106,26 @@ object FirClassVarianceChecker : FirClassChecker() {
         }
     }
 
-    private fun checkVarianceConflict(
-        type: FirTypeRef, variance: Variance,
-        context: CheckerContext, reporter: DiagnosticReporter,
+    private fun CheckerContext.checkVarianceConflict(
+        type: FirTypeRef,
+        variance: Variance,
+        reporter: DiagnosticReporter,
         source: KtSourceElement? = null
     ) {
-        checkVarianceConflict(type.coneType, variance, type, type.coneType, context, reporter, source)
+        checkVarianceConflict(type.coneType, variance, type, type.coneType, reporter, source)
     }
 
-    private fun checkVarianceConflict(
+    private fun CheckerContext.checkVarianceConflict(
         type: ConeKotlinType,
         variance: Variance,
         typeRef: FirTypeRef?,
         containingType: ConeKotlinType,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         source: KtSourceElement? = null,
         isInAbbreviation: Boolean = false
     ) {
         if (type is ConeTypeParameterType) {
-            val fullyExpandedType = type.fullyExpandedType(context.session)
+            val fullyExpandedType = type.fullyExpandedType(session)
             val typeParameterSymbol = type.lookupTag.typeParameterSymbol
             val resultSource = source ?: typeRef?.source
             if (resultSource != null &&
@@ -140,16 +140,15 @@ object FirClassVarianceChecker : FirClassChecker() {
                     typeParameterSymbol,
                     typeParameterSymbol.variance,
                     variance,
-                    containingType,
-                    context
+                    containingType
                 )
             }
             return
         }
 
         if (type is ConeClassLikeType) {
-            val fullyExpandedType = type.fullyExpandedType(context.session)
-            val classSymbol = fullyExpandedType.lookupTag.toSymbol(context.session)
+            val fullyExpandedType = type.fullyExpandedType(session)
+            val classSymbol = fullyExpandedType.lookupTag.toSymbol(session)
             if (classSymbol is FirClassSymbol<*>) {
                 val typeRefAndSourcesForArguments = extractArgumentsTypeRefAndSource(typeRef)
                 for ((index, typeArgument) in fullyExpandedType.typeArguments.withIndex()) {
@@ -176,7 +175,7 @@ object FirClassVarianceChecker : FirClassChecker() {
 
                         checkVarianceConflict(
                             typeArgumentType, newVariance, subTypeRefAndSource?.typeRef, containingType,
-                            context, reporter, subTypeRefAndSource?.typeRef?.source ?: source,
+                            reporter, subTypeRefAndSource?.typeRef?.source ?: source,
                             fullyExpandedType != type
                         )
                     }

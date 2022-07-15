@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isArrayType
 
 object FirNamedVarargChecker : FirCallChecker() {
-    override fun check(expression: FirCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirCall, reporter: DiagnosticReporter) {
         if (expression !is FirFunctionCall &&
             expression !is FirAnnotation &&
             expression !is FirDelegatedConstructorCall &&
@@ -34,7 +34,7 @@ object FirNamedVarargChecker : FirCallChecker() {
             if (isAnnotation) FirErrors.REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_ANNOTATION
             else FirErrors.REDUNDANT_SPREAD_OPERATOR_IN_NAMED_FORM_IN_FUNCTION
 
-        val allowAssignArray = context.session.languageVersionSettings.supportsFeature(
+        val allowAssignArray = session.languageVersionSettings.supportsFeature(
             if (isAnnotation) LanguageFeature.AssigningArraysToVarargsInNamedFormInAnnotations
             else LanguageFeature.AllowAssigningArrayElementsToVarargsInNamedFormForFunctions
         )
@@ -43,7 +43,7 @@ object FirNamedVarargChecker : FirCallChecker() {
             if (argument !is FirNamedArgumentExpression) return
             if (argument.isSpread) {
                 if (isVararg && (expression as? FirResolvable)?.calleeReference !is FirErrorNamedReference) {
-                    reporter.reportOn(argument.expression.source, redundantSpreadWarningFactory, context)
+                    reporter.reportOn(argument.expression.source, redundantSpreadWarningFactory)
                 }
                 return
             }
@@ -55,16 +55,14 @@ object FirNamedVarargChecker : FirCallChecker() {
             if (isAnnotation) {
                 reporter.reportOn(
                     argument.expression.source,
-                    FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION,
-                    context
+                    FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_ANNOTATION
                 )
             } else {
                 require(expectedArrayType != null) { "expectedArrayType must be passed for function call" }
                 reporter.reportOn(
                     argument.expression.source,
                     FirErrors.ASSIGNING_SINGLE_ELEMENT_TO_VARARG_IN_NAMED_FORM_FUNCTION,
-                    expectedArrayType,
-                    context,
+                    expectedArrayType
                 )
             }
         }

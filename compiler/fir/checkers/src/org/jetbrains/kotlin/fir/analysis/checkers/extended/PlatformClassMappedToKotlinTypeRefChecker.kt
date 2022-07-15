@@ -16,11 +16,11 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.classId
 
 object PlatformClassMappedToKotlinTypeRefChecker : FirTypeRefChecker() {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(typeRef: FirTypeRef, reporter: DiagnosticReporter) {
         if (typeRef is FirResolvedTypeRef) {
-            val kotlinClass = context.session.platformClassMapper.getCorrespondingKotlinClass(typeRef.type.classId)
+            val kotlinClass = session.platformClassMapper.getCorrespondingKotlinClass(typeRef.type.classId)
             if (kotlinClass != null) {
-                reporter.reportOn(typeRef.source, FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN, kotlinClass.asSingleFqName(), context)
+                reporter.reportOn(typeRef.source, FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN, kotlinClass.asSingleFqName())
             }
         }
     }

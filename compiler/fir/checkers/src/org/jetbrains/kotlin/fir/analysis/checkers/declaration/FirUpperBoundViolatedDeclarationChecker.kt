@@ -13,28 +13,27 @@ import org.jetbrains.kotlin.fir.analysis.diagnostics.withSuppressedDiagnostics
 import org.jetbrains.kotlin.fir.declarations.*
 
 object FirUpperBoundViolatedDeclarationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if (declaration is FirClass) {
             for (typeParameter in declaration.typeParameters) {
                 if (typeParameter is FirTypeParameter) {
-                    withSuppressedDiagnostics(typeParameter, context) { ctx ->
+                    withSuppressedDiagnostics(typeParameter) {
                         for (bound in typeParameter.bounds) {
-                            checkUpperBoundViolated(bound, ctx, reporter)
+                            checkUpperBoundViolated(bound, reporter)
                         }
                     }
                 }
             }
 
             for (superTypeRef in declaration.superTypeRefs) {
-                checkUpperBoundViolated(superTypeRef, context, reporter)
+                this.checkUpperBoundViolated(superTypeRef, reporter)
             }
         } else if (declaration is FirTypeAlias) {
-            checkUpperBoundViolated(declaration.expandedTypeRef, context, reporter, isIgnoreTypeParameters = true)
+            this.checkUpperBoundViolated(declaration.expandedTypeRef, reporter, isIgnoreTypeParameters = true)
         } else if (declaration is FirCallableDeclaration) {
             if (declaration.returnTypeRef.source?.kind !is KtFakeSourceElementKind) {
-                checkUpperBoundViolated(
-                    declaration.returnTypeRef, context, reporter,
-                    isIgnoreTypeParameters = context.containingDeclarations.lastOrNull() is FirTypeAlias
+                this.checkUpperBoundViolated(
+                    declaration.returnTypeRef, reporter, isIgnoreTypeParameters = containingDeclarations.lastOrNull() is FirTypeAlias
                 )
             }
         }

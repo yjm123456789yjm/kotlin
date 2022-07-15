@@ -17,29 +17,27 @@ import org.jetbrains.kotlin.fir.types.FirErrorTypeRef
 import org.jetbrains.kotlin.fir.types.FirTypeRef
 
 object FirTypeParameterInQualifiedAccessChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkExplicitReceiver(expression, context, reporter)
-        checkExpressionItself(expression, context, reporter)
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
+        this.checkExplicitReceiver(expression, reporter)
+        this.checkExpressionItself(expression, reporter)
     }
 
-    private fun checkExpressionItself(
+    private fun CheckerContext.checkExpressionItself(
         expression: FirQualifiedAccessExpression,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         // Make sure the current qualified access is not part of another qualified access or class literals.
         // E.g., for `T::toString`, which is a callable reference (a subtype of qualified access), type parameter T is checked once as an
         // explicit receiver (or LHS). When we visit `T` (as a qualified access), we should not regard it as an expression here.
-        if (context.qualifiedAccessOrAnnotationCalls.size > 1 || context.getClassCalls.isNotEmpty()) return
+        if (qualifiedAccessOrAnnotationCalls.size > 1 || getClassCalls.isNotEmpty()) return
 
         val diagnostic = expression.typeRef.coneTypeParameterInQualifiedAccess ?: return
         val source = expression.source ?: return
-        reporter.reportOn(source, FirErrors.TYPE_PARAMETER_IS_NOT_AN_EXPRESSION, diagnostic.symbol, context)
+        reporter.reportOn(source, FirErrors.TYPE_PARAMETER_IS_NOT_AN_EXPRESSION, diagnostic.symbol)
     }
 
-    private fun checkExplicitReceiver(
+    private fun CheckerContext.checkExplicitReceiver(
         expression: FirQualifiedAccessExpression,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val explicitReceiver = expression.explicitReceiver
@@ -48,9 +46,9 @@ object FirTypeParameterInQualifiedAccessChecker : FirQualifiedAccessExpressionCh
                 ?: explicitReceiver?.typeRef?.coneTypeParameterInQualifiedAccess?.symbol
                 ?: return
         if (expression is FirCallableReferenceAccess) {
-            reporter.reportOn(expression.source, FirErrors.CALLABLE_REFERENCE_LHS_NOT_A_CLASS, context)
+            reporter.reportOn(expression.source, FirErrors.CALLABLE_REFERENCE_LHS_NOT_A_CLASS)
         } else {
-            reporter.reportOn(explicitReceiver?.source, FirErrors.TYPE_PARAMETER_ON_LHS_OF_DOT, typeParameterSymbol, context)
+            reporter.reportOn(explicitReceiver?.source, FirErrors.TYPE_PARAMETER_ON_LHS_OF_DOT, typeParameterSymbol)
         }
     }
 

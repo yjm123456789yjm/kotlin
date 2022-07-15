@@ -25,23 +25,27 @@ import org.jetbrains.kotlin.fir.resolve.toFirRegularClassSymbol
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirJvmExternalDeclarationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if (declaration is FirPropertyAccessor) return
-        checkInternal(declaration, null, null, context, reporter)
+        checkInternal(declaration, null, null, reporter)
     }
 
-    private fun checkInternal(
+    private fun CheckerContext.checkInternal(
         declaration: FirDeclaration,
         reportSource: KtSourceElement?,
         modality: Modality?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (declaration !is FirMemberDeclaration) return
 
         if (declaration is FirProperty) {
             declaration.getter?.let {
-                checkInternal(it, declaration.source, declaration.modality, context, reporter)
+                checkInternal(
+                    it,
+                    declaration.source,
+                    declaration.modality,
+                    reporter
+                )
             }
         }
 
@@ -58,26 +62,26 @@ object FirJvmExternalDeclarationChecker : FirBasicDeclarationChecker() {
             }
             val externalModifier = declaration.getModifier(KtTokens.EXTERNAL_KEYWORD)
             externalModifier?.let {
-                reporter.reportOn(it.source, FirErrors.WRONG_MODIFIER_TARGET, it.token, target, context)
+                reporter.reportOn(it.source, FirErrors.WRONG_MODIFIER_TARGET, it.token, target)
             }
             return
         }
 
-        val containingClassSymbol = declaration.symbol.containingClass()?.toFirRegularClassSymbol(context.session)
+        val containingClassSymbol = declaration.symbol.containingClass()?.toFirRegularClassSymbol(session)
         if (containingClassSymbol != null) {
             if (containingClassSymbol.isInterface) {
-                reporter.reportOn(declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_IN_INTERFACE, context)
+                reporter.reportOn(declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_IN_INTERFACE)
             } else if ((modality ?: declaration.modality) == Modality.ABSTRACT) {
-                reporter.reportOn(reportSource ?: declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_BE_ABSTRACT, context)
+                reporter.reportOn(reportSource ?: declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_BE_ABSTRACT)
             }
         }
 
         if (declaration !is FirConstructor && declaration.body != null) {
-            reporter.reportOn(declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_HAVE_BODY, context)
+            reporter.reportOn(declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_HAVE_BODY)
         }
 
         if (declaration.isInline) {
-            reporter.reportOn(declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_BE_INLINED, context)
+            reporter.reportOn(declaration.source, FirJvmErrors.EXTERNAL_DECLARATION_CANNOT_BE_INLINED)
         }
     }
 }

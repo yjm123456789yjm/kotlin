@@ -18,5 +18,5 @@ abstract class FirTypeChecker<in T : FirTypeRef> {
      * please write a [org.jetbrains.kotlin.fir.analysis.checkers.declaration.FirDeclarationChecker] or
      * [org.jetbrains.kotlin.fir.analysis.checkers.expression.FirExpressionChecker] instead.
      */
-    abstract fun check(typeRef: T, context: CheckerContext, reporter: DiagnosticReporter)
+    abstract fun CheckerContext.check(typeRef: T, reporter: DiagnosticReporter)
 }

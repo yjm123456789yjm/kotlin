@@ -16,16 +16,16 @@ import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 import org.jetbrains.kotlin.fir.declarations.utils.visibility
 
 object FirLocalEntityNotAllowedChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (declaration.visibility != Visibilities.Local) {
             return
         }
 
         when {
             declaration.classKind == ClassKind.OBJECT && !declaration.isCompanion ->
-                reporter.reportOn(declaration.source, FirErrors.LOCAL_OBJECT_NOT_ALLOWED, declaration.name, context)
+                reporter.reportOn(declaration.source, FirErrors.LOCAL_OBJECT_NOT_ALLOWED, declaration.name)
             declaration.classKind == ClassKind.INTERFACE ->
-                reporter.reportOn(declaration.source, FirErrors.LOCAL_INTERFACE_NOT_ALLOWED, declaration.name, context)
+                reporter.reportOn(declaration.source, FirErrors.LOCAL_INTERFACE_NOT_ALLOWED, declaration.name)
             else -> {
             }
         }

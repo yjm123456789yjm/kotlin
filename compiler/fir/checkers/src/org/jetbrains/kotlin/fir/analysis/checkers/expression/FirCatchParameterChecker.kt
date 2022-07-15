@@ -18,17 +18,17 @@ import org.jetbrains.kotlin.fir.types.isTypeMismatchDueToNullability
 import org.jetbrains.kotlin.fir.types.typeContext
 
 object FirCatchParameterChecker : FirTryExpressionChecker() {
-    override fun check(expression: FirTryExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirTryExpression, reporter: DiagnosticReporter) {
         for (catchEntry in expression.catches) {
             val catchParameter = catchEntry.parameter
             val source = catchParameter.source ?: continue
 
             if (catchParameter.defaultValue != null) {
-                reporter.reportOn(source, FirErrors.CATCH_PARAMETER_WITH_DEFAULT_VALUE, context)
+                reporter.reportOn(source, FirErrors.CATCH_PARAMETER_WITH_DEFAULT_VALUE)
             }
 
             source.valOrVarKeyword?.let {
-                reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_CATCH_PARAMETER, it, context)
+                reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_CATCH_PARAMETER, it)
             }
 
             val coneType = catchParameter.returnTypeRef.coneType
@@ -36,23 +36,22 @@ object FirCatchParameterChecker : FirTryExpressionChecker() {
                 val isReified = coneType.lookupTag.typeParameterSymbol.isReified
 
                 if (isReified) {
-                    reporter.reportOn(source, FirErrors.REIFIED_TYPE_IN_CATCH_CLAUSE, context)
+                    reporter.reportOn(source, FirErrors.REIFIED_TYPE_IN_CATCH_CLAUSE)
                 } else {
-                    reporter.reportOn(source, FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE, context)
+                    reporter.reportOn(source, FirErrors.TYPE_PARAMETER_IN_CATCH_CLAUSE)
                 }
             }
 
-            val session = context.session
+            val session = session
             if (!coneType.isSubtypeOfThrowable(session)) {
                 reporter.reportOn(
                     source,
                     FirErrors.THROWABLE_TYPE_MISMATCH,
                     coneType,
-                    context.session.typeContext.isTypeMismatchDueToNullability(
+                    session.typeContext.isTypeMismatchDueToNullability(
                         coneType,
                         session.builtinTypes.throwableType.type
-                    ),
-                    context
+                    )
                 )
             }
         }

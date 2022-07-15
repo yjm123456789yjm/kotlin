@@ -16,15 +16,15 @@ import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 
 object FirUnderscoreChecker : FirBasicExpressionChecker() {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirStatement, reporter: DiagnosticReporter) {
         when (expression) {
             is FirResolvable -> {
-                checkUnderscoreDiagnostics(expression.calleeReference.source, context, reporter, true)
+                checkUnderscoreDiagnostics(expression.calleeReference.source, reporter, true)
             }
             is FirResolvedQualifier -> {
                 for (reservedUnderscoreDiagnostic in expression.nonFatalDiagnostics) {
                     if (reservedUnderscoreDiagnostic is ConeUnderscoreUsageWithoutBackticks) {
-                        reporter.reportOn(reservedUnderscoreDiagnostic.source, FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS, context)
+                        reporter.reportOn(reservedUnderscoreDiagnostic.source, FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS)
                     }
                 }
             }

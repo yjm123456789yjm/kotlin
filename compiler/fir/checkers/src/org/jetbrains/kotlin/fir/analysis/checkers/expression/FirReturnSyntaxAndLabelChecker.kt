@@ -22,22 +22,22 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 
 object FirReturnSyntaxAndLabelChecker : FirReturnExpressionChecker() {
-    override fun check(expression: FirReturnExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirReturnExpression, reporter: DiagnosticReporter) {
         val source = expression.source
         if (source?.kind == KtFakeSourceElementKind.ImplicitReturn) return
 
         val labeledElement = expression.target.labeledElement
         val targetSymbol = labeledElement.symbol
         if (labeledElement is FirErrorFunction && (labeledElement.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.NotAFunctionLabel) {
-            reporter.reportOn(source, FirErrors.NOT_A_FUNCTION_LABEL, context)
-        } else if (!isReturnAllowed(targetSymbol, context)) {
-            reporter.reportOn(source, FirErrors.RETURN_NOT_ALLOWED, context)
+            reporter.reportOn(source, FirErrors.NOT_A_FUNCTION_LABEL)
+        } else if (!isReturnAllowed(targetSymbol, this)) {
+            reporter.reportOn(source, FirErrors.RETURN_NOT_ALLOWED)
         }
 
         if (targetSymbol is FirAnonymousFunctionSymbol) {
             val label = targetSymbol.label
             if (label?.source?.kind !is KtRealSourceElementKind) {
-                val functionCall = context.qualifiedAccessOrAnnotationCalls.asReversed().find {
+                val functionCall = qualifiedAccessOrAnnotationCalls.asReversed().find {
                     it is FirFunctionCall &&
                             (it.calleeReference.resolvedSymbol as? FirNamedFunctionSymbol)?.callableId ==
                             FirSuspendCallChecker.KOTLIN_SUSPEND_BUILT_IN_FUNCTION_CALLABLE_ID
@@ -48,14 +48,14 @@ object FirReturnSyntaxAndLabelChecker : FirReturnExpressionChecker() {
                                 (it.expression as? FirAnonymousFunctionExpression)?.anonymousFunction?.symbol == targetSymbol
                     }
                 ) {
-                    reporter.reportOn(source, FirErrors.RETURN_FOR_BUILT_IN_SUSPEND, context)
+                    reporter.reportOn(source, FirErrors.RETURN_FOR_BUILT_IN_SUSPEND)
                 }
             }
         }
 
-        val containingDeclaration = context.containingDeclarations.last()
+        val containingDeclaration = containingDeclarations.last()
         if (containingDeclaration is FirFunction && containingDeclaration.body is FirSingleExpressionBlock) {
-            reporter.reportOn(source, FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY, context)
+            reporter.reportOn(source, FirErrors.RETURN_IN_FUNCTION_WITH_EXPRESSION_BODY)
         }
     }
 

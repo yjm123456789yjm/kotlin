@@ -19,22 +19,22 @@ import org.jetbrains.kotlin.fir.declarations.utils.isLocal
 // No need to visit anonymous object since an anonymous object is always inner. This aligns with
 // compiler/frontend/src/org/jetbrains/kotlin/resolve/ModifiersChecker.java:198
 object FirNestedClassChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         // Local enums / objects / companion objects are handled with different diagnostic codes.
         if ((declaration.classKind.isSingleton || declaration.classKind == ClassKind.ENUM_CLASS) && declaration.isLocal) return
-        val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
+        val containingDeclaration = containingDeclarations.lastOrNull() ?: return
 
         when (containingDeclaration) {
             is FirRegularClass -> {
                 if (!declaration.isInner && (containingDeclaration.isInner || containingDeclaration.isLocal)) {
-                    reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description, context)
+                    reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description)
                 }
             }
             is FirClass -> {
                 // Since 1.3, enum entries can contain inner classes only.
                 // Companion objects are reported with code WRONG_MODIFIER_CONTAINING_DECLARATION instead
                 if (containingDeclaration.classKind == ClassKind.ENUM_ENTRY && !declaration.isInner && !declaration.isCompanion) {
-                    reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description, context)
+                    reporter.reportOn(declaration.source, NESTED_CLASS_NOT_ALLOWED, declaration.description)
                 }
             }
             else -> {}

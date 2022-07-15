@@ -11,8 +11,8 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.expressions.FirBinaryLogicExpression
 
 object FirLogicExpressionTypeChecker : FirLogicExpressionChecker() {
-    override fun check(expression: FirBinaryLogicExpression, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkCondition(expression.leftOperand, context, reporter)
-        checkCondition(expression.rightOperand, context, reporter)
+    override fun CheckerContext.check(expression: FirBinaryLogicExpression, reporter: DiagnosticReporter) {
+        this.checkCondition(expression.leftOperand, reporter)
+        this.checkCondition(expression.rightOperand, reporter)
     }
 }

@@ -18,12 +18,12 @@ import org.jetbrains.kotlin.fir.types.isInt
 import org.jetbrains.kotlin.fir.types.isUnit
 
 object FirParcelizeFunctionChecker : FirSimpleFunctionChecker() {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingClassSymbol = declaration.dispatchReceiverType?.toRegularClassSymbol(context.session)
-        if (!containingClassSymbol.isParcelize(context.session)) return
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
+        val containingClassSymbol = declaration.dispatchReceiverType?.toRegularClassSymbol(session)
+        if (!containingClassSymbol.isParcelize(session)) return
         if (declaration.origin != FirDeclarationOrigin.Source) return
         if (declaration.isWriteToParcel() && declaration.isOverride) {
-            reporter.reportOn(declaration.source, KtErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED, context)
+            reporter.reportOn(declaration.source, KtErrorsParcelize.OVERRIDING_WRITE_TO_PARCEL_IS_NOT_ALLOWED, this)
         }
     }
 

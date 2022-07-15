@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.descriptors.ClassKind.ENUM_CLASS
 import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.diagnostics.hasValOrVar
+import org.jetbrains.kotlin.diagnostics.hasVar
 import org.jetbrains.kotlin.diagnostics.reportOn
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.*
@@ -32,17 +33,17 @@ import org.jetbrains.kotlin.name.StandardClassIds.primitiveArrayTypeByElementTyp
 import org.jetbrains.kotlin.name.StandardClassIds.unsignedArrayTypeByElementType
 
 object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (declaration.classKind != ANNOTATION_CLASS) return
-        if (declaration.isLocal) reporter.reportOn(declaration.source, FirErrors.LOCAL_ANNOTATION_CLASS_ERROR, context)
+        if (declaration.isLocal) reporter.reportOn(declaration.source, FirErrors.LOCAL_ANNOTATION_CLASS_ERROR)
 
         if (declaration.superTypeRefs.size != 1) {
-            reporter.reportOn(declaration.source, FirErrors.SUPERTYPES_FOR_ANNOTATION_CLASS, context)
+            reporter.reportOn(declaration.source, FirErrors.SUPERTYPES_FOR_ANNOTATION_CLASS)
         }
 
         for (member in declaration.declarations) {
-            withSuppressedDiagnostics(member, context) { ctx ->
-                checkAnnotationClassMember(member, ctx, reporter)
+            withSuppressedDiagnostics(member) {
+                checkAnnotationClassMember(member, reporter)
             }
         }
 
@@ -50,26 +51,28 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
             KotlinTarget.EXPRESSION in declaration.getAllowedAnnotationTargets()
         ) {
             val target = declaration.getRetentionAnnotation() ?: declaration.getTargetAnnotation() ?: declaration
-            reporter.reportOnWithSuppression(target, FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, context)
+            reporter.reportOnWithSuppression(target, FirErrors.RESTRICTED_RETENTION_FOR_EXPRESSION_ANNOTATION, this)
         }
 
-        checkCyclesInParameters(declaration.symbol, context, reporter)
+        checkCyclesInParameters(declaration.symbol, reporter)
     }
 
-    private fun checkAnnotationClassMember(member: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkAnnotationClassMember(member: FirDeclaration, reporter: DiagnosticReporter) {
         when {
             member is FirConstructor && member.isPrimary -> {
                 for (parameter in member.valueParameters) {
                     val source = parameter.source ?: continue
-                    reporter.reportOnWithSuppression(
-                        parameter,
-                        if (!source.hasValOrVar()) FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER else FirErrors.VAR_ANNOTATION_PARAMETER,
-                        context
-                    )
-                    val defaultValue = parameter.defaultValue
-                    if (defaultValue != null && checkConstantArguments(defaultValue, context.session) != null) {
+                    if (!source.hasValOrVar() || source.hasVar()) {
                         reporter.reportOnWithSuppression(
-                            defaultValue, FirErrors.ANNOTATION_PARAMETER_DEFAULT_VALUE_MUST_BE_CONSTANT, context
+                            parameter,
+                            if (!source.hasVar()) FirErrors.MISSING_VAL_ON_ANNOTATION_PARAMETER else FirErrors.VAR_ANNOTATION_PARAMETER,
+                            this
+                        )
+                    }
+                    val defaultValue = parameter.defaultValue
+                    if (defaultValue != null && checkConstantArguments(defaultValue, session) != null) {
+                        reporter.reportOnWithSuppression(
+                            defaultValue, FirErrors.ANNOTATION_PARAMETER_DEFAULT_VALUE_MUST_BE_CONSTANT, this
                         )
                     }
 
@@ -82,7 +85,7 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
                             // TODO: replace with UNRESOLVED_REFERENCE check
                         }
                         coneType.isNullable -> {
-                            reporter.reportOnWithSuppression(typeRef, FirErrors.NULLABLE_TYPE_OF_ANNOTATION_MEMBER, context)
+                            reporter.reportOnWithSuppression(typeRef, FirErrors.NULLABLE_TYPE_OF_ANNOTATION_MEMBER, this)
                         }
                         coneType.isPrimitiveOrNullablePrimitive -> {
                             // DO NOTHING: primitives are allowed as annotation class parameter
@@ -96,22 +99,22 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
                         classId == StandardClassIds.String -> {
                             // DO NOTHING: String is allowed
                         }
-                        classId in primitiveArrayTypeByElementType.values -> {
+                        classId != null && classId in primitiveArrayTypeByElementType.values -> {
                             // DO NOTHING: primitive arrays are allowed
                         }
-                        classId in unsignedArrayTypeByElementType.values -> {
+                        classId != null && classId in unsignedArrayTypeByElementType.values -> {
                             // DO NOTHING: arrays of unsigned types are allowed
                         }
                         classId == StandardClassIds.Array -> {
-                            if (!isAllowedArray(typeRef, context.session)) {
-                                reporter.reportOnWithSuppression(typeRef, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, context)
+                            if (!isAllowedArray(typeRef, session)) {
+                                reporter.reportOnWithSuppression(typeRef, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, this)
                             }
                         }
-                        isAllowedClassKind(coneType, context.session) -> {
+                        isAllowedClassKind(coneType, session) -> {
                             // DO NOTHING: annotation or enum classes are allowed
                         }
                         else -> {
-                            reporter.reportOnWithSuppression(typeRef, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, context)
+                            reporter.reportOnWithSuppression(typeRef, FirErrors.INVALID_TYPE_OF_ANNOTATION_MEMBER, this)
                         }
                     }
                 }
@@ -127,7 +130,7 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
                 // TODO: replace with origin check
             }
             else -> {
-                reporter.reportOn(member.source, FirErrors.ANNOTATION_CLASS_MEMBER, context)
+                reporter.reportOn(member.source, FirErrors.ANNOTATION_CLASS_MEMBER)
             }
         }
     }
@@ -171,12 +174,12 @@ object FirAnnotationClassDeclarationChecker : FirRegularClassChecker() {
         return false
     }
 
-    private fun checkCyclesInParameters(annotation: FirRegularClassSymbol, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkCyclesInParameters(annotation: FirRegularClassSymbol, reporter: DiagnosticReporter) {
         val primaryConstructor = annotation.primaryConstructorSymbol() ?: return
-        val checker = CycleChecker(annotation, context.session)
+        val checker = CycleChecker(annotation, session)
         for (valueParameter in primaryConstructor.valueParameterSymbols) {
             if (checker.parameterHasCycle(annotation, valueParameter)) {
-                reporter.reportOn(valueParameter.source, CYCLE_IN_ANNOTATION_PARAMETER, context)
+                reporter.reportOn(valueParameter.source, CYCLE_IN_ANNOTATION_PARAMETER)
             }
         }
     }

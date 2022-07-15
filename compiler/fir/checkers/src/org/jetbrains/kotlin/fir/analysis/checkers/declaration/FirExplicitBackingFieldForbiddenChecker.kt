@@ -20,7 +20,7 @@ import org.jetbrains.kotlin.fir.symbols.SymbolInternals
 import org.jetbrains.kotlin.fir.symbols.impl.isExtension
 
 object FirExplicitBackingFieldForbiddenChecker : FirBackingFieldChecker() {
-    override fun check(declaration: FirBackingField, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirBackingField, reporter: DiagnosticReporter) {
         if (declaration is FirDefaultPropertyBackingField) {
             return
         }
@@ -36,11 +36,11 @@ object FirExplicitBackingFieldForbiddenChecker : FirBackingFieldChecker() {
         }
 
         if (declaration.propertySymbol.isAbstract) {
-            reporter.reportOn(declaration.source, getProperDiagnostic(context), context)
+            reporter.reportOn(declaration.source, getProperDiagnostic(this))
         }
 
         if (declaration.propertySymbol.isExtension) {
-            reporter.reportOn(declaration.source, FirErrors.EXPLICIT_BACKING_FIELD_IN_EXTENSION, context)
+            reporter.reportOn(declaration.source, FirErrors.EXPLICIT_BACKING_FIELD_IN_EXTENSION)
         }
     }
 

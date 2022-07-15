@@ -19,9 +19,9 @@ import org.jetbrains.kotlin.fir.types.*
 // See FE1.0 [KClassWithIncorrectTypeArgumentChecker]
 object FirKClassWithIncorrectTypeArgumentChecker : FirCallableDeclarationChecker() {
 
-    override fun check(declaration: FirCallableDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirCallableDeclaration, reporter: DiagnosticReporter) {
         // Only report on top level callable declarations
-        if (context.containingDeclarations.size > 1) return
+        if (containingDeclarations.size > 1) return
 
         // When a type parameter is used as a type argument for KClass, it shouldn't be nullable.
         //  bad:  fun <T> test1() = T::class
@@ -30,11 +30,11 @@ object FirKClassWithIncorrectTypeArgumentChecker : FirCallableDeclarationChecker
         if (source.kind is KtFakeSourceElementKind) return
 
         val returnType = declaration.returnTypeRef.coneType
-        if (!returnType.isKClassTypeWithErrorOrNullableArgument(context.session.typeContext)) return
+        if (!returnType.isKClassTypeWithErrorOrNullableArgument(session.typeContext)) return
 
         val typeArgument = (returnType.typeArguments[0] as ConeKotlinTypeProjection).type
         typeArgument.typeParameterFromError?.let {
-            reporter.reportOn(source, FirErrors.KCLASS_WITH_NULLABLE_TYPE_PARAMETER_IN_SIGNATURE, it, context)
+            reporter.reportOn(source, FirErrors.KCLASS_WITH_NULLABLE_TYPE_PARAMETER_IN_SIGNATURE, it)
         }
     }
 

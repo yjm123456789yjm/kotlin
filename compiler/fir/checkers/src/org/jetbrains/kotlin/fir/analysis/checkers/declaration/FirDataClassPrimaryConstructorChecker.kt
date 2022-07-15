@@ -19,29 +19,29 @@ import org.jetbrains.kotlin.fir.declarations.utils.isData
 import org.jetbrains.kotlin.fir.declarations.primaryConstructorIfAny
 
 object FirDataClassPrimaryConstructorChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (declaration.classKind != ClassKind.CLASS || !declaration.isData) {
             return
         }
 
-        val primaryConstructor = declaration.primaryConstructorIfAny(context.session)
+        val primaryConstructor = declaration.primaryConstructorIfAny(session)
 
         if (primaryConstructor == null || primaryConstructor.source.let { it == null || it.kind is KtFakeSourceElementKind }) {
-            reporter.reportOn(declaration.source, FirErrors.PRIMARY_CONSTRUCTOR_REQUIRED_FOR_DATA_CLASS, context)
+            reporter.reportOn(declaration.source, FirErrors.PRIMARY_CONSTRUCTOR_REQUIRED_FOR_DATA_CLASS)
             return
         }
 
-        withSuppressedDiagnostics(primaryConstructor, context) { ctx ->
+        withSuppressedDiagnostics(primaryConstructor) {
             val valueParameters = primaryConstructor.valueParameterSymbols
             if (valueParameters.isEmpty()) {
-                reporter.reportOn(primaryConstructor.source, FirErrors.DATA_CLASS_WITHOUT_PARAMETERS, ctx)
+                reporter.reportOn(primaryConstructor.source, FirErrors.DATA_CLASS_WITHOUT_PARAMETERS)
             }
             for (parameter in valueParameters) {
                 if (parameter.isVararg) {
-                    reporter.reportOnWithSuppression(parameter, FirErrors.DATA_CLASS_VARARG_PARAMETER, ctx)
+                    reporter.reportOnWithSuppression(parameter, FirErrors.DATA_CLASS_VARARG_PARAMETER, this)
                 }
                 if (parameter.source?.hasValOrVar() != true) {
-                    reporter.reportOnWithSuppression(parameter, FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER, ctx)
+                    reporter.reportOnWithSuppression(parameter, FirErrors.DATA_CLASS_NOT_PROPERTY_PARAMETER, this)
                 }
             }
         }

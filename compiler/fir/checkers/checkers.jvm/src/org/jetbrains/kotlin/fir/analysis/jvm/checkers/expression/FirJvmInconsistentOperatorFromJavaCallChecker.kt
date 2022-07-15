@@ -33,7 +33,7 @@ object FirJvmInconsistentOperatorFromJavaCallChecker : FirFunctionCallChecker() 
         Name.identifier("contains")
     )
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         val callableSymbol = expression.calleeReference.toResolvedCallableSymbol() as? FirNamedFunctionSymbol ?: return
         if (callableSymbol.name != OperatorNameConventions.CONTAINS) return
         val valueParameterSymbol = callableSymbol.valueParameterSymbols.singleOrNull() ?: return
@@ -42,19 +42,20 @@ object FirJvmInconsistentOperatorFromJavaCallChecker : FirFunctionCallChecker() 
 
         if (expression.origin != FirFunctionCallOrigin.Operator || expression.origin.ordinal != 2) return
 
-        callableSymbol.check(expression.calleeReference.source, context, reporter)
+        callableSymbol.check(expression.calleeReference.source, reporter)
     }
 
-    fun FirNamedFunctionSymbol.check(source: KtSourceElement?, context: CheckerContext, reporter: DiagnosticReporter): Boolean {
+    context(CheckerContext)
+    private fun FirNamedFunctionSymbol.check(source: KtSourceElement?, reporter: DiagnosticReporter): Boolean {
         if (callableId == CONCURRENT_HASH_MAP_CALLABLE_ID) {
-            reporter.reportOn(source, FirJvmErrors.CONCURRENT_HASH_MAP_CONTAINS_OPERATOR, context)
+            reporter.reportOn(source, FirJvmErrors.CONCURRENT_HASH_MAP_CONTAINS_OPERATOR)
             return true
         }
 
-        val containingClass = containingClass()?.toFirRegularClassSymbol(context.session) ?: return false
-        val overriddenFunctions = overriddenFunctions(containingClass, context)
+        val containingClass = containingClass()?.toFirRegularClassSymbol(session) ?: return false
+        val overriddenFunctions = overriddenFunctions(containingClass, this@CheckerContext)
         for (overriddenFunction in overriddenFunctions) {
-            if (overriddenFunction is FirNamedFunctionSymbol && overriddenFunction.check(source, context, reporter)) {
+            if (overriddenFunction is FirNamedFunctionSymbol && overriddenFunction.check(source, reporter)) {
                 return true
             }
         }

@@ -37,26 +37,25 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
         sinceKotlinFqName,
     )
 
-    override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirAnnotationCall, reporter: DiagnosticReporter) {
         val argumentMapping = expression.argumentMapping.mapping
-        val fqName = expression.fqName(context.session)
+        val fqName = expression.fqName(session)
         for (arg in argumentMapping.values) {
             val argExpression = (arg as? FirNamedArgumentExpression)?.expression ?: arg
-            checkAnnotationArgumentWithSubElements(argExpression, context.session, reporter, context)
-                ?.let { reporter.reportOn(argExpression.source, it, context) }
+            checkAnnotationArgumentWithSubElements(argExpression, session, reporter)
+                ?.let { reporter.reportOn(argExpression.source, it) }
         }
 
-        checkAnnotationsWithVersion(fqName, expression, context, reporter)
-        checkDeprecatedSinceKotlin(expression.source, fqName, argumentMapping, context, reporter)
-        checkAnnotationUsedAsAnnotationArgument(expression, context, reporter)
-        checkNotAClass(expression, context, reporter)
+        this.checkAnnotationsWithVersion(fqName, expression, reporter)
+        this.checkDeprecatedSinceKotlin(expression.source, fqName, argumentMapping, reporter)
+        this.checkAnnotationUsedAsAnnotationArgument(expression, reporter)
+        this.checkNotAClass(expression, reporter)
     }
 
-    private fun checkAnnotationArgumentWithSubElements(
+    private fun CheckerContext.checkAnnotationArgumentWithSubElements(
         expression: FirExpression,
         session: FirSession,
-        reporter: DiagnosticReporter,
-        context: CheckerContext
+        reporter: DiagnosticReporter
     ): KtDiagnosticFactory0? {
 
         fun checkArgumentList(args: FirArgumentList): KtDiagnosticFactory0? {
@@ -65,13 +64,13 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
             for (arg in args.arguments) {
                 val sourceForReport = arg.source
 
-                when (val err = checkAnnotationArgumentWithSubElements(arg, session, reporter, context)) {
+                when (val err = checkAnnotationArgumentWithSubElements(arg, session, reporter)) {
                     null -> {
                         //DO NOTHING
                     }
                     else -> {
                         if (err != FirErrors.ANNOTATION_ARGUMENT_MUST_BE_KCLASS_LITERAL) usedNonConst = true
-                        reporter.reportOn(sourceForReport, err, context)
+                        reporter.reportOn(sourceForReport, err)
                     }
                 }
             }
@@ -85,8 +84,11 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
             is FirVarargArgumentsExpression -> {
                 for (arg in expression.arguments) {
                     val unwrappedArg = arg.unwrapArgument()
-                    checkAnnotationArgumentWithSubElements(unwrappedArg, session, reporter, context)
-                        ?.let { reporter.reportOn(unwrappedArg.source, it, context) }
+                    checkAnnotationArgumentWithSubElements(
+                        unwrappedArg,
+                        session,
+                        reporter
+                    )?.let { reporter.reportOn(unwrappedArg.source, it) }
                 }
             }
             else -> {
@@ -107,54 +109,51 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
         return null
     }
 
-    private fun parseVersionExpressionOrReport(
+    private fun CheckerContext.parseVersionExpressionOrReport(
         expression: FirExpression,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ): ApiVersion? {
         val constantExpression = (expression as? FirConstExpression<*>)
             ?: ((expression as? FirNamedArgumentExpression)?.expression as? FirConstExpression<*>) ?: return null
         val stringValue = constantExpression.value as? String ?: return null
         if (!stringValue.matches(RequireKotlinConstants.VERSION_REGEX)) {
-            reporter.reportOn(expression.source, FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE, context)
+            reporter.reportOn(expression.source, FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE)
             return null
         }
         val version = ApiVersion.parse(stringValue)
         if (version == null) {
-            reporter.reportOn(expression.source, FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE, context)
+            reporter.reportOn(expression.source, FirErrors.ILLEGAL_KOTLIN_VERSION_STRING_VALUE)
         }
         return version
     }
 
-    private fun checkAnnotationsWithVersion(
+    private fun CheckerContext.checkAnnotationsWithVersion(
         fqName: FqName?,
         annotation: FirAnnotation,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (!annotationFqNamesWithVersion.contains(fqName)) return
         val versionExpression = annotation.findArgumentByName(versionArgumentName) ?: return
-        val version = parseVersionExpressionOrReport(versionExpression, context, reporter) ?: return
+        val version = parseVersionExpressionOrReport(versionExpression, reporter) ?: return
         if (fqName == sinceKotlinFqName) {
-            val specified = context.session.languageVersionSettings.apiVersion
+            val specified = session.languageVersionSettings.apiVersion
             if (version > specified) {
-                reporter.reportOn(versionExpression.source, FirErrors.NEWER_VERSION_IN_SINCE_KOTLIN, specified.versionString, context)
+                reporter.reportOn(versionExpression.source, FirErrors.NEWER_VERSION_IN_SINCE_KOTLIN, specified.versionString)
             }
         }
     }
 
-    private fun checkDeprecatedSinceKotlin(
+    private fun CheckerContext.checkDeprecatedSinceKotlin(
         source: KtSourceElement?,
         fqName: FqName?,
         argumentMapping: Map<Name, FirExpression>,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (fqName != deprecatedSinceKotlinFqName)
             return
 
-        if (argumentMapping.size == 0) {
-            reporter.reportOn(source, FirErrors.DEPRECATED_SINCE_KOTLIN_WITHOUT_ARGUMENTS, context)
+        if (argumentMapping.isEmpty()) {
+            reporter.reportOn(source, FirErrors.DEPRECATED_SINCE_KOTLIN_WITHOUT_ARGUMENTS)
         }
 
         var warningSince: ApiVersion? = null
@@ -163,7 +162,7 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
         for ((name, argument) in argumentMapping) {
             val identifier = name.identifier
             if (identifier == "warningSince" || identifier == "errorSince" || identifier == "hiddenSince") {
-                val version = parseVersionExpressionOrReport(argument, context, reporter)
+                val version = this.parseVersionExpressionOrReport(argument, reporter)
                 if (version != null) {
                     when (identifier) {
                         "warningSince" -> warningSince = version
@@ -190,26 +189,24 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
         }
 
         if (isReportDeprecatedSinceKotlinWithUnorderedVersions) {
-            reporter.reportOn(source, FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_UNORDERED_VERSIONS, context)
+            reporter.reportOn(source, FirErrors.DEPRECATED_SINCE_KOTLIN_WITH_UNORDERED_VERSIONS)
         }
     }
 
-    private fun checkAnnotationUsedAsAnnotationArgument(
+    private fun CheckerContext.checkAnnotationUsedAsAnnotationArgument(
         expression: FirAnnotationCall,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val args = expression.argumentList.arguments
         for (arg in args) {
             for (ann in arg.unwrapArgument().annotations) {
-                reporter.reportOn(ann.source, FirErrors.ANNOTATION_USED_AS_ANNOTATION_ARGUMENT, context)
+                reporter.reportOn(ann.source, FirErrors.ANNOTATION_USED_AS_ANNOTATION_ARGUMENT)
             }
         }
     }
 
-    private fun checkNotAClass(
+    private fun CheckerContext.checkNotAClass(
         expression: FirAnnotationCall,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val annotationTypeRef = expression.annotationTypeRef
@@ -217,7 +214,7 @@ object FirAnnotationExpressionChecker : FirAnnotationCallChecker() {
             annotationTypeRef !is FirErrorTypeRef &&
             annotationTypeRef.coneType !is ConeClassLikeType
         ) {
-            reporter.reportOn(annotationTypeRef.source, FirErrors.NOT_A_CLASS, context)
+            reporter.reportOn(annotationTypeRef.source, FirErrors.NOT_A_CLASS)
         }
     }
 }

@@ -16,20 +16,20 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isEnumClass
 
 object FirDelegationSuperCallInEnumConstructorChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (!declaration.isEnumClass) {
             return
         }
 
         for (constructor in declaration.declarations) {
             if (constructor !is FirConstructor || constructor.isPrimary) continue
-            withSuppressedDiagnostics(constructor, context) { ctx ->
+            withSuppressedDiagnostics(constructor) {
                 val delegatedConstructor = constructor.delegatedConstructor ?: return@withSuppressedDiagnostics
                 if (!delegatedConstructor.isThis && delegatedConstructor.source?.kind !is KtFakeSourceElementKind) {
                     reporter.reportOnWithSuppression(
                         delegatedConstructor,
                         FirErrors.DELEGATION_SUPER_CALL_IN_ENUM_CONSTRUCTOR,
-                        ctx
+                        this
                     )
                 }
             }

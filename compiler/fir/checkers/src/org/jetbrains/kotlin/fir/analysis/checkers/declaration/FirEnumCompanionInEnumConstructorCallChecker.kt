@@ -21,18 +21,18 @@ import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 object FirEnumCompanionInEnumConstructorCallChecker : FirEnumEntryChecker() {
-    override fun check(declaration: FirEnumEntry, context: CheckerContext, reporter: DiagnosticReporter) {
-        val enumClass = context.containingDeclarations.lastIsInstanceOrNull<FirRegularClass>() ?: return
+    override fun CheckerContext.check(declaration: FirEnumEntry, reporter: DiagnosticReporter) {
+        val enumClass = containingDeclarations.lastIsInstanceOrNull<FirRegularClass>() ?: return
         if (enumClass.classKind != ClassKind.ENUM_CLASS) return
         val companionOfEnumSymbol = enumClass.companionObjectSymbol ?: return
         val initializerObject = (declaration.initializer as? FirAnonymousObjectExpression)?.anonymousObject ?: return
-        val delegatingConstructorCall = initializerObject.primaryConstructorIfAny(context.session)?.resolvedDelegatedConstructorCall ?: return
-        val visitor = Visitor(context, reporter, companionOfEnumSymbol)
+        val delegatingConstructorCall = initializerObject.primaryConstructorIfAny(session)?.resolvedDelegatedConstructorCall ?: return
+        val visitor = Visitor(reporter, companionOfEnumSymbol)
         delegatingConstructorCall.argumentList.acceptChildren(visitor)
     }
 
+    context(CheckerContext)
     private class Visitor(
-        val context: CheckerContext,
         val reporter: DiagnosticReporter,
         val companionSymbol: FirRegularClassSymbol
     ) : FirVisitorVoid() {
@@ -62,12 +62,12 @@ object FirEnumCompanionInEnumConstructorCallChecker : FirEnumEntryChecker() {
 
             val receiverSymbol = expression.toResolvedCallableSymbol()
                 ?.resolvedReceiverTypeRef
-                ?.toRegularClassSymbol(context.session)
+                ?.toRegularClassSymbol(session)
                 ?: return true
 
             if (receiverSymbol == companionSymbol) {
                 val source = expression.extensionReceiver.source ?: expression.source
-                reporter.reportOn(source, FirErrors.UNINITIALIZED_ENUM_COMPANION, companionSymbol, context)
+                reporter.reportOn(source, FirErrors.UNINITIALIZED_ENUM_COMPANION, companionSymbol)
                 return false
             }
 

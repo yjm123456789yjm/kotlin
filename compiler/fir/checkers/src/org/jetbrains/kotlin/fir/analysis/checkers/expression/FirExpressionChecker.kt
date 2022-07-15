@@ -10,5 +10,5 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.expressions.FirStatement
 
 abstract class FirExpressionChecker<in E : FirStatement> {
-    abstract fun check(expression: E, context: CheckerContext, reporter: DiagnosticReporter)
+    abstract fun CheckerContext.check(expression: E, reporter: DiagnosticReporter)
 }

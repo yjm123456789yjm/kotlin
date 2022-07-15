@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.coneType
 
 object FirExpressionAnnotationChecker : FirBasicExpressionChecker() {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirStatement, reporter: DiagnosticReporter) {
         // Declarations are checked separately
         // See KT-33658 about annotations on non-expression statements
         if (expression is FirDeclaration ||
@@ -40,15 +40,15 @@ object FirExpressionAnnotationChecker : FirBasicExpressionChecker() {
         val annotationsMap = hashMapOf<ConeKotlinType, MutableList<AnnotationUseSiteTarget?>>()
 
         for (annotation in annotations) {
-            val useSiteTarget = annotation.useSiteTarget ?: expression.getDefaultUseSiteTarget(annotation, context)
+            val useSiteTarget = annotation.useSiteTarget ?: expression.getDefaultUseSiteTarget(annotation, this)
             val existingTargetsForAnnotation = annotationsMap.getOrPut(annotation.annotationTypeRef.coneType) { arrayListOf() }
 
-            withSuppressedDiagnostics(annotation, context) { ctx ->
-                if (KotlinTarget.EXPRESSION !in annotation.getAllowedAnnotationTargets(ctx.session)) {
-                    reporter.reportOn(annotation.source, FirErrors.WRONG_ANNOTATION_TARGET, "expression", ctx)
+            this.withSuppressedDiagnostics(annotation) {
+                if (KotlinTarget.EXPRESSION !in annotation.getAllowedAnnotationTargets(this.session)) {
+                    reporter.reportOn(annotation.source, FirErrors.WRONG_ANNOTATION_TARGET, "expression")
                 }
 
-                checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, ctx, reporter)
+                this.checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, reporter)
             }
 
             existingTargetsForAnnotation.add(useSiteTarget)

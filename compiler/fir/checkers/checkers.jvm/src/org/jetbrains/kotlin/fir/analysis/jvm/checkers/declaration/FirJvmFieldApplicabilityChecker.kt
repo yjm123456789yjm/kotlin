@@ -38,9 +38,9 @@ import org.jetbrains.kotlin.name.JvmNames.JVM_MULTIFILE_CLASS_ID
 import org.jetbrains.kotlin.name.StandardClassIds
 
 object FirJvmFieldApplicabilityChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
         val annotation = declaration.getAnnotationByClassId(JVM_FIELD_ANNOTATION_CLASS_ID) ?: return
-        val session = context.session
+        val session = session
         val containingClassSymbol = declaration.containingClass()?.toFirRegularClassSymbol(session)
 
         val problem = when {
@@ -63,21 +63,21 @@ object FirJvmFieldApplicabilityChecker : FirPropertyChecker() {
                     }
                 }
             }
-            containingClassSymbol == null && isInsideJvmMultifileClassFile(context) ->
+            containingClassSymbol == null && isInsideJvmMultifileClassFile(this) ->
                 TOP_LEVEL_PROPERTY_OF_MULTIFILE_FACADE
             declaration.returnTypeRef.isInlineClassThatRequiresMangling(session) -> RETURN_TYPE_IS_INLINE_CLASS
             else -> return
         }
 
         val factory = if (declaration.fromPrimaryConstructor == true &&
-            !context.session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitJvmFieldOnOverrideFromInterfaceInPrimaryConstructor)
+            !this.session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitJvmFieldOnOverrideFromInterfaceInPrimaryConstructor)
         ) {
             FirJvmErrors.INAPPLICABLE_JVM_FIELD_WARNING
         } else {
             FirJvmErrors.INAPPLICABLE_JVM_FIELD
         }
 
-        reporter.reportOn(annotation.source, factory, problem.errorMessage, context)
+        reporter.reportOn(annotation.source, factory, problem.errorMessage)
     }
 
     private fun FirTypeRef.isInlineClassThatRequiresMangling(session: FirSession): Boolean {

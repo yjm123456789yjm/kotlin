@@ -19,15 +19,14 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.resolve.JVM_INLINE_ANNOTATION_CLASS_ID
 
 object FirJvmInlineApplicabilityChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         val annotation = declaration.getAnnotationByClassId(JVM_INLINE_ANNOTATION_CLASS_ID)
         if (annotation != null && !declaration.isInline) {
-            reporter.reportOn(annotation.source, FirJvmErrors.JVM_INLINE_WITHOUT_VALUE_CLASS, context)
+            reporter.reportOn(annotation.source, FirJvmErrors.JVM_INLINE_WITHOUT_VALUE_CLASS)
         } else if (annotation == null && declaration.isInline && !declaration.isExpect) {
             reporter.reportOn(
                 declaration.getModifier(KtTokens.VALUE_KEYWORD)?.source,
-                FirJvmErrors.VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION,
-                context
+                FirJvmErrors.VALUE_CLASS_WITHOUT_JVM_INLINE_ANNOTATION
             )
         }
     }

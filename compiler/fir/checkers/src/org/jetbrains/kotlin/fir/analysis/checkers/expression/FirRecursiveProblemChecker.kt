@@ -16,12 +16,12 @@ import org.jetbrains.kotlin.fir.expressions.FirStatement
 import org.jetbrains.kotlin.fir.types.*
 
 object FirRecursiveProblemChecker : FirBasicExpressionChecker() {
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirStatement, reporter: DiagnosticReporter) {
         if (expression !is FirExpression) return
 
         fun checkConeType(coneType: ConeKotlinType?) {
             if (coneType is ConeErrorType && (coneType.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.RecursionInImplicitTypes) {
-                reporter.reportOn(expression.source, FirErrors.TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM, context)
+                reporter.reportOn(expression.source, FirErrors.TYPECHECKER_HAS_RUN_INTO_RECURSIVE_PROBLEM)
             } else if (coneType is ConeClassLikeType) {
                 for (typeArgument in coneType.typeArguments) {
                     checkConeType(typeArgument.type)

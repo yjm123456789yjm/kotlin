@@ -16,13 +16,13 @@ import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.name.SpecialNames
 
 object FirFunctionNameChecker : FirSimpleFunctionChecker() {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
         val source = declaration.source
         if (source == null || source.kind is KtFakeSourceElementKind) return
-        val containingDeclaration = context.containingDeclarations.lastOrNull()
+        val containingDeclaration = containingDeclarations.lastOrNull()
         val isNonLocal = containingDeclaration is FirFile || containingDeclaration is FirClass
         if (declaration.name == SpecialNames.NO_NAME_PROVIDED && isNonLocal) {
-            reporter.reportOn(source, FirErrors.FUNCTION_DECLARATION_WITH_NO_NAME, context)
+            reporter.reportOn(source, FirErrors.FUNCTION_DECLARATION_WITH_NO_NAME)
         }
     }
 }

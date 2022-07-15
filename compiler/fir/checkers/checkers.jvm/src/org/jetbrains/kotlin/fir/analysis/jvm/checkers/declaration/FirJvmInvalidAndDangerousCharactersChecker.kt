@@ -22,20 +22,20 @@ object FirJvmInvalidAndDangerousCharactersChecker : FirBasicDeclarationChecker()
     // These characters can cause problems on Windows. '?*"|' are not allowed in file names, and % leads to unexpected env var expansion.
     private val DANGEROUS_CHARS = setOf('?', '*', '"', '|', '%')
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         val source = declaration.source
         when (declaration) {
-            is FirRegularClass -> checkNameAndReport(declaration.name, source, context, reporter)
-            is FirSimpleFunction -> checkNameAndReport(declaration.name, source, context, reporter)
-            is FirTypeParameter -> checkNameAndReport(declaration.name, source, context, reporter)
-            is FirProperty -> checkNameAndReport(declaration.name, source, context, reporter)
-            is FirTypeAlias -> checkNameAndReport(declaration.name, source, context, reporter)
-            is FirValueParameter -> checkNameAndReport(declaration.name, source, context, reporter)
+            is FirRegularClass -> checkNameAndReport(declaration.name, source, reporter)
+            is FirSimpleFunction -> checkNameAndReport(declaration.name, source, reporter)
+            is FirTypeParameter -> checkNameAndReport(declaration.name, source, reporter)
+            is FirProperty -> checkNameAndReport(declaration.name, source, reporter)
+            is FirTypeAlias -> checkNameAndReport(declaration.name, source, reporter)
+            is FirValueParameter -> checkNameAndReport(declaration.name, source, reporter)
             else -> return
         }
     }
 
-    private fun checkNameAndReport(name: Name, source: KtSourceElement?, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkNameAndReport(name: Name, source: KtSourceElement?, reporter: DiagnosticReporter) {
         if (source != null &&
             source.kind !is KtFakeSourceElementKind &&
             !name.isSpecial
@@ -45,15 +45,13 @@ object FirJvmInvalidAndDangerousCharactersChecker : FirBasicDeclarationChecker()
                 reporter.reportOn(
                     source,
                     FirErrors.INVALID_CHARACTERS,
-                    "contains illegal characters: ${INVALID_CHARS.intersect(nameString.toSet()).joinToString("")}",
-                    context
+                    "contains illegal characters: ${INVALID_CHARS.intersect(nameString.toSet()).joinToString("")}"
                 )
             } else if (nameString.any { it in DANGEROUS_CHARS }) {
                 reporter.reportOn(
                     source,
                     FirErrors.DANGEROUS_CHARACTERS,
-                    DANGEROUS_CHARS.intersect(nameString.toSet()).joinToString(""),
-                    context
+                    DANGEROUS_CHARS.intersect(nameString.toSet()).joinToString("")
                 )
             }
         }

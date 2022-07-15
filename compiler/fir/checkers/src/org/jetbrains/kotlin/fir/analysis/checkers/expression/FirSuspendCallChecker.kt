@@ -6,7 +6,6 @@
 package org.jetbrains.kotlin.fir.analysis.checkers.expression
 
 import org.jetbrains.kotlin.KtNodeTypes
-import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
@@ -31,11 +30,8 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.fir.types.*
-import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.name.CallableId
 import org.jetbrains.kotlin.name.StandardClassIds
-import org.jetbrains.kotlin.psi
-import org.jetbrains.kotlin.psi.KtNamedFunction
 import org.jetbrains.kotlin.psi.stubs.elements.KtStubElementTypes
 import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
@@ -44,13 +40,13 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker() {
 
     internal val KOTLIN_SUSPEND_BUILT_IN_FUNCTION_CALLABLE_ID = CallableId(StandardClassIds.BASE_KOTLIN_PACKAGE, BUILTIN_SUSPEND_NAME)
 
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         val reference = expression.calleeReference.resolved ?: return
         val symbol = reference.resolvedSymbol as? FirCallableSymbol ?: return
         if (reference.name == BUILTIN_SUSPEND_NAME ||
             symbol is FirNamedFunctionSymbol && symbol.name == BUILTIN_SUSPEND_NAME
         ) {
-            checkSuspendModifierForm(expression, reference, symbol, context, reporter)
+            this.checkSuspendModifierForm(expression, reference, symbol, reporter)
         }
         if (reference is FirResolvedCallableReference) return
         when (symbol) {
@@ -58,29 +54,28 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker() {
             is FirPropertySymbol -> if (symbol.callableId != StandardClassIds.Callables.coroutineContext) return
             else -> return
         }
-        val enclosingSuspendFunction = findEnclosingSuspendFunction(context)
+        val enclosingSuspendFunction = findEnclosingSuspendFunction(this)
         if (enclosingSuspendFunction == null) {
             when (symbol) {
-                is FirNamedFunctionSymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_FUNCTION_CALL, symbol, context)
-                is FirPropertySymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_PROPERTY_ACCESS, symbol, context)
+                is FirNamedFunctionSymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_FUNCTION_CALL, symbol)
+                is FirPropertySymbol -> reporter.reportOn(expression.source, FirErrors.ILLEGAL_SUSPEND_PROPERTY_ACCESS, symbol)
                 else -> {
                 }
             }
         } else {
-            if (!checkNonLocalReturnUsage(enclosingSuspendFunction, context)) {
-                reporter.reportOn(expression.source, FirErrors.NON_LOCAL_SUSPENSION_POINT, context)
+            if (!checkNonLocalReturnUsage(enclosingSuspendFunction, this)) {
+                reporter.reportOn(expression.source, FirErrors.NON_LOCAL_SUSPENSION_POINT)
             }
-            if (!checkRestrictsSuspension(expression, enclosingSuspendFunction, symbol, context)) {
-                reporter.reportOn(expression.source, FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL, context)
+            if (!checkRestrictsSuspension(expression, enclosingSuspendFunction, symbol, this)) {
+                reporter.reportOn(expression.source, FirErrors.ILLEGAL_RESTRICTED_SUSPENDING_FUNCTION_CALL)
             }
         }
     }
 
-    private fun checkSuspendModifierForm(
+    private fun CheckerContext.checkSuspendModifierForm(
         expression: FirQualifiedAccessExpression,
         reference: FirResolvedNamedReference,
         symbol: FirCallableSymbol<*>,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (symbol.callableId == KOTLIN_SUSPEND_BUILT_IN_FUNCTION_CALLABLE_ID) {
@@ -88,15 +83,15 @@ object FirSuspendCallChecker : FirQualifiedAccessExpressionChecker() {
                 expression.explicitReceiver != null ||
                 expression.formOfSuspendModifierForLambdaOrFun() == null
             ) {
-                reporter.reportOn(expression.source, FirErrors.NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND, context)
+                reporter.reportOn(expression.source, FirErrors.NON_MODIFIER_FORM_FOR_BUILT_IN_SUSPEND)
             }
         } else if (reference.name == BUILTIN_SUSPEND_NAME) {
             when (expression.formOfSuspendModifierForLambdaOrFun()) {
                 SuspendCallArgumentKind.FUN -> {
-                    reporter.reportOn(expression.source, FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN, context)
+                    reporter.reportOn(expression.source, FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND_FUN)
                 }
                 SuspendCallArgumentKind.LAMBDA -> {
-                    reporter.reportOn(expression.source, FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND, context)
+                    reporter.reportOn(expression.source, FirErrors.MODIFIER_FORM_FOR_NON_BUILT_IN_SUSPEND)
                 }
                 null -> {
                     // Nothing to do

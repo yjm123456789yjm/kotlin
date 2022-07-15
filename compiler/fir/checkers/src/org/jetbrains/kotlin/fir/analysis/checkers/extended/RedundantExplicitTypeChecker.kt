@@ -22,7 +22,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.types.ConstantValueKind
 
 object RedundantExplicitTypeChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
         if (!declaration.isLocal) return
 
         val initializer = declaration.initializer ?: return
@@ -32,7 +32,7 @@ object RedundantExplicitTypeChecker : FirPropertyChecker() {
 
         val type = declaration.returnTypeRef.coneType
 
-        if (type.toSymbol(context.session) is FirTypeAliasSymbol) return
+        if (type.toSymbol(session) is FirTypeAliasSymbol) return
         if (typeReference.annotations.isNotEmpty()) return
 
         when (initializer) {
@@ -79,7 +79,7 @@ object RedundantExplicitTypeChecker : FirPropertyChecker() {
             else -> return
         }
 
-        reporter.reportOn(declaration.returnTypeRef.source, FirErrors.REDUNDANT_EXPLICIT_TYPE, context)
+        reporter.reportOn(declaration.returnTypeRef.source, FirErrors.REDUNDANT_EXPLICIT_TYPE)
     }
 
     private fun ConeKotlinType.isSame(other: ClassId?): Boolean {

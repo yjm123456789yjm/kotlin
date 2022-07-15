@@ -32,14 +32,14 @@ object FirJavaAnnotationsChecker : FirAnnotationChecker() {
             Annotations.Java.Documented to Annotations.MustBeDocumented,
         )
 
-    override fun check(expression: FirAnnotation, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (context.containingDeclarations.lastOrNull()?.source?.kind != KtRealSourceElementKind) return
-        val callableSymbol = expression.annotationTypeRef.toRegularClassSymbol(context.session)
+    override fun CheckerContext.check(expression: FirAnnotation, reporter: DiagnosticReporter) {
+        if (containingDeclarations.lastOrNull()?.source?.kind != KtRealSourceElementKind) return
+        val callableSymbol = expression.annotationTypeRef.toRegularClassSymbol(session)
         if (callableSymbol?.origin !is FirDeclarationOrigin.Java) return
 
         val lookupTag = expression.annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.lookupTag ?: return
         javaToKotlinNameMap[lookupTag.classId]?.let { betterName ->
-            reporter.reportOn(expression.source, FirJvmErrors.DEPRECATED_JAVA_ANNOTATION, betterName.asSingleFqName(), context)
+            reporter.reportOn(expression.source, FirJvmErrors.DEPRECATED_JAVA_ANNOTATION, betterName.asSingleFqName())
         }
 
         if (expression is FirAnnotationCall) {
@@ -47,7 +47,7 @@ object FirJavaAnnotationsChecker : FirAnnotationChecker() {
             if (argumentList is FirResolvedArgumentList) {
                 for ((key, value) in argumentList.mapping) {
                     if (value.name != Annotations.ParameterNames.value && key !is FirWrappedArgumentExpression) {
-                        reporter.reportOn(key.source, FirJvmErrors.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION, context)
+                        reporter.reportOn(key.source, FirJvmErrors.POSITIONED_VALUE_ARGUMENT_FOR_JAVA_ANNOTATION)
                     }
                 }
             }

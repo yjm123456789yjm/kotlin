@@ -19,12 +19,12 @@ import org.jetbrains.kotlin.lexer.KtTokens
 import org.jetbrains.kotlin.util.OperatorNameConventions
 
 object FirDataObjectContentChecker : FirSimpleFunctionChecker() {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
         if (!declaration.hasModifier(KtTokens.OVERRIDE_KEYWORD)) return
         val source = declaration.source
         if (source == null || source.kind is KtFakeSourceElementKind) return
 
-        val containingClass = context.containingDeclarations.lastOrNull() as? FirClass ?: return
+        val containingClass = containingDeclarations.lastOrNull() as? FirClass ?: return
         if (containingClass.classKind != ClassKind.OBJECT || !containingClass.hasModifier(KtTokens.DATA_KEYWORD)) return
 
         if (
@@ -32,7 +32,7 @@ object FirDataObjectContentChecker : FirSimpleFunctionChecker() {
             (declaration.name == OperatorNameConventions.EQUALS &&
                     declaration.valueParameters.singleOrNull()?.returnTypeRef?.isNullableAny == true)
         ) {
-            reporter.reportOn(source, FirErrors.DATA_OBJECT_CUSTOM_EQUALS_OR_HASH_CODE, context)
+            reporter.reportOn(source, FirErrors.DATA_OBJECT_CUSTOM_EQUALS_OR_HASH_CODE)
         }
     }
 }

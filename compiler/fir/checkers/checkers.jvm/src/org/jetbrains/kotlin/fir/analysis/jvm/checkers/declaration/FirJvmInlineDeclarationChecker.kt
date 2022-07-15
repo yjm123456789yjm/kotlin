@@ -22,22 +22,22 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirFunctionSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirValueParameterSymbol
 
 object FirJvmInlineDeclarationChecker : FirInlineDeclarationChecker() {
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirFunction, reporter: DiagnosticReporter) {
         if (!declaration.isInline) {
-            checkParametersInNotInline(declaration, context, reporter)
+            this.checkParametersInNotInline(declaration, reporter)
             return
         }
         // local inline functions are prohibited
         if (declaration.isLocalMember) {
-            reporter.reportOn(declaration.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local inline functions", context)
+            reporter.reportOn(declaration.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local inline functions")
             return
         }
         if (declaration !is FirPropertyAccessor && declaration !is FirSimpleFunction) return
 
         val effectiveVisibility = declaration.effectiveVisibility
-        withSuppressedDiagnostics(declaration, context) { ctx ->
-            checkInlineFunctionBody(declaration, effectiveVisibility, ctx, reporter)
-            checkCallableDeclaration(declaration, ctx, reporter)
+        withSuppressedDiagnostics(declaration) {
+            checkInlineFunctionBody(declaration, effectiveVisibility, reporter)
+            checkCallableDeclaration(declaration, reporter)
         }
     }
 
@@ -58,7 +58,7 @@ object FirJvmInlineDeclarationChecker : FirInlineDeclarationChecker() {
     ) {
         override fun visitRegularClass(regularClass: FirRegularClass, data: CheckerContext) {
             if (!regularClass.classKind.isSingleton && data.containingDeclarations.lastOrNull() === inlineFunction) {
-                reporter.reportOn(regularClass.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local classes", data)
+                with(data) { reporter.reportOn(regularClass.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local classes") }
             } else {
                 super.visitRegularClass(regularClass, data)
             }
@@ -66,29 +66,26 @@ object FirJvmInlineDeclarationChecker : FirInlineDeclarationChecker() {
 
         override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: CheckerContext) {
             if (data.containingDeclarations.lastOrNull() === inlineFunction) {
-                reporter.reportOn(simpleFunction.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local functions", data)
+                with(data) { reporter.reportOn(simpleFunction.source, FirErrors.NOT_YET_SUPPORTED_IN_INLINE, "Local functions") }
             } else {
                 super.visitSimpleFunction(simpleFunction, data)
             }
         }
     }
 
-    override fun checkSuspendFunctionalParameterWithDefaultValue(
+    override fun CheckerContext.checkSuspendFunctionalParameterWithDefaultValue(
         param: FirValueParameter,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
     ) {
         reporter.reportOn(
             param.source,
             FirErrors.NOT_YET_SUPPORTED_IN_INLINE,
-            "Suspend functional parameters with default values",
-            context
+            "Suspend functional parameters with default values"
         )
     }
 
-    override fun checkFunctionalParametersWithInheritedDefaultValues(
+    override fun CheckerContext.checkFunctionalParametersWithInheritedDefaultValues(
         function: FirSimpleFunction,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         overriddenSymbols: List<FirCallableSymbol<out FirCallableDeclaration>>,
     ) {
@@ -103,8 +100,7 @@ object FirJvmInlineDeclarationChecker : FirInlineDeclarationChecker() {
                 reporter.reportOn(
                     param.source,
                     FirErrors.NOT_YET_SUPPORTED_IN_INLINE,
-                    "Functional parameters with inherited default values",
-                    context
+                    "Functional parameters with inherited default values"
                 )
             }
         }

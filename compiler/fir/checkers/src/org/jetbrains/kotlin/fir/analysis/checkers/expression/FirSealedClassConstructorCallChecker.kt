@@ -22,19 +22,19 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirSealedClassConstructorCallChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         val constructorSymbol = expression.calleeReference.safeAs<FirResolvedNamedReference>()
             ?.resolvedSymbol as? FirConstructorSymbol
             ?: return
 
         val typeSymbol = constructorSymbol.resolvedReturnTypeRef.coneType
-            .fullyExpandedType(context.session)
+            .fullyExpandedType(session)
             .safeAs<ConeClassLikeType>()
-            ?.lookupTag?.toSymbol(context.session) as? FirRegularClassSymbol
+            ?.lookupTag?.toSymbol(session) as? FirRegularClassSymbol
             ?: return
 
         if (typeSymbol.modality == Modality.SEALED) {
-            reporter.reportOn(expression.source, FirErrors.SEALED_CLASS_CONSTRUCTOR_CALL, context)
+            reporter.reportOn(expression.source, FirErrors.SEALED_CLASS_CONSTRUCTOR_CALL)
         }
     }
 }

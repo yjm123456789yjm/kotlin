@@ -14,11 +14,11 @@ import org.jetbrains.kotlin.fir.types.FirTypeRef
 import org.jetbrains.kotlin.fir.types.coneTypeSafe
 
 object FirDynamicUnsupportedChecker : FirTypeRefChecker() {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(typeRef: FirTypeRef, reporter: DiagnosticReporter) {
         // It's assumed this checker is only called
         // by within the platform that disallows dynamics
         if (typeRef.coneTypeSafe<ConeDynamicType>() != null) {
-            reporter.reportOn(typeRef.source, FirErrors.UNSUPPORTED, "dynamic type", context)
+            reporter.reportOn(typeRef.source, FirErrors.UNSUPPORTED, "dynamic type")
         }
     }
 }

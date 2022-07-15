@@ -27,26 +27,26 @@ import org.jetbrains.kotlin.fir.types.isBooleanOrNullableBoolean
 import org.jetbrains.kotlin.fir.types.toRegularClassSymbol
 
 object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
-    override fun check(expression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
-        reportNotExhaustive(expression, context, reporter)
-        reportElseMisplaced(expression, reporter, context)
+    override fun CheckerContext.check(expression: FirWhenExpression, reporter: DiagnosticReporter) {
+        reportNotExhaustive(expression, reporter)
+        reportElseMisplaced(expression, reporter)
     }
 
-    private fun reportNotExhaustive(whenExpression: FirWhenExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.reportNotExhaustive(whenExpression: FirWhenExpression, reporter: DiagnosticReporter) {
         if (whenExpression.isExhaustive) return
 
         val source = whenExpression.source ?: return
 
         if (whenExpression.usedAsExpression) {
             if (source.isIfExpression) {
-                reporter.reportOn(source, FirErrors.INVALID_IF_AS_EXPRESSION, context)
+                reporter.reportOn(source, FirErrors.INVALID_IF_AS_EXPRESSION)
                 return
             } else if (source.isWhenExpression) {
-                reporter.reportOn(source, FirErrors.NO_ELSE_IN_WHEN, whenExpression.missingCases, context)
+                reporter.reportOn(source, FirErrors.NO_ELSE_IN_WHEN, whenExpression.missingCases)
             }
         } else {
             val subjectType = whenExpression.subject?.typeRef?.coneType ?: return
-            val subjectClassSymbol = subjectType.fullyExpandedType(context.session).toRegularClassSymbol(context.session) ?: return
+            val subjectClassSymbol = subjectType.fullyExpandedType(session).toRegularClassSymbol(session) ?: return
             val kind = when {
                 subjectClassSymbol.modality == Modality.SEALED -> AlgebraicTypeKind.Sealed
                 subjectClassSymbol.classKind == ClassKind.ENUM_CLASS -> AlgebraicTypeKind.Enum
@@ -54,10 +54,10 @@ object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
                 else -> return
             }
 
-            if (context.session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitNonExhaustiveWhenOnAlgebraicTypes)) {
-                reporter.reportOn(source, FirErrors.NO_ELSE_IN_WHEN, whenExpression.missingCases, context)
+            if (session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitNonExhaustiveWhenOnAlgebraicTypes)) {
+                reporter.reportOn(source, FirErrors.NO_ELSE_IN_WHEN, whenExpression.missingCases)
             } else {
-                reporter.reportOn(source, FirErrors.NON_EXHAUSTIVE_WHEN_STATEMENT, kind.displayName, whenExpression.missingCases, context)
+                reporter.reportOn(source, FirErrors.NON_EXHAUSTIVE_WHEN_STATEMENT, kind.displayName, whenExpression.missingCases)
             }
         }
     }
@@ -71,16 +71,15 @@ object FirExhaustiveWhenChecker : FirWhenExpressionChecker() {
         Boolean("Boolean")
     }
 
-    private fun reportElseMisplaced(
+    private fun CheckerContext.reportElseMisplaced(
         expression: FirWhenExpression,
-        reporter: DiagnosticReporter,
-        context: CheckerContext
+        reporter: DiagnosticReporter
     ) {
         val branchesCount = expression.branches.size
         for (indexedValue in expression.branches.withIndex()) {
             val branch = indexedValue.value
             if (branch.condition is FirElseIfTrueCondition && indexedValue.index < branchesCount - 1) {
-                reporter.reportOn(branch.source, FirErrors.ELSE_MISPLACED_IN_WHEN, context)
+                reporter.reportOn(branch.source, FirErrors.ELSE_MISPLACED_IN_WHEN)
             }
         }
     }

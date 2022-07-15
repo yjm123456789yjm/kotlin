@@ -33,39 +33,37 @@ object FirDeprecationChecker : FirBasicExpressionChecker() {
         KtFakeSourceElementKind.DesugaredIncrementOrDecrement
     )
 
-    override fun check(expression: FirStatement, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirStatement, reporter: DiagnosticReporter) {
         if (!allowedSourceKinds.contains(expression.source?.kind)) return
         if (expression is FirAnnotation || expression is FirDelegatedConstructorCall) return //checked by FirDeprecatedTypeChecker
         val resolvable = expression as? FirResolvable ?: return
         val reference = resolvable.calleeReference.resolved ?: return
         val referencedSymbol = reference.resolvedSymbol
 
-        reportDeprecationIfNeeded(reference.source, referencedSymbol, expression, context, reporter)
+        this.reportDeprecationIfNeeded(reference.source, referencedSymbol, expression, reporter)
     }
 
-    internal fun reportDeprecationIfNeeded(
+    internal fun CheckerContext.reportDeprecationIfNeeded(
         source: KtSourceElement?,
         referencedSymbol: FirBasedSymbol<*>,
         callSite: FirElement?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val deprecation = getWorstDeprecation(callSite, referencedSymbol, context) ?: return
-        reportDeprecation(source, referencedSymbol, deprecation, reporter, context)
+        val deprecation = getWorstDeprecation(callSite, referencedSymbol, this) ?: return
+        this.reportDeprecation(source, referencedSymbol, deprecation, reporter)
     }
 
-    internal fun reportDeprecation(
+    internal fun CheckerContext.reportDeprecation(
         source: KtSourceElement?,
         referencedSymbol: FirBasedSymbol<*>,
         deprecationInfo: DeprecationInfo,
-        reporter: DiagnosticReporter,
-        context: CheckerContext
+        reporter: DiagnosticReporter
     ) {
         val diagnostic = when (deprecationInfo.deprecationLevel) {
             DeprecationLevelValue.ERROR, DeprecationLevelValue.HIDDEN -> FirErrors.DEPRECATION_ERROR
             DeprecationLevelValue.WARNING -> FirErrors.DEPRECATION
         }
-        reporter.reportOn(source, diagnostic, referencedSymbol, deprecationInfo.message ?: "", context)
+        reporter.reportOn(source, diagnostic, referencedSymbol, deprecationInfo.message ?: "")
     }
 
     private fun getWorstDeprecation(

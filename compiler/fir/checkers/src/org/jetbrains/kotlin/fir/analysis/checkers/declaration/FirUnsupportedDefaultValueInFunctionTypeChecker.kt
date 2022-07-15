@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.fir.resolve.diagnostics.ConeUnsupportedDefaultValueI
 import org.jetbrains.kotlin.fir.types.FirErrorTypeRef
 
 object FirUnsupportedDefaultValueInFunctionTypeChecker : FirValueParameterChecker() {
-    override fun check(declaration: FirValueParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirValueParameter, reporter: DiagnosticReporter) {
         val diagnostic = ((declaration.defaultValue?.typeRef as? FirErrorTypeRef)?.diagnostic as? ConeUnsupportedDefaultValueInFunctionType)
         if (diagnostic != null) {
-            reporter.reportOn(diagnostic.source, FirErrors.UNSUPPORTED, diagnostic.reason, context)
+            reporter.reportOn(diagnostic.source, FirErrors.UNSUPPORTED, diagnostic.reason)
         }
     }
 }

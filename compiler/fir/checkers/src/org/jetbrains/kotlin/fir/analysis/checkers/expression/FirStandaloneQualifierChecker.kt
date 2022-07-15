@@ -16,10 +16,10 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirRegularClassSymbol
 import org.jetbrains.kotlin.fir.types.isUnit
 
 object FirStandaloneQualifierChecker : FirResolvedQualifierChecker() {
-    override fun check(expression: FirResolvedQualifier, context: CheckerContext, reporter: DiagnosticReporter) {
-        val lastQualifiedAccess = context.qualifiedAccessOrAnnotationCalls.lastOrNull() as? FirQualifiedAccess
+    override fun CheckerContext.check(expression: FirResolvedQualifier, reporter: DiagnosticReporter) {
+        val lastQualifiedAccess = qualifiedAccessOrAnnotationCalls.lastOrNull() as? FirQualifiedAccess
         if (lastQualifiedAccess?.explicitReceiver === expression) return
-        val lastGetClass = context.getClassCalls.lastOrNull()
+        val lastGetClass = getClassCalls.lastOrNull()
         if (lastGetClass?.argument === expression) return
         // Note: if it's real Unit, it will be filtered by ClassKind.OBJECT check below
         if (!expression.typeRef.isUnit) return
@@ -27,10 +27,10 @@ object FirStandaloneQualifierChecker : FirResolvedQualifierChecker() {
         when (val symbol = expression.symbol) {
             is FirRegularClassSymbol -> {
                 if (symbol.classKind == ClassKind.OBJECT) return
-                reporter.reportOn(expression.source, FirErrors.NO_COMPANION_OBJECT, symbol, context)
+                reporter.reportOn(expression.source, FirErrors.NO_COMPANION_OBJECT, symbol)
             }
             null -> {
-                reporter.reportOn(expression.source, FirErrors.EXPRESSION_EXPECTED_PACKAGE_FOUND, context)
+                reporter.reportOn(expression.source, FirErrors.EXPRESSION_EXPECTED_PACKAGE_FOUND)
             }
             else -> {}
         }

@@ -219,37 +219,37 @@ object FirConflictsChecker : FirBasicDeclarationChecker() {
         }
     }
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         val inspector = DeclarationInspector()
 
         when (declaration) {
-            is FirFile -> checkFile(declaration, inspector, context)
+            is FirFile -> checkFile(declaration, inspector, this)
             is FirRegularClass -> checkRegularClass(declaration, inspector)
             else -> {
             }
         }
 
-        context.addDeclaration(declaration)
+        addDeclaration(declaration)
         try {
             inspector.declarationConflictingSymbols.forEach { (conflictingDeclaration, symbols) ->
                 val source = conflictingDeclaration.source
                 if (source != null && symbols.isNotEmpty()) {
-                    withSuppressedDiagnostics(conflictingDeclaration, context) { ctx ->
+                    withSuppressedDiagnostics(conflictingDeclaration) {
                         when (conflictingDeclaration) {
                             is FirSimpleFunction,
                             is FirConstructor -> {
-                                reporter.reportOn(source, FirErrors.CONFLICTING_OVERLOADS, symbols, ctx)
+                                reporter.reportOn(source, FirErrors.CONFLICTING_OVERLOADS, symbols)
                             }
                             else -> {
                                 val factory = if (conflictingDeclaration is FirClassLikeDeclaration &&
-                                    conflictingDeclaration.getContainingDeclaration(ctx.session) == null &&
+                                    conflictingDeclaration.getContainingDeclaration(this.session) == null &&
                                     symbols.any { it is FirClassLikeSymbol<*> }
                                 ) {
                                     FirErrors.PACKAGE_OR_CLASSIFIER_REDECLARATION
                                 } else {
                                     FirErrors.REDECLARATION
                                 }
-                                reporter.reportOn(source, factory, symbols, ctx)
+                                reporter.reportOn(source, factory, symbols)
                             }
                         }
                     }
@@ -260,23 +260,23 @@ object FirConflictsChecker : FirBasicDeclarationChecker() {
                 when (declaration) {
                     is FirMemberDeclaration -> {
                         if (declaration is FirFunction) {
-                            checkConflictingParameters(declaration.valueParameters, context, reporter)
+                            this.checkConflictingParameters(declaration.valueParameters, reporter)
                         }
-                        checkConflictingParameters(declaration.typeParameters, context, reporter)
+                        this.checkConflictingParameters(declaration.typeParameters, reporter)
                     }
                     is FirTypeParametersOwner -> {
-                        checkConflictingParameters(declaration.typeParameters, context, reporter)
+                        this.checkConflictingParameters(declaration.typeParameters, reporter)
                     }
                     else -> {
                     }
                 }
             }
         } finally {
-            context.dropDeclaration()
+            dropDeclaration()
         }
     }
 
-    private fun checkConflictingParameters(parameters: List<FirElement>, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkConflictingParameters(parameters: List<FirElement>, reporter: DiagnosticReporter) {
         if (parameters.size <= 1) return
 
         val multimap = ListMultimap<Name, FirBasedSymbol<*>>()
@@ -308,8 +308,7 @@ object FirConflictsChecker : FirBasicDeclarationChecker() {
                     reporter.reportOn(
                         parameter.source,
                         FirErrors.REDECLARATION,
-                        conflictingParameters,
-                        context
+                        conflictingParameters
                     )
                 }
             }

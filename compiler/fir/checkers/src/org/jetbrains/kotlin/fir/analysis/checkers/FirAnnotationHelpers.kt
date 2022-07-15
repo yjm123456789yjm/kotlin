@@ -99,17 +99,16 @@ fun FirExpression.extractClassesFromArgument(): List<FirRegularClassSymbol> {
     }
 }
 
-fun checkRepeatedAnnotation(
+fun CheckerContext.checkRepeatedAnnotation(
     useSiteTarget: AnnotationUseSiteTarget?,
     existingTargetsForAnnotation: MutableList<AnnotationUseSiteTarget?>,
     annotation: FirAnnotation,
-    context: CheckerContext,
     reporter: DiagnosticReporter,
 ) {
     val duplicated = useSiteTarget in existingTargetsForAnnotation
             || existingTargetsForAnnotation.any { (it == null) != (useSiteTarget == null) }
-    if (duplicated && !annotation.isRepeatable(context.session)) {
-        reporter.reportOn(annotation.source, FirErrors.REPEATED_ANNOTATION, context)
+    if (duplicated && !annotation.isRepeatable(session)) {
+        reporter.reportOn(annotation.source, FirErrors.REPEATED_ANNOTATION)
     }
 }
 
@@ -170,10 +169,9 @@ private fun FirExpression.unfoldArrayOrVararg(): List<FirExpression> {
     }
 }
 
-fun checkRepeatedAnnotation(
+fun CheckerContext.checkRepeatedAnnotation(
     annotationContainer: FirAnnotationContainer?,
     annotations: List<FirAnnotation>,
-    context: CheckerContext,
     reporter: DiagnosticReporter
 ) {
     if (annotations.size <= 1) return
@@ -181,11 +179,11 @@ fun checkRepeatedAnnotation(
     val annotationsMap = hashMapOf<ConeKotlinType, MutableList<AnnotationUseSiteTarget?>>()
 
     for (annotation in annotations) {
-        val useSiteTarget = annotation.useSiteTarget ?: annotationContainer?.getDefaultUseSiteTarget(annotation, context)
+        val useSiteTarget = annotation.useSiteTarget ?: annotationContainer?.getDefaultUseSiteTarget(annotation, this)
         val existingTargetsForAnnotation = annotationsMap.getOrPut(annotation.annotationTypeRef.coneType) { arrayListOf() }
 
-        withSuppressedDiagnostics(annotation, context) {
-            checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, it, reporter)
+        withSuppressedDiagnostics(annotation) {
+            this.checkRepeatedAnnotation(useSiteTarget, existingTargetsForAnnotation, annotation, reporter)
         }
 
         existingTargetsForAnnotation.add(useSiteTarget)

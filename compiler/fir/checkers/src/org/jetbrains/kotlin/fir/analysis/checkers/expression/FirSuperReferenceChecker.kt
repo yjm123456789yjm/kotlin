@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirSuperReferenceChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         val superReference = expression.calleeReference.safeAs<FirSuperReference>()?.takeIf { it.hadExplicitTypeInSource() } ?: return
 
         val superTypeRef = superReference.superTypeRef
@@ -30,7 +30,7 @@ object FirSuperReferenceChecker : FirQualifiedAccessExpressionChecker() {
             typeArgumentList.typeArguments.isNotEmpty() &&
             superType.typeArguments.all { it !is ConeErrorType }
         ) {
-            reporter.reportOn(typeArgumentList.source, FirErrors.TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER, context)
+            reporter.reportOn(typeArgumentList.source, FirErrors.TYPE_ARGUMENTS_REDUNDANT_IN_SUPER_QUALIFIER)
         }
     }
 }

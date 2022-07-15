@@ -18,35 +18,34 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.Variance
 
 object FirProjectionRelationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if (declaration is FirPropertyAccessor) {
             return
         }
 
         if (declaration is FirCallableDeclaration) {
-            checkTypeRef(declaration.returnTypeRef, context, reporter)
+            checkTypeRef(declaration.returnTypeRef, reporter)
         }
 
         when (declaration) {
             is FirClass -> {
                 for (it in declaration.superTypeRefs) {
-                    checkTypeRef(it, context, reporter)
+                    checkTypeRef(it, reporter)
                 }
             }
             is FirTypeAlias ->
-                checkTypeRef(declaration.expandedTypeRef, context, reporter)
+                checkTypeRef(declaration.expandedTypeRef, reporter)
             else -> {}
         }
     }
 
-    private fun checkTypeRef(
+    private fun CheckerContext.checkTypeRef(
         typeRef: FirTypeRef,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val type = typeRef.coneTypeSafe<ConeClassLikeType>()
-        val fullyExpandedType = type?.fullyExpandedType(context.session) ?: return
-        val declaration = fullyExpandedType.toSymbol(context.session) as? FirRegularClassSymbol ?: return
+        val fullyExpandedType = type?.fullyExpandedType(session) ?: return
+        val declaration = fullyExpandedType.toSymbol(session) as? FirRegularClassSymbol ?: return
         val typeParameters = declaration.typeParameterSymbols
         val typeArguments = type.typeArguments
 
@@ -82,12 +81,11 @@ object FirProjectionRelationChecker : FirBasicDeclarationChecker() {
                         if (type != fullyExpandedType) FirErrors.CONFLICTING_PROJECTION_IN_TYPEALIAS_EXPANSION else FirErrors.CONFLICTING_PROJECTION
                     else
                         FirErrors.REDUNDANT_PROJECTION,
-                    fullyExpandedType,
-                    context
+                    fullyExpandedType
                 )
             }
 
-            argTypeRefSource.typeRef?.let { checkTypeRef(it, context, reporter) }
+            argTypeRefSource.typeRef?.let { argTypeRef -> checkTypeRef(argTypeRef, reporter) }
         }
     }
 

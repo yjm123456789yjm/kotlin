@@ -33,7 +33,7 @@ import org.jetbrains.kotlin.lexer.KtTokens
 
 // See old FE's [DeclarationsChecker]
 object FirMemberPropertiesChecker : FirClassChecker() {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirClass, reporter: DiagnosticReporter) {
         val memberPropertySymbols = declaration.declarations.filterIsInstance<FirProperty>().map { it.symbol }.toSet()
         val initializedInConstructor =
             mutableMapOf<FirPropertySymbol, EventOccurrencesRange>().withDefault { EventOccurrencesRange.ZERO }
@@ -44,7 +44,7 @@ object FirMemberPropertiesChecker : FirClassChecker() {
         if (memberPropertySymbols.any { !it.hasInitializer }) {
             collectPropertyInitialization(
                 declaration,
-                context.session,
+                session,
                 memberPropertySymbols,
                 initializedInConstructor,
                 initializedInInitOrOtherProperty
@@ -60,7 +60,7 @@ object FirMemberPropertiesChecker : FirClassChecker() {
                     innerDeclaration.initializer != null ||
                             initializedInConstructor.getValue(symbol).isDefinitelyVisited() ||
                             initializedInInitOrOtherProperty.getValue(symbol).isDefinitelyVisited()
-                checkProperty(declaration, innerDeclaration, isInitialized, context, reporter, !reachedDeadEnd)
+                this.checkProperty(declaration, innerDeclaration, isInitialized, reporter, !reachedDeadEnd)
             }
             reachedDeadEnd = reachedDeadEnd || deadEnds.contains(innerDeclaration)
         }
@@ -155,11 +155,10 @@ object FirMemberPropertiesChecker : FirClassChecker() {
         }
     }
 
-    private fun checkProperty(
+    private fun CheckerContext.checkProperty(
         containingDeclaration: FirClass,
         property: FirProperty,
         isInitialized: Boolean,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         reachable: Boolean
     ) {
@@ -169,17 +168,16 @@ object FirMemberPropertiesChecker : FirClassChecker() {
         // So, our source of truth should be the full modifier list retrieved from the source.
         val modifierList = property.source.getModifierList()
 
-        withSuppressedDiagnostics(property, context) { ctx ->
+        withSuppressedDiagnostics(property) {
             checkPropertyInitializer(
                 containingDeclaration,
                 property,
                 modifierList,
                 isInitialized,
                 reporter,
-                ctx,
                 reachable
             )
-            checkExpectDeclarationVisibilityAndBody(property, source, reporter, ctx)
+            checkExpectDeclarationVisibilityAndBody(property, source, reporter)
 
             val hasAbstractModifier = KtTokens.ABSTRACT_KEYWORD in modifierList
             val isAbstract = property.isAbstract || hasAbstractModifier
@@ -189,7 +187,7 @@ object FirMemberPropertiesChecker : FirClassChecker() {
                 (property.getter == null || property.getter is FirDefaultPropertyAccessor)
             ) {
                 property.source?.let {
-                    reporter.reportOn(it, FirErrors.PRIVATE_PROPERTY_IN_INTERFACE, ctx)
+                    reporter.reportOn(it, FirErrors.PRIVATE_PROPERTY_IN_INTERFACE)
                 }
             }
 
@@ -200,17 +198,16 @@ object FirMemberPropertiesChecker : FirClassChecker() {
                             it,
                             FirErrors.ABSTRACT_PROPERTY_IN_NON_ABSTRACT_CLASS,
                             property.symbol,
-                            containingDeclaration.symbol,
-                            ctx
+                            containingDeclaration.symbol
                         )
                         return
                     }
                 }
                 property.initializer?.source?.let {
-                    reporter.reportOn(it, FirErrors.ABSTRACT_PROPERTY_WITH_INITIALIZER, ctx)
+                    reporter.reportOn(it, FirErrors.ABSTRACT_PROPERTY_WITH_INITIALIZER)
                 }
                 property.delegate?.source?.let {
-                    reporter.reportOn(it, FirErrors.ABSTRACT_DELEGATED_PROPERTY, ctx)
+                    reporter.reportOn(it, FirErrors.ABSTRACT_DELEGATED_PROPERTY)
                 }
             }
 
@@ -219,10 +216,10 @@ object FirMemberPropertiesChecker : FirClassChecker() {
                 containingDeclaration.isInterface &&
                 !hasAbstractModifier &&
                 property.isAbstract &&
-                !isInsideExpectClass(containingDeclaration, ctx)
+                !isInsideExpectClass(containingDeclaration, this)
             ) {
                 property.source?.let {
-                    reporter.reportOn(it, FirErrors.REDUNDANT_OPEN_IN_INTERFACE, ctx)
+                    reporter.reportOn(it, FirErrors.REDUNDANT_OPEN_IN_INTERFACE)
                 }
             }
         }

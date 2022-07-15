@@ -24,13 +24,13 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtSafeQualifiedExpression
 
 object RedundantCallOfConversionMethod : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         if (expression !is FirFunctionCall) return
         val functionName = expression.calleeReference.name.asString()
         val qualifiedType = targetClassMap[functionName] ?: return
 
         if (expression.explicitReceiver?.isRedundant(qualifiedType) == true) {
-            reporter.reportOn(expression.source, FirErrors.REDUNDANT_CALL_OF_CONVERSION_METHOD, context)
+            reporter.reportOn(expression.source, FirErrors.REDUNDANT_CALL_OF_CONVERSION_METHOD)
         }
     }
 

@@ -25,50 +25,50 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirConstPropertyChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
         if (!declaration.isConst) return
 
         if (declaration.isVar) {
             val constModifier = declaration.getModifier(KtTokens.CONST_KEYWORD)
             constModifier?.let {
-                reporter.reportOn(it.source, FirErrors.WRONG_MODIFIER_TARGET, it.token, "vars", context)
+                reporter.reportOn(it.source, FirErrors.WRONG_MODIFIER_TARGET, it.token, "vars")
             }
         }
 
-        val classKind = (context.containingDeclarations.lastOrNull() as? FirRegularClass)?.classKind
-        if (classKind != ClassKind.OBJECT && context.containingDeclarations.size > 1) {
-            reporter.reportOn(declaration.source, FirErrors.CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT, context)
+        val classKind = (containingDeclarations.lastOrNull() as? FirRegularClass)?.classKind
+        if (classKind != ClassKind.OBJECT && containingDeclarations.size > 1) {
+            reporter.reportOn(declaration.source, FirErrors.CONST_VAL_NOT_TOP_LEVEL_OR_OBJECT)
             return
         }
 
         val getter = declaration.getter
         val source = getter?.source
         if (source != null && source.kind !is KtFakeSourceElementKind) {
-            reporter.reportOnWithSuppression(getter, FirErrors.CONST_VAL_WITH_GETTER, context)
+            reporter.reportOnWithSuppression(getter, FirErrors.CONST_VAL_WITH_GETTER, this)
             return
         }
 
         val delegate = declaration.delegate
         if (delegate != null) {
-            reporter.reportOnWithSuppression(delegate, FirErrors.CONST_VAL_WITH_DELEGATE, context)
+            reporter.reportOnWithSuppression(delegate, FirErrors.CONST_VAL_WITH_DELEGATE, this)
             return
         }
 
         val initializer = declaration.initializer
         if (initializer == null) {
-            reporter.reportOn(declaration.source, FirErrors.CONST_VAL_WITHOUT_INITIALIZER, context)
+            reporter.reportOn(declaration.source, FirErrors.CONST_VAL_WITHOUT_INITIALIZER)
             return
         }
 
-        val type = declaration.returnTypeRef.coneType.fullyExpandedType(context.session)
+        val type = declaration.returnTypeRef.coneType.fullyExpandedType(session)
         if ((type !is ConeErrorType) && !type.canBeUsedForConstVal()) {
-            reporter.reportOn(declaration.source, FirErrors.TYPE_CANT_BE_USED_FOR_CONST_VAL, declaration.returnTypeRef.coneType, context)
+            reporter.reportOn(declaration.source, FirErrors.TYPE_CANT_BE_USED_FOR_CONST_VAL, declaration.returnTypeRef.coneType)
             return
         }
 
-        withSuppressedDiagnostics(initializer, context) { ctx ->
-            if (checkConstantArguments(initializer, ctx.session) != null) {
-                reporter.reportOn(initializer.source, FirErrors.CONST_VAL_WITH_NON_CONST_INITIALIZER, ctx)
+        withSuppressedDiagnostics(initializer) {
+            if (checkConstantArguments(initializer, this.session) != null) {
+                reporter.reportOn(initializer.source, FirErrors.CONST_VAL_WITH_NON_CONST_INITIALIZER)
             }
         }
     }

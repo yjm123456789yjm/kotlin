@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.analysis.checkers.getContainingClassSymbol
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.jvm.FirJvmErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirConstructor
 import org.jetbrains.kotlin.fir.declarations.FirFunction
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
@@ -26,26 +27,26 @@ import org.jetbrains.kotlin.fir.resolve.dfa.cfg.isLocalClassOrAnonymousObject
 import org.jetbrains.kotlin.name.JvmNames.JVM_OVERLOADS_CLASS_ID
 
 object FirOverloadsChecker : FirFunctionChecker() {
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirFunction, reporter: DiagnosticReporter) {
         val annotation = declaration.getAnnotationByClassId(JVM_OVERLOADS_CLASS_ID) ?: return
         //todo need to have expect declaration here to check if it has default values
         if (declaration.isActual) return
 
-        val containingDeclaration = declaration.getContainingClassSymbol(context.session)
+        val containingDeclaration = declaration.getContainingClassSymbol(session)
         when {
             containingDeclaration?.classKind == ClassKind.INTERFACE ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_INTERFACE, context)
+                reporter.reportOnWithSuppression(annotation, FirJvmErrors.OVERLOADS_INTERFACE, this)
             declaration.isAbstract ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_ABSTRACT, context)
+                reporter.reportOnWithSuppression(annotation, FirJvmErrors.OVERLOADS_ABSTRACT, this)
             (declaration is FirSimpleFunction && declaration.isLocal) ||
-                    context.containingDeclarations.any { it.isLocalClassOrAnonymousObject() } ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_LOCAL, context)
+                    containingDeclarations.any { it.isLocalClassOrAnonymousObject() } ->
+                reporter.reportOnWithSuppression(annotation, FirJvmErrors.OVERLOADS_LOCAL, this)
             declaration is FirConstructor && containingDeclaration?.classKind == ClassKind.ANNOTATION_CLASS ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR, context)
+                reporter.reportOnWithSuppression(annotation, FirJvmErrors.OVERLOADS_ANNOTATION_CLASS_CONSTRUCTOR, this)
             !declaration.visibility.isPublicAPI && declaration.visibility != Visibilities.Internal ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_PRIVATE, context)
+                reporter.reportOnWithSuppression(annotation, FirJvmErrors.OVERLOADS_PRIVATE, this)
             declaration.valueParameters.none { it.defaultValue != null } ->
-                reporter.reportOn(annotation.source, FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS, context)
+                reporter.reportOnWithSuppression(annotation, FirJvmErrors.OVERLOADS_WITHOUT_DEFAULT_ARGUMENTS, this)
         }
     }
 

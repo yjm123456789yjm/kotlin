@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.fir.types.FirTypeRefWithNullability
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirSuspendModifierChecker : FirTypeRefChecker() {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(typeRef: FirTypeRef, reporter: DiagnosticReporter) {
         // We are only interested in source type refs (i.e., Fir(Dynamic|User|Function)TypeRef).
         if (typeRef !is FirTypeRefWithNullability) return
 
@@ -39,8 +39,7 @@ object FirSuspendModifierChecker : FirTypeRefChecker() {
                 suspendModifier.source,
                 FirErrors.WRONG_MODIFIER_TARGET,
                 suspendModifier.token,
-                "non-functional type",
-                context
+                "non-functional type"
             )
         }
     }

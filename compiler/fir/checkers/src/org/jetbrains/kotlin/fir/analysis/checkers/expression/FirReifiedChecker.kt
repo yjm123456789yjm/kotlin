@@ -19,7 +19,7 @@ import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.name.StandardClassIds
 
 object FirReifiedChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         val calleReference = expression.calleeReference
         val typeArguments = expression.typeArguments
         val typeParameters = calleReference.toResolvedCallableSymbol()?.typeParameterSymbols ?: return
@@ -32,7 +32,7 @@ object FirReifiedChecker : FirQualifiedAccessExpressionChecker() {
             val typeParameter = typeParameters[index]
 
             if (source != null && typeParameter.isReifiedTypeParameterOrFromKotlinArray()) {
-                checkArgumentAndReport(typeArgument, source, false, context, reporter)
+                checkArgumentAndReport(typeArgument, source, false, reporter)
             }
         }
     }
@@ -43,30 +43,34 @@ object FirReifiedChecker : FirQualifiedAccessExpressionChecker() {
                 containingDeclaration is FirRegularClassSymbol && containingDeclaration.classId == StandardClassIds.Array
     }
 
-    private fun checkArgumentAndReport(
+    private fun CheckerContext.checkArgumentAndReport(
         typeArgument: ConeKotlinType?,
         source: KtSourceElement,
         isArray: Boolean,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (typeArgument?.classId == StandardClassIds.Array) {
-            checkArgumentAndReport(typeArgument.typeArguments[0].type, source, true, context, reporter)
+            checkArgumentAndReport(
+                typeArgument.typeArguments[0].type,
+                source,
+                true,
+                reporter
+            )
             return
         }
 
         if (typeArgument is ConeTypeParameterType) {
             val factory = if (isArray) {
-                FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY.chooseFactory(context)
+                FirErrors.TYPE_PARAMETER_AS_REIFIED_ARRAY.chooseFactory(this@checkArgumentAndReport)
             } else {
                 FirErrors.TYPE_PARAMETER_AS_REIFIED
             }
             val symbol = typeArgument.lookupTag.typeParameterSymbol
             if (!symbol.isReified) {
-                reporter.reportOn(source, factory, symbol, context)
+                reporter.reportOn(source, factory, symbol)
             }
         } else if (typeArgument != null && typeArgument.cannotBeReified()) {
-            reporter.reportOn(source, FirErrors.REIFIED_TYPE_FORBIDDEN_SUBSTITUTION, typeArgument, context)
+            reporter.reportOn(source, FirErrors.REIFIED_TYPE_FORBIDDEN_SUBSTITUTION, typeArgument)
             return
         }
     }

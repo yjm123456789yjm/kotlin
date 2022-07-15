@@ -70,21 +70,21 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
     // See related discussions:
     // https://youtrack.jetbrains.com/issue/KT-6054
     // https://youtrack.jetbrains.com/issue/KT-11769
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         val source = expression.source ?: return
         if (source.kind is KtFakeSourceElementKind) return
 
         val calleeSymbol = expression.calleeReference.resolvedSymbol ?: return
-        val calleeContainingClassSymbol = calleeSymbol.getContainingClassSymbol(context.session) as? FirRegularClassSymbol ?: return
+        val calleeContainingClassSymbol = calleeSymbol.getContainingClassSymbol(session) as? FirRegularClassSymbol ?: return
         // We're looking for members/entries/companion object in an enum class or members in companion object of an enum class.
         val calleeIsInsideEnum = calleeContainingClassSymbol.isEnumClass
         val calleeIsInsideEnumCompanion =
-            calleeContainingClassSymbol.isCompanion && (calleeContainingClassSymbol.outerClassSymbol(context) as? FirRegularClassSymbol)?.isEnumClass == true
+            calleeContainingClassSymbol.isCompanion && (calleeContainingClassSymbol.outerClassSymbol(this) as? FirRegularClassSymbol)?.isEnumClass == true
         if (!calleeIsInsideEnum && !calleeIsInsideEnumCompanion) return
 
         val enumClassSymbol =
             if (calleeIsInsideEnum) calleeContainingClassSymbol
-            else calleeContainingClassSymbol.outerClassSymbol(context) as? FirRegularClassSymbol ?: return
+            else calleeContainingClassSymbol.outerClassSymbol(this) as? FirRegularClassSymbol ?: return
 
         // An accessed context within the enum class of interest. We should look up until either enum members or enum entries are found,
         // not just last containing declaration. For example,
@@ -99,13 +99,13 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
         // companion object is not initialized for both member properties. The former has the property itself as the last containing
         // declaration, whereas the latter has an anonymous function instead. For both cases, we're looking for member properties as an
         // accessed context.
-        val accessedContext = context.containingDeclarations.lastOrNull {
+        val accessedContext = containingDeclarations.lastOrNull {
             // To not raise an error for an access from another enum class, e.g.,
             //   enum class EnumCompanion4(...) {
             //     INSTANCE(EnumCompanion2.foo())
             //   }
             // find an accessed context within the same enum class.
-            it.getContainingClassSymbol(context.session) == enumClassSymbol
+            it.getContainingClassSymbol(session) == enumClassSymbol
         }?.symbol ?: return
 
         val declarationSymbols = enumClassSymbol.declarationSymbols
@@ -122,7 +122,7 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
         //   }
         if (accessedContext in enumMemberProperties) {
             val lazyDelegation = (accessedContext as FirPropertySymbol).lazyDelegation
-            if (lazyDelegation != null && lazyDelegation == context.containingDeclarations.lastOrNull()) {
+            if (lazyDelegation != null && lazyDelegation == containingDeclarations.lastOrNull()) {
                 return
             }
         }
@@ -137,7 +137,7 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
         //       fun foo() = ...
         //     }
         //   }
-        if (accessedContext in enumEntries && context.containingDeclarations.lastOrNull()?.isEnumEntryInitializer != true) {
+        if (accessedContext in enumEntries && containingDeclarations.lastOrNull()?.isEnumEntryInitializer != true) {
             return
         }
 
@@ -154,7 +154,7 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
                     //   }
                     //   val score = ... <!>common<!>
                     // }
-                    reporter.reportOn(source, FirErrors.UNINITIALIZED_VARIABLE, calleeSymbol, context)
+                    reporter.reportOn(source, FirErrors.UNINITIALIZED_VARIABLE, calleeSymbol)
                 } else {
                     // enum class EnumCompanion2(...) {
                     //   INSTANCE(<!>foo<!>())
@@ -167,15 +167,13 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
                         reporter.reportOn(
                             expression.explicitReceiver!!.source,
                             FirErrors.UNINITIALIZED_ENUM_COMPANION,
-                            enumClassSymbol,
-                            context
+                            enumClassSymbol
                         )
                     } else {
                         reporter.reportOn(
                             expression.calleeReference.source,
                             FirErrors.UNINITIALIZED_ENUM_COMPANION,
-                            enumClassSymbol,
-                            context
+                            enumClassSymbol
                         )
                     }
                 }
@@ -195,7 +193,7 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
                 //     <!>B<!> -> ...
                 //   }
                 // }
-                reporter.reportOn(source, FirErrors.UNINITIALIZED_ENUM_ENTRY, calleeEnumEntry, context)
+                reporter.reportOn(source, FirErrors.UNINITIALIZED_ENUM_ENTRY, calleeEnumEntry)
             }
             // enum class A(...) {
             //   A1(<!>A2<!>),
@@ -213,7 +211,7 @@ object FirUninitializedEnumChecker : FirQualifiedAccessExpressionChecker() {
                     }
                 }
                 if (precedingEntry == accessedContext) {
-                    reporter.reportOn(source, FirErrors.UNINITIALIZED_ENUM_ENTRY, calleeEnumEntry, context)
+                    reporter.reportOn(source, FirErrors.UNINITIALIZED_ENUM_ENTRY, calleeEnumEntry)
                 }
             }
         }

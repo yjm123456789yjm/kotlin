@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.resolve.calls.tower.isSuccess
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 
 object FirDelegatedPropertyChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
         val delegate = declaration.delegate ?: return
         val delegateType = delegate.typeRef.coneType
 
@@ -41,7 +41,7 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
             // Implicit recursion type is not reported since the type ref does not have a real source.
             if ((delegateType.diagnostic as? ConeSimpleDiagnostic)?.kind == DiagnosticKind.RecursionInImplicitTypes) {
                 // skip reporting other issues in this case
-                reporter.reportOnWithSuppression(delegate, FirErrors.RECURSION_IN_IMPLICIT_TYPES, context)
+                reporter.reportOnWithSuppression(delegate, FirErrors.RECURSION_IN_IMPLICIT_TYPES, this)
             }
             return
         }
@@ -77,8 +77,7 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
                         errorNamedReference.source,
                         FirErrors.DELEGATE_SPECIAL_FUNCTION_NONE_APPLICABLE,
                         expectedFunctionSignature,
-                        candidates,
-                        context
+                        candidates
                     )
                 }
 
@@ -89,8 +88,7 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
                             FirErrors.DELEGATE_SPECIAL_FUNCTION_MISSING,
                             expectedFunctionSignature,
                             delegateType,
-                            delegateDescription,
-                            context
+                            delegateDescription
                         )
                         true
                     }
@@ -101,8 +99,7 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
                                 errorNamedReference.source,
                                 FirErrors.DELEGATE_SPECIAL_FUNCTION_AMBIGUITY,
                                 expectedFunctionSignature,
-                                diagnostic.candidates.map { it.symbol },
-                                context
+                                diagnostic.candidates.map { it.symbol }
                             )
                         } else {
                             reportInapplicableDiagnostics(diagnostic.candidates.map { it.symbol })
@@ -115,8 +112,7 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
                             FirErrors.DELEGATE_SPECIAL_FUNCTION_MISSING,
                             expectedFunctionSignature,
                             delegateType,
-                            delegateDescription,
-                            context
+                            delegateDescription
                         )
                         true
                     }
@@ -131,14 +127,13 @@ object FirDelegatedPropertyChecker : FirPropertyChecker() {
             private fun checkReturnType(functionCall: FirFunctionCall) {
                 val returnType = functionCall.typeRef.coneType
                 val propertyType = declaration.returnTypeRef.coneType
-                if (!AbstractTypeChecker.isSubtypeOf(context.session.typeContext, returnType, propertyType)) {
+                if (!AbstractTypeChecker.isSubtypeOf(session.typeContext, returnType, propertyType)) {
                     reporter.reportOn(
                         delegate.source,
                         FirErrors.DELEGATE_SPECIAL_FUNCTION_RETURN_TYPE_MISMATCH,
                         "getValue",
                         propertyType,
-                        returnType,
-                        context
+                        returnType
                     )
                 }
             }

@@ -16,33 +16,29 @@ import org.jetbrains.kotlin.fir.declarations.FirAnonymousFunction
 import org.jetbrains.kotlin.psi.KtFunction
 
 object FirAnonymousFunctionSyntaxChecker : FirDeclarationSyntaxChecker<FirAnonymousFunction, KtFunction>() {
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirAnonymousFunction,
         source: KtPsiSourceElement,
         psi: KtFunction,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (psi.typeParameterList != null) {
             reporter.reportOn(
                 source,
-                FirErrors.TYPE_PARAMETERS_NOT_ALLOWED,
-                context
+                FirErrors.TYPE_PARAMETERS_NOT_ALLOWED
             )
         }
     }
 
-    override fun checkLightTree(
+    override fun CheckerContext.checkLightTree(
         element: FirAnonymousFunction,
         source: KtLightSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         source.treeStructure.typeParametersList(source.lighterASTNode)?.let { _ ->
             reporter.reportOn(
                 source,
-                FirErrors.TYPE_PARAMETERS_NOT_ALLOWED,
-                context
+                FirErrors.TYPE_PARAMETERS_NOT_ALLOWED
             )
         }
     }

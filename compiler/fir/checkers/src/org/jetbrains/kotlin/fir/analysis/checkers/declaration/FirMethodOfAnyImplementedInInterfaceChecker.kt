@@ -32,7 +32,7 @@ object FirMethodOfAnyImplementedInInterfaceChecker : FirRegularClassChecker(), F
         // Intentionally empty
     }
 
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (!declaration.isInterface) {
             return
         }
@@ -49,8 +49,8 @@ object FirMethodOfAnyImplementedInInterfaceChecker : FirRegularClassChecker(), F
             }
 
             if (methodOfAny) {
-                withSuppressedDiagnostics(function, context) {
-                    reporter.reportOn(function.source, FirErrors.METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE, it)
+                this.withSuppressedDiagnostics(function) {
+                    reporter.reportOn(function.source, FirErrors.METHOD_OF_ANY_IMPLEMENTED_IN_INTERFACE)
                 }
             }
         }

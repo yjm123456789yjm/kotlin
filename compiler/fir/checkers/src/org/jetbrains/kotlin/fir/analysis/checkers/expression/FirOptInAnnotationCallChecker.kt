@@ -22,17 +22,17 @@ import org.jetbrains.kotlin.fir.types.coneTypeSafe
 import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object FirOptInAnnotationCallChecker : FirAnnotationCallChecker() {
-    override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirAnnotationCall, reporter: DiagnosticReporter) {
         val lookupTag = expression.annotationTypeRef.coneTypeSafe<ConeClassLikeType>()?.lookupTag ?: return
         val classId = lookupTag.classId
         val isRequiresOptIn = classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID
         val isOptIn = classId == OptInNames.OPT_IN_CLASS_ID
         if (isRequiresOptIn || isOptIn) {
-            checkOptInIsEnabled(expression.source, context, reporter)
+            checkOptInIsEnabled(expression.source, reporter)
             if (isOptIn) {
                 val arguments = expression.arguments
                 if (arguments.isEmpty()) {
-                    reporter.reportOn(expression.source, FirErrors.OPT_IN_WITHOUT_ARGUMENTS, context)
+                    reporter.reportOn(expression.source, FirErrors.OPT_IN_WITHOUT_ARGUMENTS)
                 } else {
                     val annotationClasses = expression.findArgumentByName(OptInNames.USE_EXPERIMENTAL_ANNOTATION_CLASS)
                     for (classSymbol in annotationClasses?.extractClassesFromArgument().orEmpty()) {
@@ -41,8 +41,7 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker() {
                                 reporter.reportOn(
                                     expression.source,
                                     FirErrors.OPT_IN_ARGUMENT_IS_NOT_MARKER,
-                                    classSymbol.classId.asSingleFqName(),
-                                    context
+                                    classSymbol.classId.asSingleFqName()
                                 )
                             }
                         }
@@ -52,17 +51,16 @@ object FirOptInAnnotationCallChecker : FirAnnotationCallChecker() {
         }
     }
 
-    private fun checkOptInIsEnabled(
+    private fun CheckerContext.checkOptInIsEnabled(
         element: KtSourceElement?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val languageVersionSettings = context.session.languageVersionSettings
+        val languageVersionSettings = session.languageVersionSettings
         val optInFqNames = languageVersionSettings.getFlag(AnalysisFlags.optIn)
         if (!languageVersionSettings.supportsFeature(LanguageFeature.OptInRelease) &&
             OptInNames.REQUIRES_OPT_IN_FQ_NAME.asString() !in optInFqNames
         ) {
-            reporter.reportOn(element, FirErrors.OPT_IN_IS_NOT_ENABLED, context)
+            reporter.reportOn(element, FirErrors.OPT_IN_IS_NOT_ENABLED)
         }
     }
 }

@@ -17,14 +17,14 @@ import org.jetbrains.kotlin.types.Variance
 
 object FirTypeParameterVarianceChecker : FirTypeParameterChecker() {
 
-    override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingDeclaration = context.containingDeclarations.lastOrNull()
+    override fun CheckerContext.check(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
+        val containingDeclaration = containingDeclarations.lastOrNull()
         if (declaration.variance != Variance.INVARIANT &&
             (containingDeclaration is FirSimpleFunction ||
                     containingDeclaration is FirTypeAlias ||
                     containingDeclaration is FirProperty)
         ) {
-            reporter.reportOn(declaration.source, FirErrors.VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED, context)
+            reporter.reportOn(declaration.source, FirErrors.VARIANCE_ON_TYPE_PARAMETER_NOT_ALLOWED)
         }
     }
 }

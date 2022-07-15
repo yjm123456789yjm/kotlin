@@ -13,16 +13,16 @@ import org.jetbrains.kotlin.fir.declarations.*
 import org.jetbrains.kotlin.fir.declarations.utils.isInline
 
 object FirReifiedTypeParameterChecker : FirTypeParameterChecker() {
-    override fun check(declaration: FirTypeParameter, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirTypeParameter, reporter: DiagnosticReporter) {
         if (!declaration.isReified) return
-        val containingDeclaration = context.containingDeclarations.lastOrNull() ?: return
+        val containingDeclaration = containingDeclarations.lastOrNull() ?: return
 
         val forbidReified = (containingDeclaration is FirRegularClass) ||
                 (containingDeclaration is FirSimpleFunction && !containingDeclaration.isInline) ||
                 (containingDeclaration is FirProperty && !containingDeclaration.areAccessorsInline())
 
         if (forbidReified) {
-            reporter.reportOn(declaration.source, FirErrors.REIFIED_TYPE_PARAMETER_NO_INLINE, context)
+            reporter.reportOn(declaration.source, FirErrors.REIFIED_TYPE_PARAMETER_NO_INLINE)
         }
     }
 

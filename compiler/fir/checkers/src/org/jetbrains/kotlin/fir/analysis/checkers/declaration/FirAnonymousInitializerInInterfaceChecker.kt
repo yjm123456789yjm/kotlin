@@ -14,10 +14,10 @@ import org.jetbrains.kotlin.fir.declarations.FirAnonymousInitializer
 import org.jetbrains.kotlin.fir.declarations.utils.isInterface
 
 object FirAnonymousInitializerInInterfaceChecker : FirAnonymousInitializerChecker() {
-    override fun check(declaration: FirAnonymousInitializer, context: CheckerContext, reporter: DiagnosticReporter) {
-        val clazz = context.findClosestClassOrObject() ?: return
+    override fun CheckerContext.check(declaration: FirAnonymousInitializer, reporter: DiagnosticReporter) {
+        val clazz = findClosestClassOrObject() ?: return
         if (clazz.isInterface) {
-            reporter.reportOn(declaration.source, FirErrors.ANONYMOUS_INITIALIZER_IN_INTERFACE, context)
+            reporter.reportOn(declaration.source, FirErrors.ANONYMOUS_INITIALIZER_IN_INTERFACE)
         }
     }
 }

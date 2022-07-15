@@ -27,45 +27,46 @@ class FirControlFlowAnalyzer(
 
     // Currently declaration in analyzeXXX is not used, but it may be useful in future
     @Suppress("UNUSED_PARAMETER")
-    fun analyzeClassInitializer(klass: FirClass, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
+    fun CheckerContext.analyzeClassInitializer(klass: FirClass, graph: ControlFlowGraph, reporter: DiagnosticReporter) {
         if (graph.owner != null) return
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
+        cfaCheckers.forEach { checker -> with(checker) { analyze(graph, reporter) } }
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun analyzeFunction(function: FirFunction, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
+    fun CheckerContext.analyzeFunction(function: FirFunction, graph: ControlFlowGraph, reporter: DiagnosticReporter) {
         if (graph.owner != null) return
 
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        if (context.containingDeclarations.any { it is FirProperty || it is FirFunction }) return
-        runAssignmentCfaCheckers(graph, reporter, context)
+        cfaCheckers.forEach { checker -> with(checker) { analyze(graph, reporter) } }
+        if (containingDeclarations.any { it is FirProperty || it is FirFunction }) return
+        this.runAssignmentCfaCheckers(graph, reporter)
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun analyzePropertyInitializer(property: FirProperty, graph: ControlFlowGraph, context: CheckerContext, reporter: DiagnosticReporter) {
+    fun CheckerContext.analyzePropertyInitializer(property: FirProperty, graph: ControlFlowGraph, reporter: DiagnosticReporter) {
         if (graph.owner != null) return
 
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        runAssignmentCfaCheckers(graph, reporter, context)
+        cfaCheckers.forEach { checker -> with(checker) { analyze(graph, reporter) } }
+        this.runAssignmentCfaCheckers(graph, reporter)
     }
 
     @Suppress("UNUSED_PARAMETER")
-    fun analyzePropertyAccessor(
+    fun CheckerContext.analyzePropertyAccessor(
         accessor: FirPropertyAccessor,
         graph: ControlFlowGraph,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (graph.owner != null) return
 
-        cfaCheckers.forEach { it.analyze(graph, reporter, context) }
-        runAssignmentCfaCheckers(graph, reporter, context)
+        cfaCheckers.forEach { checker -> with(checker) { analyze(graph, reporter) } }
+        runAssignmentCfaCheckers(graph, reporter)
     }
 
-    private fun runAssignmentCfaCheckers(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
+    private fun CheckerContext.runAssignmentCfaCheckers(graph: ControlFlowGraph, reporter: DiagnosticReporter) {
         val (properties, capturedWrites) = LocalPropertyAndCapturedWriteCollector.collect(graph)
         if (properties.isEmpty()) return
         val data = PropertyInitializationInfoCollector(properties).getData(graph)
-        variableAssignmentCheckers.forEach { it.analyze(graph, reporter, data, properties, capturedWrites, context) }
+        variableAssignmentCheckers.forEach { checker ->
+            with(checker) { analyze(graph, reporter, data, properties, capturedWrites) }
+        }
     }
 }

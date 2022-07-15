@@ -47,7 +47,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
  */
 object FirJavaGenericVarianceViolationTypeChecker : FirFunctionCallChecker() {
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         val calleeFunction = expression.calleeReference.toResolvedCallableSymbol() as? FirFunctionSymbol<*> ?: return
         if (!calleeFunction.originalOrSelf().isJavaOrEnhancement) {
             return
@@ -60,7 +60,7 @@ object FirJavaGenericVarianceViolationTypeChecker : FirFunctionCallChecker() {
                 typeArgumentMap[calleeFunction.typeParameterSymbols[i]] = type
             }
         }
-        val typeParameterSubstitutor = substitutorByMap(typeArgumentMap, context.session)
+        val typeParameterSubstitutor = substitutorByMap(typeArgumentMap, session)
         for ((arg, param) in argumentMapping) {
             val expectedType = typeParameterSubstitutor.substituteOrSelf(param.returnTypeRef.coneType)
 
@@ -74,7 +74,7 @@ object FirJavaGenericVarianceViolationTypeChecker : FirFunctionCallChecker() {
 
             val lowerBound = expectedType.lowerBound
             val upperBound = expectedType.upperBound
-            val typeContext = context.session.typeContext
+            val typeContext = session.typeContext
             val lowerConstructor = lowerBound.typeConstructor(typeContext)
             val upperConstructor = upperBound.typeConstructor(typeContext)
 
@@ -109,7 +109,7 @@ object FirJavaGenericVarianceViolationTypeChecker : FirFunctionCallChecker() {
             // projection and type capturing and compare the types after such erasure. This way, we won't incorrectly reject any valid code
             // though we may accept some invalid code. But in presence of the unsound flexible types, we are allowing invalid code already.
             val argTypeWithoutOutProjection = argType.removeOutProjection(isCovariant = true)
-            val lowerBoundWithoutCapturing = context.session.typeApproximator.approximateToSuperType(
+            val lowerBoundWithoutCapturing = session.typeApproximator.approximateToSuperType(
                 lowerBound,
                 TypeApproximatorConfiguration.FinalApproximationAfterResolutionAndInference
             ) ?: lowerBound
@@ -120,7 +120,7 @@ object FirJavaGenericVarianceViolationTypeChecker : FirFunctionCallChecker() {
                     lowerBoundWithoutCapturing.withNullability(ConeNullability.NULLABLE, typeContext)
                 )
             ) {
-                reporter.reportOn(arg.source, FirJvmErrors.JAVA_TYPE_MISMATCH, expectedType, argType, context)
+                reporter.reportOn(arg.source, FirJvmErrors.JAVA_TYPE_MISMATCH, expectedType, argType)
             }
         }
     }

@@ -19,21 +19,20 @@ import org.jetbrains.kotlin.fir.types.FirResolvedTypeRef
 import org.jetbrains.kotlin.fir.types.FirUserTypeRef
 
 object FirReservedUnderscoreDeclarationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         when (declaration) {
             is FirRegularClass, is FirTypeParameter, is FirProperty, is FirTypeAlias -> {
-                reportIfUnderscore(declaration, context, reporter)
+                this.reportIfUnderscore(declaration, reporter)
             }
             is FirFunction -> {
                 if (declaration is FirSimpleFunction) {
-                    reportIfUnderscore(declaration, context, reporter)
+                    this.reportIfUnderscore(declaration, reporter)
                 }
                 val isSingleUnderscoreAllowed = declaration is FirAnonymousFunction || declaration is FirPropertyAccessor
                 for (parameter in declaration.valueParameters) {
-                    withSuppressedDiagnostics(parameter, context) { ctx ->
+                    withSuppressedDiagnostics(parameter) {
                         reportIfUnderscore(
                             parameter,
-                            ctx,
                             reporter,
                             isSingleUnderscoreAllowed = isSingleUnderscoreAllowed
                         )
@@ -42,16 +41,15 @@ object FirReservedUnderscoreDeclarationChecker : FirBasicDeclarationChecker() {
             }
             is FirFile -> {
                 for (import in declaration.imports) {
-                    checkUnderscoreDiagnostics(import.aliasSource, context, reporter, isExpression = false)
+                    checkUnderscoreDiagnostics(import.aliasSource, reporter, isExpression = false)
                 }
             }
             else -> return
         }
     }
 
-    private fun reportIfUnderscore(
+    private fun CheckerContext.reportIfUnderscore(
         declaration: FirDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         isSingleUnderscoreAllowed: Boolean = false
     ) {
@@ -62,8 +60,7 @@ object FirReservedUnderscoreDeclarationChecker : FirBasicDeclarationChecker() {
                 if (rawName?.isUnderscore == true && !(isSingleUnderscoreAllowed && rawName == "_")) {
                     reporter.reportOn(
                         declarationSource,
-                        FirErrors.UNDERSCORE_IS_RESERVED,
-                        context
+                        FirErrors.UNDERSCORE_IS_RESERVED
                     )
                 }
             }
@@ -79,10 +76,10 @@ object FirReservedUnderscoreDeclarationChecker : FirBasicDeclarationChecker() {
             val delegatedTypeRef = returnOrReceiverTypeRef.delegatedTypeRef
             if (delegatedTypeRef is FirUserTypeRef) {
                 for (qualifierPart in delegatedTypeRef.qualifier) {
-                    checkUnderscoreDiagnostics(qualifierPart.source, context, reporter, isExpression = true)
+                    checkUnderscoreDiagnostics(qualifierPart.source, reporter, isExpression = true)
 
                     for (typeArgument in qualifierPart.typeArgumentList.typeArguments) {
-                        checkUnderscoreDiagnostics(typeArgument.source, context, reporter, isExpression = true)
+                        checkUnderscoreDiagnostics(typeArgument.source, reporter, isExpression = true)
                     }
                 }
             }

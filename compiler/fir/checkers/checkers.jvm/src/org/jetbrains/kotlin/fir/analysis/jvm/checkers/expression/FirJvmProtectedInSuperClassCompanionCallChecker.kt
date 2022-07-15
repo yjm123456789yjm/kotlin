@@ -30,10 +30,10 @@ import org.jetbrains.kotlin.resolve.annotations.JVM_STATIC_ANNOTATION_CLASS_ID
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 
 object FirJvmProtectedInSuperClassCompanionCallChecker : FirQualifiedAccessChecker() {
-    override fun check(expression: FirQualifiedAccess, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccess, reporter: DiagnosticReporter) {
         val dispatchReceiver = expression.dispatchReceiver
         if (dispatchReceiver is FirNoReceiverExpression) return
-        val dispatchClassSymbol = dispatchReceiver.typeRef.toRegularClassSymbol(context.session) ?: return
+        val dispatchClassSymbol = dispatchReceiver.typeRef.toRegularClassSymbol(session) ?: return
         val resolvedSymbol = expression.calleeReference.toResolvedCallableSymbol() ?: return
 
         val visibility = if (resolvedSymbol is FirPropertySymbol) {
@@ -48,23 +48,23 @@ object FirJvmProtectedInSuperClassCompanionCallChecker : FirQualifiedAccessCheck
         if (resolvedSymbol.getAnnotationByClassId(JVM_STATIC_ANNOTATION_CLASS_ID) != null) return
         if (!dispatchClassSymbol.isCompanion) return
         val companionContainingClassSymbol =
-            dispatchClassSymbol.getContainingDeclarationSymbol(context.session) as? FirRegularClassSymbol ?: return
+            dispatchClassSymbol.getContainingDeclarationSymbol(session) as? FirRegularClassSymbol ?: return
 
         // Called from within a derived class
         val companionContainingType = companionContainingClassSymbol.defaultType()
-        if (context.findClosest<FirClass> {
-                AbstractTypeChecker.isSubtypeOf(context.session.typeContext, it.symbol.defaultType(), companionContainingType)
+        if (findClosest<FirClass> {
+                AbstractTypeChecker.isSubtypeOf(session.typeContext, it.symbol.defaultType(), companionContainingType)
             } == null
         ) {
             return
         }
 
         // Called not within the same companion object or its owner class
-        if (context.findClosest<FirClass> {
+        if (findClosest<FirClass> {
                 it.symbol == dispatchClassSymbol || it.symbol == companionContainingClassSymbol
             } == null
         ) {
-            reporter.reportOn(expression.calleeReference.source, FirJvmErrors.SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC, context)
+            reporter.reportOn(expression.calleeReference.source, FirJvmErrors.SUBCLASS_CANT_CALL_COMPANION_PROTECTED_NON_STATIC)
         }
     }
 }

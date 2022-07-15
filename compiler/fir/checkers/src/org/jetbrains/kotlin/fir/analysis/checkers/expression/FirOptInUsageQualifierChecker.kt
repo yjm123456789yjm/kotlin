@@ -10,11 +10,11 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.expressions.FirResolvedQualifier
 
 object FirOptInUsageQualifierChecker : FirResolvedQualifierChecker() {
-    override fun check(expression: FirResolvedQualifier, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirResolvedQualifier, reporter: DiagnosticReporter) {
         val symbol = expression.symbol ?: return
         with(FirOptInUsageBaseChecker) {
-            val experimentalities = symbol.loadExperimentalities(context, fromSetter = false, dispatchReceiverType = null)
-            reportNotAcceptedExperimentalities(experimentalities, expression, context, reporter)
+            val experimentalities = symbol.loadExperimentalities(this@check, fromSetter = false, dispatchReceiverType = null)
+            this@check.reportNotAcceptedExperimentalities(experimentalities, expression, reporter)
         }
     }
 }

@@ -13,9 +13,8 @@ import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
 
-fun checkUnderscoreDiagnostics(
+fun CheckerContext.checkUnderscoreDiagnostics(
     source: KtSourceElement?,
-    context: CheckerContext,
     reporter: DiagnosticReporter,
     isExpression: Boolean
 ) {
@@ -26,8 +25,7 @@ fun checkUnderscoreDiagnostics(
             if (source.getRawIdentifier()?.isUnderscore == true) {
                 reporter.reportOn(
                     source,
-                    if (isExpression) FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS else FirErrors.UNDERSCORE_IS_RESERVED,
-                    context
+                    if (isExpression) FirErrors.UNDERSCORE_USAGE_WITHOUT_BACKTICKS else FirErrors.UNDERSCORE_IS_RESERVED
                 )
             }
         }

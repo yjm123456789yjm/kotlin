@@ -16,7 +16,7 @@ import org.jetbrains.kotlin.fir.scopes.platformClassMapper
 import org.jetbrains.kotlin.name.ClassId
 
 object PlatformClassMappedToKotlinImportsChecker : FirFileChecker() {
-    override fun check(declaration: FirFile, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirFile, reporter: DiagnosticReporter) {
         declaration.imports.forEach { import ->
             val importedFqName = import.importedFqName ?: return
             if (importedFqName.isRoot || importedFqName.shortName().asString().isEmpty()) return
@@ -25,9 +25,9 @@ object PlatformClassMappedToKotlinImportsChecker : FirFileChecker() {
                 return
             }
 
-            val kotlinClass = context.session.platformClassMapper.getCorrespondingKotlinClass(classId)
+            val kotlinClass = session.platformClassMapper.getCorrespondingKotlinClass(classId)
             if (kotlinClass != null) {
-                reporter.reportOn(import.source, FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN, importedFqName, context)
+                reporter.reportOn(import.source, FirErrors.PLATFORM_CLASS_MAPPED_TO_KOTLIN, importedFqName)
             }
         }
     }

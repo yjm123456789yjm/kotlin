@@ -29,60 +29,59 @@ import org.jetbrains.kotlin.name.JvmNames.JVM_RECORD_ANNOTATION_CLASS_ID
 object FirJvmRecordChecker : FirRegularClassChecker() {
     private val JAVA_RECORD_CLASS_ID = ClassId.fromString("java/lang/Record")
 
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         declaration.superTypeRefs.firstOrNull()?.let { typeRef ->
             if (typeRef.coneTypeSafe<ConeClassLikeType>()?.classId == JAVA_RECORD_CLASS_ID) {
-                reporter.reportOn(typeRef.source, FirJvmErrors.ILLEGAL_JAVA_LANG_RECORD_SUPERTYPE, context)
+                reporter.reportOn(typeRef.source, FirJvmErrors.ILLEGAL_JAVA_LANG_RECORD_SUPERTYPE)
                 return
             }
         }
 
         val annotationSource = declaration.getAnnotationByClassId(JVM_RECORD_ANNOTATION_CLASS_ID)?.source ?: return
 
-        val languageVersionSettings = context.session.languageVersionSettings
+        val languageVersionSettings = session.languageVersionSettings
         if (!languageVersionSettings.supportsFeature(LanguageFeature.JvmRecordSupport)) {
             reporter.reportOn(
                 annotationSource,
                 FirErrors.UNSUPPORTED_FEATURE,
-                LanguageFeature.JvmRecordSupport to languageVersionSettings,
-                context
+                LanguageFeature.JvmRecordSupport to languageVersionSettings
             )
             return
         }
 
         if (declaration.isLocal) {
-            reporter.reportOn(annotationSource, FirJvmErrors.LOCAL_JVM_RECORD, context)
+            reporter.reportOn(annotationSource, FirJvmErrors.LOCAL_JVM_RECORD)
             return
         }
 
         if (declaration.isInner) {
-            reporter.reportOn(declaration.source, FirJvmErrors.INNER_JVM_RECORD, context)
+            reporter.reportOn(declaration.source, FirJvmErrors.INNER_JVM_RECORD)
             return
         }
 
         if (!declaration.isFinal) {
-            reporter.reportOn(declaration.source, FirJvmErrors.NON_FINAL_JVM_RECORD, context)
+            reporter.reportOn(declaration.source, FirJvmErrors.NON_FINAL_JVM_RECORD)
             return
         }
 
         if (declaration.isEnumClass) {
-            reporter.reportOn(declaration.source, FirJvmErrors.ENUM_JVM_RECORD, context)
+            reporter.reportOn(declaration.source, FirJvmErrors.ENUM_JVM_RECORD)
             return
         }
 
         if (!declaration.isData) {
-            reporter.reportOn(annotationSource, FirJvmErrors.NON_DATA_CLASS_JVM_RECORD, context)
+            reporter.reportOn(annotationSource, FirJvmErrors.NON_DATA_CLASS_JVM_RECORD)
             return
         }
 
-        declaration.primaryConstructorIfAny(context.session)?.valueParameterSymbols?.let { params ->
+        declaration.primaryConstructorIfAny(session)?.valueParameterSymbols?.let { params ->
             if (params.isEmpty()) {
-                reporter.reportOn(annotationSource, FirJvmErrors.JVM_RECORD_WITHOUT_PRIMARY_CONSTRUCTOR_PARAMETERS, context)
+                reporter.reportOn(annotationSource, FirJvmErrors.JVM_RECORD_WITHOUT_PRIMARY_CONSTRUCTOR_PARAMETERS)
                 return
             }
             params.dropLast(1).forEach { param ->
                 if (param.isVararg) {
-                    reporter.reportOn(param.source, FirJvmErrors.JVM_RECORD_NOT_LAST_VARARG_PARAMETER, context)
+                    reporter.reportOn(param.source, FirJvmErrors.JVM_RECORD_NOT_LAST_VARARG_PARAMETER)
                 }
             }
         }
@@ -91,19 +90,19 @@ object FirJvmRecordChecker : FirRegularClassChecker() {
             if (decl is FirProperty) {
                 val fromConstructor = decl.source?.kind == KtFakeSourceElementKind.PropertyFromParameter
                 if (decl.isVar && fromConstructor) {
-                    reporter.reportOn(decl.source, FirJvmErrors.JVM_RECORD_NOT_VAL_PARAMETER, context)
+                    reporter.reportOn(decl.source, FirJvmErrors.JVM_RECORD_NOT_VAL_PARAMETER)
                 } else if (!fromConstructor && (decl.hasBackingField || decl.delegateFieldSymbol != null)) {
-                    reporter.reportOn(decl.source, FirJvmErrors.FIELD_IN_JVM_RECORD, context)
+                    reporter.reportOn(decl.source, FirJvmErrors.FIELD_IN_JVM_RECORD)
                 }
             } else if (decl is FirField && decl.isSynthetic) {
-                reporter.reportOn(decl.source, FirJvmErrors.DELEGATION_BY_IN_JVM_RECORD, context)
+                reporter.reportOn(decl.source, FirJvmErrors.DELEGATION_BY_IN_JVM_RECORD)
             }
         }
 
         declaration.superTypeRefs.firstOrNull()?.let { typeRef ->
             if (typeRef.source?.kind != KtRealSourceElementKind) return@let
-            if (typeRef.toRegularClassSymbol(context.session)?.classKind == ClassKind.CLASS) {
-                reporter.reportOn(declaration.source, FirJvmErrors.JVM_RECORD_EXTENDS_CLASS, typeRef.coneType, context)
+            if (typeRef.toRegularClassSymbol(session)?.classKind == ClassKind.CLASS) {
+                reporter.reportOn(declaration.source, FirJvmErrors.JVM_RECORD_EXTENDS_CLASS, typeRef.coneType)
             }
         }
     }

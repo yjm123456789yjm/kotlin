@@ -19,8 +19,8 @@ import org.jetbrains.kotlin.name.ClassId
 object FirJvmPolymorphicSignatureCallChecker : FirFunctionCallChecker() {
     private val polymorphicSignatureClassId = ClassId.fromString("java/lang/invoke/MethodHandle.PolymorphicSignature")
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.PolymorphicSignature)) return
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
+        if (!session.languageVersionSettings.supportsFeature(LanguageFeature.PolymorphicSignature)) return
         val callableSymbol = expression.calleeReference.toResolvedCallableSymbol() ?: return
         if (callableSymbol.getAnnotationByClassId(polymorphicSignatureClassId) == null) return
 
@@ -28,7 +28,7 @@ object FirJvmPolymorphicSignatureCallChecker : FirFunctionCallChecker() {
             if (valueArgument is FirVarargArgumentsExpression) {
                 for (argument in valueArgument.arguments) {
                     if (argument is FirSpreadArgumentExpression) {
-                        reporter.reportOn(argument.source, FirJvmErrors.SPREAD_ON_SIGNATURE_POLYMORPHIC_CALL, context)
+                        reporter.reportOn(argument.source, FirJvmErrors.SPREAD_ON_SIGNATURE_POLYMORPHIC_CALL)
                     }
                 }
             }

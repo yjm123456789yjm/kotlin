@@ -29,9 +29,9 @@ import org.jetbrains.kotlin.lexer.KtTokens
 
 // See old FE's [DeclarationsChecker]
 object FirTopLevelPropertiesChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
         // Only report on top level callable declarations
-        if (context.containingDeclarations.size > 1) return
+        if (containingDeclarations.size > 1) return
 
         val source = declaration.source ?: return
         if (source.kind is KtFakeSourceElementKind) return
@@ -39,45 +39,42 @@ object FirTopLevelPropertiesChecker : FirPropertyChecker() {
         // So, our source of truth should be the full modifier list retrieved from the source.
         val modifierList = source.getModifierList()
 
-        withSuppressedDiagnostics(declaration, context) { ctx ->
+        withSuppressedDiagnostics(declaration) {
             checkPropertyInitializer(
                 containingClass = null,
                 declaration,
                 modifierList,
                 isInitialized = declaration.initializer != null,
-                reporter,
-                ctx
+                reporter
             )
-            checkExpectDeclarationVisibilityAndBody(declaration, source, reporter, ctx)
+            this.checkExpectDeclarationVisibilityAndBody(declaration, source, reporter)
         }
     }
 }
 
 // TODO: check class too
-internal fun checkExpectDeclarationVisibilityAndBody(
+internal fun CheckerContext.checkExpectDeclarationVisibilityAndBody(
     declaration: FirMemberDeclaration,
     source: KtSourceElement,
-    reporter: DiagnosticReporter,
-    context: CheckerContext
+    reporter: DiagnosticReporter
 ) {
     if (declaration.isExpect) {
         if (Visibilities.isPrivate(declaration.visibility)) {
-            reporter.reportOn(source, FirErrors.EXPECTED_PRIVATE_DECLARATION, context)
+            reporter.reportOn(source, FirErrors.EXPECTED_PRIVATE_DECLARATION)
         }
         if (declaration is FirSimpleFunction && declaration.hasBody) {
-            reporter.reportOn(source, FirErrors.EXPECTED_DECLARATION_WITH_BODY, context)
+            reporter.reportOn(source, FirErrors.EXPECTED_DECLARATION_WITH_BODY)
         }
     }
 }
 
 // Matched FE 1.0's [DeclarationsChecker#checkPropertyInitializer].
-internal fun checkPropertyInitializer(
+internal fun CheckerContext.checkPropertyInitializer(
     containingClass: FirClass?,
     property: FirProperty,
     modifierList: FirModifierList?,
     isInitialized: Boolean,
     reporter: DiagnosticReporter,
-    context: CheckerContext,
     reachable: Boolean = true
 ) {
     val inInterface = containingClass?.isInterface == true
@@ -90,7 +87,7 @@ internal fun checkPropertyInitializer(
             returnTypeRef is FirErrorTypeRef && returnTypeRef.diagnostic is ConeLocalVariableNoTypeOrInitializer
         ) {
             property.source?.let {
-                reporter.reportOn(it, FirErrors.PROPERTY_WITH_NO_TYPE_NO_INITIALIZER, context)
+                reporter.reportOn(it, FirErrors.PROPERTY_WITH_NO_TYPE_NO_INITIALIZER)
             }
         }
         return
@@ -99,27 +96,27 @@ internal fun checkPropertyInitializer(
     val backingFieldRequired = property.hasBackingField
     if (inInterface && backingFieldRequired && property.hasAccessorImplementation) {
         property.source?.let {
-            reporter.reportOn(it, FirErrors.BACKING_FIELD_IN_INTERFACE, context)
+            reporter.reportOn(it, FirErrors.BACKING_FIELD_IN_INTERFACE)
         }
     }
 
-    val isExpect = property.isEffectivelyExpect(containingClass, context)
+    val isExpect = property.isEffectivelyExpect(containingClass, this)
 
     when {
         property.initializer != null -> {
             property.initializer?.source?.let {
                 when {
                     inInterface -> {
-                        reporter.reportOn(it, FirErrors.PROPERTY_INITIALIZER_IN_INTERFACE, context)
+                        reporter.reportOn(it, FirErrors.PROPERTY_INITIALIZER_IN_INTERFACE)
                     }
                     isExpect -> {
-                        reporter.reportOn(it, FirErrors.EXPECTED_PROPERTY_INITIALIZER, context)
+                        reporter.reportOn(it, FirErrors.EXPECTED_PROPERTY_INITIALIZER)
                     }
                     !backingFieldRequired -> {
-                        reporter.reportOn(it, FirErrors.PROPERTY_INITIALIZER_NO_BACKING_FIELD, context)
+                        reporter.reportOn(it, FirErrors.PROPERTY_INITIALIZER_NO_BACKING_FIELD)
                     }
                     property.receiverTypeRef != null -> {
-                        reporter.reportOn(it, FirErrors.EXTENSION_PROPERTY_WITH_BACKING_FIELD, context)
+                        reporter.reportOn(it, FirErrors.EXTENSION_PROPERTY_WITH_BACKING_FIELD)
                     }
                 }
             }
@@ -128,17 +125,17 @@ internal fun checkPropertyInitializer(
             property.delegate?.source?.let {
                 when {
                     inInterface -> {
-                        reporter.reportOn(it, FirErrors.DELEGATED_PROPERTY_IN_INTERFACE, context)
+                        reporter.reportOn(it, FirErrors.DELEGATED_PROPERTY_IN_INTERFACE)
                     }
                     isExpect -> {
-                        reporter.reportOn(it, FirErrors.EXPECTED_DELEGATED_PROPERTY, context)
+                        reporter.reportOn(it, FirErrors.EXPECTED_DELEGATED_PROPERTY)
                     }
                 }
             }
         }
         else -> {
             val propertySource = property.source ?: return
-            val isExternal = property.isEffectivelyExternal(containingClass, context)
+            val isExternal = property.isEffectivelyExternal(containingClass, this)
             if (
                 backingFieldRequired &&
                 !inInterface &&
@@ -149,23 +146,23 @@ internal fun checkPropertyInitializer(
                 !property.hasExplicitBackingField
             ) {
                 if (property.receiverTypeRef != null && !property.hasAccessorImplementation) {
-                    reporter.reportOn(propertySource, FirErrors.EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT, context)
+                    reporter.reportOn(propertySource, FirErrors.EXTENSION_PROPERTY_MUST_HAVE_ACCESSORS_OR_BE_ABSTRACT)
                 } else if (reachable) { // TODO: can be suppressed not to report diagnostics about no body
                     if (containingClass == null || property.hasAccessorImplementation) {
-                        reporter.reportOn(propertySource, FirErrors.MUST_BE_INITIALIZED, context)
+                        reporter.reportOn(propertySource, FirErrors.MUST_BE_INITIALIZED)
                     } else {
-                        reporter.reportOn(propertySource, FirErrors.MUST_BE_INITIALIZED_OR_BE_ABSTRACT, context)
+                        reporter.reportOn(propertySource, FirErrors.MUST_BE_INITIALIZED_OR_BE_ABSTRACT)
                     }
                 }
             }
             if (property.isLateInit) {
                 if (isExpect) {
-                    reporter.reportOn(propertySource, FirErrors.EXPECTED_LATEINIT_PROPERTY, context)
+                    reporter.reportOn(propertySource, FirErrors.EXPECTED_LATEINIT_PROPERTY)
                 }
                 // TODO: like [BindingContext.MUST_BE_LATEINIT], we should consider variable with uninitialized error.
                 if (backingFieldRequired && !inInterface && isInitialized) {
-                    if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-                        reporter.reportOn(propertySource, FirErrors.UNNECESSARY_LATEINIT, context)
+                    if (languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+                        reporter.reportOn(propertySource, FirErrors.UNNECESSARY_LATEINIT)
                     }
                 }
             }

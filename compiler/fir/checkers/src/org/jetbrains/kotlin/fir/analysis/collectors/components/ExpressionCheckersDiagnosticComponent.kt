@@ -154,7 +154,7 @@ class ExpressionCheckersDiagnosticComponent(
         reporter: DiagnosticReporter
     ) {
         for (checker in this) {
-            checker.check(expression, context, reporter)
+            with(checker) { context.check(expression, reporter) }
         }
     }
 }

@@ -57,7 +57,7 @@ import org.jetbrains.kotlin.util.OperatorNameConventions.SIMPLE_UNARY_OPERATION_
 
 object FirOperatorModifierChecker : FirSimpleFunctionChecker() {
 
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
         if (!declaration.isOperator) return
         //we are not interested in implicit operators from override
         if (!declaration.hasModifier(KtTokens.OPERATOR_KEYWORD)) return
@@ -67,13 +67,13 @@ object FirOperatorModifierChecker : FirSimpleFunctionChecker() {
         }
 
         if (checks == null) {
-            reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, "illegal function name", context)
+            reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, "illegal function name")
             return
         }
 
         for (check in checks) {
-            check.check(context, declaration)?.let { error ->
-                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, error, context)
+            check.check(this, declaration)?.let { error ->
+                reporter.reportOn(declaration.source, FirErrors.INAPPLICABLE_OPERATOR_MODIFIER, error)
                 return
             }
         }

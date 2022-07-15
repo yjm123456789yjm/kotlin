@@ -18,14 +18,13 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 
-fun checkInconsistentTypeParameters(
+fun CheckerContext.checkInconsistentTypeParameters(
     firTypeRefClasses: List<Pair<FirTypeRef?, FirRegularClassSymbol>>,
-    context: CheckerContext,
     reporter: DiagnosticReporter,
     source: KtSourceElement?,
     isValues: Boolean
 ) {
-    val result = buildDeepSubstitutionMultimap(firTypeRefClasses, context)
+    val result = buildDeepSubstitutionMultimap(firTypeRefClasses)
     for ((typeParameterSymbol, typeAndProjections) in result) {
         val projections = typeAndProjections.projections
         if (projections.size > 1) {
@@ -35,8 +34,7 @@ fun checkInconsistentTypeParameters(
                     FirErrors.INCONSISTENT_TYPE_PARAMETER_VALUES,
                     typeParameterSymbol,
                     typeAndProjections.classSymbol,
-                    projections,
-                    context
+                    projections
                 )
             } else {
                 reporter.reportOn(
@@ -44,25 +42,23 @@ fun checkInconsistentTypeParameters(
                     FirErrors.INCONSISTENT_TYPE_PARAMETER_BOUNDS,
                     typeParameterSymbol,
                     typeAndProjections.classSymbol,
-                    projections,
-                    context
+                    projections
                 )
             }
         }
     }
 }
 
-private fun buildDeepSubstitutionMultimap(
+private fun CheckerContext.buildDeepSubstitutionMultimap(
     firTypeRefClasses: List<Pair<FirTypeRef?, FirRegularClassSymbol>>,
-    context: CheckerContext,
 ): Map<FirTypeParameterSymbol, ClassSymbolAndProjections> {
     val result = mutableMapOf<FirTypeParameterSymbol, ClassSymbolAndProjections>()
     val substitution = mutableMapOf<FirTypeParameterSymbol, ConeKotlinType>()
     val visitedSupertypes = mutableSetOf<ConeKotlinType>()
-    val session = context.session
+    val session = session
     val typeContext = session.typeContext
 
-    fun fillInDeepSubstitutor(typeArguments: Array<out ConeTypeProjection>?, classSymbol: FirRegularClassSymbol, context: CheckerContext) {
+    fun CheckerContext.fillInDeepSubstitutor(typeArguments: Array<out ConeTypeProjection>?, classSymbol: FirRegularClassSymbol) {
         if (typeArguments != null) {
             val typeParameterSymbols = classSymbol.typeParameterSymbols
             val count = minOf(typeArguments.size, typeParameterSymbols.size)
@@ -104,16 +100,16 @@ private fun buildDeepSubstitutionMultimap(
                 return
 
             val superClassSymbol = fullyExpandedType.toRegularClassSymbol(session)
-            withSuppressedDiagnostics(superTypeRef, context) {
+            withSuppressedDiagnostics(superTypeRef) {
                 if (!fullyExpandedType.isEnum && superClassSymbol != null) {
-                    fillInDeepSubstitutor(fullyExpandedType.typeArguments, superClassSymbol, it)
+                    fillInDeepSubstitutor(fullyExpandedType.typeArguments, superClassSymbol)
                 }
             }
         }
     }
 
     for (firTypeRefClass in firTypeRefClasses) {
-        fillInDeepSubstitutor(firTypeRefClass.first?.coneType?.fullyExpandedType(session)?.typeArguments, firTypeRefClass.second, context)
+        fillInDeepSubstitutor(firTypeRefClass.first?.coneType?.fullyExpandedType(session)?.typeArguments, firTypeRefClass.second)
     }
     return result
 }

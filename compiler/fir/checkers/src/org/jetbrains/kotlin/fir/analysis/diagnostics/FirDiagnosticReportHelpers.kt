@@ -17,8 +17,8 @@ fun DiagnosticReporter.reportOnWithSuppression(
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(element, context) {
-        reportOn(element.source, factory, it, positioningStrategy)
+    context.withSuppressedDiagnostics(element) {
+        reportOn(element.source, factory, positioningStrategy)
     }
 }
 
@@ -29,8 +29,8 @@ fun DiagnosticReporter.reportOnWithSuppression(
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(symbol.fir, context) {
-        reportOn(symbol.source, factory, it, positioningStrategy)
+    context.withSuppressedDiagnostics(symbol.fir) {
+        reportOn(symbol.source, factory, positioningStrategy)
     }
 }
 
@@ -40,8 +40,8 @@ fun DiagnosticReporter.reportOnWithSuppression(
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(element, context) {
-        reportOn(element.source, factory, it, positioningStrategy)
+    context.withSuppressedDiagnostics(element) {
+        reportOn(element.source, factory, positioningStrategy)
     }
 }
 
@@ -52,8 +52,8 @@ fun <A : Any> DiagnosticReporter.reportOnWithSuppression(
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(element, context) {
-        reportOn(element.source, factory, a, it, positioningStrategy)
+    context.withSuppressedDiagnostics(element) {
+        reportOn(element.source, factory, a, positioningStrategy)
     }
 }
 
@@ -65,8 +65,8 @@ fun <A : Any, B : Any> DiagnosticReporter.reportOnWithSuppression(
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(element, context) {
-        reportOn(element.source, factory, a, b, it, positioningStrategy)
+    context.withSuppressedDiagnostics(element) {
+        reportOn(element.source, factory, a, b, positioningStrategy)
     }
 }
 
@@ -79,8 +79,8 @@ fun <A : Any, B : Any, C : Any> DiagnosticReporter.reportOnWithSuppression(
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(element, context) {
-        reportOn(element.source, factory, a, b, c, it, positioningStrategy)
+    context.withSuppressedDiagnostics(element) {
+        reportOn(element.source, factory, a, b, c, positioningStrategy)
     }
 }
 
@@ -94,35 +94,32 @@ fun <A : Any, B : Any, C : Any, D : Any> DiagnosticReporter.reportOnWithSuppress
     context: MutableDiagnosticContext,
     positioningStrategy: SourceElementPositioningStrategy? = null
 ) {
-    withSuppressedDiagnostics(element, context) {
-        reportOn(element.source, factory, a, b, c, d, it, positioningStrategy)
+    context.withSuppressedDiagnostics(element) {
+        reportOn(element.source, factory, a, b, c, d, positioningStrategy)
     }
 }
 
 @OptIn(SymbolInternals::class)
-inline fun <reified C : MutableDiagnosticContext> withSuppressedDiagnostics(
+inline fun <reified C : MutableDiagnosticContext> C.withSuppressedDiagnostics(
     symbol: FirBasedSymbol<*>,
-    context: C,
-    f: (C) -> Unit
-) = withSuppressedDiagnostics(symbol.fir, context, f)
+    f: C.() -> Unit
+) = withSuppressedDiagnostics(symbol.fir, f)
 
-inline fun <reified C : MutableDiagnosticContext> withSuppressedDiagnostics(
+inline fun <reified C : MutableDiagnosticContext> C.withSuppressedDiagnostics(
     annotationContainer: FirAnnotationContainer,
-    context: C,
-    f: (C) -> Unit
+    f: C.() -> Unit
 ) {
     val arguments = AbstractDiagnosticCollector.getDiagnosticsSuppressedForContainer(annotationContainer)
     if (arguments != null) {
-        f(
-            context.addSuppressedDiagnostics(
-                arguments,
-                allInfosSuppressed = AbstractDiagnosticCollector.SUPPRESS_ALL_INFOS in arguments,
-                allWarningsSuppressed = AbstractDiagnosticCollector.SUPPRESS_ALL_WARNINGS in arguments,
-                allErrorsSuppressed = AbstractDiagnosticCollector.SUPPRESS_ALL_ERRORS in arguments
-            ) as C
+        (addSuppressedDiagnostics(
+            arguments,
+            allInfosSuppressed = AbstractDiagnosticCollector.SUPPRESS_ALL_INFOS in arguments,
+            allWarningsSuppressed = AbstractDiagnosticCollector.SUPPRESS_ALL_WARNINGS in arguments,
+            allErrorsSuppressed = AbstractDiagnosticCollector.SUPPRESS_ALL_ERRORS in arguments
+        ) as C).f(
         )
         return
     }
-    f(context)
+    this.f()
 }
 

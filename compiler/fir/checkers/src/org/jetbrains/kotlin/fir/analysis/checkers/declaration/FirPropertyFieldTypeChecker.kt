@@ -19,51 +19,51 @@ import org.jetbrains.kotlin.fir.declarations.utils.isLateInit
 import org.jetbrains.kotlin.fir.types.*
 
 object FirPropertyFieldTypeChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
         val backingField = declaration.backingField ?: return
 
         if (!declaration.hasExplicitBackingField) {
             return
         }
 
-        val typeCheckerContext = context.session.typeContext.newTypeCheckerState(
+        val typeCheckerContext = session.typeContext.newTypeCheckerState(
             errorTypesEqualToAnything = false,
             stubTypesEqualToAnything = false
         )
 
         if (declaration.initializer != null) {
-            reporter.reportOn(declaration.initializer?.source, FirErrors.PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION, context)
+            reporter.reportOn(declaration.initializer?.source, FirErrors.PROPERTY_INITIALIZER_WITH_EXPLICIT_FIELD_DECLARATION)
         }
 
         if (backingField.isLateInit && declaration.isVal) {
-            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_FIELD_IN_VAL_PROPERTY, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_FIELD_IN_VAL_PROPERTY, this)
         }
 
         if (backingField.initializer == null && !backingField.isLateInit) {
-            reporter.reportOnWithSuppression(backingField, FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.PROPERTY_FIELD_DECLARATION_MISSING_INITIALIZER, this)
         } else if (backingField.initializer != null && backingField.isLateInit) {
-            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_PROPERTY_FIELD_DECLARATION_WITH_INITIALIZER, this)
         }
 
         if (backingField.isLateInit && backingField.isNullable) {
-            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_NULLABLE_BACKING_FIELD, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.LATEINIT_NULLABLE_BACKING_FIELD, this)
         }
 
         if (declaration.delegate != null) {
-            reporter.reportOnWithSuppression(backingField, FirErrors.BACKING_FIELD_FOR_DELEGATED_PROPERTY, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.BACKING_FIELD_FOR_DELEGATED_PROPERTY, this)
         }
 
         if (backingField.returnTypeRef.coneType == declaration.returnTypeRef.coneType) {
-            reporter.reportOnWithSuppression(backingField, FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD, context)
+            reporter.reportOnWithSuppression(backingField, FirErrors.REDUNDANT_EXPLICIT_BACKING_FIELD, this)
             return
         }
 
         if (!backingField.isSubtypeOf(declaration, typeCheckerContext)) {
-            checkAsFieldNotSubtype(declaration, context, reporter)
+            this.checkAsFieldNotSubtype(declaration, reporter)
         }
 
         if (!declaration.isSubtypeOf(backingField, typeCheckerContext)) {
-            checkAsPropertyNotSubtype(declaration, context, reporter)
+            this.checkAsPropertyNotSubtype(declaration, reporter)
         }
     }
 
@@ -76,23 +76,21 @@ object FirPropertyFieldTypeChecker : FirPropertyChecker() {
     private val FirPropertyAccessor?.isNotExplicit
         get() = this == null || this is FirDefaultPropertyAccessor
 
-    private fun checkAsPropertyNotSubtype(
+    private fun CheckerContext.checkAsPropertyNotSubtype(
         property: FirProperty,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (property.isVar && property.setter.isNotExplicit) {
-            reporter.reportOn(property.source, FirErrors.PROPERTY_MUST_HAVE_SETTER, context)
+            reporter.reportOn(property.source, FirErrors.PROPERTY_MUST_HAVE_SETTER)
         }
     }
 
-    private fun checkAsFieldNotSubtype(
+    private fun CheckerContext.checkAsFieldNotSubtype(
         property: FirProperty,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (property.getter.isNotExplicit) {
-            reporter.reportOn(property.source, FirErrors.PROPERTY_MUST_HAVE_GETTER, context)
+            reporter.reportOn(property.source, FirErrors.PROPERTY_MUST_HAVE_GETTER)
         }
     }
 }

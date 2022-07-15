@@ -87,7 +87,7 @@ class DeclarationCheckersDiagnosticComponent(
         reporter: DiagnosticReporter
     ) {
         for (checker in this) {
-            checker.check(declaration, context, reporter)
+            with(checker) { context.check(declaration, reporter) }
         }
     }
 }

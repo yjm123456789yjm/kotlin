@@ -17,7 +17,7 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isNullLiteral
 
 object FirUselessElvisChecker : FirElvisExpressionChecker() {
-    override fun check(expression: FirElvisExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirElvisExpression, reporter: DiagnosticReporter) {
         // If the overall expression is not resolved/completed, the corresponding error will be reported separately.
         // See [FirControlFlowStatementsResolveTransformer#transformElvisExpression],
         // where an error type is recorded as the expression's return type.
@@ -26,15 +26,15 @@ object FirUselessElvisChecker : FirElvisExpressionChecker() {
         val lhsType = expression.lhs.typeRef.coneType
         if (lhsType is ConeErrorType) return
         if (!lhsType.canBeNull) {
-            if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-                reporter.reportOn(expression.source, FirErrors.USELESS_ELVIS, lhsType, context)
+            if (languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+                reporter.reportOn(expression.source, FirErrors.USELESS_ELVIS, lhsType)
             }
             return
         }
 
         if (expression.rhs.isNullLiteral) {
-            if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-                reporter.reportOn(expression.source, FirErrors.USELESS_ELVIS_RIGHT_IS_NULL, context)
+            if (languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+                reporter.reportOn(expression.source, FirErrors.USELESS_ELVIS_RIGHT_IS_NULL)
             }
         }
     }

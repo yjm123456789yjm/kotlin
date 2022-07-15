@@ -16,24 +16,24 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.*
 
 object RedundantNullableChecker : FirTypeRefChecker() {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(typeRef: FirTypeRef, reporter: DiagnosticReporter) {
         if (typeRef !is FirResolvedTypeRef || typeRef.isMarkedNullable != true) return
 
-        var symbol = typeRef.toClassLikeSymbol(context.session)
+        var symbol = typeRef.toClassLikeSymbol(session)
         if (symbol is FirTypeAliasSymbol) {
             while (symbol is FirTypeAliasSymbol) {
                 val resolvedExpandedTypeRef = symbol.resolvedExpandedTypeRef
                 if (resolvedExpandedTypeRef.type.isMarkedNullable) {
-                    reporter.reportOn(typeRef.source, REDUNDANT_NULLABLE, context)
+                    reporter.reportOn(typeRef.source, REDUNDANT_NULLABLE)
                     break
                 } else {
-                    symbol = resolvedExpandedTypeRef.toClassLikeSymbol(context.session)
+                    symbol = resolvedExpandedTypeRef.toClassLikeSymbol(session)
                 }
             }
         } else {
             with(SourceNavigator.forElement(typeRef)) {
                 if (typeRef.isRedundantNullable()) {
-                    reporter.reportOn(typeRef.source, REDUNDANT_NULLABLE, context)
+                    reporter.reportOn(typeRef.source, REDUNDANT_NULLABLE)
                 }
             }
         }

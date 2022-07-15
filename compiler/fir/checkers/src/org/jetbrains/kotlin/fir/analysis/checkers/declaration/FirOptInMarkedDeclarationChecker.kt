@@ -20,25 +20,25 @@ import org.jetbrains.kotlin.fir.declarations.FirPropertyAccessor
 import org.jetbrains.kotlin.fir.declarations.FirValueParameter
 
 object FirOptInMarkedDeclarationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         for (annotation in declaration.annotations) {
-            val annotationClass = annotation.getAnnotationClassForOptInMarker(context.session) ?: continue
-            withSuppressedDiagnostics(annotation, context) { ctx ->
+            val annotationClass = annotation.getAnnotationClassForOptInMarker(session) ?: continue
+            withSuppressedDiagnostics(annotation) {
                 val useSiteTarget = annotation.useSiteTarget
                 if ((declaration is FirPropertyAccessor && declaration.isGetter) || useSiteTarget == PROPERTY_GETTER) {
-                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "getter", ctx)
+                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "getter")
                 }
                 if (useSiteTarget == SETTER_PARAMETER ||
                     (useSiteTarget != PROPERTY && useSiteTarget != PROPERTY_SETTER && declaration is FirValueParameter &&
                             KotlinTarget.VALUE_PARAMETER in annotationClass.getAllowedAnnotationTargets())
                 ) {
-                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "parameter", ctx)
+                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "parameter")
                 }
                 if (declaration is FirProperty && declaration.isLocal) {
-                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "variable", ctx)
+                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "variable")
                 }
                 if (useSiteTarget == FIELD || useSiteTarget == PROPERTY_DELEGATE_FIELD) {
-                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "field", ctx)
+                    reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "field")
                 }
             }
         }

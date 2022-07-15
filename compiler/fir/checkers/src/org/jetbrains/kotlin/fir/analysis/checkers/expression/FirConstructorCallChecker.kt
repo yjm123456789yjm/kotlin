@@ -21,28 +21,27 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.toRegularClassSymbol
 
 object FirConstructorCallChecker : FirFunctionCallChecker() {
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         val constructorSymbol = expression.calleeReference.resolvedSymbol as? FirConstructorSymbol ?: return
-        val declarationClass = constructorSymbol.resolvedReturnTypeRef.coneType.toRegularClassSymbol(context.session)
+        val declarationClass = constructorSymbol.resolvedReturnTypeRef.coneType.toRegularClassSymbol(session)
 
         if (declarationClass != null) {
             if (declarationClass.isAbstract && declarationClass.classKind == ClassKind.CLASS) {
-                reporter.reportOn(expression.source, FirErrors.CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS, context)
+                reporter.reportOn(expression.source, FirErrors.CREATING_AN_INSTANCE_OF_ABSTRACT_CLASS)
             }
             if (declarationClass.classKind == ClassKind.ANNOTATION_CLASS &&
-                context.qualifiedAccessOrAnnotationCalls.all { call ->
+                qualifiedAccessOrAnnotationCalls.all { call ->
                     call !is FirAnnotation
                 } &&
-                context.containingDeclarations.all { klass ->
+                containingDeclarations.all { klass ->
                     klass !is FirRegularClass || klass.classKind != ClassKind.ANNOTATION_CLASS
                 }
             ) {
-                if (!context.languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses) ||
+                if (!languageVersionSettings.supportsFeature(LanguageFeature.InstantiationOfAnnotationClasses) ||
                     declarationClass.typeParameterSymbols.isNotEmpty()
                 ) reporter.reportOn(
                     expression.source,
-                    FirErrors.ANNOTATION_CLASS_CONSTRUCTOR_CALL,
-                    context
+                    FirErrors.ANNOTATION_CLASS_CONSTRUCTOR_CALL
                 )
             }
         }

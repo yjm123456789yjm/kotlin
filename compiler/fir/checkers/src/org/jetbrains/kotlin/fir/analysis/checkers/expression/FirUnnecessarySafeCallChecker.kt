@@ -19,18 +19,18 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isUnit
 
 object FirUnnecessarySafeCallChecker : FirSafeCallExpressionChecker() {
-    override fun check(expression: FirSafeCallExpression, context: CheckerContext, reporter: DiagnosticReporter) {
-        val receiverType = expression.receiver.typeRef.coneType.fullyExpandedType(context.session)
+    override fun CheckerContext.check(expression: FirSafeCallExpression, reporter: DiagnosticReporter) {
+        val receiverType = expression.receiver.typeRef.coneType.fullyExpandedType(session)
         if (receiverType.isUnit || expression.receiver.source?.elementType == KtNodeTypes.SUPER_EXPRESSION) {
-            reporter.reportOn(expression.source, FirErrors.UNEXPECTED_SAFE_CALL, context)
+            reporter.reportOn(expression.source, FirErrors.UNEXPECTED_SAFE_CALL)
             return
         }
         if (!receiverType.canBeNull) {
-            if (context.languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
-                reporter.reportOn(expression.source, FirErrors.UNNECESSARY_SAFE_CALL, receiverType, context)
+            if (languageVersionSettings.supportsFeature(LanguageFeature.EnableDfaWarningsInK2)) {
+                reporter.reportOn(expression.source, FirErrors.UNNECESSARY_SAFE_CALL, receiverType)
             }
-            if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.SafeCallsAreAlwaysNullable)) {
-                reporter.reportOn(expression.source, FirErrors.SAFE_CALL_WILL_CHANGE_NULLABILITY, context)
+            if (!session.languageVersionSettings.supportsFeature(LanguageFeature.SafeCallsAreAlwaysNullable)) {
+                reporter.reportOn(expression.source, FirErrors.SAFE_CALL_WILL_CHANGE_NULLABILITY)
             }
         }
     }

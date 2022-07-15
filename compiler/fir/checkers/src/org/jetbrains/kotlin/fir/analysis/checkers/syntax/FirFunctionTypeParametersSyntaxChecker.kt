@@ -23,39 +23,29 @@ object FirFunctionTypeParametersSyntaxChecker : FirDeclarationSyntaxChecker<FirS
     override fun isApplicable(element: FirSimpleFunction, source: KtSourceElement): Boolean =
         source.kind !is KtFakeSourceElementKind
 
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirSimpleFunction,
         source: KtPsiSourceElement,
         psi: KtFunction,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val typeParamsNode = psi.typeParameterList
         val nameNode = psi.nameIdentifier
 
         if (typeParamsNode != null && nameNode != null && typeParamsNode.startOffset > nameNode.startOffset) {
-            reporter.reportOn(
-                source,
-                FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX,
-                context
-            )
+            reporter.reportOn(source, FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX)
         }
     }
 
-    override fun checkLightTree(
+    override fun CheckerContext.checkLightTree(
         element: FirSimpleFunction,
         source: KtLightSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val typeParamsNode = source.treeStructure.typeParametersList(source.lighterASTNode)
         val nameNode = source.treeStructure.nameIdentifier(source.lighterASTNode)
         if (typeParamsNode != null && nameNode != null && typeParamsNode.startOffset > nameNode.startOffset) {
-            reporter.reportOn(
-                source,
-                FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX,
-                context
-            )
+            reporter.reportOn(source, FirErrors.DEPRECATED_TYPE_PARAMETER_SYNTAX)
         }
     }
 }

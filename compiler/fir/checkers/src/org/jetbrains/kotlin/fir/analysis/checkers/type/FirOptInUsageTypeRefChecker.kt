@@ -30,38 +30,38 @@ import org.jetbrains.kotlin.resolve.checkers.OptInNames
 
 object FirOptInUsageTypeRefChecker : FirTypeRefChecker() {
     @OptIn(SymbolInternals::class)
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(typeRef: FirTypeRef, reporter: DiagnosticReporter) {
         val source = typeRef.source
         if (source?.kind !is KtRealSourceElementKind) return
         // coneTypeSafe filters out all delegatedTypeRefs from here
         val coneType = typeRef.coneTypeSafe<ConeClassLikeType>() ?: return
 
         for (annotation in typeRef.annotations) {
-            if (annotation.getAnnotationClassForOptInMarker(context.session) != null) {
+            if (annotation.getAnnotationClassForOptInMarker(session) != null) {
                 if (annotation.useSiteTarget == AnnotationUseSiteTarget.RECEIVER) {
-                    withSuppressedDiagnostics(annotation, context) {
-                        reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "parameter", it)
+                    withSuppressedDiagnostics(annotation) {
+                        reporter.reportOn(annotation.source, FirErrors.OPT_IN_MARKER_ON_WRONG_TARGET, "parameter")
                     }
                 }
             }
         }
 
-        val symbol = coneType.lookupTag.toSymbol(context.session) ?: return
+        val symbol = coneType.lookupTag.toSymbol(session) ?: return
         symbol.ensureResolved(FirResolvePhase.STATUS)
         val classId = symbol.classId
-        val lastAnnotationCall = context.qualifiedAccessOrAnnotationCalls.lastOrNull() as? FirAnnotation
+        val lastAnnotationCall = qualifiedAccessOrAnnotationCalls.lastOrNull() as? FirAnnotation
         if (lastAnnotationCall == null || lastAnnotationCall.annotationTypeRef !== typeRef) {
             if (classId == OptInNames.REQUIRES_OPT_IN_CLASS_ID || classId == OptInNames.OPT_IN_CLASS_ID) {
-                reporter.reportOn(source, OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION, context)
+                reporter.reportOn(source, OPT_IN_CAN_ONLY_BE_USED_AS_ANNOTATION)
             } else if (symbol is FirRegularClassSymbol && symbol.fir.getAnnotationByClassId(OptInNames.REQUIRES_OPT_IN_CLASS_ID) != null) {
-                reporter.reportOn(source, OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN, context)
+                reporter.reportOn(source, OPT_IN_MARKER_CAN_ONLY_BE_USED_AS_ANNOTATION_OR_ARGUMENT_IN_OPT_IN)
             }
         }
 
         with(FirOptInUsageBaseChecker) {
-            val experimentalities = symbol.loadExperimentalities(context, fromSetter = false, dispatchReceiverType = null) +
-                    loadExperimentalitiesFromConeArguments(context, coneType.typeArguments.toList())
-            reportNotAcceptedExperimentalities(experimentalities, typeRef, context, reporter)
+            val experimentalities = symbol.loadExperimentalities(this@check, fromSetter = false, dispatchReceiverType = null) +
+                    loadExperimentalitiesFromConeArguments(this@check, coneType.typeArguments.toList())
+            this@check.reportNotAcceptedExperimentalities(experimentalities, typeRef, reporter)
         }
     }
 }

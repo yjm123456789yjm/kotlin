@@ -23,10 +23,10 @@ import org.jetbrains.kotlin.fir.symbols.ensureResolved
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         val cyclicConstructors = mutableSetOf<FirConstructor>()
         var hasPrimaryConstructor = false
-        val isEffectivelyExpect = declaration.isEffectivelyExpect(context.containingDeclarations.lastOrNull() as? FirRegularClass, context)
+        val isEffectivelyExpect = declaration.isEffectivelyExpect(containingDeclarations.lastOrNull() as? FirRegularClass, this)
 
         // candidates for further analysis
         val secondaryNonCyclicConstructors = mutableSetOf<FirConstructor>()
@@ -48,7 +48,7 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker() {
         secondaryNonCyclicConstructors -= cyclicConstructors
 
         for (secondaryNonCyclicConstructor in secondaryNonCyclicConstructors) {
-            withSuppressedDiagnostics(secondaryNonCyclicConstructor, context) { ctx ->
+            withSuppressedDiagnostics(secondaryNonCyclicConstructor) {
                 val delegatedConstructor = secondaryNonCyclicConstructor.delegatedConstructor
                 if (hasPrimaryConstructor) {
                     if (!isEffectivelyExpect && delegatedConstructor?.isThis != true) {
@@ -56,13 +56,12 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker() {
                             reporter.reportOnWithSuppression(
                                 delegatedConstructor,
                                 FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED,
-                                ctx
+                                this
                             )
                         } else {
                             reporter.reportOn(
                                 secondaryNonCyclicConstructor.source,
-                                FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED,
-                                ctx
+                                FirErrors.PRIMARY_CONSTRUCTOR_DELEGATION_CALL_EXPECTED
                             )
                         }
                     }
@@ -74,15 +73,15 @@ object FirCommonConstructorDelegationIssuesChecker : FirRegularClassChecker() {
                         callee.diagnostic is ConeAmbiguityError &&
                         delegatedConstructor.source?.kind is KtFakeSourceElementKind
                     ) {
-                        reporter.reportOn(secondaryNonCyclicConstructor.source, FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED, ctx)
+                        reporter.reportOn(secondaryNonCyclicConstructor.source, FirErrors.EXPLICIT_DELEGATION_CALL_REQUIRED)
                     }
                 }
             }
         }
 
         for (cyclicConstructor in cyclicConstructors) {
-            withSuppressedDiagnostics(cyclicConstructor, context) { ctx ->
-                reporter.reportOn(cyclicConstructor.delegatedConstructor?.source, FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL, ctx)
+            this.withSuppressedDiagnostics(cyclicConstructor) {
+                reporter.reportOn(cyclicConstructor.delegatedConstructor?.source, FirErrors.CYCLIC_CONSTRUCTOR_DELEGATION_CALL)
             }
         }
     }

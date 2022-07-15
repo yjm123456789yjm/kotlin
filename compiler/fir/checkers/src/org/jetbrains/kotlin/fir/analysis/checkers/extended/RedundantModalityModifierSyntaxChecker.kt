@@ -27,23 +27,22 @@ object RedundantModalityModifierSyntaxChecker : FirDeclarationSyntaxChecker<FirD
     override fun isApplicable(element: FirDeclaration, source: KtSourceElement): Boolean =
         source.kind !is KtFakeSourceElementKind && element is FirMemberDeclaration
 
-    override fun checkPsiOrLightTree(
+    override fun CheckerContext.checkPsiOrLightTree(
         element: FirDeclaration,
         source: KtSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         require(element is FirMemberDeclaration)
         val modality = element.modality ?: return
         if (
             modality == Modality.FINAL
-            && (context.containingDeclarations.last() as? FirClass)?.classKind == ClassKind.INTERFACE
+            && (containingDeclarations.last() as? FirClass)?.classKind == ClassKind.INTERFACE
         ) return
 
         if (source.treeStructure.modalityModifier(source.lighterASTNode) == null) return
-        val implicitModality = element.implicitModality(context)
+        val implicitModality = element.implicitModality(this)
         if (modality == implicitModality) {
-            reporter.reportOn(source, REDUNDANT_MODALITY_MODIFIER, context)
+            reporter.reportOn(source, REDUNDANT_MODALITY_MODIFIER)
         }
     }
 }

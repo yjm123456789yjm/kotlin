@@ -17,23 +17,23 @@ import org.jetbrains.kotlin.fir.expressions.classId
 import org.jetbrains.kotlin.parcelize.ParcelizeNames
 
 object FirParcelizeConstructorChecker : FirConstructorChecker() {
-    override fun check(declaration: FirConstructor, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirConstructor, reporter: DiagnosticReporter) {
         if (!declaration.isPrimary) return
         val source = declaration.source ?: return
         if (source.kind == KtFakeSourceElementKind.ImplicitConstructor) return
-        val containingClass = context.containingDeclarations.last() as? FirRegularClass ?: return
+        val containingClass = containingDeclarations.last() as? FirRegularClass ?: return
         val containingClassSymbol = containingClass.symbol
-        if (!containingClassSymbol.isParcelize(context.session) || containingClass.hasCustomParceler(context.session)) return
+        if (!containingClassSymbol.isParcelize(session) || containingClass.hasCustomParceler(session)) return
 
         if (declaration.valueParameters.isEmpty()) {
-            reporter.reportOn(containingClass.source, KtErrorsParcelize.PARCELABLE_PRIMARY_CONSTRUCTOR_IS_EMPTY, context)
+            reporter.reportOn(containingClass.source, KtErrorsParcelize.PARCELABLE_PRIMARY_CONSTRUCTOR_IS_EMPTY, this)
         } else {
             for (valueParameter in declaration.valueParameters) {
                 if (valueParameter.source?.hasValOrVar() != true) {
                     reporter.reportOn(
                         valueParameter.source,
                         KtErrorsParcelize.PARCELABLE_CONSTRUCTOR_PARAMETER_SHOULD_BE_VAL_OR_VAR,
-                        context
+                        this
                     )
                 }
                 if (valueParameter.defaultValue == null) {
@@ -44,7 +44,7 @@ object FirParcelizeConstructorChecker : FirConstructorChecker() {
                         reporter.reportOn(
                             illegalAnnotation.source,
                             KtErrorsParcelize.INAPPLICABLE_IGNORED_ON_PARCEL_CONSTRUCTOR_PROPERTY,
-                            context
+                            this
                         )
                     }
                 }

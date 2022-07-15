@@ -30,7 +30,7 @@ import org.jetbrains.kotlin.psi.KtBinaryExpression
 import org.jetbrains.kotlin.psi.KtNameReferenceExpression
 
 object CanBeReplacedWithOperatorAssignmentChecker : FirVariableAssignmentChecker() {
-    override fun check(expression: FirVariableAssignment, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirVariableAssignment, reporter: DiagnosticReporter) {
         val lValue = expression.lValue
         if (lValue !is FirResolvedNamedReference) return
         if (expression.source?.kind is KtFakeSourceElementKind) return
@@ -61,7 +61,7 @@ object CanBeReplacedWithOperatorAssignmentChecker : FirVariableAssignmentChecker
         }
 
         if (needToReport) {
-            reporter.reportOn(expression.source, FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT, context)
+            reporter.reportOn(expression.source, FirErrors.CAN_BE_REPLACED_WITH_OPERATOR_ASSIGNMENT)
         }
 
     }
@@ -73,7 +73,7 @@ object CanBeReplacedWithOperatorAssignmentChecker : FirVariableAssignmentChecker
         prevOperator: LighterASTNode? = null
     ): Boolean {
         val tree = source.treeStructure
-        val children = expression.getChildren(tree).filterNotNull()
+        val children = expression.getChildren(tree)
 
         val operator = children.firstOrNull { it.tokenType == KtNodeTypes.OPERATION_REFERENCE }
         if (prevOperator != null && !isLightNodesHierarchicallyTrue(prevOperator, operator)) return false

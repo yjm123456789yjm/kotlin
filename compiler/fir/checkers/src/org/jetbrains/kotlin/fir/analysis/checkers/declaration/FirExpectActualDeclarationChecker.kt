@@ -31,25 +31,24 @@ import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstanceOrNull
 
 @Suppress("DuplicatedCode")
 object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (!context.session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)) return
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
+        if (!session.languageVersionSettings.supportsFeature(LanguageFeature.MultiPlatformProjects)) return
         if (declaration !is FirMemberDeclaration) return
         if (declaration.isActual) {
-            checkActualDeclarationHasExpected(declaration, context, reporter)
+            this.checkActualDeclarationHasExpected(declaration, reporter)
         }
     }
 
-    private fun checkActualDeclarationHasExpected(
+    private fun CheckerContext.checkActualDeclarationHasExpected(
         declaration: FirMemberDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         checkActual: Boolean = true
     ) {
         val symbol = declaration.symbol
         val compatibilityToMembersMap = symbol.expectForActual ?: return
-        val session = context.session
+        val session = session
 
-        checkAmbiguousExpects(symbol, compatibilityToMembersMap, symbol, context, reporter)
+        this.checkAmbiguousExpects(symbol, compatibilityToMembersMap, symbol, reporter)
 
         val source = declaration.source
         if (!declaration.isActual) {
@@ -57,7 +56,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
 
             if (Compatible in compatibilityToMembersMap) {
                 if (checkActual && requireActualModifier(symbol, session)) {
-                    reporter.reportOn(source, FirErrors.ACTUAL_MISSING, context)
+                    reporter.reportOn(source, FirErrors.ACTUAL_MISSING)
                 }
                 return
             }
@@ -89,12 +88,12 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
                 val nonTrivialUnfulfilled = singleIncompatibility.unfulfilled.filterNot(::hasSingleActualSuspect)
 
                 if (nonTrivialUnfulfilled.isNotEmpty()) {
-                    reporter.reportOn(source, FirErrors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS, symbol, nonTrivialUnfulfilled, context)
+                    reporter.reportOn(source, FirErrors.NO_ACTUAL_CLASS_MEMBER_FOR_EXPECTED_CLASS, symbol, nonTrivialUnfulfilled)
                 }
             }
 
             Compatible !in compatibilityToMembersMap -> {
-                reporter.reportOn(source, FirErrors.ACTUAL_WITHOUT_EXPECT, symbol, compatibilityToMembersMap.cast(), context)
+                reporter.reportOn(source, FirErrors.ACTUAL_WITHOUT_EXPECT, symbol, compatibilityToMembersMap.cast())
             }
 
             else -> {
@@ -104,7 +103,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
                     val actualConstructor = klass?.declarationSymbols?.firstIsInstanceOrNull<FirConstructorSymbol>()
                     val expectedConstructor = expected.declarationSymbols.firstIsInstanceOrNull<FirConstructorSymbol>()
                     if (expectedConstructor != null && actualConstructor != null) {
-                        checkAnnotationConstructors(source, expectedConstructor, actualConstructor, context, reporter)
+                        checkAnnotationConstructors(source, expectedConstructor, actualConstructor, this, reporter)
                     }
                 }
             }
@@ -143,11 +142,10 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
     }
 
 
-    private fun checkAmbiguousExpects(
+    private fun CheckerContext.checkAmbiguousExpects(
         actualDeclaration: FirBasedSymbol<*>,
         compatibility: Map<ExpectActualCompatibility<FirBasedSymbol<*>>, List<FirBasedSymbol<*>>>,
         symbol: FirBasedSymbol<*>,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val filesWithAtLeastWeaklyCompatibleExpects = compatibility.asSequence()
@@ -165,8 +163,7 @@ object FirExpectActualDeclarationChecker : FirBasicDeclarationChecker() {
                 actualDeclaration.source,
                 FirErrors.AMBIGUOUS_EXPECTS,
                 symbol,
-                filesWithAtLeastWeaklyCompatibleExpects,
-                context
+                filesWithAtLeastWeaklyCompatibleExpects
             )
         }
     }

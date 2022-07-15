@@ -23,23 +23,23 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames.TYPE_PARCELER_CLASS_IDS
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.WRITE_WITH_CLASS_IDS
 
 object FirParcelizeAnnotationChecker : FirAnnotationCallChecker() {
-    override fun check(expression: FirAnnotationCall, context: CheckerContext, reporter: DiagnosticReporter) {
-        val annotationType = expression.annotationTypeRef.coneType.fullyExpandedType(context.session) as? ConeClassLikeType ?: return
-        val resolvedAnnotationSymbol = annotationType.lookupTag.toFirRegularClassSymbol(context.session) ?: return
+    override fun CheckerContext.check(expression: FirAnnotationCall, reporter: DiagnosticReporter) {
+        val annotationType = expression.annotationTypeRef.coneType.fullyExpandedType(session) as? ConeClassLikeType ?: return
+        val resolvedAnnotationSymbol = annotationType.lookupTag.toFirRegularClassSymbol(session) ?: return
         when (val annotationClassId = resolvedAnnotationSymbol.classId) {
             in TYPE_PARCELER_CLASS_IDS -> {
-                checkTypeParcelerUsage(expression, context, reporter)
-                checkDeprecatedAnnotations(expression, annotationClassId, context, reporter, isForbidden = true)
+                checkTypeParcelerUsage(expression, this, reporter)
+                checkDeprecatedAnnotations(expression, annotationClassId, this, reporter, isForbidden = true)
             }
             in WRITE_WITH_CLASS_IDS -> {
-                checkWriteWithUsage(expression, context, reporter)
-                checkDeprecatedAnnotations(expression, annotationClassId, context, reporter, isForbidden = true)
+                checkWriteWithUsage(expression, this, reporter)
+                checkDeprecatedAnnotations(expression, annotationClassId, this, reporter, isForbidden = true)
             }
             in IGNORED_ON_PARCEL_CLASS_IDS -> {
-                checkDeprecatedAnnotations(expression, annotationClassId, context, reporter, isForbidden = false)
+                checkDeprecatedAnnotations(expression, annotationClassId, this, reporter, isForbidden = false)
             }
             in PARCELIZE_CLASS_CLASS_IDS, in RAW_VALUE_ANNOTATION_CLASS_IDS -> {
-                checkDeprecatedAnnotations(expression, annotationClassId, context, reporter, isForbidden = false)
+                checkDeprecatedAnnotations(expression, annotationClassId, this, reporter, isForbidden = false)
             }
         }
     }

@@ -31,24 +31,24 @@ import org.jetbrains.kotlin.name.JvmNames.JVM_DEFAULT_NO_COMPATIBILITY_CLASS_ID
 import org.jetbrains.kotlin.name.JvmNames.JVM_DEFAULT_WITH_COMPATIBILITY_CLASS_ID
 
 object FirJvmDefaultChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
-        val jvmDefaultMode = context.session.jvmDefaultModeState
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
+        val jvmDefaultMode = session.jvmDefaultModeState
         val defaultAnnotation = declaration.getAnnotationByClassId(JVM_DEFAULT_CLASS_ID)
 
         if (defaultAnnotation != null) {
-            val containingDeclaration = context.findClosest<FirClassLikeDeclaration>()
+            val containingDeclaration = findClosest<FirClassLikeDeclaration>()
             val source = defaultAnnotation.source
             when {
                 containingDeclaration !is FirClass || !containingDeclaration.isInterface -> {
-                    reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_NOT_IN_INTERFACE, context)
+                    reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_NOT_IN_INTERFACE)
                     return
                 }
-                context.isJvm6() -> {
-                    reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_IN_JVM6_TARGET, "JvmDefault", context)
+                isJvm6() -> {
+                    reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_IN_JVM6_TARGET, "JvmDefault")
                     return
                 }
                 !jvmDefaultMode.isEnabled -> {
-                    reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_IN_DECLARATION, "JvmDefault", context)
+                    reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_IN_DECLARATION, "JvmDefault")
                     return
                 }
             }
@@ -57,12 +57,11 @@ object FirJvmDefaultChecker : FirBasicDeclarationChecker() {
             if (annotationNoCompatibility != null) {
                 val source = annotationNoCompatibility.source
                 when {
-                    context.isJvm6() -> {
+                    isJvm6() -> {
                         reporter.reportOn(
                             source,
                             FirJvmErrors.JVM_DEFAULT_IN_JVM6_TARGET,
-                            "JvmDefaultWithoutCompatibility",
-                            context
+                            "JvmDefaultWithoutCompatibility"
                         )
                         return
                     }
@@ -70,8 +69,7 @@ object FirJvmDefaultChecker : FirBasicDeclarationChecker() {
                         reporter.reportOn(
                             source,
                             FirJvmErrors.JVM_DEFAULT_IN_DECLARATION,
-                            "JvmDefaultWithoutCompatibility",
-                            context
+                            "JvmDefaultWithoutCompatibility"
                         )
                         return
                     }
@@ -81,58 +79,55 @@ object FirJvmDefaultChecker : FirBasicDeclarationChecker() {
             if (annotationWithCompatibility != null) {
                 val source = annotationWithCompatibility.source
                 when {
-                    context.isJvm6() -> {
+                    isJvm6() -> {
                         reporter.reportOn(
                             source,
                             FirJvmErrors.JVM_DEFAULT_IN_JVM6_TARGET,
-                            "JvmDefaultWithCompatibility",
-                            context
+                            "JvmDefaultWithCompatibility"
                         )
                         return
                     }
                     jvmDefaultMode != JvmDefaultMode.ALL_INCOMPATIBLE -> {
-                        reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_IN_DECLARATION, context)
+                        reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_IN_DECLARATION)
                         return
                     }
                     declaration !is FirRegularClass || !declaration.isInterface -> {
-                        reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_NOT_ON_INTERFACE, context)
+                        reporter.reportOn(source, FirJvmErrors.JVM_DEFAULT_WITH_COMPATIBILITY_NOT_ON_INTERFACE)
                         return
                     }
                 }
             }
         }
 
-        checkNonJvmDefaultOverridesJavaDefault(defaultAnnotation, jvmDefaultMode, declaration, context, reporter)
+        this.checkNonJvmDefaultOverridesJavaDefault(defaultAnnotation, jvmDefaultMode, declaration, reporter)
     }
 
-    private fun checkNonJvmDefaultOverridesJavaDefault(
+    private fun CheckerContext.checkNonJvmDefaultOverridesJavaDefault(
         defaultAnnotation: FirAnnotation?,
         jvmDefaultMode: JvmDefaultMode,
         declaration: FirDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (defaultAnnotation != null || jvmDefaultMode.forAllMethodsWithBody) return
         val member = declaration as? FirSimpleFunction ?: return
-        if (declaration is FirPropertyAccessor) return
 
-        val containingDeclaration = context.findClosest<FirClassLikeDeclaration>()
+        val containingDeclaration = findClosest<FirClassLikeDeclaration>()
         if (containingDeclaration is FirClass && containingDeclaration.isInterface) {
-            val unsubstitutedScope = containingDeclaration.unsubstitutedScope(context)
+            val unsubstitutedScope = containingDeclaration.unsubstitutedScope(this)
             unsubstitutedScope.processFunctionsByName(member.name) {}
             val overriddenFunctions = unsubstitutedScope.getDirectOverriddenFunctions(member.symbol)
 
             if (overriddenFunctions.any { it.getAnnotationByClassId(JVM_DEFAULT_CLASS_ID) != null }) {
-                reporter.reportOn(declaration.source, FirJvmErrors.JVM_DEFAULT_REQUIRED_FOR_OVERRIDE, context)
+                reporter.reportOn(declaration.source, FirJvmErrors.JVM_DEFAULT_REQUIRED_FOR_OVERRIDE)
             } else if (jvmDefaultMode.isEnabled) {
                 for (overriddenFunction in overriddenFunctions) {
                     val overriddenDeclarations = overriddenFunction.getOverriddenDeclarations()
                     for (overriddenDeclaration in overriddenDeclarations) {
-                        val containingClassSymbol = overriddenDeclaration.containingClass()?.toSymbol(context.session)
+                        val containingClassSymbol = overriddenDeclaration.containingClass()?.toSymbol(session)
                         if (containingClassSymbol?.origin is FirDeclarationOrigin.Java &&
                             overriddenDeclaration.modality != Modality.ABSTRACT
                         ) {
-                            reporter.reportOn(declaration.source, FirJvmErrors.NON_JVM_DEFAULT_OVERRIDES_JAVA_DEFAULT, context)
+                            reporter.reportOn(declaration.source, FirJvmErrors.NON_JVM_DEFAULT_OVERRIDES_JAVA_DEFAULT)
                             return
                         }
                     }

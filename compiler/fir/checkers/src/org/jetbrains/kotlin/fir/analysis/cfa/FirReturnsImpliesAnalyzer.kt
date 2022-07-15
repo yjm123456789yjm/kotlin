@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.utils.addIfNotNull
 
 object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
-    override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
+    override fun CheckerContext.analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter) {
         val function = graph.declaration as? FirFunction ?: return
         val graphRef = function.controlFlowGraphReference as FirControlFlowGraphReferenceImpl
         val dataFlowInfo = graphRef.dataFlowInfo
@@ -47,7 +47,7 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
         if (effects.isNullOrEmpty()) return
 
-        val logicSystem = object : PersistentLogicSystem(context.session.typeContext) {
+        val logicSystem = object : PersistentLogicSystem(session.typeContext) {
             override fun processUpdatedReceiverVariable(flow: PersistentFlow, variable: RealVariable) =
                 throw IllegalStateException("Receiver variable update is not possible for this logic system")
 
@@ -61,11 +61,11 @@ object FirReturnsImpliesAnalyzer : FirControlFlowChecker() {
 
         effects.forEach { effect ->
             val wrongCondition = graph.exitNode.previousCfgNodes.any {
-                isWrongConditionOnNode(it, effect as ConeConditionalEffectDeclaration, function, logicSystem, dataFlowInfo, context)
+                isWrongConditionOnNode(it, effect as ConeConditionalEffectDeclaration, function, logicSystem, dataFlowInfo, this)
             }
 
             if (wrongCondition) {
-                reporter.reportOn(function.contractDescription.source, FirErrors.WRONG_IMPLIES_CONDITION, context)
+                reporter.reportOn(function.contractDescription.source, FirErrors.WRONG_IMPLIES_CONDITION)
             }
         }
     }

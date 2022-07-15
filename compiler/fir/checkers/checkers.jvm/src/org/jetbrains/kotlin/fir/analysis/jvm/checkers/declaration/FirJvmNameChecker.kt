@@ -27,31 +27,31 @@ import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 object FirJvmNameChecker : FirBasicDeclarationChecker() {
     private val NAME = Name.identifier("name")
 
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         val jvmName = declaration.findJvmNameAnnotation() ?: return
         val name = jvmName.findArgumentByName(NAME) ?: return
 
-        if (name.typeRef.coneType != context.session.builtinTypes.stringType.type) {
+        if (name.typeRef.coneType != session.builtinTypes.stringType.type) {
             return
         }
 
         val value = name.safeAs<FirConstExpression<*>>()?.value as? String ?: return
 
         if (!Name.isValidIdentifier(value)) {
-            reporter.reportOn(jvmName.source, FirJvmErrors.ILLEGAL_JVM_NAME, context)
+            reporter.reportOn(jvmName.source, FirJvmErrors.ILLEGAL_JVM_NAME)
         }
 
-        if (declaration is FirFunction && !context.isRenamableFunction(declaration)) {
-            reporter.reportOn(jvmName.source, FirJvmErrors.INAPPLICABLE_JVM_NAME, context)
+        if (declaration is FirFunction && !isRenamableFunction(declaration)) {
+            reporter.reportOn(jvmName.source, FirJvmErrors.INAPPLICABLE_JVM_NAME)
         } else if (declaration is FirCallableDeclaration) {
-            val containingClass = declaration.getContainingClass(context.session)
+            val containingClass = declaration.getContainingClass(session)
 
             if (
                 declaration.isOverride ||
                 declaration.isOpen ||
                 containingClass?.isInlineThatRequiresMangling() == true
             ) {
-                reporter.reportOn(jvmName.source, FirJvmErrors.INAPPLICABLE_JVM_NAME, context)
+                reporter.reportOn(jvmName.source, FirJvmErrors.INAPPLICABLE_JVM_NAME)
             }
         }
     }

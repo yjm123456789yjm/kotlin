@@ -30,11 +30,11 @@ import org.jetbrains.kotlin.fir.visitors.FirVisitorVoid
 import org.jetbrains.kotlin.types.AbstractTypeChecker
 
 object FirFunctionParameterChecker : FirFunctionChecker() {
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkVarargParameters(declaration, context, reporter)
-        checkParameterTypes(declaration, context, reporter)
-        checkUninitializedParameter(declaration, context, reporter)
-        checkValOrVarParameter(declaration, context, reporter)
+    override fun CheckerContext.check(declaration: FirFunction, reporter: DiagnosticReporter) {
+        checkVarargParameters(declaration, reporter)
+        checkParameterTypes(declaration, this, reporter)
+        checkUninitializedParameter(declaration, reporter)
+        checkValOrVarParameter(declaration, reporter)
     }
 
     private fun checkParameterTypes(function: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
@@ -56,19 +56,19 @@ object FirFunctionParameterChecker : FirFunctionChecker() {
         }
     }
 
-    private fun checkVarargParameters(function: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkVarargParameters(function: FirFunction, reporter: DiagnosticReporter) {
         val varargParameters = function.valueParameters.filter { it.isVararg }
         if (varargParameters.size > 1) {
             for (parameter in varargParameters) {
-                reporter.reportOnWithSuppression(parameter, FirErrors.MULTIPLE_VARARG_PARAMETERS, context)
+                reporter.reportOnWithSuppression(parameter, FirErrors.MULTIPLE_VARARG_PARAMETERS, this)
             }
         }
 
-        val nullableNothingType = context.session.builtinTypes.nullableNothingType.coneType
+        val nullableNothingType = session.builtinTypes.nullableNothingType.coneType
         for (varargParameter in varargParameters) {
             val varargParameterType = varargParameter.returnTypeRef.coneType.arrayElementType() ?: continue
-            if (AbstractTypeChecker.isSubtypeOf(context.session.typeContext, varargParameterType, nullableNothingType) ||
-                (varargParameterType.isInlineClass(context.session) && !varargParameterType.isUnsignedTypeOrNullableUnsignedType)
+            if (AbstractTypeChecker.isSubtypeOf(session.typeContext, varargParameterType, nullableNothingType) ||
+                (varargParameterType.isInlineClass(session) && !varargParameterType.isUnsignedTypeOrNullableUnsignedType)
             // Note: comparing with FE1.0, we skip checking if the type is not primitive because primitive types are not inline. That
             // is any primitive values are already allowed by the inline check.
             ) {
@@ -76,13 +76,13 @@ object FirFunctionParameterChecker : FirFunctionChecker() {
                     varargParameter,
                     FirErrors.FORBIDDEN_VARARG_PARAMETER_TYPE,
                     varargParameterType,
-                    context
+                    this
                 )
             }
         }
     }
 
-    private fun checkUninitializedParameter(function: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkUninitializedParameter(function: FirFunction, reporter: DiagnosticReporter) {
         for ((index, parameter) in function.valueParameters.withIndex()) {
             // Alas, CheckerContext.qualifiedAccesses stack is not available at this point.
             // Thus, manually visit default value expression and report the diagnostic on qualified accesses of interest.
@@ -104,7 +104,7 @@ object FirFunctionParameterChecker : FirFunctionChecker() {
                             qualifiedAccessExpression,
                             FirErrors.UNINITIALIZED_PARAMETER,
                             referredParameter.symbol,
-                            context
+                            this@checkUninitializedParameter
                         )
                     }
                 }
@@ -116,7 +116,7 @@ object FirFunctionParameterChecker : FirFunctionChecker() {
         }
     }
 
-    private fun checkValOrVarParameter(function: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkValOrVarParameter(function: FirFunction, reporter: DiagnosticReporter) {
         if (function is FirConstructor && function.isPrimary) {
             // `val/var` is valid for primary constructors, but not for secondary constructors
             return
@@ -125,11 +125,11 @@ object FirFunctionParameterChecker : FirFunctionChecker() {
         for (valueParameter in function.valueParameters) {
             val source = valueParameter.source
             if (source?.kind is KtFakeSourceElementKind) continue
-            source.valOrVarKeyword?.let {
+            source.valOrVarKeyword?.let { keywordToken ->
                 if (function is FirConstructor) {
-                    reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, it, context)
+                    reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_SECONDARY_CONSTRUCTOR_PARAMETER, keywordToken)
                 } else {
-                    reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_FUN_PARAMETER, it, context)
+                    reporter.reportOn(source, FirErrors.VAL_OR_VAR_ON_FUN_PARAMETER, keywordToken)
                 }
             }
         }

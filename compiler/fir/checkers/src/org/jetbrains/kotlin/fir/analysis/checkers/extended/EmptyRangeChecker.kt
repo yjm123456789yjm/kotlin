@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.fir.expressions.FirConstExpression
 import org.jetbrains.kotlin.fir.expressions.FirFunctionCall
 
 object EmptyRangeChecker : FirFunctionCallChecker() {
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         if (expression.source?.kind is KtFakeSourceElementKind) return
         val left = expression.rangeLeft ?: return
         val right = expression.rangeRight ?: return
@@ -34,7 +34,7 @@ object EmptyRangeChecker : FirFunctionCallChecker() {
         }
 
         if (needReport) {
-            reporter.reportOn(expression.source, FirErrors.EMPTY_RANGE, context)
+            reporter.reportOn(expression.source, FirErrors.EMPTY_RANGE)
         }
     }
 

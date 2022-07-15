@@ -22,30 +22,28 @@ object FirTypeParameterSyntaxChecker : FirDeclarationSyntaxChecker<FirTypeParame
     override fun isApplicable(element: FirTypeParameter, source: KtSourceElement): Boolean =
         element.bounds.size >= 2
 
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirTypeParameter,
         source: KtPsiSourceElement,
         psi: KtTypeParameter,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val (constraint, params) = element.bounds.partition { it.psi?.parent is KtTypeConstraint }
         if (params.isNotEmpty() && constraint.isNotEmpty()) {
-            reporter.reportOn(source, FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS, context)
+            reporter.reportOn(source, FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS)
         }
     }
 
-    override fun checkPsiOrLightTree(
+    override fun CheckerContext.checkPsiOrLightTree(
         element: FirTypeParameter,
         source: KtSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val (constraint, params) = element.withNavigator {
             element.bounds.partition { it.isInTypeConstraint() }
         }
         if (params.isNotEmpty() && constraint.isNotEmpty()) {
-            reporter.reportOn(source, FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS, context)
+            reporter.reportOn(source, FirErrors.MISPLACED_TYPE_PARAMETER_CONSTRAINTS)
         }
     }
 }

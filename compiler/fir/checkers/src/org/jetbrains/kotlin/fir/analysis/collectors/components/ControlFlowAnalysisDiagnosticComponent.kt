@@ -38,13 +38,13 @@ class ControlFlowAnalysisDiagnosticComponent(
         data: CheckerContext
     ) {
         val graph = controlFlowGraphReference?.controlFlowGraph ?: return
-        controlFlowAnalyzer.analyzeClassInitializer(klass, graph, data, reporter)
+        with(controlFlowAnalyzer) { data.analyzeClassInitializer(klass, graph, reporter) }
     }
 
     // ------------------------------- Property initializer -------------------------------
     override fun visitProperty(property: FirProperty, data: CheckerContext) {
         val graph = property.controlFlowGraphReference?.controlFlowGraph ?: return
-        controlFlowAnalyzer.analyzePropertyInitializer(property, graph, data, reporter)
+        with(controlFlowAnalyzer) { data.analyzePropertyInitializer(property, graph, reporter) }
     }
 
     // ------------------------------- Function -------------------------------
@@ -52,7 +52,7 @@ class ControlFlowAnalysisDiagnosticComponent(
     override fun visitFunction(function: FirFunction, data: CheckerContext) {
         val graph = function.controlFlowGraphReference?.controlFlowGraph ?: return
 
-        controlFlowAnalyzer.analyzeFunction(function, graph, data, reporter)
+        with(controlFlowAnalyzer) { data.analyzeFunction(function, graph, reporter) }
     }
 
     override fun visitSimpleFunction(simpleFunction: FirSimpleFunction, data: CheckerContext) {
@@ -62,7 +62,7 @@ class ControlFlowAnalysisDiagnosticComponent(
     override fun visitPropertyAccessor(propertyAccessor: FirPropertyAccessor, data: CheckerContext) {
         val graph = propertyAccessor.controlFlowGraphReference?.controlFlowGraph ?: return
 
-        controlFlowAnalyzer.analyzePropertyAccessor(propertyAccessor, graph, data, reporter)
+        with(controlFlowAnalyzer) { data.analyzePropertyAccessor(propertyAccessor, graph, reporter) }
     }
 
     override fun visitConstructor(constructor: FirConstructor, data: CheckerContext) {

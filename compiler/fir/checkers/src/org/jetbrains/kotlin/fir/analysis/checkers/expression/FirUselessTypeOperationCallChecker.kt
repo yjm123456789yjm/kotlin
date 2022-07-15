@@ -17,30 +17,30 @@ import org.jetbrains.kotlin.fir.types.*
 
 // See .../types/CastDiagnosticsUtil.kt for counterparts, including isRefinementUseless, isExactTypeCast, isUpcast.
 object FirUselessTypeOperationCallChecker : FirTypeOperatorCallChecker() {
-    override fun check(expression: FirTypeOperatorCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirTypeOperatorCall, reporter: DiagnosticReporter) {
         if (expression.operation !in FirOperation.TYPES) return
         val arg = expression.argument
 
-        val candidateType = arg.typeRef.coneType.upperBoundIfFlexible().fullyExpandedType(context.session)
+        val candidateType = arg.typeRef.coneType.upperBoundIfFlexible().fullyExpandedType(session)
         if (candidateType is ConeErrorType) return
 
-        val targetType = expression.conversionTypeRef.coneType.fullyExpandedType(context.session)
+        val targetType = expression.conversionTypeRef.coneType.fullyExpandedType(session)
         if (targetType is ConeErrorType) return
 
         // x as? Type <=> x as Type?
         val refinedTargetType =
             if (expression.operation == FirOperation.SAFE_AS) {
-                targetType.withNullability(ConeNullability.NULLABLE, context.session.typeContext)
+                targetType.withNullability(ConeNullability.NULLABLE, session.typeContext)
             } else {
                 targetType
             }
-        if (isRefinementUseless(context, candidateType, refinedTargetType, shouldCheckForExactType(expression, context), arg)) {
+        if (isRefinementUseless(this, candidateType, refinedTargetType, shouldCheckForExactType(expression, this), arg)) {
             when (expression.operation) {
-                FirOperation.IS -> reporter.reportOn(expression.source, FirErrors.USELESS_IS_CHECK, true, context)
-                FirOperation.NOT_IS -> reporter.reportOn(expression.source, FirErrors.USELESS_IS_CHECK, false, context)
+                FirOperation.IS -> reporter.reportOn(expression.source, FirErrors.USELESS_IS_CHECK, true)
+                FirOperation.NOT_IS -> reporter.reportOn(expression.source, FirErrors.USELESS_IS_CHECK, false)
                 FirOperation.AS, FirOperation.SAFE_AS -> {
                     if ((arg.typeRef as? FirResolvedTypeRef)?.isFromStubType != true) {
-                        reporter.reportOn(expression.source, FirErrors.USELESS_CAST, context)
+                        reporter.reportOn(expression.source, FirErrors.USELESS_CAST)
                     }
                 }
                 else -> throw AssertionError("Should not be here: ${expression.operation}")

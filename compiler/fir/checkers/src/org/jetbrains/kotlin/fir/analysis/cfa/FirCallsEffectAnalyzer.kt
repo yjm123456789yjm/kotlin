@@ -41,8 +41,8 @@ import kotlin.contracts.contract
 
 object FirCallsEffectAnalyzer : FirControlFlowChecker() {
 
-    override fun analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter, context: CheckerContext) {
-        val session = context.session
+    override fun CheckerContext.analyze(graph: ControlFlowGraph, reporter: DiagnosticReporter) {
+        val session = session
         val function = (graph.declaration as? FirFunction) ?: return
         if (function !is FirContractDescriptionOwner) return
         if (function.contractDescription.coneEffects?.any { it is ConeCallsEffectDeclaration } != true) return
@@ -71,9 +71,9 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         )
 
         for ((symbol, leakedPlaces) in leakedSymbols) {
-            reporter.reportOn(function.contractDescription.source, FirErrors.LEAKED_IN_PLACE_LAMBDA, symbol, context)
+            reporter.reportOn(function.contractDescription.source, FirErrors.LEAKED_IN_PLACE_LAMBDA, symbol)
             leakedPlaces.forEach {
-                reporter.reportOn(it, FirErrors.LEAKED_IN_PLACE_LAMBDA, symbol, context)
+                reporter.reportOn(it, FirErrors.LEAKED_IN_PLACE_LAMBDA, symbol)
             }
         }
 
@@ -88,7 +88,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
                 val requiredRange = effectDeclaration.kind
                 val pathAwareInfo = invocationData.getValue(node)
                 for (info in pathAwareInfo.values) {
-                    if (investigate(info, symbol, requiredRange, function, reporter, context)) {
+                    if (this.investigate(info, symbol, requiredRange, function, reporter)) {
                         // To avoid duplicate reports, stop investigating remaining paths once reported.
                         break
                     }
@@ -97,13 +97,12 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
         }
     }
 
-    private fun investigate(
+    private fun CheckerContext.investigate(
         info: LambdaInvocationInfo,
         symbol: FirBasedSymbol<*>,
         requiredRange: EventOccurrencesRange,
         function: FirContractDescriptionOwner,
-        reporter: DiagnosticReporter,
-        context: CheckerContext
+        reporter: DiagnosticReporter
     ): Boolean {
         val foundRange = info[symbol] ?: EventOccurrencesRange.ZERO
         if (foundRange !in requiredRange) {
@@ -112,8 +111,7 @@ object FirCallsEffectAnalyzer : FirControlFlowChecker() {
                 FirErrors.WRONG_INVOCATION_KIND,
                 symbol,
                 requiredRange,
-                foundRange,
-                context
+                foundRange
             )
             return true
         }

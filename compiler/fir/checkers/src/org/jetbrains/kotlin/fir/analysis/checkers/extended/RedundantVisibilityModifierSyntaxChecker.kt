@@ -31,10 +31,9 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 
 object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<FirDeclaration, KtDeclaration>() {
 
-    override fun checkPsiOrLightTree(
+    override fun CheckerContext.checkPsiOrLightTree(
         element: FirDeclaration,
         source: KtSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (element is FirPropertyAccessor) {
@@ -46,8 +45,8 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
         }
 
         when (element) {
-            is FirProperty -> checkPropertyAndReport(element, context, reporter)
-            else -> checkElementAndReport(element, context, reporter)
+            is FirProperty -> checkPropertyAndReport(element, this, reporter)
+            else -> checkElementAndReport(element, this, reporter)
         }
     }
 
@@ -62,7 +61,7 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
             property.setter?.let { setter ->
                 val visibility = setter.implicitVisibility(it)
                 setterImplicitVisibility = visibility
-                checkElementAndReport(setter, visibility, property, it, reporter)
+                it.checkElementAndReport(setter, visibility, property, reporter)
             }
 
             property.getter?.let { getter ->
@@ -97,19 +96,17 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
         containingMemberDeclaration: FirMemberDeclaration?,
         context: CheckerContext,
         reporter: DiagnosticReporter
-    ) = checkElementAndReport(
+    ) = context.checkElementAndReport(
         element,
         element.implicitVisibility(context),
         containingMemberDeclaration,
-        context,
         reporter
     )
 
-    private fun checkElementAndReport(
+    private fun CheckerContext.checkElementAndReport(
         element: FirDeclaration,
         implicitVisibility: Visibility,
         containingMemberDeclaration: FirMemberDeclaration?,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (element.source?.kind is KtFakeSourceElementKind) {
@@ -117,9 +114,9 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
         }
 
         val isAccessorWithSameVisibility = element is FirPropertyAccessor
-                && element.visibility == context.containingPropertyVisibility
+                && element.visibility == containingPropertyVisibility
 
-        if (element !is FirMemberDeclaration && !isAccessorWithSameVisibility) {
+        if (element !is FirMemberDeclaration) {
             return
         }
 
@@ -130,7 +127,7 @@ object RedundantVisibilityModifierSyntaxChecker : FirDeclarationSyntaxChecker<Fi
             return
         }
 
-        reporter.reportOn(element.source, FirErrors.REDUNDANT_VISIBILITY_MODIFIER, context)
+        reporter.reportOn(element.source, FirErrors.REDUNDANT_VISIBILITY_MODIFIER)
     }
 
     private fun FirProperty.canMakeSetterMoreAccessible(setterImplicitVisibility: Visibility?): Boolean {

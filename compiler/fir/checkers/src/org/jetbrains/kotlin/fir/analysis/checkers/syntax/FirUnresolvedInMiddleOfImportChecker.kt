@@ -24,19 +24,19 @@ import org.jetbrains.kotlin.name.ClassId
 import org.jetbrains.kotlin.psi.KtFile
 
 object FirUnresolvedInMiddleOfImportChecker : FirDeclarationSyntaxChecker<FirFile, KtFile>() {
-    override fun checkPsiOrLightTree(element: FirFile, source: KtSourceElement, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.checkPsiOrLightTree(element: FirFile, source: KtSourceElement, reporter: DiagnosticReporter) {
         for (import in element.imports) {
-            if (import is FirErrorImport) processErrorImport(import, context, reporter)
+            if (import is FirErrorImport) this.processErrorImport(import, reporter)
         }
     }
 
-    private fun processErrorImport(import: FirErrorImport, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.processErrorImport(import: FirErrorImport, reporter: DiagnosticReporter) {
         when (val diagnostic = import.diagnostic) {
             is ConeUnresolvedParentInImport -> {
                 val source = import.source ?: return
                 var segmentSource: KtSourceElement? = source.dotQualifiedExpression() ?: return
 
-                val symbolProvider = context.session.symbolProvider
+                val symbolProvider = session.symbolProvider
                 val parentClassId = diagnostic.parentClassId
 
                 if (import.isAllUnder && isClassIdPointingToEnumEntry(parentClassId, symbolProvider)) {
@@ -45,8 +45,7 @@ object FirUnresolvedInMiddleOfImportChecker : FirDeclarationSyntaxChecker<FirFil
                     reporter.reportOn(
                         source,
                         FirErrors.CANNOT_ALL_UNDER_IMPORT_FROM_SINGLETON,
-                        parentClassId.shortClassName,
-                        context,
+                        parentClassId.shortClassName
                     )
                     return
                 }
@@ -69,8 +68,7 @@ object FirUnresolvedInMiddleOfImportChecker : FirDeclarationSyntaxChecker<FirFil
                 reporter.reportOn(
                     unresolvedSource,
                     FirErrors.UNRESOLVED_IMPORT,
-                    parentClassId.getOutermostClassName(),
-                    context,
+                    parentClassId.getOutermostClassName()
                 )
             }
             else -> {

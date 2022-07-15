@@ -38,9 +38,9 @@ import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 
 object FirParcelizeClassChecker : FirClassChecker() {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkParcelableClass(declaration, context, reporter)
-        checkParcelerClass(declaration, context, reporter)
+    override fun CheckerContext.check(declaration: FirClass, reporter: DiagnosticReporter) {
+        checkParcelableClass(declaration, this, reporter)
+        this.checkParcelerClass(declaration, reporter)
     }
 
     private fun checkParcelableClass(klass: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
@@ -102,17 +102,17 @@ object FirParcelizeClassChecker : FirClassChecker() {
         }
     }
 
-    private fun checkParcelerClass(klass: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkParcelerClass(klass: FirClass, reporter: DiagnosticReporter) {
         if (klass !is FirRegularClass || klass.isCompanion) return
         for (superTypeRef in klass.superTypeRefs) {
-            withSuppressedDiagnostics(superTypeRef, context) {
+            withSuppressedDiagnostics(superTypeRef) {
                 if (superTypeRef.coneType.classId == OLD_PARCELER_ID) {
                     val strategy = if (klass.name == SpecialNames.NO_NAME_PROVIDED) {
                         SourceElementPositioningStrategies.OBJECT_KEYWORD
                     } else {
                         SourceElementPositioningStrategies.NAME_IDENTIFIER
                     }
-                    reporter.reportOn(klass.source, KtErrorsParcelize.DEPRECATED_PARCELER, it, positioningStrategy = strategy)
+                    reporter.reportOn(klass.source, KtErrorsParcelize.DEPRECATED_PARCELER, this, positioningStrategy = strategy)
                 }
             }
         }

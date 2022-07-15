@@ -18,17 +18,17 @@ import org.jetbrains.kotlin.fir.types.toSymbol
 import org.jetbrains.kotlin.fir.types.visibilityForApproximation
 
 object FirAmbiguousAnonymousTypeChecker : FirCallableDeclarationChecker() {
-    override fun check(declaration: FirCallableDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirCallableDeclaration, reporter: DiagnosticReporter) {
         if (declaration !is FirSimpleFunction && declaration !is FirProperty) return
-        if (context.containingDeclarations.any { it.isLocalMember || it is FirAnonymousObject }) return
+        if (containingDeclarations.any { it.isLocalMember || it is FirAnonymousObject }) return
 
         if (!shouldHideLocalType(
-                declaration.visibilityForApproximation(context.containingDeclarations.lastOrNull()),
+                declaration.visibilityForApproximation(containingDeclarations.lastOrNull()),
                 declaration.isInline
             )
         ) return
 
-        val classSymbol = declaration.returnTypeRef.coneType.toSymbol(context.session) ?: return
+        val classSymbol = declaration.returnTypeRef.coneType.toSymbol(session) ?: return
         if (classSymbol is FirAnonymousObjectSymbol) {
             // Any anonymous object that has only one super type is already approximated to the super type by
             // org.jetbrains.kotlin.fir.types.TypeUtilsKt#hideLocalTypeIfNeeded. Hence, any remaining anonymous object must have more than
@@ -36,8 +36,7 @@ object FirAmbiguousAnonymousTypeChecker : FirCallableDeclarationChecker() {
             reporter.reportOn(
                 declaration.source,
                 FirErrors.AMBIGUOUS_ANONYMOUS_TYPE_INFERRED,
-                classSymbol.resolvedSuperTypeRefs.map { it.coneType },
-                context
+                classSymbol.resolvedSuperTypeRefs.map { it.coneType }
             )
         }
     }

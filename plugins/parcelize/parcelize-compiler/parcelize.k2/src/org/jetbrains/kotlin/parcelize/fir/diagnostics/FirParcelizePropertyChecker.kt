@@ -29,28 +29,28 @@ import org.jetbrains.kotlin.parcelize.ParcelizeNames.IGNORED_ON_PARCEL_CLASS_IDS
 import org.jetbrains.kotlin.parcelize.ParcelizeNames.PARCELER_ID
 
 object FirParcelizePropertyChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
-        val containingClassSymbol = declaration.dispatchReceiverType?.toRegularClassSymbol(context.session) ?: return
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
+        val containingClassSymbol = declaration.dispatchReceiverType?.toRegularClassSymbol(session) ?: return
 
-        if (containingClassSymbol.isParcelize(context.session)) {
+        if (containingClassSymbol.isParcelize(session)) {
             val fromPrimaryConstructor = declaration.fromPrimaryConstructor ?: false
             if (
                 !fromPrimaryConstructor &&
                 (declaration.hasBackingField || declaration.delegate != null) &&
                 !declaration.hasIgnoredOnParcel() &&
-                !containingClassSymbol.hasCustomParceler(context.session)
+                !containingClassSymbol.hasCustomParceler(session)
             ) {
-                reporter.reportOn(declaration.source, KtErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED, context)
+                reporter.reportOn(declaration.source, KtErrorsParcelize.PROPERTY_WONT_BE_SERIALIZED, this)
             }
             if (fromPrimaryConstructor) {
-                checkParcelableClassProperty(declaration, containingClassSymbol, context, reporter)
+                checkParcelableClassProperty(declaration, containingClassSymbol, this, reporter)
             }
         }
 
         if (declaration.name == CREATOR_NAME && containingClassSymbol.isCompanion && declaration.hasJvmFieldAnnotation) {
-            val outerClass = context.containingDeclarations.asReversed().getOrNull(1) as? FirRegularClass
-            if (outerClass != null && outerClass.symbol.isParcelize(context.session)) {
-                reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, context)
+            val outerClass = containingDeclarations.asReversed().getOrNull(1) as? FirRegularClass
+            if (outerClass != null && outerClass.symbol.isParcelize(session)) {
+                reporter.reportOn(declaration.source, KtErrorsParcelize.CREATOR_DEFINITION_IS_NOT_ALLOWED, this)
             }
         }
     }

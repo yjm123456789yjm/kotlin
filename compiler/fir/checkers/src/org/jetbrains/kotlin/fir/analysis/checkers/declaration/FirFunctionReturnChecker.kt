@@ -20,15 +20,7 @@ import org.jetbrains.kotlin.fir.types.isUnit
 
 object FirFunctionReturnChecker : FirFunctionChecker() {
 
-    override fun check(declaration: FirFunction, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkHasReturnIfBlock(declaration, reporter, context)
-    }
-
-    private fun checkHasReturnIfBlock(
-        declaration: FirFunction,
-        reporter: DiagnosticReporter,
-        context: CheckerContext
-    ) {
+    override fun CheckerContext.check(declaration: FirFunction, reporter: DiagnosticReporter) {
         if (declaration is FirPropertyAccessor && declaration.isSetter) return
         if (declaration is FirConstructor) return
         if (declaration is FirAnonymousFunction && declaration.isLambda) return
@@ -37,7 +29,7 @@ object FirFunctionReturnChecker : FirFunctionChecker() {
 
         val blockExitNode = graph.exitNode.previousNodes.lastOrNull { it is BlockExitNode } ?: return
         if (!blockExitNode.isDead) {
-            reporter.reportOn(declaration.source, FirErrors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY, context)
+            reporter.reportOn(declaration.source, FirErrors.NO_RETURN_IN_FUNCTION_WITH_BLOCK_BODY)
         }
     }
 }

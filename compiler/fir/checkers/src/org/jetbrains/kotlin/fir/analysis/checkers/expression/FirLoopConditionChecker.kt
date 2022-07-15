@@ -13,11 +13,11 @@ import org.jetbrains.kotlin.fir.expressions.FirErrorLoop
 import org.jetbrains.kotlin.fir.expressions.FirLoop
 
 object FirLoopConditionChecker : FirLoopExpressionChecker() {
-    override fun check(expression: FirLoop, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirLoop, reporter: DiagnosticReporter) {
         if (expression is FirErrorLoop) return
         val condition = expression.condition
-        withSuppressedDiagnostics(condition, context) {
-            checkCondition(condition, it, reporter)
+        this.withSuppressedDiagnostics(condition) {
+            checkCondition(condition, reporter)
         }
     }
 }

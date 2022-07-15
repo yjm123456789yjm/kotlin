@@ -24,13 +24,12 @@ import org.jetbrains.kotlin.fir.resolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 
 object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
-    override fun analyze(
+    override fun CheckerContext.analyze(
         graph: ControlFlowGraph,
         reporter: DiagnosticReporter,
         data: Map<CFGNode<*>, PathAwarePropertyInitializationInfo>,
         properties: Set<FirPropertySymbol>,
-        capturedWrites: Set<FirVariableAssignment>,
-        context: CheckerContext
+        capturedWrites: Set<FirVariableAssignment>
     ) {
         val unprocessedProperties = mutableSetOf<FirPropertySymbol>()
         val propertiesCharacteristics = mutableMapOf<FirPropertySymbol, EventOccurrencesRange>()
@@ -61,14 +60,14 @@ object CanBeValChecker : AbstractFirPropertyInitializationChecker() {
             if (lastDestructuringSource != null) {
                 // if this is the last variable in destructuring declaration and destructuringCanBeVal == true and it can be val
                 if (lastDestructuredVariables == 1 && destructuringCanBeVal && canBeVal(symbol, value)) {
-                    reporter.reportOn(lastDestructuringSource, FirErrors.CAN_BE_VAL, context)
+                    reporter.reportOn(lastDestructuringSource, FirErrors.CAN_BE_VAL)
                     lastDestructuringSource = null
                 } else if (!canBeVal(symbol, value)) {
                     destructuringCanBeVal = false
                 }
                 lastDestructuredVariables--
             } else if (canBeVal(symbol, value) && !symbol.hasDelegate) {
-                reporter.reportOn(source, FirErrors.CAN_BE_VAL, context)
+                reporter.reportOn(source, FirErrors.CAN_BE_VAL)
             }
         }
     }

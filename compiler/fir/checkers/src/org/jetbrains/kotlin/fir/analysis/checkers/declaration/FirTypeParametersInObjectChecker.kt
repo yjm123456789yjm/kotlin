@@ -19,23 +19,23 @@ import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.languageVersionSettings
 
 object FirTypeParametersInObjectChecker : FirClassChecker() {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirClass, reporter: DiagnosticReporter) {
         if (declaration.classKind != ClassKind.OBJECT) {
             return
         }
 
         when (declaration) {
             is FirRegularClass -> if (declaration.typeParameters.isNotEmpty()) {
-                reporter.reportOn(declaration.source, FirErrors.TYPE_PARAMETERS_IN_OBJECT, context)
+                reporter.reportOn(declaration.source, FirErrors.TYPE_PARAMETERS_IN_OBJECT)
             }
             is FirAnonymousObject -> if (declaration.source?.getChild(KtNodeTypes.TYPE_PARAMETER_LIST, depth = 1) != null) {
                 val diagnosticFactory =
-                    if (context.session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitTypeParametersInAnonymousObjects)) {
+                    if (session.languageVersionSettings.supportsFeature(LanguageFeature.ProhibitTypeParametersInAnonymousObjects)) {
                         FirErrors.TYPE_PARAMETERS_IN_OBJECT
                     } else {
                         FirErrors.TYPE_PARAMETERS_IN_ANONYMOUS_OBJECT
                     }
-                reporter.reportOn(declaration.source, diagnosticFactory, context)
+                reporter.reportOn(declaration.source, diagnosticFactory)
             }
         }
     }

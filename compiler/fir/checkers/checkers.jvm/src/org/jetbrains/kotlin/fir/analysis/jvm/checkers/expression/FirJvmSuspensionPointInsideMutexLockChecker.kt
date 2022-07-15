@@ -22,12 +22,12 @@ object FirJvmSuspensionPointInsideMutexLockChecker : FirFunctionCallChecker() {
     private val synchronizedCallableId = CallableId(FqName("kotlin"), Name.identifier("synchronized"))
     private val withLockCallableId = CallableId(FqName("kotlin.concurrent"), Name.identifier("withLock"))
 
-    override fun check(expression: FirFunctionCall, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirFunctionCall, reporter: DiagnosticReporter) {
         val symbol = expression.calleeReference.toResolvedCallableSymbol() ?: return
         if (!symbol.isSuspend) return
-        val closestAnonymousFunction = context.findClosest<FirAnonymousFunction>() ?: return
+        val closestAnonymousFunction = findClosest<FirAnonymousFunction>() ?: return
 
-        for (call in context.qualifiedAccessOrAnnotationCalls.asReversed()) {
+        for (call in qualifiedAccessOrAnnotationCalls.asReversed()) {
             if (call is FirFunctionCall) {
                 val callableSymbol = call.calleeReference.toResolvedCallableSymbol() ?: continue
                 if (callableSymbol.callableId == synchronizedCallableId) {
@@ -36,11 +36,11 @@ object FirJvmSuspensionPointInsideMutexLockChecker : FirFunctionCallChecker() {
                         (unwrappedFirstArgument as? FirAnonymousFunctionExpression)?.anonymousFunction ?: return
 
                     if (closestAnonymousFunction == firstArgumentAnonymousFunction) {
-                        reporter.reportOn(expression.source, FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION, symbol, context)
+                        reporter.reportOn(expression.source, FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION, symbol)
                     }
                     return
                 } else if (callableSymbol.callableId == withLockCallableId) {
-                    reporter.reportOn(expression.source, FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION, symbol, context)
+                    reporter.reportOn(expression.source, FirJvmErrors.SUSPENSION_POINT_INSIDE_CRITICAL_SECTION, symbol)
                     return
                 }
             }

@@ -24,24 +24,24 @@ import org.jetbrains.kotlin.utils.addToStdlib.lastIsInstanceOrNull
 
 /** Checker on super type declarations in the primary constructor of a class declaration. */
 object FirPrimaryConstructorSuperTypeChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         if (declaration.isInterface) {
             with(SourceNavigator.forElement(declaration)) {
                 for (superTypeRef in declaration.superTypeRefs) {
                     if (superTypeRef.isInConstructorCallee()) {
-                        reporter.reportOnWithSuppression(superTypeRef, FirErrors.SUPERTYPE_INITIALIZED_IN_INTERFACE, context)
+                        reporter.reportOnWithSuppression(superTypeRef, FirErrors.SUPERTYPE_INITIALIZED_IN_INTERFACE, this@check)
                     }
                 }
             }
             return
         }
 
-        val primaryConstructorSymbol = declaration.primaryConstructorIfAny(context.session)
+        val primaryConstructorSymbol = declaration.primaryConstructorIfAny(session)
 
         if (primaryConstructorSymbol == null) {
-            checkSupertypeInitializedWithoutPrimaryConstructor(declaration, reporter, context)
+            checkSupertypeInitializedWithoutPrimaryConstructor(declaration, reporter)
         } else {
-            checkSuperTypeNotInitialized(primaryConstructorSymbol, declaration, context, reporter)
+            checkSuperTypeNotInitialized(primaryConstructorSymbol, declaration, reporter)
         }
     }
 
@@ -54,22 +54,21 @@ object FirPrimaryConstructorSuperTypeChecker : FirRegularClassChecker() {
      *  class B : <!SUPERTYPE_NOT_INITIALIZED>A<!>
      *  ```
      */
-    private fun checkSuperTypeNotInitialized(
+    private fun CheckerContext.checkSuperTypeNotInitialized(
         primaryConstructorSymbol: FirConstructorSymbol,
         regularClass: FirRegularClass,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
-        val containingClass = context.containingDeclarations.lastIsInstanceOrNull<FirRegularClass>()
+        val containingClass = containingDeclarations.lastIsInstanceOrNull<FirRegularClass>()
         val delegatedConstructorCall = primaryConstructorSymbol.resolvedDelegatedConstructorCall ?: return
         // No need to check implicit call to the constructor of `kotlin.Any`.
         val constructedTypeRef = delegatedConstructorCall.constructedTypeRef
         if (constructedTypeRef is FirImplicitAnyTypeRef) return
-        val superClassSymbol = constructedTypeRef.coneType.toRegularClassSymbol(context.session) ?: return
+        val superClassSymbol = constructedTypeRef.coneType.toRegularClassSymbol(session) ?: return
         // Subclassing a singleton should be reported as SINGLETON_IN_SUPERTYPE
         if (superClassSymbol.classKind.isSingleton) return
-        if (regularClass.isEffectivelyExpect(containingClass, context) ||
-            regularClass.isEffectivelyExternal(containingClass, context)
+        if (regularClass.isEffectivelyExpect(containingClass, this) ||
+            regularClass.isEffectivelyExternal(containingClass, this)
         ) {
             return
         }
@@ -77,7 +76,7 @@ object FirPrimaryConstructorSuperTypeChecker : FirRegularClassChecker() {
         if (delegatedCallSource.kind !is KtFakeSourceElementKind) return
         if (superClassSymbol.classId == StandardClassIds.Enum) return
         if (delegatedCallSource.elementType != KtNodeTypes.SUPER_TYPE_CALL_ENTRY) {
-            reporter.reportOn(constructedTypeRef.source, FirErrors.SUPERTYPE_NOT_INITIALIZED, context)
+            reporter.reportOn(constructedTypeRef.source, FirErrors.SUPERTYPE_NOT_INITIALIZED)
         }
     }
 
@@ -94,15 +93,14 @@ object FirPrimaryConstructorSuperTypeChecker : FirRegularClassChecker() {
      * }
      * ```
      */
-    private fun checkSupertypeInitializedWithoutPrimaryConstructor(
+    private fun CheckerContext.checkSupertypeInitializedWithoutPrimaryConstructor(
         regularClass: FirRegularClass,
-        reporter: DiagnosticReporter,
-        context: CheckerContext
+        reporter: DiagnosticReporter
     ) {
         with(SourceNavigator.forElement(regularClass)) {
             for (superTypeRef in regularClass.superTypeRefs) {
                 if (superTypeRef.isInConstructorCallee()) {
-                    reporter.reportOn(regularClass.source, FirErrors.SUPERTYPE_INITIALIZED_WITHOUT_PRIMARY_CONSTRUCTOR, context)
+                    reporter.reportOn(regularClass.source, FirErrors.SUPERTYPE_INITIALIZED_WITHOUT_PRIMARY_CONSTRUCTOR)
                 }
             }
         }

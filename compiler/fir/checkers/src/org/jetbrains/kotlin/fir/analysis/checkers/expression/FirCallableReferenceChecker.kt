@@ -22,16 +22,15 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirCallableSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirConstructorSymbol
 
 object FirCallableReferenceChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         if (expression !is FirCallableReferenceAccess) return
 
-        checkReferenceIsToAllowedMember(expression, context, reporter)
+        checkReferenceIsToAllowedMember(expression, reporter)
     }
 
     // See FE 1.0 [DoubleColonExpressionResolver#checkReferenceIsToAllowedMember]
-    private fun checkReferenceIsToAllowedMember(
+    private fun CheckerContext.checkReferenceIsToAllowedMember(
         callableReferenceAccess: FirCallableReferenceAccess,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         // UNRESOLVED_REFERENCE will be reported separately.
@@ -41,13 +40,13 @@ object FirCallableReferenceChecker : FirQualifiedAccessExpressionChecker() {
         if (source.kind is KtFakeSourceElementKind) return
 
         val referredSymbol = reference.resolvedSymbol
-        if (referredSymbol is FirConstructorSymbol && referredSymbol.getContainingClassSymbol(context.session)?.classKind == ClassKind.ANNOTATION_CLASS) {
-            reporter.reportOn(source, FirErrors.CALLABLE_REFERENCE_TO_ANNOTATION_CONSTRUCTOR, context)
+        if (referredSymbol is FirConstructorSymbol && referredSymbol.getContainingClassSymbol(session)?.classKind == ClassKind.ANNOTATION_CLASS) {
+            reporter.reportOn(source, FirErrors.CALLABLE_REFERENCE_TO_ANNOTATION_CONSTRUCTOR)
         }
         if ((referredSymbol as? FirCallableSymbol<*>)?.isExtensionMember == true &&
             !referredSymbol.isLocalMember
         ) {
-            reporter.reportOn(source, FirErrors.EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED, referredSymbol, context)
+            reporter.reportOn(source, FirErrors.EXTENSION_IN_CLASS_REFERENCE_NOT_ALLOWED, referredSymbol)
         }
     }
 }

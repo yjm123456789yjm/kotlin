@@ -25,23 +25,23 @@ import org.jetbrains.kotlin.fir.types.coneType
 import org.jetbrains.kotlin.fir.types.isUnit
 
 object FirPropertyAccessorsTypesChecker : FirPropertyChecker() {
-    override fun check(declaration: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
-        checkGetter(declaration, context, reporter)
-        checkSetter(declaration, context, reporter)
+    override fun CheckerContext.check(declaration: FirProperty, reporter: DiagnosticReporter) {
+        checkGetter(declaration, reporter)
+        checkSetter(declaration, reporter)
     }
 
-    private fun checkGetter(property: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkGetter(property: FirProperty, reporter: DiagnosticReporter) {
         val getter = property.getter ?: return
         val propertyType = property.returnTypeRef.coneType
 
-        withSuppressedDiagnostics(getter, context) { ctx ->
-            checkAccessorForDelegatedProperty(property, getter, ctx, reporter)
+        withSuppressedDiagnostics(getter) {
+            checkAccessorForDelegatedProperty(property, getter, reporter)
             if (getter.visibility != property.visibility) {
-                reporter.reportOn(getter.source, FirErrors.GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY, ctx)
+                reporter.reportOn(getter.source, FirErrors.GETTER_VISIBILITY_DIFFERS_FROM_PROPERTY_VISIBILITY)
             }
             if (property.symbol.callableId.classId != null && getter.body != null && property.delegate == null) {
-                if (isLegallyAbstract(property, ctx)) {
-                    reporter.reportOn(getter.source, FirErrors.ABSTRACT_PROPERTY_WITH_GETTER, ctx)
+                if (isLegallyAbstract(property, this)) {
+                    reporter.reportOn(getter.source, FirErrors.ABSTRACT_PROPERTY_WITH_GETTER)
                 }
             }
             val getterReturnTypeRef = getter.returnTypeRef
@@ -54,37 +54,37 @@ object FirPropertyAccessorsTypesChecker : FirPropertyChecker() {
             }
             if (getterReturnType != property.returnTypeRef.coneType) {
                 val getterReturnTypeSource = getterReturnTypeRef.source
-                withSuppressedDiagnostics(getterReturnTypeRef, ctx) {
-                    reporter.reportOn(getterReturnTypeSource, FirErrors.WRONG_GETTER_RETURN_TYPE, propertyType, getterReturnType, it)
+                withSuppressedDiagnostics(getterReturnTypeRef) {
+                    reporter.reportOn(getterReturnTypeSource, FirErrors.WRONG_GETTER_RETURN_TYPE, propertyType, getterReturnType)
                 }
             }
         }
     }
 
-    private fun checkSetter(property: FirProperty, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkSetter(property: FirProperty, reporter: DiagnosticReporter) {
         val setter = property.setter ?: return
         val propertyType = property.returnTypeRef.coneType
 
-        withSuppressedDiagnostics(setter, context) { ctx ->
+        withSuppressedDiagnostics(setter) {
             if (property.isVal) {
-                reporter.reportOn(setter.source, FirErrors.VAL_WITH_SETTER, ctx)
+                reporter.reportOn(setter.source, FirErrors.VAL_WITH_SETTER)
             }
-            checkAccessorForDelegatedProperty(property, setter, ctx, reporter)
+            checkAccessorForDelegatedProperty(property, setter, reporter)
             val visibilityCompareResult = setter.visibility.compareTo(property.visibility)
             if (visibilityCompareResult == null || visibilityCompareResult > 0) {
-                reporter.reportOn(setter.source, FirErrors.SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY, ctx)
+                reporter.reportOn(setter.source, FirErrors.SETTER_VISIBILITY_INCONSISTENT_WITH_PROPERTY_VISIBILITY)
             }
             if (property.symbol.callableId.classId != null && property.delegate == null) {
-                val isLegallyAbstract = isLegallyAbstract(property, ctx)
+                val isLegallyAbstract = isLegallyAbstract(property, this)
                 if (setter.visibility == Visibilities.Private && property.visibility != Visibilities.Private) {
                     if (isLegallyAbstract) {
-                        reporter.reportOn(setter.source, FirErrors.PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY, ctx)
+                        reporter.reportOn(setter.source, FirErrors.PRIVATE_SETTER_FOR_ABSTRACT_PROPERTY)
                     } else if (property.isOpen) {
-                        reporter.reportOn(setter.source, FirErrors.PRIVATE_SETTER_FOR_OPEN_PROPERTY, ctx)
+                        reporter.reportOn(setter.source, FirErrors.PRIVATE_SETTER_FOR_OPEN_PROPERTY)
                     }
                 }
                 if (isLegallyAbstract && setter.body != null) {
-                    reporter.reportOn(setter.source, FirErrors.ABSTRACT_PROPERTY_WITH_SETTER, ctx)
+                    reporter.reportOn(setter.source, FirErrors.ABSTRACT_PROPERTY_WITH_SETTER)
                 }
             }
 
@@ -99,31 +99,30 @@ object FirPropertyAccessorsTypesChecker : FirPropertyChecker() {
             }
 
             if (valueSetterType != propertyType) {
-                withSuppressedDiagnostics(valueSetterParameter, ctx) {
-                    reporter.reportOn(valueSetterTypeSource, FirErrors.WRONG_SETTER_PARAMETER_TYPE, propertyType, valueSetterType, ctx)
+                withSuppressedDiagnostics(valueSetterParameter) {
+                    reporter.reportOn(valueSetterTypeSource, FirErrors.WRONG_SETTER_PARAMETER_TYPE, propertyType, valueSetterType)
                 }
             }
 
             val setterReturnType = setter.returnTypeRef.coneType
 
             if (!setterReturnType.isUnit) {
-                withSuppressedDiagnostics(setter.returnTypeRef, ctx) {
-                    reporter.reportOn(setter.returnTypeRef.source, FirErrors.WRONG_SETTER_RETURN_TYPE, ctx)
+                withSuppressedDiagnostics(setter.returnTypeRef) {
+                    reporter.reportOn(setter.returnTypeRef.source, FirErrors.WRONG_SETTER_RETURN_TYPE)
                 }
             }
         }
     }
 
-    private fun checkAccessorForDelegatedProperty(
+    private fun CheckerContext.checkAccessorForDelegatedProperty(
         property: FirProperty,
         accessor: FirPropertyAccessor,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (property.delegateFieldSymbol != null && accessor.body != null &&
             accessor.source?.kind != KtFakeSourceElementKind.DelegatedPropertyAccessor
         ) {
-            reporter.reportOn(accessor.source, FirErrors.ACCESSOR_FOR_DELEGATED_PROPERTY, context)
+            reporter.reportOn(accessor.source, FirErrors.ACCESSOR_FOR_DELEGATED_PROPERTY)
         }
     }
 

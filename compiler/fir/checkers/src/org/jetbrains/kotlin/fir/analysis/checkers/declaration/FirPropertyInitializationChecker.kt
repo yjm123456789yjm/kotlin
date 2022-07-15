@@ -25,7 +25,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirPropertyInitializationChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         val properties = mutableSetOf<FirPropertySymbol>()
         val toReport = mutableSetOf<FirVariableAssignment>()
         for (decl in declaration.declarations.asReversed()) {
@@ -41,7 +41,7 @@ object FirPropertyInitializationChecker : FirRegularClassChecker() {
         }
         toReport.forEach { exp ->
             val propertySymbol = exp.lValue.toResolvedCallableSymbol() ?: return@forEach
-            reporter.reportOn(exp.lValue.source, FirErrors.INITIALIZATION_BEFORE_DECLARATION, propertySymbol, context)
+            reporter.reportOn(exp.lValue.source, FirErrors.INITIALIZATION_BEFORE_DECLARATION, propertySymbol)
         }
     }
 

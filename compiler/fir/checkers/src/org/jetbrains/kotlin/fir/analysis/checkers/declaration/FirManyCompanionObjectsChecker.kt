@@ -9,17 +9,18 @@ import org.jetbrains.kotlin.fir.analysis.checkers.context.CheckerContext
 import org.jetbrains.kotlin.diagnostics.DiagnosticReporter
 import org.jetbrains.kotlin.fir.analysis.diagnostics.FirErrors
 import org.jetbrains.kotlin.diagnostics.reportOn
+import org.jetbrains.kotlin.fir.analysis.diagnostics.reportOnWithSuppression
 import org.jetbrains.kotlin.fir.declarations.FirRegularClass
 import org.jetbrains.kotlin.fir.declarations.utils.isCompanion
 
 object FirManyCompanionObjectsChecker : FirRegularClassChecker() {
-    override fun check(declaration: FirRegularClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirRegularClass, reporter: DiagnosticReporter) {
         var hasCompanion = false
 
-        for (it in declaration.declarations) {
-            if (it is FirRegularClass && it.isCompanion) {
+        for (declaration in declaration.declarations) {
+            if (declaration is FirRegularClass && declaration.isCompanion) {
                 if (hasCompanion) {
-                    reporter.reportOn(it.source, FirErrors.MANY_COMPANION_OBJECTS, context)
+                    reporter.reportOnWithSuppression(declaration, FirErrors.MANY_COMPANION_OBJECTS, this)
                 }
                 hasCompanion = true
             }

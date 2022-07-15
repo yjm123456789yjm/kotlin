@@ -20,29 +20,29 @@ import org.jetbrains.kotlin.fir.types.isBuiltinFunctionalType
 import org.jetbrains.kotlin.name.StandardClassIds
 
 object FirTypeAnnotationChecker : FirTypeRefChecker() {
-    override fun check(typeRef: FirTypeRef, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(typeRef: FirTypeRef, reporter: DiagnosticReporter) {
         if (typeRef !is FirResolvedTypeRef) return
 
         for (annotation in typeRef.annotations) {
-            withSuppressedDiagnostics(annotation, context) {
-                val annotationTargets = annotation.getAllowedAnnotationTargets(context.session)
+            withSuppressedDiagnostics(annotation) {
+                val annotationTargets = annotation.getAllowedAnnotationTargets(session)
                 if (KotlinTarget.TYPE !in annotationTargets) {
                     val useSiteTarget = annotation.useSiteTarget
                     if (useSiteTarget == null || KotlinTarget.USE_SITE_MAPPING[useSiteTarget] !in annotationTargets) {
-                        reporter.reportOn(annotation.source, FirErrors.WRONG_ANNOTATION_TARGET, "type usage", it)
+                        reporter.reportOn(annotation.source, FirErrors.WRONG_ANNOTATION_TARGET, "type usage")
                     }
                 }
             }
             if (annotation.classId == StandardClassIds.Annotations.ExtensionFunctionType) {
-                if (!typeRef.type.isBuiltinFunctionalType(context.session)) {
-                    if (context.languageVersionSettings.supportsFeature(LanguageFeature.ForbidExtensionFunctionTypeOnNonFunctionTypes)) {
-                        reporter.reportOn(annotation.source, FirErrors.WRONG_EXTENSION_FUNCTION_TYPE, context)
+                if (!typeRef.type.isBuiltinFunctionalType(session)) {
+                    if (languageVersionSettings.supportsFeature(LanguageFeature.ForbidExtensionFunctionTypeOnNonFunctionTypes)) {
+                        reporter.reportOn(annotation.source, FirErrors.WRONG_EXTENSION_FUNCTION_TYPE)
                     } else {
-                        reporter.reportOn(annotation.source, FirErrors.WRONG_EXTENSION_FUNCTION_TYPE_WARNING, context)
+                        reporter.reportOn(annotation.source, FirErrors.WRONG_EXTENSION_FUNCTION_TYPE_WARNING)
                     }
 
                 } else if (typeRef.type.typeArguments.size <= 1) {
-                    reporter.reportOn(annotation.source, FirErrors.WRONG_EXTENSION_FUNCTION_TYPE, context)
+                    reporter.reportOn(annotation.source, FirErrors.WRONG_EXTENSION_FUNCTION_TYPE)
                 }
             }
         }

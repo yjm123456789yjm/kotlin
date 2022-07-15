@@ -32,7 +32,7 @@ import org.jetbrains.kotlin.name.StandardClassIds
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 object FirJvmStaticChecker : FirBasicDeclarationChecker() {
-    override fun check(declaration: FirDeclaration, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirDeclaration, reporter: DiagnosticReporter) {
         if (declaration is FirConstructor) {
             // WRONG_DECLARATION_TARGET
             return
@@ -45,7 +45,7 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
         val declarationAnnotation = declaration.findAnnotation(StandardClassIds.Annotations.JvmStatic)
 
         if (declarationAnnotation != null) {
-            checkAnnotated(declaration, context, reporter, declaration.source)
+            checkAnnotated(declaration, this, reporter, declaration.source)
         }
 
         fun checkIfAnnotated(it: FirDeclaration) {
@@ -53,7 +53,7 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
                 return
             }
             val targetSource = it.source ?: declaration.source
-            checkAnnotated(it, context, reporter, targetSource, declaration as? FirProperty)
+            checkAnnotated(it, this, reporter, targetSource, declaration as? FirProperty)
         }
 
         if (declaration is FirProperty) {
@@ -81,24 +81,23 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
             container.classKind != ClassKind.OBJECT ||
             !container.isCompanion() && containerIsAnonymous
         ) {
-            reportStaticNotInProperObject(context, reporter, supportsJvmStaticInInterface, targetSource)
+            context.reportStaticNotInProperObject(reporter, supportsJvmStaticInInterface, targetSource)
         } else if (
             container.isCompanion() &&
             context.containerIsInterface(1)
         ) {
             if (supportsJvmStaticInInterface) {
-                checkForInterface(declaration, context, reporter, targetSource)
+                context.checkForInterface(declaration, reporter, targetSource)
             } else {
-                reportStaticNotInProperObject(context, reporter, supportsJvmStaticInInterface, targetSource)
+                context.reportStaticNotInProperObject(reporter, supportsJvmStaticInInterface, targetSource)
             }
         }
 
-        checkOverrideCannotBeStatic(declaration, context, reporter, targetSource, outerProperty)
-        checkStaticOnConstOrJvmField(declaration, context, reporter, targetSource)
+        context.checkOverrideCannotBeStatic(declaration, reporter, targetSource, outerProperty)
+        context.checkStaticOnConstOrJvmField(declaration, reporter, targetSource)
     }
 
-    private fun reportStaticNotInProperObject(
-        context: CheckerContext,
+    private fun CheckerContext.reportStaticNotInProperObject(
         reporter: DiagnosticReporter,
         supportsJvmStaticInInterface: Boolean,
         targetSource: KtSourceElement?,
@@ -109,12 +108,11 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
             FirJvmErrors.JVM_STATIC_NOT_IN_OBJECT_OR_CLASS_COMPANION
         }
 
-        reporter.reportOn(targetSource, properDiagnostic, context)
+        reporter.reportOn(targetSource, properDiagnostic)
     }
 
-    private fun checkForInterface(
+    private fun CheckerContext.checkForInterface(
         declaration: FirDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         targetSource: KtSourceElement?,
     ) {
@@ -135,9 +133,9 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
         }
 
         if (visibility != Visibilities.Public) {
-            reporter.reportOn(targetSource, FirJvmErrors.JVM_STATIC_ON_NON_PUBLIC_MEMBER, context)
+            reporter.reportOn(targetSource, FirJvmErrors.JVM_STATIC_ON_NON_PUBLIC_MEMBER)
         } else if (isExternal) {
-            reporter.reportOn(targetSource, FirJvmErrors.JVM_STATIC_ON_EXTERNAL_IN_INTERFACE, context)
+            reporter.reportOn(targetSource, FirJvmErrors.JVM_STATIC_ON_EXTERNAL_IN_INTERFACE)
         }
     }
 
@@ -178,25 +176,23 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
         }
     }
 
-    private fun checkOverrideCannotBeStatic(
+    private fun CheckerContext.checkOverrideCannotBeStatic(
         declaration: FirMemberDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         targetSource: KtSourceElement?,
         outerProperty: FirProperty? = null,
     ) {
         val isOverride = outerProperty?.isOverride ?: declaration.isOverride
 
-        if (!isOverride || !context.containerIsNonCompanionObject(0)) {
+        if (!isOverride || !containerIsNonCompanionObject(0)) {
             return
         }
 
-        reporter.reportOn(targetSource, FirJvmErrors.OVERRIDE_CANNOT_BE_STATIC, context)
+        reporter.reportOn(targetSource, FirJvmErrors.OVERRIDE_CANNOT_BE_STATIC)
     }
 
-    private fun checkStaticOnConstOrJvmField(
+    private fun CheckerContext.checkStaticOnConstOrJvmField(
         declaration: FirDeclaration,
-        context: CheckerContext,
         reporter: DiagnosticReporter,
         targetSource: KtSourceElement?,
     ) {
@@ -204,7 +200,7 @@ object FirJvmStaticChecker : FirBasicDeclarationChecker() {
             declaration is FirProperty && declaration.isConst ||
             declaration.hasAnnotationNamedAs(StandardClassIds.Annotations.JvmField)
         ) {
-            reporter.reportOn(targetSource, FirJvmErrors.JVM_STATIC_ON_CONST_OR_JVM_FIELD, context)
+            reporter.reportOn(targetSource, FirJvmErrors.JVM_STATIC_ON_CONST_OR_JVM_FIELD)
         }
     }
 

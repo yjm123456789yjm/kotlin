@@ -32,10 +32,9 @@ object FirConfusingWhenBranchSyntaxChecker : FirExpressionSyntaxChecker<FirWhenE
         ANDAND, OROR
     )
 
-    override fun checkLightTree(
+    override fun CheckerContext.checkLightTree(
         element: FirWhenExpression,
         source: KtLightSourceElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (element.subject == null && element.subjectVariable == null) return
@@ -50,16 +49,15 @@ object FirConfusingWhenBranchSyntaxChecker : FirExpressionSyntaxChecker<FirWhenE
                         .firstOrNull { it.tokenType != OPERATION_REFERENCE && it.isExpression() }
                     else -> null
                 } ?: continue
-                checkConditionExpression(offset, expression, tree, context, reporter)
+                checkConditionExpression(offset, expression, tree, reporter)
             }
         }
     }
 
-    private fun checkConditionExpression(
+    private fun CheckerContext.checkConditionExpression(
         offset: Int,
         expression: LighterASTNode,
         tree: FlyweightCapableTreeStructure<LighterASTNode>,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         val shouldReport = when (expression.tokenType) {
@@ -74,15 +72,14 @@ object FirConfusingWhenBranchSyntaxChecker : FirExpressionSyntaxChecker<FirWhenE
         if (shouldReport) {
             val source =
                 KtLightSourceElement(expression, offset + expression.startOffset, offset + expression.endOffset, tree)
-            reporter.reportOn(source, FirErrors.CONFUSING_BRANCH_CONDITION, context)
+            reporter.reportOn(source, FirErrors.CONFUSING_BRANCH_CONDITION)
         }
     }
 
-    override fun checkPsi(
+    override fun CheckerContext.checkPsi(
         element: FirWhenExpression,
         source: KtPsiSourceElement,
         psi: PsiElement,
-        context: CheckerContext,
         reporter: DiagnosticReporter
     ) {
         if (element.subject == null && element.subjectVariable == null) return
@@ -90,19 +87,19 @@ object FirConfusingWhenBranchSyntaxChecker : FirExpressionSyntaxChecker<FirWhenE
         if (whenExpression.subjectExpression == null && whenExpression.subjectVariable == null) return
         for (entry in whenExpression.entries) {
             for (condition in entry.conditions) {
-                checkCondition(condition, context, reporter)
+                checkCondition(condition, this, reporter)
             }
         }
     }
 
     private fun checkCondition(condition: KtWhenCondition, context: CheckerContext, reporter: DiagnosticReporter) {
         when (condition) {
-            is KtWhenConditionWithExpression -> checkConditionExpression(condition.expression, context, reporter)
-            is KtWhenConditionInRange -> checkConditionExpression(condition.rangeExpression, context, reporter)
+            is KtWhenConditionWithExpression -> context.checkConditionExpression(condition.expression, reporter)
+            is KtWhenConditionInRange -> context.checkConditionExpression(condition.rangeExpression, reporter)
         }
     }
 
-    private fun checkConditionExpression(rawExpression: KtExpression?, context: CheckerContext, reporter: DiagnosticReporter) {
+    private fun CheckerContext.checkConditionExpression(rawExpression: KtExpression?, reporter: DiagnosticReporter) {
         if (rawExpression == null) return
         if (rawExpression is KtParenthesizedExpression) return
         val shouldReport = when (val expression = KtPsiUtil.safeDeparenthesize(rawExpression)) {
@@ -112,7 +109,7 @@ object FirConfusingWhenBranchSyntaxChecker : FirExpressionSyntaxChecker<FirWhenE
         }
         if (shouldReport) {
             val source = KtRealPsiSourceElement(rawExpression)
-            reporter.reportOn(source, FirErrors.CONFUSING_BRANCH_CONDITION, context)
+            reporter.reportOn(source, FirErrors.CONFUSING_BRANCH_CONDITION)
         }
     }
 }

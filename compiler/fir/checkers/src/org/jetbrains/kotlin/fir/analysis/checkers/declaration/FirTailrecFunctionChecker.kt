@@ -27,10 +27,10 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirNamedFunctionSymbol
 import org.jetbrains.kotlin.fir.types.toSymbol
 
 object FirTailrecFunctionChecker : FirSimpleFunctionChecker() {
-    override fun check(declaration: FirSimpleFunction, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirSimpleFunction, reporter: DiagnosticReporter) {
         if (!declaration.isTailRec) return
-        if (!(declaration.isEffectivelyFinal(context) || declaration.visibility == Visibilities.Private)) {
-            reporter.reportOn(declaration.source, FirErrors.TAILREC_ON_VIRTUAL_MEMBER_ERROR, context)
+        if (!(declaration.isEffectivelyFinal(this) || declaration.visibility == Visibilities.Private)) {
+            reporter.reportOn(declaration.source, FirErrors.TAILREC_ON_VIRTUAL_MEMBER_ERROR)
         }
         val graph = declaration.controlFlowGraphReference?.controlFlowGraph ?: return
 
@@ -71,28 +71,28 @@ object FirTailrecFunctionChecker : FirSimpleFunctionChecker() {
                 if (resolvedSymbol != declaration.symbol) return
                 if (functionCall.arguments.size != resolvedSymbol.valueParameterSymbols.size && resolvedSymbol.isOverride) {
                     // Overridden functions using default arguments at tail call are not included: KT-4285
-                    reporter.reportOn(functionCall.source, FirErrors.NON_TAIL_RECURSIVE_CALL, context)
+                    reporter.reportOn(functionCall.source, FirErrors.NON_TAIL_RECURSIVE_CALL)
                     return
                 }
                 val dispatchReceiver = functionCall.dispatchReceiver
-                val dispatchReceiverOwner = declaration.dispatchReceiverType?.toSymbol(context.session) as? FirClassSymbol<*>
+                val dispatchReceiverOwner = declaration.dispatchReceiverType?.toSymbol(session) as? FirClassSymbol<*>
                 val sameReceiver = dispatchReceiver is FirNoReceiverExpression ||
                         (dispatchReceiver is FirThisReceiverExpression && dispatchReceiver.calleeReference.boundSymbol == dispatchReceiverOwner) ||
                         dispatchReceiverOwner?.classKind?.isSingleton == true
                 if (!sameReceiver) {
                     // A call on a different receiver might get dispatched to a different method, so it can't be optimized.
-                    reporter.reportOn(functionCall.source, FirErrors.NON_TAIL_RECURSIVE_CALL, context)
+                    reporter.reportOn(functionCall.source, FirErrors.NON_TAIL_RECURSIVE_CALL)
                 } else if (tryScopeCount > 0 || catchScopeCount > 0 || finallyScopeCount > 0) {
-                    reporter.reportOn(functionCall.source, FirErrors.TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED, context)
+                    reporter.reportOn(functionCall.source, FirErrors.TAIL_RECURSION_IN_TRY_IS_NOT_SUPPORTED)
                 } else if (node.hasMoreFollowingInstructions(declaration)) {
-                    reporter.reportOn(functionCall.source, FirErrors.NON_TAIL_RECURSIVE_CALL, context)
+                    reporter.reportOn(functionCall.source, FirErrors.NON_TAIL_RECURSIVE_CALL)
                 } else if (!node.isDead) {
                     tailrecCount++
                 }
             }
         })
         if (tailrecCount == 0) {
-            reporter.reportOn(declaration.source, FirErrors.NO_TAIL_CALLS_FOUND, context)
+            reporter.reportOn(declaration.source, FirErrors.NO_TAIL_CALLS_FOUND)
         }
     }
 

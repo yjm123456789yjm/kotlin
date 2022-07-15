@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.*
 
 object FirUpperBoundViolatedExpressionChecker : FirQualifiedAccessExpressionChecker() {
-    override fun check(expression: FirQualifiedAccessExpression, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(expression: FirQualifiedAccessExpression, reporter: DiagnosticReporter) {
         // something that contains the type parameters
         // declarations with their declared bounds.
         // it may be the called function declaration
@@ -44,12 +44,12 @@ object FirUpperBoundViolatedExpressionChecker : FirQualifiedAccessExpressionChec
         val typeParameters: List<FirTypeParameterSymbol>
 
         if (calleeSymbol is FirConstructorSymbol && calleeSymbol.isTypeAliasedConstructor) {
-            val constructedType = expression.typeRef.coneType.fullyExpandedType(context.session)
+            val constructedType = expression.typeRef.coneType.fullyExpandedType(session)
             typeArguments = constructedType.typeArguments.map {
                 TypeArgumentWithSourceInfo(it, typeRef = null, expression.source)
             }
 
-            typeParameters = (constructedType.toSymbol(context.session) as? FirRegularClassSymbol)?.typeParameterSymbols ?: return
+            typeParameters = (constructedType.toSymbol(session) as? FirRegularClassSymbol)?.typeParameterSymbols ?: return
         } else {
             typeArguments = expression.typeArguments.map { firTypeProjection ->
                 TypeArgumentWithSourceInfo(
@@ -71,11 +71,10 @@ object FirUpperBoundViolatedExpressionChecker : FirQualifiedAccessExpressionChec
 
         val substitutor = substitutorByMap(
             typeParameters.withIndex().associate { Pair(it.value, typeArguments[it.index].coneTypeProjection as ConeKotlinType) },
-            context.session,
+            session,
         )
 
-        checkUpperBoundViolated(
-            context,
+        this.checkUpperBoundViolated(
             reporter,
             typeParameters,
             typeArguments,

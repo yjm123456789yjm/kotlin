@@ -358,7 +358,11 @@ val coreLibProjects by extra {
 
 val projectsWithEnabledContextReceivers by extra {
     listOf(
-        ":compiler:fir:fir2ir"
+        ":compiler:fir:fir2ir",
+        ":compiler:frontend.common",
+        ":compiler:fir:checkers",
+        ":compiler:fir:checkers:checkers.jvm",
+        ":compiler:fir:checkers:checkers.js",
     )
 }
 

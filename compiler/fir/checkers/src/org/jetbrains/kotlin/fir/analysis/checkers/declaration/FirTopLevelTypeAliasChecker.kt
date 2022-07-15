@@ -18,9 +18,9 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeAliasSymbol
 import org.jetbrains.kotlin.fir.types.*
 
 object FirTopLevelTypeAliasChecker : FirTypeAliasChecker() {
-    override fun check(declaration: FirTypeAlias, context: CheckerContext, reporter: DiagnosticReporter) {
-        if (context.containingDeclarations.lastOrNull() !is FirFile) {
-            reporter.reportOn(declaration.source, FirErrors.TOPLEVEL_TYPEALIASES_ONLY, context)
+    override fun CheckerContext.check(declaration: FirTypeAlias, reporter: DiagnosticReporter) {
+        if (containingDeclarations.lastOrNull() !is FirFile) {
+            reporter.reportOn(declaration.source, FirErrors.TOPLEVEL_TYPEALIASES_ONLY)
         }
 
         fun containsTypeParameter(type: ConeKotlinType): Boolean {
@@ -30,7 +30,7 @@ object FirTopLevelTypeAliasChecker : FirTypeAliasChecker() {
                 return true
             }
 
-            if (unwrapped is ConeClassLikeType && unwrapped.lookupTag.toSymbol(context.session) is FirTypeAliasSymbol) {
+            if (unwrapped is ConeClassLikeType && unwrapped.lookupTag.toSymbol(session) is FirTypeAliasSymbol) {
                 for (typeArgument in unwrapped.typeArguments) {
                     val typeArgumentType = (typeArgument as? ConeKotlinType) ?: (typeArgument as? ConeKotlinTypeProjection)?.type
                     if (typeArgumentType != null && containsTypeParameter(typeArgumentType)) {
@@ -43,14 +43,14 @@ object FirTopLevelTypeAliasChecker : FirTypeAliasChecker() {
         }
 
         val expandedTypeRef = declaration.expandedTypeRef
-        val fullyExpandedType = expandedTypeRef.coneType.fullyExpandedType(context.session)
+        val fullyExpandedType = expandedTypeRef.coneType.fullyExpandedType(session)
 
         if (containsTypeParameter(fullyExpandedType) || fullyExpandedType is ConeDynamicType) {
             reporter.reportOnWithSuppression(
                 expandedTypeRef,
                 FirErrors.TYPEALIAS_SHOULD_EXPAND_TO_CLASS,
                 expandedTypeRef.coneType,
-                context
+                this
             )
         }
     }

@@ -21,7 +21,7 @@ import org.jetbrains.kotlin.fir.declarations.utils.isOpen
 import org.jetbrains.kotlin.lexer.KtTokens
 
 object FirOpenMemberChecker : FirClassChecker() {
-    override fun check(declaration: FirClass, context: CheckerContext, reporter: DiagnosticReporter) {
+    override fun CheckerContext.check(declaration: FirClass, reporter: DiagnosticReporter) {
         if (declaration.canHaveOpenMembers) return
         for (memberDeclaration in declaration.declarations) {
             if (memberDeclaration !is FirCallableDeclaration ||
@@ -31,9 +31,9 @@ object FirOpenMemberChecker : FirClassChecker() {
             val source = memberDeclaration.source ?: continue
             if (memberDeclaration.isOpen || memberDeclaration.hasModifier(KtTokens.OPEN_KEYWORD) && source.shouldReportOpenFromSource) {
                 if (declaration.classKind == ClassKind.OBJECT) {
-                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_OBJECT, context)
+                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_OBJECT)
                 } else {
-                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_FINAL_CLASS, context)
+                    reporter.reportOn(source, FirErrors.NON_FINAL_MEMBER_IN_FINAL_CLASS)
                 }
             }
         }
