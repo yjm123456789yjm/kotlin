@@ -640,7 +640,6 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         disableUnless(inlineClassPropertyAccessorsPhase, config.optimizationsEnabled)
         disableUnless(dcePhase, config.optimizationsEnabled)
         disableUnless(removeRedundantCallsToFileInitializersPhase, config.optimizationsEnabled)
-        disableUnless(constantInliningPhase, config.optimizationsEnabled)
         disableUnless(ghaPhase, config.optimizationsEnabled)
         disableUnless(verifyBitcodePhase, config.needCompilerVerification || getBoolean(KonanConfigKeys.VERIFY_BITCODE))
 
