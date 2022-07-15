@@ -143,8 +143,8 @@ abstract class BuildMetricsReporterService : BuildService<BuildMetricsReporterSe
                 reportingSettings.fileReportSettings?.let { fileReportSettings ->
                     buildDataProcessors.add(PlainTextBuildReportWriterDataProcessor(fileReportSettings, project.rootProject.name))
                 }
-                reportingSettings.metricsOutputFile?.let { metricsOutputFile ->
-                    buildDataProcessors.add(MetricsWriter(metricsOutputFile.absoluteFile))
+                reportingSettings.singleOutputFile?.let { singleOutputFile ->
+                    buildDataProcessors.add(MetricsWriter(singleOutputFile.absoluteFile))
                 }
 
                 it.parameters.startParameters = getStartParameters(project)
