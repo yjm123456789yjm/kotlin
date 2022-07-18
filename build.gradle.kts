@@ -364,7 +364,8 @@ val coreLibProjects by extra {
 
 val projectsWithEnabledContextReceivers by extra {
     listOf(
-        ":compiler:fir:fir2ir"
+        ":compiler:fir:fir2ir",
+        ":plugins:kapt4:kapt4-compiler",
     )
 }
 

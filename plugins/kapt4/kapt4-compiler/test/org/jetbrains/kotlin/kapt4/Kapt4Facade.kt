@@ -5,14 +5,13 @@
 
 package org.jetbrains.kotlin.kapt4
 
-import org.jetbrains.kotlin.codegen.ClassBuilderMode
-import org.jetbrains.kotlin.codegen.GenerationUtils
-import org.jetbrains.kotlin.codegen.OriginCollectingClassBuilderFactory
-import org.jetbrains.kotlin.kapt3.KaptContextForStubGeneration
+import org.jetbrains.kotlin.cli.common.config.addKotlinSourceRoots
+import org.jetbrains.kotlin.cli.jvm.config.addJavaSourceRoots
 import org.jetbrains.kotlin.kapt3.test.KaptMessageCollectorProvider
-import org.jetbrains.kotlin.kapt3.util.MessageCollectorBackedKaptLogger
+import org.jetbrains.kotlin.kapt3.test.kaptOptionsProvider
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.services.*
+import java.io.File
 
 class Kapt4Facade(private val testServices: TestServices) :
     AbstractTestFacade<ResultingArtifact.Source, KaptContextBinaryArtifact>() {
@@ -27,9 +26,17 @@ class Kapt4Facade(private val testServices: TestServices) :
     override fun transform(module: TestModule, inputArtifact: ResultingArtifact.Source): KaptContextBinaryArtifact {
         val configurationProvider = testServices.compilerConfigurationProvider
         val project = configurationProvider.getProject(module)
-        val ktFiles = testServices.sourceFileProvider.getKtFilesForSourceFiles(module.files, project).values.toList()
-        Kapt4Main.run(configurationProvider.getCompilerConfiguration(module))
+
+        val configuration = configurationProvider.getCompilerConfiguration(module)
+        configuration.addKotlinSourceRoots(module.files.filter { it.isKtFile }.map { it.realFile().absolutePath })
+        configuration.addJavaSourceRoots(module.files.filter { it.isKtFile }.map { it.realFile() })
+        val options = testServices.kaptOptionsProvider[module]
+        Kapt4Main.run(configuration, options)
         TODO()
+    }
+
+    private fun TestFile.realFile(): File {
+        return testServices.sourceFileProvider.getRealFileForSourceFile(this)
     }
 
     override fun shouldRunAnalysis(module: TestModule): Boolean {

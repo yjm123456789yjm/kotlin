@@ -7,7 +7,6 @@ package org.jetbrains.kotlin.analysis.project.structure
 
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiElement
-import org.jetbrains.kotlin.platform.TargetPlatform
 
 public abstract class ProjectStructureProvider {
     /**

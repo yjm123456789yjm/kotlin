@@ -10,7 +10,6 @@ import com.intellij.psi.PsiFileSystemItem
 import com.intellij.psi.PsiJavaFile
 import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.StandaloneProjectFactory.findJvmRootsForJavaFiles
 import org.jetbrains.kotlin.analysis.project.structure.*
-import org.jetbrains.kotlin.platform.TargetPlatform
 
 internal class KtModuleProviderImpl(
     internal val mainModules: List<KtModule>,

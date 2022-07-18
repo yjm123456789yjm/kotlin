@@ -36,7 +36,6 @@ abstract class AbstractKotlinKapt4ContextTest(
             ::CommonEnvironmentConfigurator,
             ::JvmEnvironmentConfigurator,
             ::KaptEnvironmentConfigurator,
-            ::KaptRegularExtensionForTestConfigurator,
         )
 
         facadeStep(::Kapt4Facade)

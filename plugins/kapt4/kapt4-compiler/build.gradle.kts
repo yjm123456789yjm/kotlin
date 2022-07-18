@@ -16,7 +16,8 @@ dependencies {
     api(project(":analysis:analysis-api-standalone"))
     api(project(":analysis:symbol-light-classes"))
 
-    api(project(":kotlin-annotation-processing-base"))
+    compileOnly(project(":kotlin-annotation-processing-base"))
+    compileOnly(project(":kotlin-annotation-processing-runtime"))
     implementation(project(":compiler:backend.jvm.entrypoint"))
 
     compileOnly(toolsJarApi())

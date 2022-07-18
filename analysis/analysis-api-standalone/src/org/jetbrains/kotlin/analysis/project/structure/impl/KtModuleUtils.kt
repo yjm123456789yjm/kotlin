@@ -15,6 +15,7 @@ import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.ProjectScope
 import com.intellij.util.io.URLUtil
 import org.jetbrains.kotlin.analysis.api.impl.base.util.LibraryUtils
+import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtLibraryModule
 import org.jetbrains.kotlin.analysis.project.structure.builder.buildKtSdkModule
@@ -42,6 +43,9 @@ import org.jetbrains.kotlin.resolve.jvm.platform.JvmPlatformAnalyzerServices
 import org.jetbrains.kotlin.resolve.konan.platform.NativePlatformAnalyzerServices
 import java.nio.file.Files
 import java.nio.file.Paths
+import kotlin.contracts.ExperimentalContracts
+import kotlin.contracts.InvocationKind
+import kotlin.contracts.contract
 
 internal fun TargetPlatform.getAnalyzerServices(): PlatformDependentAnalyzerServices {
     return when {
@@ -95,13 +99,19 @@ internal inline fun <reified T : PsiFileSystemItem> getPsiFilesFromPaths(
     }
 }
 
+@OptIn(ExperimentalContracts::class)
 internal fun buildKtModuleProviderByCompilerConfiguration(
     compilerConfig: CompilerConfiguration,
     project: Project,
     ktFiles: List<KtFile>,
-): ProjectStructureProvider = buildProjectStructureProvider {
-    addModule(
-        buildKtSourceModule {
+    moduleCallback: (KtSourceModule) -> Unit = {}
+): ProjectStructureProvider {
+    contract {
+        callsInPlace(moduleCallback, InvocationKind.EXACTLY_ONCE)
+    }
+
+    return buildProjectStructureProvider {
+        val module = buildKtSourceModule {
             val platform = TargetPlatform(setOf(JdkPlatform(JvmTarget.DEFAULT)))
             val moduleName = compilerConfig.get(CommonConfigurationKeys.MODULE_NAME) ?: "<no module name provided>"
 
@@ -162,5 +172,7 @@ internal fun buildKtModuleProviderByCompilerConfiguration(
                 )
             )
         }
-    )
+        moduleCallback(module)
+        addModule(module)
+    }
 }
