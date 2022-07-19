@@ -29,7 +29,7 @@ dependencies {
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 
     testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 }
 

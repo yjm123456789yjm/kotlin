@@ -11,7 +11,7 @@ dependencies {
     implementation(project(":compiler:fir:checkers:checkers-component-generator"))
     implementation(project(":analysis:analysis-api"))
 
-    implementation(project(":kotlin-reflect"))
+    implementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     implementation(project(":kotlin-reflect-api"))
 
     /*

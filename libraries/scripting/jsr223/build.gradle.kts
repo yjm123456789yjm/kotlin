@@ -16,7 +16,7 @@ dependencies {
     compileOnly(project(":kotlin-reflect-api"))
     compileOnly(intellijCore())
     publishedRuntime(project(":kotlin-compiler"))
-    publishedRuntime(project(":kotlin-reflect"))
+    publishedRuntime(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
 }
 
 sourceSets {

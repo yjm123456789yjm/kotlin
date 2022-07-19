@@ -32,7 +32,7 @@ dependencies {
     testApiJUnit5()
 
     testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:deserialization"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":core:descriptors.jvm"))
