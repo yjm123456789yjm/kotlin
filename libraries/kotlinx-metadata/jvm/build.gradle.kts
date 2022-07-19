@@ -42,7 +42,7 @@ dependencies {
     testImplementation(commonDependency("junit:junit"))
     testImplementation(commonDependency("org.jetbrains.intellij.deps:asm-all"))
     testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
 }
 
 if (deployVersion != null) {

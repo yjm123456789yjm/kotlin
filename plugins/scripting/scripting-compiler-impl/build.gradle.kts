@@ -23,7 +23,7 @@ dependencies {
     // FIXME: drop after removing references to LocalFileSystem they don't exist in intellij-core
     compileOnly(intellijAnalysis())
 
-    runtimeOnly(project(":kotlin-reflect"))
+    runtimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
 
     testApi(project(":compiler:frontend"))
     testApi(project(":compiler:plugin-api"))

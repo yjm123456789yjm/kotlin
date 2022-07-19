@@ -13,7 +13,7 @@ dependencies {
     testCompileOnly(intellijCore())
     testCompileOnly(project(":kotlin-reflect-api"))
 
-    testRuntimeOnly(project(":kotlin-reflect"))
+    testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 

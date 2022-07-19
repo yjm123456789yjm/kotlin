@@ -22,7 +22,7 @@ dependencies {
     compileOnly(intellijCore())
     publishedRuntime(project(":kotlin-compiler"))
     publishedRuntime(project(":kotlin-scripting-compiler"))
-    publishedRuntime(project(":kotlin-reflect"))
+    publishedRuntime(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     publishedRuntime(commonDependency("org.jetbrains.intellij.deps", "trove4j"))
 }
 
