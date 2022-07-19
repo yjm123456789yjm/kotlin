@@ -13,7 +13,8 @@ dependencies {
     testCompileOnly(intellijCore())
     // testCompileOnly(project(":kotlin-reflect-api")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:fir-plugin-ic-test:test works
 
-    // testRuntimeOnly(project(":kotlin-reflect")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:fir-plugin-ic-test:test works
+    // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:fir-plugin-ic-test:test works
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 

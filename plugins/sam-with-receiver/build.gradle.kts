@@ -28,7 +28,7 @@ dependencies {
 
     // ./gradlew --no-build-cache --rerun-tasks :kotlin-sam-with-receiver-compiler-plugin:test was failing before anyway
     // testCompileOnly(project(":kotlin-reflect-api"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 

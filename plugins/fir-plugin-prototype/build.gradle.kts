@@ -26,8 +26,9 @@ dependencies {
     testApi(project(":compiler:fir:checkers:checkers.jvm"))
     testApi(project(":compiler:fir:checkers:checkers.js"))
 
-    // testCompileOnly(project(":kotlin-reflect-api")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:test works
-    // testRuntimeOnly(project(":kotlin-reflect")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:test works
+    // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:test works
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 

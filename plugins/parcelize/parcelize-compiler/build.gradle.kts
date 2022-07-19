@@ -45,7 +45,7 @@ dependencies {
 
     // ./gradlew --no-build-cache --rerun-tasks :plugins:parcelize:parcelize-compiler:test works
     // testCompileOnly(project(":kotlin-reflect-api"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testApi(commonDependency("junit:junit"))
