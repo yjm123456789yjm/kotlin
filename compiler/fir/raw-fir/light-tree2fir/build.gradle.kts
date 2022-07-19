@@ -30,7 +30,7 @@ dependencies {
     testCompileOnly(project(":kotlin-test:kotlin-test-junit"))
     // testCompileOnly(project(":kotlin-reflect"))
 
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testCompileOnly(intellijCore())

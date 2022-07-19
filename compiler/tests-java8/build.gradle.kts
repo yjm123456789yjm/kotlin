@@ -8,7 +8,7 @@ dependencies {
     testApi(projectTests(":compiler:tests-common"))
     testImplementation(intellijCore())
     testApi(projectTests(":generators:test-generator"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testRuntimeOnly(toolsJar())
 
     if (kotlinBuildProperties.isInJpsBuildIdeaSync) {

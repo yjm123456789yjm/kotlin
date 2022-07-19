@@ -8,8 +8,8 @@ dependencies {
     testApi(project(":compiler:cli"))
     testApi(intellijCore())
 
-    // testCompileOnly(project(":kotlin-reflect"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testImplementation(projectTests(":compiler:test-infrastructure-utils"))

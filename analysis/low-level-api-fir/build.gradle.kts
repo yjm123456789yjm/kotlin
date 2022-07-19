@@ -41,6 +41,7 @@ dependencies {
     testApi(projectTests(":analysis:analysis-api-impl-base"))
     testApi(project(":kotlin-test:kotlin-test-junit"))
     testApiJUnit5()
+    // testApi(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testImplementation(project(":analysis:symbol-light-classes"))
 
     testRuntimeOnly(project(":core:descriptors.runtime"))
