@@ -53,7 +53,7 @@ dependencies {
     commonCompileOnly("com.android.tools.build:builder:3.6.4")
     commonCompileOnly("com.android.tools.build:builder-model:3.6.4")
     commonCompileOnly("org.codehaus.groovy:groovy-all:2.4.12")
-    commonCompileOnly(project(":kotlin-reflect"))
+    commonCompileOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     commonCompileOnly(intellijCore())
     commonCompileOnly(commonDependency("org.jetbrains.teamcity:serviceMessages"))
     commonCompileOnly("com.gradle:gradle-enterprise-gradle-plugin:3.9")
