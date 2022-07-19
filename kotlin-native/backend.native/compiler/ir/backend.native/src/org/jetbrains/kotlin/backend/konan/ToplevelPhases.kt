@@ -96,6 +96,9 @@ internal val createSymbolTablePhase = konanUnitPhase(
 internal val objCExportPhase = konanUnitPhase(
         op = {
             objCExport = ObjCExport(this, symbolTable!!)
+            if (config.omitFrameworkBinary) {
+                objCExport.produceFrameworkInterface()
+            }
         },
         name = "ObjCExport",
         description = "Objective-C header generation",
@@ -621,14 +624,14 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
         disableUnless(entryPointPhase, config.produce == CompilerOutputKind.PROGRAM)
         disableUnless(buildAdditionalCacheInfoPhase, config.produce.isCache && config.lazyIrForCaches)
         disableUnless(exportInternalAbiPhase, config.produce.isCache)
-        disableIf(backendCodegen, config.produce == CompilerOutputKind.LIBRARY)
-        disableUnless(bitcodePostprocessingPhase, config.produce.involvesLinkStage)
-        disableUnless(linkBitcodeDependenciesPhase, config.produce.involvesLinkStage)
+        disableIf(backendCodegen, config.involvesOnlyFrontend)
+        disableUnless(bitcodePostprocessingPhase, config.involvesLinkStage)
+        disableUnless(linkBitcodeDependenciesPhase, config.involvesLinkStage)
         disableUnless(checkExternalCallsPhase, getBoolean(KonanConfigKeys.CHECK_EXTERNAL_CALLS))
         disableUnless(rewriteExternalCallsCheckerGlobals, getBoolean(KonanConfigKeys.CHECK_EXTERNAL_CALLS))
         disableUnless(optimizeTLSDataLoadsPhase, config.optimizationsEnabled)
-        disableUnless(objectFilesPhase, config.produce.involvesLinkStage)
-        disableUnless(linkerPhase, config.produce.involvesLinkStage)
+        disableUnless(objectFilesPhase, config.involvesLinkStage)
+        disableUnless(linkerPhase, config.involvesLinkStage)
         disableIf(testProcessorPhase, getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) == TestRunnerKind.NONE)
         disableIf(dumpTestsPhase, getNotNull(KonanConfigKeys.GENERATE_TEST_RUNNER) == TestRunnerKind.NONE || config.testDumpFile == null)
         disableUnless(buildDFGPhase, config.optimizationsEnabled)
@@ -649,11 +652,11 @@ internal fun PhaseConfig.konanPhasesConfig(config: KonanConfig) {
 
         disableUnless(removeRedundantSafepointsPhase, config.memoryModel == MemoryModel.EXPERIMENTAL)
 
-        val isDescriptorsOnlyLibrary = config.metadataKlib == true
-        disableIf(psiToIrPhase, isDescriptorsOnlyLibrary)
-        disableIf(destroySymbolTablePhase, isDescriptorsOnlyLibrary)
-        disableIf(copyDefaultValuesToActualPhase, isDescriptorsOnlyLibrary)
-        disableIf(specialBackendChecksPhase, isDescriptorsOnlyLibrary)
-        disableIf(checkSamSuperTypesPhase, isDescriptorsOnlyLibrary)
+        val onlyFrontend = config.metadataKlib == true || config.omitFrameworkBinary
+        disableIf(psiToIrPhase, onlyFrontend)
+        disableIf(destroySymbolTablePhase, onlyFrontend)
+        disableIf(copyDefaultValuesToActualPhase, onlyFrontend)
+        disableIf(specialBackendChecksPhase, onlyFrontend)
+        disableIf(checkSamSuperTypesPhase, onlyFrontend)
     }
 }

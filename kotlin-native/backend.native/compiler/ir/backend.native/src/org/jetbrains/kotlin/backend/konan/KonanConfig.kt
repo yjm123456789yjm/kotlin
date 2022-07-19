@@ -393,6 +393,9 @@ class KonanConfig(val project: Project, val configuration: CompilerConfiguration
     private val implicitModuleName: String
         get() = File(outputFiles.outputName).name
 
+    internal val omitFrameworkBinary: Boolean
+        get() = configuration.getBoolean(KonanConfigKeys.OMIT_FRAMEWORK_BINARY)
+
     val infoArgsOnly = configuration.kotlinSourceRoots.isEmpty()
             && configuration[KonanConfigKeys.INCLUDED_LIBRARIES].isNullOrEmpty()
             && librariesToCache.isEmpty()

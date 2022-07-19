@@ -28,11 +28,12 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifNotEmpty
 /**
  * Supposed to be true for a single LLVM module within final binary.
  */
-val CompilerOutputKind.isFinalBinary: Boolean get() = when (this) {
+val KonanConfig.isFinalBinary: Boolean get() = when (this.produce) {
     CompilerOutputKind.PROGRAM, CompilerOutputKind.DYNAMIC,
-    CompilerOutputKind.STATIC, CompilerOutputKind.FRAMEWORK -> true
+    CompilerOutputKind.STATIC-> true
     CompilerOutputKind.DYNAMIC_CACHE, CompilerOutputKind.STATIC_CACHE,
     CompilerOutputKind.LIBRARY, CompilerOutputKind.BITCODE -> false
+    CompilerOutputKind.FRAMEWORK -> !omitFrameworkBinary
 }
 
 val CompilerOutputKind.involvesBitcodeGeneration: Boolean
@@ -41,12 +42,22 @@ val CompilerOutputKind.involvesBitcodeGeneration: Boolean
 internal val Context.producedLlvmModuleContainsStdlib: Boolean
     get() = this.llvmModuleSpecification.containsModule(this.stdlibModule)
 
-val CompilerOutputKind.involvesLinkStage: Boolean
-    get() = when (this) {
+val KonanConfig.involvesLinkStage: Boolean
+    get() = when (this.produce) {
         CompilerOutputKind.PROGRAM, CompilerOutputKind.DYNAMIC,
         CompilerOutputKind.DYNAMIC_CACHE, CompilerOutputKind.STATIC_CACHE,
-        CompilerOutputKind.STATIC, CompilerOutputKind.FRAMEWORK -> true
+        CompilerOutputKind.STATIC -> true
         CompilerOutputKind.LIBRARY, CompilerOutputKind.BITCODE -> false
+        CompilerOutputKind.FRAMEWORK -> !omitFrameworkBinary
+    }
+
+val KonanConfig.involvesOnlyFrontend: Boolean
+    get() = when (this.produce) {
+        CompilerOutputKind.PROGRAM, CompilerOutputKind.DYNAMIC,
+        CompilerOutputKind.DYNAMIC_CACHE, CompilerOutputKind.STATIC_CACHE,
+        CompilerOutputKind.STATIC, CompilerOutputKind.BITCODE -> false
+        CompilerOutputKind.LIBRARY -> true
+        CompilerOutputKind.FRAMEWORK -> omitFrameworkBinary
     }
 
 val CompilerOutputKind.isCache: Boolean
@@ -189,6 +200,7 @@ internal fun produceOutput(context: Context) {
         CompilerOutputKind.DYNAMIC_CACHE,
         CompilerOutputKind.STATIC_CACHE,
         CompilerOutputKind.PROGRAM -> {
+            if (context.config.omitFrameworkBinary) return
             val output = tempFiles.nativeBinaryFileName
             context.bitcodeFileName = output
             // Insert `_main` after pipeline so we won't worry about optimizations

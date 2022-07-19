@@ -47,8 +47,6 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
     private fun produceInterface(): ObjCExportedInterface? {
         if (!target.family.isAppleFamily) return null
 
-        if (!context.config.produce.isFinalBinary) return null
-
         // TODO: emit RTTI to the same modules as classes belong to.
         //   Not possible yet, since ObjCExport translates the entire "world" API at once
         //   and can't do this per-module, e.g. due to global name conflict resolution.
@@ -85,7 +83,7 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
             ObjCExportBlockCodeGenerator(codegen).generate()
         }
 
-        if (!context.config.produce.isFinalBinary) return // TODO: emit RTTI to the same modules as classes belong to.
+        if (!context.config.isFinalBinary) return // TODO: emit RTTI to the same modules as classes belong to.
 
         val mapper = exportedInterface?.mapper ?: ObjCExportMapper(unitSuspendFunctionExport = context.config.unitSuspendFunctionObjCExport)
         namer = exportedInterface?.namer ?: ObjCExportNamerImpl(
@@ -106,6 +104,15 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
 
         objCCodeGenerator.generate(codeSpec)
         objCCodeGenerator.dispose()
+    }
+
+    /**
+     * Produce everything except framework binary
+     */
+    fun produceFrameworkInterface() {
+        if (exportedInterface != null) {
+            produceFrameworkSpecific(exportedInterface.headerLines)
+        }
     }
 
     private fun produceFrameworkSpecific(headerLines: List<String>) {
@@ -143,7 +150,7 @@ internal class ObjCExport(val context: Context, symbolTable: SymbolTable) {
         modules.child("module.modulemap").writeBytes(moduleMap.toByteArray())
 
         emitInfoPlist(frameworkContents, frameworkName)
-        if (target.family == Family.OSX) {
+        if (target.family == Family.OSX && !context.config.omitFrameworkBinary) {
             framework.child("Versions/Current").createAsSymlink("A")
             for (child in listOf(frameworkName, "Headers", "Modules", "Resources")) {
                 framework.child(child).createAsSymlink("Versions/Current/$child")
