@@ -15,7 +15,7 @@ dependencies {
     testApiJUnit5(vintageEngine = true, runner = true, suiteApi = true)
 
     testImplementation(intellijCore())
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testJvm6ServerRuntime(projectTests(":compiler:tests-common-jvm6"))
 }
 

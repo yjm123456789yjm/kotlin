@@ -35,8 +35,8 @@ dependencies {
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 
     // ./gradlew --no-build-cache --rerun-tasks :kotlin-lombok-compiler-plugin:test works
-    // testCompileOnly(project(":kotlin-reflect"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testApi(commonDependency("junit:junit"))

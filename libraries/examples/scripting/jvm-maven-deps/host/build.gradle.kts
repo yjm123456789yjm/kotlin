@@ -11,7 +11,7 @@ dependencies {
     compileOnly(project(":compiler:util"))
 
     testRuntimeOnly(project(":kotlin-compiler"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testRuntimeOnly(project(":kotlin-scripting-compiler"))
 
     testApi(commonDependency("junit"))

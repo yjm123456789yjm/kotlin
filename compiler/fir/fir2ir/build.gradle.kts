@@ -31,8 +31,9 @@ dependencies {
 
     testApiJUnit5()
 
-    // testCompileOnly(project(":kotlin-reflect"))
-    // testRuntimeOnly(project(":kotlin-reflect")) // todo why?
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // todo why?
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testRuntimeOnly(project(":core:deserialization"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":core:descriptors.jvm"))

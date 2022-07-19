@@ -7,7 +7,7 @@ project.updateJvmTarget("1.6")
 
 dependencies {
     api(kotlinStdlib())
-    compileOnly(project(":kotlin-reflect"))
+    compileOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testApi(commonDependency("junit"))
 }
 

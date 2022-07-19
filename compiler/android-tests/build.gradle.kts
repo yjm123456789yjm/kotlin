@@ -16,6 +16,7 @@ dependencies {
     testApi(project(":compiler:frontend.java"))
 
     testApi(kotlinStdlib())
+    // testApi(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testApi(projectTests(":compiler:tests-common"))
     testApi(commonDependency("junit:junit"))
     testApi(projectTests(":compiler:test-infrastructure"))
