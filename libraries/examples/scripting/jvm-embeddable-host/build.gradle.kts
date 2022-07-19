@@ -9,7 +9,8 @@ dependencies {
     testRuntimeOnly(project(":kotlin-compiler-embeddable"))
     testRuntimeOnly(project(":kotlin-scripting-compiler-embeddable"))
     testRuntimeOnly(project(":kotlin-scripting-jvm-host"))
-    // testRuntimeOnly(project(":kotlin-reflect")) // ./gradlew :examples:scripting-jvm-embeddable-host:test works
+    // ./gradlew :examples:scripting-jvm-embeddable-host:test works
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(commonDependency("com.google.guava:guava"))
     testApi(commonDependency("junit"))
 }

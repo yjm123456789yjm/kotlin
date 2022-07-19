@@ -14,7 +14,7 @@ dependencies {
     testImplementation(intellijCore())
 
     // testCompileOnly(project(":kotlin-reflect-api"))
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testImplementation(projectTests(":generators:test-generator"))

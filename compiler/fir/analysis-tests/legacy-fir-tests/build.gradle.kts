@@ -24,7 +24,8 @@ dependencies {
     testApi(project(":compiler:frontend"))
 
     testCompileOnly(project(":kotlin-reflect-api"))
-    // testRuntimeOnly(project(":kotlin-reflect")) ./gradlew :compiler:fir:analysis-tests:legacy-fir-tests:test works
+    // ./gradlew :compiler:fir:analysis-tests:legacy-fir-tests:test works
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testCompileOnly(intellijCore())

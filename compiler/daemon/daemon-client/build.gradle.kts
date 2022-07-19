@@ -31,7 +31,8 @@ dependencies {
     nativePlatformVariants.forEach {
         embedded(commonDependency("net.rubygrapefruit", "native-platform", "-$it"))
     }
-    // runtimeOnly(project(":kotlin-reflect")) // todo why?
+    // todo why?
+    // runtimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     api(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
         isTransitive = false
     }

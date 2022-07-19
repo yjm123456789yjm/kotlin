@@ -19,7 +19,7 @@ dependencies {
         // testRuntimeOnly(files("${rootProject.projectDir}/dist/kotlinc/lib/kotlin-reflect.jar"))
     }
 
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testApiJUnit5(vintageEngine = true)

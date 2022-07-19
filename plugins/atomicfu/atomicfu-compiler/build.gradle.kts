@@ -69,7 +69,7 @@ dependencies {
     testApi(project(":kotlin-test:kotlin-test-jvm"))
 
     testRuntimeOnly(kotlinStdlib())
-    // testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testRuntimeOnly(project(":kotlin-preloader")) // it's required for ant tests
     testRuntimeOnly(project(":compiler:backend-common"))
     testRuntimeOnly(commonDependency("org.fusesource.jansi", "jansi"))

@@ -27,7 +27,9 @@ dependencies {
 
     testRuntimeOnly(project(":kotlin-scripting-jsr223-unshaded"))
     testRuntimeOnly(project(":kotlin-compiler"))
-    // testRuntimeOnly(project(":kotlin-reflect")) // well, technically, ./gradlew :kotlin-scripting-jsr223-unshaded:test :kotlin-scripting-jsr223-test:test fails, but it was failing before anyway...
+    // well, technically, ./gradlew :kotlin-scripting-jsr223-unshaded:test :kotlin-scripting-jsr223-test:test fails, but it was
+    // failing before anyway...
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
 
     embeddableTestRuntime(commonDependency("junit"))
     embeddableTestRuntime(project(":kotlin-scripting-jsr223"))

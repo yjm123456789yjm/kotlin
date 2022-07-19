@@ -9,7 +9,8 @@ dependencies {
     api(project(":kotlin-script-util"))
     testRuntimeOnly(project(":kotlin-compiler"))
     testRuntimeOnly(project(":kotlin-scripting-compiler"))
-    // testRuntimeOnly(project(":kotlin-reflect")) // ./gradlew :examples:scripting-jvm-simple-script-host:test works
+    // ./gradlew :examples:scripting-jvm-simple-script-host:test works
+    // testRuntimeOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
     testApi(commonDependency("junit"))
 }
 

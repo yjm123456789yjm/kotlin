@@ -33,7 +33,7 @@ dependencies {
 
     testImplementation(intellijCore())
     testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
-    testImplementation(project(":kotlin-reflect"))
+    testImplementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
 }
 
 optInToExperimentalCompilerApi()
