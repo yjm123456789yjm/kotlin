@@ -11,7 +11,7 @@ dependencies {
 
     testImplementation(commonDependency("junit:junit"))
     testCompileOnly(project(":kotlin-reflect-api"))
-    testImplementation(project(":kotlin-reflect"))
+    testImplementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
 }
 
 sourceSets {
