@@ -23,6 +23,8 @@ import org.jetbrains.kotlin.analysis.api.standalone.base.project.structure.Stand
 import org.jetbrains.kotlin.analysis.decompiled.light.classes.ClsJavaStubByVirtualFileCache
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.FirSealedClassInheritorsProcessorFactory
 import org.jetbrains.kotlin.analysis.low.level.api.fir.api.services.PackagePartProviderFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirBuiltinsSessionFactory
+import org.jetbrains.kotlin.analysis.low.level.api.fir.project.structure.LLFirLibrarySessionFactory
 import org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProvider
 import org.jetbrains.kotlin.analysis.project.structure.KtModuleScopeProviderImpl
 import org.jetbrains.kotlin.analysis.project.structure.ProjectStructureProvider
@@ -141,6 +143,10 @@ public class StandaloneAnalysisAPISessionBuilder(
                     }
                 }
             )
+
+            registerService(LLFirLibrarySessionFactory::class.java)
+            registerService(LLFirBuiltinsSessionFactory::class.java)
+
             RegisterComponentService.registerLLFirResolveSessionService(this)
             registerService(
                 PackagePartProviderFactory::class.java,
