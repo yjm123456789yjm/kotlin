@@ -32,7 +32,7 @@ import java.io.ByteArrayOutputStream
 import java.io.ObjectOutputStream
 
 object Kapt4Main {
-    fun run(configuration: CompilerConfiguration, options: KaptOptions) {
+    fun run(configuration: CompilerConfiguration, options: KaptOptions): Pair<Kapt4ContextForStubGeneration, Map<KtLightClass, StubGenerator.KaptStub?>> {
         val module: KtSourceModule
 
         val analysisSession = buildStandaloneAnalysisAPISession {
@@ -63,10 +63,7 @@ object Kapt4Main {
         )
 
         val generator = with(context) { StubGenerator() }
-        generator.generateStubs()
-
-
-        TODO()
+        return context to generator.generateStubs()
     }
 }
 

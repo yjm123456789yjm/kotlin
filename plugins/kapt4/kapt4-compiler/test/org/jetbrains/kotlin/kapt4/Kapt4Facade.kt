@@ -14,16 +14,16 @@ import org.jetbrains.kotlin.test.services.*
 import java.io.File
 
 class Kapt4Facade(private val testServices: TestServices) :
-    AbstractTestFacade<ResultingArtifact.Source, KaptContextBinaryArtifact>() {
+    AbstractTestFacade<ResultingArtifact.Source, Kapt4ContextBinaryArtifact>() {
     override val inputKind: TestArtifactKind<ResultingArtifact.Source>
         get() = SourcesKind
-    override val outputKind: TestArtifactKind<KaptContextBinaryArtifact>
-        get() = KaptContextBinaryArtifact.Kind
+    override val outputKind: TestArtifactKind<Kapt4ContextBinaryArtifact>
+        get() = Kapt4ContextBinaryArtifact.Kind
 
     override val additionalServices: List<ServiceRegistrationData>
         get() = listOf(service(::KaptMessageCollectorProvider))
 
-    override fun transform(module: TestModule, inputArtifact: ResultingArtifact.Source): KaptContextBinaryArtifact {
+    override fun transform(module: TestModule, inputArtifact: ResultingArtifact.Source): Kapt4ContextBinaryArtifact {
         val configurationProvider = testServices.compilerConfigurationProvider
         val project = configurationProvider.getProject(module)
 
@@ -31,8 +31,8 @@ class Kapt4Facade(private val testServices: TestServices) :
         configuration.addKotlinSourceRoots(module.files.filter { it.isKtFile }.map { it.realFile().absolutePath })
         configuration.addJavaSourceRoots(module.files.filter { it.isKtFile }.map { it.realFile() })
         val options = testServices.kaptOptionsProvider[module]
-        Kapt4Main.run(configuration, options)
-        TODO()
+        val stubMap = Kapt4Main.run(configuration, options)
+        return Kapt4ContextBinaryArtifact(context, stubMap.values.filterNotNull())
     }
 
     private fun TestFile.realFile(): File {
@@ -44,10 +44,13 @@ class Kapt4Facade(private val testServices: TestServices) :
     }
 }
 
-class KaptContextBinaryArtifact() : ResultingArtifact.Binary<KaptContextBinaryArtifact>() {
-    object Kind : BinaryKind<KaptContextBinaryArtifact>("KaptArtifact")
+data class Kapt4ContextBinaryArtifact(
+    val kaptContext: Kapt4ContextForStubGeneration,
+    val kaptStubs: List<StubGenerator.KaptStub>
+) : ResultingArtifact.Binary<Kapt4ContextBinaryArtifact>() {
+    object Kind : BinaryKind<Kapt4ContextBinaryArtifact>("KaptArtifact")
 
-    override val kind: BinaryKind<KaptContextBinaryArtifact>
+    override val kind: BinaryKind<Kapt4ContextBinaryArtifact>
         get() = Kind
 }
 

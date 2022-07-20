@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.intellij.testFramework.TestDataPath
 import org.jetbrains.kotlin.kapt3.test.*
 import org.jetbrains.kotlin.kapt3.test.KaptTestDirectives.MAP_DIAGNOSTIC_LOCATIONS
 import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
@@ -16,6 +17,7 @@ import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.runners.AbstractKotlinCompilerWithTargetBackendTest
 import org.jetbrains.kotlin.test.services.configuration.CommonEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurator
+import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
 abstract class AbstractKotlinKapt4ContextTest(
@@ -42,10 +44,13 @@ abstract class AbstractKotlinKapt4ContextTest(
     }
 }
 
+@TestMetadata("plugins/kapt4/kapt4-compiler/testData/converter")
+@TestDataPath("\$PROJECT_ROOT")
+@Tag("IgnoreJDK11")
 class KotlinKapt4ContextTestGenerated : AbstractKotlinKapt4ContextTest(TargetBackend.JVM_IR) {
     @Test
-    @TestMetadata("enums.kt")
-    fun testEnums() {
-        runTest("plugins/kapt3/kapt3-compiler/testData/converter/enums.kt")
+    @TestMetadata("simple.kt")
+    fun testSimple() {
+        runTest("plugins/kapt4/kapt4-compiler/testData/converter/simple.kt")
     }
 }

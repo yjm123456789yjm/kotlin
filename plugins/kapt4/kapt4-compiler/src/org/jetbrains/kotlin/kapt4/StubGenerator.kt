@@ -80,15 +80,14 @@ class StubGenerator {
     private val keepKdocComments = options[KaptFlag.KEEP_KDOC_COMMENTS_IN_STUBS]
 
     private val signatureParser = SignatureParser(treeMaker)
+
     // TODO: rename
     private val compiledClassByName = classes.associateBy { it.name!! }
 
     private val kdocCommentKeeper = if (keepKdocComments) Kapt4KDocCommentKeeper() else null
 
-    fun generateStubs() {
-        for (lightClass in classes) {
-            convertTopLevelClass(lightClass)
-        }
+    fun generateStubs(): Map<KtLightClass, KaptStub?> {
+        return classes.associateWith { convertTopLevelClass(it) }
     }
 
     private fun convertTopLevelClass(lightClass: KtLightClass): KaptStub? {
