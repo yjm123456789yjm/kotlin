@@ -30,7 +30,7 @@ dependencies {
     testApi(commonDependency("org.jetbrains.intellij.deps:jdom"))
 
     testImplementation(commonDependency("com.google.code.gson:gson"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    // testRuntimeOnly(project(":kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 }
 
