@@ -23,8 +23,8 @@ dependencies {
     testApi(project(":compiler:fir:entrypoint"))
     testApi(project(":compiler:frontend"))
 
-    // testCompileOnly(project(":kotlin-reflect-api"))
-    // testRuntimeOnly(project(":kotlin-reflect")) // why?
+    testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(project(":kotlin-reflect")) ./gradlew :compiler:fir:analysis-tests:legacy-fir-tests:test works
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testCompileOnly(intellijCore())
