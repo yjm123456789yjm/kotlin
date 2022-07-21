@@ -84,6 +84,7 @@
         <option value="$PROJECT_DIR$/plugins/parcelize/parcelize-compiler/testData" />
         <option value="$PROJECT_DIR$/plugins/lombok/testData" />
         <option value="$PROJECT_DIR$/plugins/sam-with-receiver/testData" />
+        <option value="$PROJECT_DIR$/plugins/kapt4/kapt4-compiler/testData" />
       </array>
     </option>
   </component>
