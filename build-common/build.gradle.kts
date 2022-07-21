@@ -25,7 +25,7 @@ dependencies {
     testApi(commonDependency("junit:junit"))
     testApi(protobufFull())
     testApi(kotlinStdlib())
-    testImplementation(project(":kotlin-reflect"))
+    // testImplementation(project(":kotlin-reflect"))
 }
 
 sourceSets {
