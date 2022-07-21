@@ -16,9 +16,12 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.intellij.lang.jvm.types.JvmType
+import com.intellij.psi.JvmPsiConversionHelper
 import com.intellij.psi.PsiAnnotation
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiType
+import com.intellij.psi.util.PsiTypesUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 
 internal class ParameterInfo(
@@ -33,7 +36,10 @@ internal fun PsiMethod.getParametersInfo(
     containingClass: KtLightClass,
     isInnerClassMember: Boolean
 ): List<ParameterInfo> {
-    TODO()
+    val typeConverter = JvmPsiConversionHelper.getInstance(project)
+    return this.parameters.map {
+        ParameterInfo(0, it.name ?: "<no name provided>", typeConverter.convertType(it.type), emptyList(), emptyList())
+    }
 //    val localVariables = this.localVariables ?: emptyList()
 //    val parameters = this.parameters ?: emptyList()
 //    val isStatic = isStatic(access)

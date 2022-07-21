@@ -45,7 +45,9 @@ class Kapt4TreeMaker(
 //        if (type.sort == ARRAY) {
 //            return TypeArray(Type(AsmUtil.correctElementType(type)))
 //        }
-        if (type == null) TODO()
+        if (type == null) {
+            TODO()
+        }
         return FqName(type.qualifiedName)
     }
 

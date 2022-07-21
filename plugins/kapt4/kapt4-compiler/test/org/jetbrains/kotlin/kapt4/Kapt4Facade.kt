@@ -46,7 +46,7 @@ class Kapt4Facade(private val testServices: TestServices) :
 
 data class Kapt4ContextBinaryArtifact(
     val kaptContext: Kapt4ContextForStubGeneration,
-    val kaptStubs: List<StubGenerator.KaptStub>
+    val kaptStubs: List<Kapt4StubGenerator.KaptStub>
 ) : ResultingArtifact.Binary<Kapt4ContextBinaryArtifact>() {
     object Kind : BinaryKind<Kapt4ContextBinaryArtifact>("KaptArtifact")
 

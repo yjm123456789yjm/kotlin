@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.lang.jvm.JvmModifier
+import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiField
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiModifierListOwner
@@ -23,7 +24,7 @@ val PsiModifierListOwner.isFinal: Boolean get() = hasModifier(JvmModifier.PUBLIC
 val PsiModifierListOwner.isAbstract: Boolean get() = hasModifier(JvmModifier.PUBLIC)
 
 val PsiModifierListOwner.isStatic: Boolean get() = hasModifier(JvmModifier.STATIC)
-val PsiModifierListOwner.isSynthetic: Boolean get() = TODO()
+val PsiModifierListOwner.isSynthetic: Boolean get() = false //TODO()
 val PsiModifierListOwner.isVolatile: Boolean get() = hasModifier(JvmModifier.VOLATILE)
 
 typealias JavacList<T> = com.sun.tools.javac.util.List<T>
@@ -96,5 +97,8 @@ private fun getAsmFieldSignature(field: PsiField): String {
     TODO()
 }
 
+val PsiModifierListOwner.isConstructor: Boolean
+    get() = (this is PsiMethod) && this.isConstructor
+
 val PsiType.qualifiedName: String
-    get() = TODO()
+    get() = (this as? PsiClassType)?.resolve()?.qualifiedName ?: "<no name provided>"

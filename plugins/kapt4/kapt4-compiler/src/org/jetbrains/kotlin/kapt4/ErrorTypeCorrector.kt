@@ -5,28 +5,16 @@
 
 package org.jetbrains.kotlin.kapt4
 
-import com.intellij.psi.util.PsiTreeUtil
-import com.sun.tools.javac.code.BoundKind
 import com.sun.tools.javac.tree.JCTree
-import org.jetbrains.kotlin.codegen.state.KotlinTypeMapper
-import org.jetbrains.kotlin.codegen.state.updateArgumentModeFromAnnotations
 import org.jetbrains.kotlin.descriptors.*
-import org.jetbrains.kotlin.load.kotlin.TypeMappingMode
-import org.jetbrains.kotlin.load.kotlin.getOptimalModeForReturnType
-import org.jetbrains.kotlin.load.kotlin.getOptimalModeForValueParameter
 import org.jetbrains.kotlin.psi.*
-import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.resolve.source.getPsi
 import org.jetbrains.kotlin.types.*
-import org.jetbrains.kotlin.types.checker.SimpleClassicTypeSystemContext
-import org.jetbrains.kotlin.types.error.ErrorUtils
-import org.jetbrains.kotlin.types.error.ErrorTypeKind
 
 private typealias SubstitutionMap = Map<String, Pair<KtTypeParameter, KtTypeProjection>>
 
 context(Kapt4ContextForStubGeneration)
 class ErrorTypeCorrector(
-    private val converter: StubGenerator,
+    private val converter: Kapt4StubGenerator,
     private val typeKind: TypeKind,
     file: KtFile
 ) {

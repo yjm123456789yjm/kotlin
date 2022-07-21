@@ -6,8 +6,6 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.psi.util.PsiUtil
 import com.sun.tools.javac.code.Flags
 import com.sun.tools.javac.parser.Tokens
 import com.sun.tools.javac.tree.JCTree
@@ -29,14 +27,11 @@ import org.jetbrains.kotlin.resolve.ArrayFqNames
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
-import org.jetbrains.org.objectweb.asm.tree.AnnotationNode
-import org.jetbrains.org.objectweb.asm.tree.ClassNode
-import org.jetbrains.org.objectweb.asm.tree.MethodNode
 import java.io.File
 import javax.lang.model.element.ElementKind
 
 context(Kapt4ContextForStubGeneration)
-class StubGenerator {
+class Kapt4StubGenerator {
     private companion object {
         private const val VISIBILITY_MODIFIERS = (Opcodes.ACC_PUBLIC or Opcodes.ACC_PRIVATE or Opcodes.ACC_PROTECTED).toLong()
         private const val MODALITY_MODIFIERS = (Opcodes.ACC_FINAL or Opcodes.ACC_ABSTRACT).toLong()
@@ -91,8 +86,8 @@ class StubGenerator {
     }
 
     private fun convertTopLevelClass(lightClass: KtLightClass): KaptStub? {
-        val origin = origins[lightClass]// ?: return null // TODO: handle synthetic declarations from plugins
-        val ktFile = origin?.element?.containingFile as? KtFile ?: return null
+//        val origin = origins[lightClass]// ?: return null // TODO: handle synthetic declarations from plugins
+        val ktFile = origins[lightClass] ?: return null //origin?.element?.containingFile as? KtFile ?: return null
         val lineMappings = Kapt4LineMappingCollector()
         val packageName = (lightClass.parent as? PsiJavaFile)?.packageName ?: TODO()
         val packageClause = runUnless(packageName.isBlank()) { treeMaker.FqName(packageName) }
@@ -344,32 +339,33 @@ class StubGenerator {
         return access
     }
 
-    private fun getDeclarationAccessFlags(callable: PsiModifierListOwner): Int {
+    private fun getDeclarationAccessFlags(declaration: PsiModifierListOwner): Int {
         var access = 0
-        if (callable.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
+        if (declaration.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
             access = access or Opcodes.ACC_DEPRECATED
         }
         val visibilityFlag = when {
-            callable.isPublic -> Opcodes.ACC_PUBLIC
-            callable.isPrivate -> Opcodes.ACC_PRIVATE
-            callable.isProtected -> Opcodes.ACC_PROTECTED
+            declaration.isPublic -> Opcodes.ACC_PUBLIC
+            declaration.isPrivate -> Opcodes.ACC_PRIVATE
+            declaration.isProtected -> Opcodes.ACC_PROTECTED
             else -> 0
         }
         access = access or visibilityFlag
 
         val modalityFlag = when {
-            callable.isFinal -> Opcodes.ACC_FINAL
-            callable.isAbstract -> Opcodes.ACC_ABSTRACT
+            declaration.isConstructor -> 0
+            declaration.isFinal -> Opcodes.ACC_FINAL
+            declaration.isAbstract -> Opcodes.ACC_ABSTRACT
             else -> 0
         }
 
         access = access or modalityFlag
 
-        if (callable.isStatic) {
+        if (declaration.isStatic) {
             access = access or Opcodes.ACC_STATIC
         }
 
-        if (callable.isVolatile) {
+        if (declaration.isVolatile) {
             access = access or Opcodes.ACC_VOLATILE
         }
 
@@ -516,8 +512,6 @@ class StubGenerator {
     ): JCTree.JCVariableDecl? {
 //        if (field.isSynthetic || isIgnored(field.invisibleAnnotations)) return null // TODO
         // not needed anymore
-        val origin = origins[field]
-        val descriptor = origin?.descriptor
 
         val fieldAnnotations = emptyList<PsiAnnotation>()
 //        val fieldAnnotations = when {
@@ -597,7 +591,7 @@ class StubGenerator {
             method.annotations.toList()
         }
 
-        val isConstructor = method.name == "<init>"
+        val isConstructor = method.isConstructor
 
         val name = method.name
         if (!isValidIdentifier(name, canBeConstructor = isConstructor)) return null
@@ -615,7 +609,7 @@ class StubGenerator {
             modifiers.flags = modifiers.flags or Flags.DEFAULT
         }
 
-        val asmReturnType = method.returnType ?: TODO()
+        val asmReturnType = method.returnType ?: PsiType.VOID
         val jcReturnType = if (isConstructor) null else treeMaker.Type(method.returnType)
 
         val parametersInfo = method.getParametersInfo(containingClass, isInner)
@@ -703,7 +697,6 @@ class StubGenerator {
         method: PsiMethod,
         parameters: JavacList<JCTree.JCVariableDecl>
     ): Pair<SignatureParser.MethodGenericSignature, JCExpression?> {
-        val psiElement = origins[method]?.element
         val genericSignature = signatureParser.parseMethodSignature(
             method.signature, parameters, exceptionTypes, jcReturnType,
             nonErrorParameterTypeProvider = { index, lazyType ->
@@ -854,11 +847,11 @@ class StubGenerator {
         ktTypeProvider: () -> KtTypeReference?,
         ifNonError: () -> T
     ): T {
-        TODO()
-//        if (!correctErrorTypes) {
-//            return ifNonError()
-//        }
-//
+        if (!correctErrorTypes) {
+            return ifNonError()
+        }
+
+//        TODO
 //        if (type?.containsErrorTypes() == true) {
 //            val typeFromSource = ktTypeProvider()?.typeElement
 //            val ktFile = typeFromSource?.containingKtFile
@@ -868,56 +861,57 @@ class StubGenerator {
 //            }
 //        }
 //
-//        val nonErrorType = ifNonError()
-//
-//        if (nonErrorType is JCFieldAccess) {
-//            val qualifier = nonErrorType.selected
-//            if (nonErrorType.name.toString() == NON_EXISTENT_CLASS_NAME.shortName().asString()
-//                && qualifier is JCIdent
-//                && qualifier.name.toString() == NON_EXISTENT_CLASS_NAME.parent().asString()
-//            ) {
-//                @Suppress("UNCHECKED_CAST")
-//                return treeMaker.FqName("java.lang.Object") as T
-//            }
-//        }
-//
-//        return nonErrorType
+        val nonErrorType = ifNonError()
+
+        if (nonErrorType is JCFieldAccess) {
+            val qualifier = nonErrorType.selected
+            if (nonErrorType.name.toString() == NON_EXISTENT_CLASS_NAME.shortName().asString()
+                && qualifier is JCIdent
+                && qualifier.name.toString() == NON_EXISTENT_CLASS_NAME.parent().asString()
+            ) {
+                @Suppress("UNCHECKED_CAST")
+                return treeMaker.FqName("java.lang.Object") as T
+            }
+        }
+
+        return nonErrorType
     }
 
     private class ClassSupertypes(val superClass: JCExpression?, val interfaces: JavacList<JCExpression>)
 
     private fun calculateSuperTypes(clazz: PsiClass, genericType: SignatureParser.ClassGenericSignature): ClassSupertypes {
-        TODO()
-//        val hasSuperClass = clazz.superName != "java/lang/Object" && !clazz.isEnum
-//
-//        val defaultSuperTypes = ClassSupertypes(
-//            if (hasSuperClass) genericType.superClass else null,
-//            genericType.interfaces
-//        )
-//
-//        if (!correctErrorTypes) {
-//            return defaultSuperTypes
-//        }
-//
-//        val declaration = kaptContext.origins[clazz]?.element as? KtClassOrObject ?: return defaultSuperTypes
-//        val declarationDescriptor = kaptContext.bindingContext[BindingContext.CLASS, declaration] ?: return defaultSuperTypes
+        val superClass = clazz.superClass
+
+        val hasSuperClass = superClass?.qualifiedName != "java.lang.Object" && !clazz.isEnum
+
+        val defaultSuperTypes = ClassSupertypes(
+            if (hasSuperClass) genericType.superClass else null,
+            genericType.interfaces
+        )
+
+        if (!correctErrorTypes) {
+            return defaultSuperTypes
+        }
+
+        val superInterfaces = clazz.supers.filter { it.isInterface }
+
+//        TODO
 //
 //        if (typeMapper.mapType(declarationDescriptor.defaultType) != Type.getObjectType(clazz.name)) {
 //            return defaultSuperTypes
 //        }
 //
-//        val (superClass, superInterfaces) = partitionSuperTypes(declaration) ?: return defaultSuperTypes
-//
-//        val sameSuperClassCount = (superClass == null) == (defaultSuperTypes.superClass == null)
-//        val sameSuperInterfaceCount = superInterfaces.size == defaultSuperTypes.interfaces.size
-//
-//        if (sameSuperClassCount && sameSuperInterfaceCount) {
-//            return defaultSuperTypes
-//        }
-//
-//        class SuperTypeCalculationFailure : RuntimeException()
-//
-//        fun nonErrorType(ref: () -> KtTypeReference?): JCExpression {
+        val sameSuperClassCount = (superClass == null) == (defaultSuperTypes.superClass == null)
+        val sameSuperInterfaceCount = superInterfaces.size == defaultSuperTypes.interfaces.size
+
+        if (sameSuperClassCount && sameSuperInterfaceCount) {
+            return defaultSuperTypes
+        }
+
+        class SuperTypeCalculationFailure : RuntimeException()
+
+        fun nonErrorType(ref: () -> PsiClass?): JCExpression {
+            TODO()
 //            assert(correctErrorTypes)
 //
 //            return getNonErrorType<JCExpression>(
@@ -925,16 +919,16 @@ class StubGenerator {
 //                ErrorTypeCorrector.TypeKind.SUPER_TYPE,
 //                ref
 //            ) { throw SuperTypeCalculationFailure() }
-//        }
-//
-//        return try {
-//            ClassSupertypes(
-//                superClass?.let { nonErrorType { it } },
-//                mapJList(superInterfaces) { nonErrorType { it } }
-//            )
-//        } catch (e: SuperTypeCalculationFailure) {
-//            defaultSuperTypes
-//        }
+        }
+
+        return try {
+            ClassSupertypes(
+                superClass?.let { nonErrorType { it } },
+                mapJList(superInterfaces) { nonErrorType { it } }
+            )
+        } catch (e: SuperTypeCalculationFailure) {
+            defaultSuperTypes
+        }
     }
 
 

@@ -5,15 +5,18 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.sun.tools.javac.parser.Tokens
+import com.sun.tools.javac.tree.DCTree
 import com.sun.tools.javac.tree.DocCommentTable
 import com.sun.tools.javac.tree.JCTree
 
 context(Kapt4ContextForStubGeneration)
 class Kapt4KDocCommentKeeper {
-//    private val docCommentTable = KaptDocCommentTable()
+    private val docCommentTable = Kapt4DocCommentTable()
 
     fun getDocTable(file: JCTree.JCCompilationUnit): DocCommentTable {
-        TODO()
+        return docCommentTable
+//        TODO()
 //        val map = docCommentTable.takeIf { it.map.isNotEmpty() } ?: return docCommentTable
 //
 //        // Enum values with doc comments are rendered incorrectly in javac pretty print,
@@ -47,7 +50,7 @@ class Kapt4KDocCommentKeeper {
     }
 
     fun saveKDocComment(tree: JCTree, node: Any) {
-        TODO()
+//        TODO()
 //        val origin = kaptContext.origins[node] ?: return
 //        val psiElement = origin.element as? KtDeclaration ?: return
 //        val descriptor = origin.descriptor
@@ -127,4 +130,26 @@ class Kapt4KDocCommentKeeper {
 //    private fun LeafPsiElement.isKDocStart() = elementType == KDocTokens.START
 //    private fun LeafPsiElement.isKDocEnd() = elementType == KDocTokens.END
 //    private fun LeafPsiElement.isKDocLeadingAsterisk() = elementType == KDocTokens.LEADING_ASTERISK
+}
+
+
+private class Kapt4DocCommentTable(map: Map<JCTree, Tokens.Comment> = emptyMap()) : DocCommentTable {
+    private val table = map.toMutableMap()
+
+    val map: Map<JCTree, Tokens.Comment>
+        get() = table
+
+    override fun hasComment(tree: JCTree) = tree in table
+    override fun getComment(tree: JCTree) = table[tree]
+    override fun getCommentText(tree: JCTree) = getComment(tree)?.text
+
+    override fun getCommentTree(tree: JCTree): DCTree.DCDocComment? = null
+
+    override fun putComment(tree: JCTree, c: Tokens.Comment) {
+        table[tree] = c
+    }
+
+    fun removeComment(tree: JCTree) {
+        table.remove(tree)
+    }
 }

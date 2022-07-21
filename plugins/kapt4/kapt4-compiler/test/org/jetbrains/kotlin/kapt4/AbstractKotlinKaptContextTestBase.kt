@@ -41,6 +41,10 @@ abstract class AbstractKotlinKapt4ContextTest(
         )
 
         facadeStep(::Kapt4Facade)
+
+        handlersStep(Kapt4ContextBinaryArtifact.Kind) {
+            useHandlers(::Kapt4Handler)
+        }
     }
 }
 
