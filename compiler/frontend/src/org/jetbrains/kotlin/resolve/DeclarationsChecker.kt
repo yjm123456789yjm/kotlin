@@ -35,7 +35,6 @@ import org.jetbrains.kotlin.psi.psiUtil.visibilityModifier
 import org.jetbrains.kotlin.resolve.BindingContext.*
 import org.jetbrains.kotlin.resolve.DescriptorUtils.classCanHaveAbstractDeclaration
 import org.jetbrains.kotlin.resolve.DescriptorUtils.classCanHaveOpenMembers
-import org.jetbrains.kotlin.resolve.calls.results.TypeSpecificityComparator
 import org.jetbrains.kotlin.resolve.checkers.PlatformDiagnosticSuppressor
 import org.jetbrains.kotlin.resolve.descriptorUtil.builtIns
 import org.jetbrains.kotlin.resolve.descriptorUtil.isAnnotationConstructor
@@ -48,6 +47,7 @@ import org.jetbrains.kotlin.types.typeUtil.constituentTypes
 import org.jetbrains.kotlin.types.typeUtil.contains
 import org.jetbrains.kotlin.types.typeUtil.isArrayOfNothing
 import org.jetbrains.kotlin.types.typeUtil.isNothing
+import org.jetbrains.kotlin.types.util.lowerIfFlexible
 import org.jetbrains.kotlin.types.util.upperIfFlexible
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
