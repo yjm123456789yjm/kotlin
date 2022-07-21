@@ -22,7 +22,7 @@ dependencies {
     compileOnly(project(":compiler:util"))
     compileOnly(project(":compiler:cli-common"))
     compileOnly(project(":daemon-common"))
-    compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect-api"))
     compileOnly(project(":js:js.frontend"))
     compileOnly(commonDependency("net.rubygrapefruit", "native-platform"))
 
@@ -31,7 +31,7 @@ dependencies {
     nativePlatformVariants.forEach {
         embedded(commonDependency("net.rubygrapefruit", "native-platform", "-$it"))
     }
-    runtimeOnly(project(":kotlin-reflect"))
+    // runtimeOnly(project(":kotlin-reflect")) // todo why?
     api(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
         isTransitive = false
     }
