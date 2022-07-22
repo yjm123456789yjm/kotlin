@@ -35,7 +35,7 @@ dependencies {
         testCompileOnly(project(it))
     }
 
-    // testImplementation(project(":kotlin-reflect"))
+    testImplementation(project(":kotlin-reflect"))
     testImplementation(toolsJar())
 
     antLauncherJar(commonDependency("org.apache.ant", "ant"))
