@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.ir.util.getSimpleFunction
 import org.jetbrains.kotlin.ir.util.isTrueConst
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.utils.addToStdlib.flatGroupBy
+import org.jetbrains.kotlin.wasm.ir.WasmI32
 import org.jetbrains.kotlin.wasm.ir.WasmImmediate
 import org.jetbrains.kotlin.wasm.ir.WasmOp
 import org.jetbrains.kotlin.wasm.ir.WasmType
@@ -27,8 +28,7 @@ class SwitchGenerator(private val expression: IrWhen, private val generator: Bod
     data class ValueToLabel(val value: Any?, val label: Label)
 
     private val IrSimpleFunctionSymbol.isEqEq
-        get() = this == symbols.irBuiltIns.eqeqSymbol || symbols.equalityFunctions.containsValue(this) //||
-                //this == symbols.irBuiltIns.stringClass.owner.getSimpleFunction("equals")
+        get() = this == symbols.irBuiltIns.eqeqSymbol || symbols.equalityFunctions.containsValue(this)
 
     // @return null if the IrWhen cannot be emitted as lookupswitch or tableswitch.
     fun generate(): Boolean {
@@ -292,20 +292,18 @@ class SwitchGenerator(private val expression: IrWhen, private val generator: Bod
                     assert(branch.condition.isTrueConst()) { "IrElseBranch.condition should be const true: ${branch.condition.dump()}" }
                     matchConditions(branch.result) ?: return null
                 } else {
-                    if (!branch.result.isTrueConst())
-                        return null
+                    if (!branch.result.isTrueConst()) return null
                     matchConditions(branch.condition) ?: return null
                 }
             }
-
-            return if (candidates.isNotEmpty()) candidates else return null
+            return candidates.ifEmpty { null }
         } else if (condition is IrCall && condition.symbol == symbols.irBuiltIns.ororSymbol) {
             val candidates = ArrayList<IrCall>()
             for (i in 0 until condition.valueArgumentsCount) {
                 val argument = condition.getValueArgument(i)!!
                 candidates += matchConditions(argument) ?: return null
             }
-            return if (candidates.isNotEmpty()) candidates else return null
+            return candidates.ifEmpty { null }
         } else if (condition is IrCall) {
             return arrayListOf(condition)
         }
@@ -346,65 +344,68 @@ class SwitchGenerator(private val expression: IrWhen, private val generator: Bod
             }
         }
 
+        private fun createBinaryTable(sortedCaseToExpressionIndex: List<Pair<Int, Int>>, elseIndex: Int, fromIncl: Int, toExcl: Int) {
+            val size = toExcl - fromIncl
+            if (size == 1) {
+                generator.body.buildConstI32(sortedCaseToExpressionIndex[fromIncl].second)
+                generator.body.buildConstI32(elseIndex)
+                subject.accept(generator, null)
+                generator.body.buildConstI32(sortedCaseToExpressionIndex[fromIncl].first)
+                generator.body.buildInstr(WasmOp.I32_EQ)
+                generator.body.buildInstr(WasmOp.SELECT)
+                return
+            }
+
+            val border = fromIncl + size / 2
+
+            subject.accept(generator, null)
+            generator.body.buildConstI32(sortedCaseToExpressionIndex[border].first)
+            generator.body.buildInstr(WasmOp.I32_LT_S)
+            generator.body.buildIf(null, WasmI32)
+            createBinaryTable(sortedCaseToExpressionIndex, elseIndex, fromIncl, border)
+            generator.body.buildElse()
+            createBinaryTable(sortedCaseToExpressionIndex, elseIndex, border, toExcl)
+            generator.body.buildEnd()
+        }
+
         protected fun genIntSwitch(unsortedIntCases: List<ValueToLabel>) {
             val intCases = unsortedIntCases.map { it.value as Int to it.label }
-            val caseMin = intCases.minBy { it.first }
-            val caseMax = intCases.maxBy { it.first }
 
-            if (caseMin.first == Int.MIN_VALUE && caseMax.first == Int.MAX_VALUE) error("!!!")
             val resultType = generator.context.transformBlockResultType(expression.type)
 
-            val notEmptyBuckets = intCases
-                .groupBy { (it.first - caseMin.first) % intCases.size }
-                .values
-                .filter { it.isNotEmpty() }
+            val sortedCases = intCases.sortedBy { it.first }
+            val sortedCaseToExpressionIndex =
+                sortedCases.map { case -> case.first to expressionToLabels.indexOfFirst { it.label == case.second } }
+
+            createBinaryTable(sortedCaseToExpressionIndex, expressionToLabels.size, 0, sortedCases.size)
+            val selectorLocal = generator.context.referenceLocal(SyntheticLocalType.TABLE_SWITCH_SELECTOR)
+            generator.body.buildSetLocal(selectorLocal)
 
             val baseBlockIndex = generator.body.numberOfNestedBlocks
 
-            repeat(notEmptyBuckets.size + 1) { //buckets + else branch
+            repeat(expressionToLabels.size + 2) { //expressions + else branch + br_table
                 generator.body.buildBlock(resultType)
             }
-            generator.body.buildBlock(resultType) //br_table
 
-            //(subject - min) % size
             resultType?.let { generateDefaultInitializerForType(it, generator.body) } //stub value
-            subject.accept(generator, null)
-            generator.body.buildConstI32(caseMin.first)
-            generator.body.buildInstr(WasmOp.I32_SUB)
-            generator.body.buildConstI32(intCases.size)
-            generator.body.buildInstr(WasmOp.I32_REM_U)
-
+            generator.body.buildGetLocal(selectorLocal)
             generator.body.buildInstr(
                 WasmOp.BR_TABLE,
-                WasmImmediate.LabelIdxVector(notEmptyBuckets.indices.toList()),
-                WasmImmediate.LabelIdx(notEmptyBuckets.size)
+                WasmImmediate.LabelIdxVector(expressionToLabels.indices.toList()),
+                WasmImmediate.LabelIdx(expressionToLabels.size)
             )
             generator.body.buildEnd()
 
-            for (bucket in notEmptyBuckets) {
+            val elseBlockIndex = baseBlockIndex + 2
+
+            for (expression in expressionToLabels) {
                 if (resultType != null) {
                     generator.body.buildDrop()
                 }
 
-                val elseBlockIndex = baseBlockIndex + 2
-
-                for (branch in bucket) {
-                    val condition = callToLabels.first { it.label == branch.second }.call
-                    val expression = expressionToLabels.first { it.label == branch.second }.expression
-                    condition.acceptVoid(generator)
-                    generator.body.buildIf(null, resultType)
-                    inElseContext(elseBlockIndex, resultType) {
-                        expression.acceptVoid(generator)
-                    }
-                    generator.body.buildElse()
+                inElseContext(elseBlockIndex, resultType) {
+                    expression.expression.acceptVoid(generator)
                 }
-
-                // now we are in the deepest else block that means else block for whole when
-                resultType?.let { generateDefaultInitializerForType(it, generator.body) } //stub value
-                generator.body.buildBr(elseBlockIndex)
-
-                repeat(bucket.size) { generator.body.buildEnd() }
-
                 generator.body.buildBr(baseBlockIndex + 1)
                 generator.body.buildEnd()
             }
