@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.intellij.openapi.Disposable
 import com.sun.tools.javac.tree.TreeMaker
 import com.sun.tools.javac.util.Context
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
@@ -22,10 +23,18 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.org.objectweb.asm.Opcodes
 
 object Kapt4Main {
-    fun run(configuration: CompilerConfiguration, options: KaptOptions): Pair<Kapt4ContextForStubGeneration, Map<KtLightClass, Kapt4StubGenerator.KaptStub?>> {
+    fun run(
+        configuration: CompilerConfiguration,
+        options: KaptOptions,
+        applicationDisposable: Disposable,
+        projectDisposable: Disposable,
+    ): Pair<Kapt4ContextForStubGeneration, Map<KtLightClass, Kapt4StubGenerator.KaptStub?>> {
         val module: KtSourceModule
 
-        val analysisSession = buildStandaloneAnalysisAPISession {
+        val analysisSession = buildStandaloneAnalysisAPISession(
+            applicationDisposable,
+            projectDisposable
+        ) {
             // I have files: List<File>
             buildKtModuleProviderByCompilerConfiguration(configuration) {
                 module = it

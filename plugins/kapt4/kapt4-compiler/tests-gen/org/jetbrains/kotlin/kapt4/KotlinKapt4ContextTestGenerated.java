@@ -21,7 +21,6 @@ import java.util.regex.Pattern;
 @SuppressWarnings("all")
 @TestMetadata("plugins/kapt3/kapt3-compiler/testData/converter")
 @TestDataPath("$PROJECT_ROOT")
-@Execution(ExecutionMode.SAME_THREAD)
 public class KotlinKapt4ContextTestGenerated extends AbstractKotlinKapt4ContextTest {
     @Test
     @TestMetadata("abstractEnum.kt")

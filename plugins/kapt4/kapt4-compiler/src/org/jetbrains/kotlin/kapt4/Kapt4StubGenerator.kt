@@ -393,6 +393,9 @@ class Kapt4StubGenerator {
 
         if (declaration.isStatic) {
             access = access or Opcodes.ACC_STATIC
+            if (declaration !is PsiClass) {
+                // access = access or Opcodes.ACC_FINAL
+            }
         }
 
         if (declaration.isVolatile) {
@@ -461,7 +464,7 @@ class Kapt4StubGenerator {
     ): JCModifiers {
         return convertModifiers(containingClass, access.toLong(), kind, packageFqName, allAnnotations)
     }
-    // TODO
+
     private fun convertModifiers(
         containingClass: PsiClass,
         access: Long,
@@ -470,19 +473,11 @@ class Kapt4StubGenerator {
         allAnnotations: List<PsiAnnotation>
     ): JCModifiers {
         var seenOverride = false
-        val seenAnnotations = mutableSetOf<PsiAnnotation>()
         fun convertAndAdd(list: JavacList<JCAnnotation>, annotation: PsiAnnotation): JavacList<JCAnnotation> {
             if (annotation.hasQualifiedName("java.lang.Override")) {
                 if (seenOverride) return list  // KT-34569: skip duplicate @Override annotations
                 seenOverride = true
             }
-
-            // Missing annotation classes can match against multiple annotation descriptors
-//            val annotationDescriptor = descriptorAnnotations.firstOrNull {
-//                it !in seenAnnotations && checkIfAnnotationValueMatches(annotation, AnnotationValue(it))
-//            }?.also {
-//                seenAnnotations += it
-//            }
             val annotationTree = convertAnnotation(containingClass, annotation, packageFqName) ?: return list
             return list.prepend(annotationTree)
         }

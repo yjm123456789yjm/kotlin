@@ -31,7 +31,12 @@ class Kapt4Facade(private val testServices: TestServices) :
         configuration.addKotlinSourceRoots(module.files.filter { it.isKtFile }.map { it.realFile().absolutePath })
         configuration.addJavaSourceRoots(module.files.filter { it.isKtFile }.map { it.realFile() })
         val options = testServices.kaptOptionsProvider[module]
-        val (context, stubMap) = Kapt4Main.run(configuration, options)
+        val (context, stubMap) = Kapt4Main.run(
+            configuration,
+            options,
+            testServices.applicationDisposableProvider.getApplicationRootDisposable(),
+            configurationProvider.testRootDisposable
+        )
         return Kapt4ContextBinaryArtifact(context, stubMap.values.filterNotNull())
     }
 
