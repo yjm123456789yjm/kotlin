@@ -6,22 +6,21 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.psi.PsiClassType
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifierListOwner
-import com.intellij.psi.PsiType
+import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTypesUtil
+import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
-import org.jetbrains.kotlin.asJava.elements.KtLightMethod
+import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.psi.KtElement
+import java.util.*
 
 val PsiModifierListOwner.isPublic: Boolean get() = hasModifier(JvmModifier.PUBLIC)
 val PsiModifierListOwner.isPrivate: Boolean get() = hasModifier(JvmModifier.PRIVATE)
 val PsiModifierListOwner.isProtected: Boolean get() = hasModifier(JvmModifier.PROTECTED)
 
-val PsiModifierListOwner.isFinal: Boolean get() = hasModifier(JvmModifier.PUBLIC)
-val PsiModifierListOwner.isAbstract: Boolean get() = hasModifier(JvmModifier.PUBLIC)
+val PsiModifierListOwner.isFinal: Boolean get() = hasModifier(JvmModifier.FINAL)
+val PsiModifierListOwner.isAbstract: Boolean get() = hasModifier(JvmModifier.ABSTRACT)
 
 val PsiModifierListOwner.isStatic: Boolean get() = hasModifier(JvmModifier.STATIC)
 val PsiModifierListOwner.isSynthetic: Boolean get() = false //TODO()
@@ -81,7 +80,7 @@ operator fun <T : Any> JavacList<T>.plus(other: JavacList<T>): JavacList<T> {
 
 fun <T : Any> Iterable<T>.toJList(): JavacList<T> = JavacList.from(this)
 
-val KtLightClass.signature: String
+val PsiClass.signature: String
     get() = ClassUtil.getClassObjectPresentation(PsiTypesUtil.getClassType(this))
 
 val PsiMethod.signature: String
@@ -94,11 +93,21 @@ val PsiMethod.hasVarargs: Boolean
     get() = TODO() //
 
 private fun getAsmFieldSignature(field: PsiField): String {
-    TODO()
+    return ClassUtil.getBinaryPresentation(Optional.ofNullable<PsiType>(field.type).orElse(PsiType.VOID))
 }
 
 val PsiModifierListOwner.isConstructor: Boolean
     get() = (this is PsiMethod) && this.isConstructor
 
 val PsiType.qualifiedName: String
-    get() = (this as? PsiClassType)?.resolve()?.qualifiedName ?: "<no name provided>"
+    get() = resolvedClass?.qualifiedName ?: "<no name provided>"
+
+val PsiElement.ktOrigin: KtElement
+    get() = (this as? KtLightElement<*, *>)?.kotlinOrigin ?: TODO()
+
+val PsiClass.defaultType: PsiType
+    get() = PsiTypesUtil.getClassType(this)
+
+
+val PsiType.resolvedClass: PsiClass?
+    get() = (this as? PsiClassType)?.resolve()

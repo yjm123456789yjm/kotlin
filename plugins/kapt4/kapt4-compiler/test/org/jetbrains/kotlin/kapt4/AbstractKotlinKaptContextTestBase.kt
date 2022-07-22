@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.TestMetadata
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
+import org.jetbrains.kotlin.test.directives.ConfigurationDirectives.WITH_STDLIB
 import org.jetbrains.kotlin.test.model.DependencyKind
 import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.runners.AbstractKotlinCompilerWithTargetBackendTest
@@ -20,7 +21,9 @@ import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurat
 import org.junit.jupiter.api.Tag
 import org.junit.jupiter.api.Test
 
-abstract class AbstractKotlinKapt4ContextTest(
+open class AbstractKotlinKapt4ContextTest : AbstractKotlinKapt4ContextTestBase(TargetBackend.JVM_IR)
+
+abstract class AbstractKotlinKapt4ContextTestBase(
     targetBackend: TargetBackend
 ) : AbstractKotlinCompilerWithTargetBackendTest(targetBackend) {
     override fun TestConfigurationBuilder.configuration() {
@@ -32,6 +35,7 @@ abstract class AbstractKotlinKapt4ContextTest(
 
         defaultDirectives {
             +MAP_DIAGNOSTIC_LOCATIONS
+            +WITH_STDLIB
         }
 
         useConfigurators(
@@ -51,7 +55,7 @@ abstract class AbstractKotlinKapt4ContextTest(
 @TestMetadata("plugins/kapt4/kapt4-compiler/testData/converter")
 @TestDataPath("\$PROJECT_ROOT")
 @Tag("IgnoreJDK11")
-class KotlinKapt4ContextTestGenerated : AbstractKotlinKapt4ContextTest(TargetBackend.JVM_IR) {
+class KotlinKapt4ContextTestManual : AbstractKotlinKapt4ContextTest() {
     @Test
     @TestMetadata("simple.kt")
     fun testSimple() {

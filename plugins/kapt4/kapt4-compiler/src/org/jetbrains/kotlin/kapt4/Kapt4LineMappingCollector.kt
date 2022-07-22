@@ -6,12 +6,8 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.openapi.fileEditor.FileDocumentManager
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiField
-import com.intellij.psi.PsiFile
-import com.intellij.psi.PsiMethod
+import com.intellij.psi.*
 import com.sun.tools.javac.tree.JCTree
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
 import org.jetbrains.kotlin.kapt3.base.stubs.KotlinPosition
@@ -26,15 +22,15 @@ class Kapt4LineMappingCollector {
 
     private val filePaths = mutableMapOf<PsiFile, Pair<String, Boolean>>()
 
-    fun registerClass(lightClass: KtLightClass) {
+    fun registerClass(lightClass: PsiClass) {
         register(lightClass, lightClass.name ?: NO_NAME_PROVIDED)
     }
 
-    fun registerMethod(lightClass: KtLightClass, method: PsiMethod) {
+    fun registerMethod(lightClass: PsiClass, method: PsiMethod) {
         register(method, lightClass.name + "#" + method.name + method.signature)
     }
 
-    fun registerField(lightClass: KtLightClass, field: PsiField) {
+    fun registerField(lightClass: PsiClass, field: PsiField) {
         register(field, lightClass.name + "#" + field.name)
     }
 
@@ -42,11 +38,11 @@ class Kapt4LineMappingCollector {
         signatureInfo[declaration.getJavacSignature()] = method.name + method.signature
     }
 
-    fun getPosition(lightClass: KtLightClass): KotlinPosition? = lineInfo[lightClass.name]
-    fun getPosition(lightClass: KtLightClass, method: PsiMethod): KotlinPosition? =
+    fun getPosition(lightClass: PsiClass): KotlinPosition? = lineInfo[lightClass.name]
+    fun getPosition(lightClass: PsiClass, method: PsiMethod): KotlinPosition? =
         lineInfo[lightClass.name + "#" + method.name + method.signature]
 
-    fun getPosition(lightClass: KtLightClass, field: PsiField): KotlinPosition? = lineInfo[lightClass.name + "#" + field.name]
+    fun getPosition(lightClass: PsiClass, field: PsiField): KotlinPosition? = lineInfo[lightClass.name + "#" + field.name]
 
     private fun register(asmNode: Any, fqName: String) {
         val psiElement = (asmNode as? KtLightElement<*, *>)?.kotlinOrigin ?: return

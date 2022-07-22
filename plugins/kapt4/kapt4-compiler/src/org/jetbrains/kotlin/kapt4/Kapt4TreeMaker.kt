@@ -89,8 +89,8 @@ class Kapt4TreeMaker(
         // This is a top-level class
         if ('$' !in nameWithDots) return nameWithDots
 
-        val kaptContext = this.kaptContext.get()
-        TODO()
+        return nameWithDots.replace('$', '.')
+//        TODO()
 //        // Maybe it's in our sources?
 //        val classFromSources = kaptContext.compiledClasses.firstOrNull { it.name == internalName }
 //        if (classFromSources != null) {
