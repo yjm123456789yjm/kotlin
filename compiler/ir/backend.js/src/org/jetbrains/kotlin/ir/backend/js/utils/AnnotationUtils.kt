@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.declarations.IrOverridableDeclaration
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrConst
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
+import org.jetbrains.kotlin.ir.expressions.IrVararg
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
@@ -24,11 +25,13 @@ object JsAnnotations {
     val jsQualifierFqn = FqName("kotlin.js.JsQualifier")
     val jsExportFqn = FqName("kotlin.js.JsExport")
     val jsImplicitExportFqn = FqName("kotlin.js.JsImplicitExport")
+    val jsReflectedClass = FqName("kotlin.js.JsReflectedClass")
     val jsNativeGetter = FqName("kotlin.js.nativeGetter")
     val jsNativeSetter = FqName("kotlin.js.nativeSetter")
     val jsNativeInvoke = FqName("kotlin.js.nativeInvoke")
     val jsFunFqn = FqName("kotlin.js.JsFun")
     val JsPolyfillFqn = FqName("kotlin.js.JsPolyfill")
+    val JsSubtypeCheckableFqn = FqName("kotlin.js.JsSubtypeCheckable")
 }
 
 @Suppress("UNCHECKED_CAST")
@@ -38,6 +41,9 @@ fun IrConstructorCall.getSingleConstStringArgument() =
 @Suppress("UNCHECKED_CAST")
 fun IrConstructorCall.getSingleConstBooleanArgument() =
     (getValueArgument(0) as IrConst<Boolean>).value
+
+fun IrConstructorCall.getClassReferencVarargArguments() =
+    (getValueArgument(0) as? IrVararg)?.elements as? List<IrClassReference>
 
 fun IrAnnotationContainer.getJsModule(): String? =
     getAnnotation(JsAnnotations.jsModuleFqn)?.getSingleConstStringArgument()
@@ -65,6 +71,15 @@ fun IrAnnotationContainer.isJsExport(): Boolean =
 
 fun IrAnnotationContainer.isJsImplicitExport(): Boolean =
     hasAnnotation(JsAnnotations.jsImplicitExportFqn)
+
+fun IrAnnotationContainer.isJsSubtypeCheckable(): Boolean =
+    hasAnnotation(JsAnnotations.JsSubtypeCheckableFqn)
+
+fun IrAnnotationContainer.isJsReflectedClass(): Boolean =
+    hasAnnotation(JsAnnotations.jsReflectedClass)
+
+fun IrAnnotationContainer.getJsSubtypeCheckableInterfaces(): List<IrClassReference>? =
+    getAnnotation(JsAnnotations.JsSubtypeCheckableFqn)?.getClassReferencVarargArguments()
 
 fun IrAnnotationContainer.isJsNativeGetter(): Boolean = hasAnnotation(JsAnnotations.jsNativeGetter)
 
