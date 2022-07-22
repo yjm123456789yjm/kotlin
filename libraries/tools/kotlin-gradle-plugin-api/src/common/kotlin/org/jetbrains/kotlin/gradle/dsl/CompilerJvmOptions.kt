@@ -5,48 +5,43 @@
 
 package org.jetbrains.kotlin.gradle.dsl
 
-@Deprecated("Use CompilerJvmOptions instead", level = DeprecationLevel.WARNING)
-interface KotlinJvmOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions {
-    override val options: org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
+interface CompilerJvmOptions : org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions {
 
     /**
      * Generate metadata for Java 1.8 reflection on method parameters
      * Default value: false
      */
-    var javaParameters: kotlin.Boolean
-        get() = options.javaParameters.get()
-        set(value) = options.javaParameters.set(value)
+    @get:org.gradle.api.tasks.Input
+    val javaParameters: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Target version of the generated JVM bytecode (1.8, 9, 10, ..., 18), default is 1.8
      * Possible values: "1.8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"
      * Default value: null
      */
-    var jvmTarget: kotlin.String?
-        get() = options.jvmTarget.orNull
-        set(value) = options.jvmTarget.set(value)
+    @get:org.gradle.api.tasks.Optional
+    @get:org.gradle.api.tasks.Input
+    val jvmTarget: org.gradle.api.provider.Property<kotlin.String>
 
     /**
      * Name of the generated .kotlin_module file
      * Default value: null
      */
-    var moduleName: kotlin.String?
-        get() = options.moduleName.orNull
-        set(value) = options.moduleName.set(value)
+    @get:org.gradle.api.tasks.Optional
+    @get:org.gradle.api.tasks.Input
+    val moduleName: org.gradle.api.provider.Property<kotlin.String>
 
     /**
      * Don't automatically include the Java runtime into the classpath
      * Default value: false
      */
-    var noJdk: kotlin.Boolean
-        get() = options.noJdk.get()
-        set(value) = options.noJdk.set(value)
+    @get:org.gradle.api.tasks.Input
+    val noJdk: org.gradle.api.provider.Property<kotlin.Boolean>
 
     /**
      * Use the old JVM backend
      * Default value: false
      */
-    var useOldBackend: kotlin.Boolean
-        get() = options.useOldBackend.get()
-        set(value) = options.useOldBackend.set(value)
+    @get:org.gradle.api.tasks.Input
+    val useOldBackend: org.gradle.api.provider.Property<kotlin.Boolean>
 }

@@ -21,6 +21,17 @@ import kotlin.reflect.KVisibility
 
 @Retention(AnnotationRetention.RUNTIME)
 annotation class GradleOption(
-    val value: KClass<out DefaultValues> = DefaultValues::class,
-    val backingFieldVisibility: KVisibility = KVisibility.PRIVATE
+    val value: KClass<out DefaultValues>,
+    val gradleInputType: GradleInputTypes
 )
+
+enum class GradleInputTypes(
+    val typeAsString: String
+) {
+    INPUT("org.gradle.api.tasks.Input"),
+    INTERNAL("org.gradle.api.tasks.Internal");
+
+    override fun toString(): String {
+        return typeAsString
+    }
+}
