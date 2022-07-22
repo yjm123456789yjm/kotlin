@@ -18,6 +18,7 @@ dependencies {
     api(project(":kotlin-scripting-jvm"))
     compileOnly(project(":kotlin-scripting-compiler"))
     compileOnly(project(":compiler:cli"))
+    // ./gradlew --no-build-cache --rerun-tasks :kotlin-scripting-ide-services-unshaded:compileKotlin works
     compileOnly(project(":kotlin-reflect-api"))
     compileOnly(intellijCore())
     publishedRuntime(project(":kotlin-compiler"))
