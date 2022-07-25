@@ -36,6 +36,14 @@ interface KotlinCommonOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonTool
         set(value) = options.languageVersion.set(value.languageVersionCompilerOption)
 
     /**
+     * Enable usages of API that requires opt-in with an opt-in requirement marker with the given fully qualified name
+     * Default value: emptyList<String>()
+     */
+    var optIn: kotlin.collections.List<kotlin.String>
+        get() = options.optIn.get()
+        set(value) = options.optIn.set(value)
+
+    /**
      * Compile using experimental K2. K2 is a new compiler pipeline, no compatibility guarantees are yet provided
      * Default value: false
      */

@@ -15,6 +15,9 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
     override val languageVersion: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.LanguageVersion> =
         objectFactory.property(org.jetbrains.kotlin.config.LanguageVersion::class.java)
 
+    override val optIn: org.gradle.api.provider.ListProperty<kotlin.String> =
+        objectFactory.listProperty(kotlin.String::class.java).convention(emptyList<String>())
+
     override val useK2: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
@@ -22,6 +25,7 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
         super.toCompilerArguments(args)
         args.apiVersion = apiVersion.orNull?.versionString
         args.languageVersion = languageVersion.orNull?.versionString
+        args.optIn = optIn.get().toTypedArray()
         args.useK2 = useK2.get()
     }
 
@@ -29,6 +33,7 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
         super.fillDefaultValues(args)
         args.apiVersion = null
         args.languageVersion = null
+        args.optIn = emptyList<String>().toTypedArray()
         args.useK2 = false
     }
 }

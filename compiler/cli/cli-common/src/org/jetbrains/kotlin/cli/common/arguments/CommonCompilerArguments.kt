@@ -77,6 +77,10 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     @Argument(value = "-script", description = "Evaluate the given Kotlin script (*.kts) file")
     var script: Boolean by FreezableVar(false)
 
+    @GradleOption(
+        value = DefaultValues.EmptyStringArrayDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(
         value = "-opt-in",
         deprecatedName = "-Xopt-in",
