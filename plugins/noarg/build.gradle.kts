@@ -21,8 +21,8 @@ dependencies {
     testApi(projectTests(":compiler:test-infrastructure"))
     testApi(projectTests(":compiler:test-infrastructure-utils"))
 
-    testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(project(":kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 

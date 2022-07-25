@@ -10,7 +10,7 @@ dependencies {
     api(project(":kotlin-util-io"))
 
     testImplementation(commonDependency("junit:junit"))
-    testCompileOnly(project(":kotlin-reflect-api"))
+    // testCompileOnly(project(":kotlin-reflect-api"))
     testImplementation(project(":kotlin-reflect"))
 }
 

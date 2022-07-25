@@ -18,8 +18,8 @@ dependencies {
     testImplementation(projectTests(":compiler:visualizer"))
     testImplementation(projectTests(":js:js.tests"))
     testImplementation(projectTests(":generators:test-generator"))
-    testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(project(":kotlin-reflect"))
 }
 
 sourceSets {
