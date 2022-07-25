@@ -25,7 +25,7 @@ dependencies {
     implementation(project(":compiler:ir.serialization.jvm"))
     implementation(project(":compiler:ir.tree"))
 
-    // compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect"))
     compileOnly(intellijCore())
 }
 

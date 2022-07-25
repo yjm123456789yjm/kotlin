@@ -35,7 +35,7 @@ dependencies {
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 
     // ./gradlew --no-build-cache --rerun-tasks :kotlin-lombok-compiler-plugin:test works
-    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testCompileOnly(project(":kotlin-reflect"))
     // testRuntimeOnly(project(":kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 

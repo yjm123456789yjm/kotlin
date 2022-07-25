@@ -7,7 +7,7 @@ dependencies {
     api(project(":examples:scripting-jvm-maven-deps"))
     api(project(":kotlin-scripting-jvm-host-unshaded"))
     api(kotlinStdlib())
-    // compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect"))
     compileOnly(project(":compiler:util"))
 
     testRuntimeOnly(project(":kotlin-compiler"))

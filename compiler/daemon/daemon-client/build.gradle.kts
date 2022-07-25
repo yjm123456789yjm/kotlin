@@ -22,7 +22,7 @@ dependencies {
     compileOnly(project(":compiler:util"))
     compileOnly(project(":compiler:cli-common"))
     compileOnly(project(":daemon-common"))
-    // compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect"))
     compileOnly(project(":js:js.frontend"))
     compileOnly(commonDependency("net.rubygrapefruit", "native-platform"))
 

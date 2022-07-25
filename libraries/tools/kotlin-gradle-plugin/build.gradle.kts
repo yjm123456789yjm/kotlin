@@ -39,7 +39,7 @@ dependencies {
     commonCompileOnly(project(":compiler:incremental-compilation-impl"))
     commonCompileOnly(project(":daemon-common"))
     commonCompileOnly(project(":native:kotlin-native-utils"))
-    // commonCompileOnly(project(":kotlin-reflect-api"))
+    // commonCompileOnly(project(":kotlin-reflect"))
     commonCompileOnly(project(":kotlin-android-extensions"))
     commonCompileOnly(project(":kotlin-build-common"))
     commonCompileOnly(project(":kotlin-compiler-runner"))
@@ -101,7 +101,7 @@ dependencies {
     }
 
     testCompileOnly(project(":compiler"))
-    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testCompileOnly(project(":kotlin-reflect"))
     testCompileOnly(project(":kotlin-annotation-processing"))
     testCompileOnly(project(":kotlin-annotation-processing-gradle"))
 
