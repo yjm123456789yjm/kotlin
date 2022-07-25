@@ -9,7 +9,7 @@ dependencies {
     api(project(":js:js.frontend"))
 
     implementation(project(":compiler:ir.backend.common"))
-    compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect-api"))
 
     compileOnly(intellijCore())
 }

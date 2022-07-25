@@ -13,8 +13,8 @@ dependencies {
     testImplementation(project(":compiler:backend.jvm.lower"))
     testImplementation(intellijCore())
 
-    testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testRuntimeOnly(project(":kotlin-reflect"))
     testRuntimeOnly(project(":core:descriptors.runtime"))
 
     testImplementation(projectTests(":generators:test-generator"))

@@ -16,7 +16,7 @@ dependencies {
     compileOnly(project(":compiler:fir:entrypoint"))
     compileOnly(project(":compiler:plugin-api"))
     compileOnly(intellijCore())
-    compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect-api")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:test works
 
     testApiJUnit5()
     testApi(projectTests(":compiler:tests-common-new"))
@@ -26,8 +26,8 @@ dependencies {
     testApi(project(":compiler:fir:checkers:checkers.jvm"))
     testApi(project(":compiler:fir:checkers:checkers.js"))
 
-    testCompileOnly(project(":kotlin-reflect-api"))
-    testRuntimeOnly(project(":kotlin-reflect"))
+    // testCompileOnly(project(":kotlin-reflect-api")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:test works
+    // testRuntimeOnly(project(":kotlin-reflect")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:test works
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir-serialization"))
 
