@@ -27,7 +27,7 @@ dependencies {
 
     testApiJUnit5()
 
-    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testCompileOnly(project(":kotlin-reflect"))
     // testRuntimeOnly(project(":kotlin-reflect")) // todo why?
     testRuntimeOnly(project(":core:descriptors.runtime"))
     testRuntimeOnly(project(":compiler:fir:fir2ir:jvm-backend"))

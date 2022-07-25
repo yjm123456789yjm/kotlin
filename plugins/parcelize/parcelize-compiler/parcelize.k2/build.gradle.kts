@@ -18,7 +18,7 @@ dependencies {
     compileOnly(project(":compiler:ir.tree"))
     compileOnly(project(":compiler:fir:entrypoint"))
     // ./gradlew --no-build-cache --rerun-tasks :plugins:parcelize:parcelize-compiler:parcelize.k2:compileKotlin
-    // compileOnly(project(":kotlin-reflect-api"))
+    // compileOnly(project(":kotlin-reflect"))
 }
 
 sourceSets {

@@ -11,7 +11,7 @@ dependencies {
     testApi(projectTests(":compiler:incremental-compilation-impl"))
 
     testCompileOnly(intellijCore())
-    // testCompileOnly(project(":kotlin-reflect-api")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:fir-plugin-ic-test:test works
+    // testCompileOnly(project(":kotlin-reflect")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:fir-plugin-ic-test:test works
 
     // testRuntimeOnly(project(":kotlin-reflect")) // ./gradlew --no-build-cache --rerun-tasks :plugins:fir-plugin-prototype:fir-plugin-ic-test:test works
     testRuntimeOnly(project(":core:descriptors.runtime"))

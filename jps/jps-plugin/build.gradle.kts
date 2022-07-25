@@ -53,7 +53,7 @@ dependencies {
     testRuntimeOnly("com.jetbrains.intellij.platform:util-ex:$intellijVersion") { isTransitive = false }
     testRuntimeOnly("com.google.code.gson:gson:2.8.9")
 
-    // testCompileOnly(project(":kotlin-reflect-api"))
+    // testCompileOnly(project(":kotlin-reflect"))
     testImplementation(projectTests(":compiler:incremental-compilation-impl"))
     testCompileOnly(jpsBuild())
     testImplementation(devKitJps()) {

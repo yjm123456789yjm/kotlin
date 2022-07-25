@@ -12,7 +12,7 @@ dependencies {
     implementation(project(":analysis:analysis-api"))
 
     implementation(project(":kotlin-reflect"))
-    // implementation(project(":kotlin-reflect-api"))
+    // implementation(project(":kotlin-reflect"))
 
     /*
      We do not need guava in the generator, but because of a bug in the IJ project importing, we need to have a dependency on intellijCore
