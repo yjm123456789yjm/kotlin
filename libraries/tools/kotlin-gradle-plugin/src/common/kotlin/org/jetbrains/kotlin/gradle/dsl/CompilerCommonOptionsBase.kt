@@ -18,6 +18,9 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
     override val optIn: org.gradle.api.provider.ListProperty<kotlin.String> =
         objectFactory.listProperty(kotlin.String::class.java).convention(emptyList<String>())
 
+    override val progressiveMode: org.gradle.api.provider.Property<kotlin.Boolean> =
+        objectFactory.property(kotlin.Boolean::class.java).convention(false)
+
     override val useK2: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
@@ -26,6 +29,7 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
         args.apiVersion = apiVersion.orNull?.versionString
         args.languageVersion = languageVersion.orNull?.versionString
         args.optIn = optIn.get().toTypedArray()
+        args.progressiveMode = progressiveMode.get()
         args.useK2 = useK2.get()
     }
 
@@ -34,6 +38,7 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
         args.apiVersion = null
         args.languageVersion = null
         args.optIn = emptyList<String>().toTypedArray()
+        args.progressiveMode = false
         args.useK2 = false
     }
 }

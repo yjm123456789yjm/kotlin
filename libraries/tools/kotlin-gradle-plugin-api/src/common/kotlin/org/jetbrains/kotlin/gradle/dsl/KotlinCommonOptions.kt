@@ -44,6 +44,18 @@ interface KotlinCommonOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonTool
         set(value) = options.optIn.set(value)
 
     /**
+     * Enable progressive compiler mode.
+     * In this mode, deprecations and bug fixes for unstable code take effect immediately,
+     * instead of going through a graceful migration cycle.
+     * Code written in the progressive mode is backward compatible; however, code written in
+     * non-progressive mode may cause compilation errors in the progressive mode.
+     * Default value: false
+     */
+    var progressiveMode: kotlin.Boolean
+        get() = options.progressiveMode.get()
+        set(value) = options.progressiveMode.set(value)
+
+    /**
      * Compile using experimental K2. K2 is a new compiler pipeline, no compatibility guarantees are yet provided
      * Default value: false
      */

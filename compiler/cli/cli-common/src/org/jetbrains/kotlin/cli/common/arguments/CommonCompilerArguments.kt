@@ -63,6 +63,10 @@ abstract class CommonCompilerArguments : CommonToolArguments() {
     )
     var kotlinHome: String? by NullableStringFreezableVar(null)
 
+    @GradleOption(
+        value = DefaultValues.BooleanFalseDefault::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
     @Argument(
         value = "-progressive",
         deprecatedName = "-Xprogressive",

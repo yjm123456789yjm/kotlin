@@ -701,12 +701,12 @@ private fun Printer.generateOptionDeprecation(property: KProperty1<*, *>) {
 }
 
 private fun Printer.generateDoc(property: KProperty1<*, *>) {
-    val description = property.findAnnotation<Argument>()!!.description
+    val description = property.findAnnotation<Argument>()!!.description.lines()
     val possibleValues = property.gradleValues.possibleValues
     val defaultValue = property.gradleDefaultValue
 
     println("/**")
-    println(" * $description")
+    description.forEach { println(" * $it") }
     if (possibleValues != null) {
         println(" * Possible values: ${possibleValues.joinToString()}")
     }
