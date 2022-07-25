@@ -658,7 +658,9 @@ private fun Printer.generatePropertyGetterAndSetter(
     modifiers: String = "",
 ) {
     val defaultValue = property.gradleValues
-    val returnType = property.gradleReturnType
+    val returnType = defaultValue.kotlinOptionsType.withNullability(false).toString().substringBeforeLast("!").let {
+        if (property.gradleDefaultValue == "null") "$it?" else it
+    }
 
     if (defaultValue.type != defaultValue.kotlinOptionsType) {
         assert(defaultValue.fromKotlinOptionConverterProp != null)
