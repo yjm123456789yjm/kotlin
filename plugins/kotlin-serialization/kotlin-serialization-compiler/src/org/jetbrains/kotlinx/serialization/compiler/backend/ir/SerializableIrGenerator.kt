@@ -14,12 +14,8 @@ import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrDelegatingConstructorCallImpl
-import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.types.IrTypeProjection
-import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.types.isString
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
-import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.js.resolve.diagnostics.findPsi
 import org.jetbrains.kotlin.resolve.BindingContext
 import org.jetbrains.kotlin.resolve.descriptorUtil.fqNameSafe
@@ -35,6 +31,7 @@ import org.jetbrains.kotlinx.serialization.compiler.diagnostic.serializableAnnot
 import org.jetbrains.kotlinx.serialization.compiler.extensions.SerializationPluginContext
 import org.jetbrains.kotlinx.serialization.compiler.resolve.*
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.CACHED_DESCRIPTOR_FIELD_NAME
+import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.CACHED_SERIALIZERS_PROPERTY_NAME
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.MISSING_FIELD_EXC
 import org.jetbrains.kotlinx.serialization.compiler.resolve.SerialEntityNames.SERIAL_DESC_FIELD
 
@@ -67,6 +64,45 @@ class SerializableIrGenerator(
     }
 
     private val IrClass.isInternalSerializable: Boolean get() = kind == ClassKind.CLASS && hasSerializableOrMetaAnnotationWithoutArgs()
+
+    private val cachedChildSerializers: List<IrExpression?> =
+        createCacheableSerializersExpr(irClass.companionObject()!!, properties.serializableProperties)
+
+    private val cachedChildSerializersProperty: IrProperty? = createCachedSerializersProperty(cachedChildSerializers)
+
+    private fun createCachedSerializersProperty(serializers: List<IrExpression?>): IrProperty? {
+        // if all child serializers are null (non-cacheable) we don't need to create a property
+        serializers.firstOrNull { it != null } ?: return null
+
+        val kSerializerIrClass = compilerContext.referenceClass(SerialEntityNames.KSERIALIZER_NAME_FQ)!!.owner
+        val kSerializerIrType =
+            kSerializerIrClass.defaultType.substitute(mapOf(kSerializerIrClass.typeParameters[0].symbol to compilerContext.irBuiltIns.anyType))
+        val arrayIrType = compilerContext.irBuiltIns.arrayClass.typeWith(kSerializerIrType)
+
+        return createValProperty(irClass.companionObject()!!, arrayIrType, CACHED_SERIALIZERS_PROPERTY_NAME) {
+            +createArrayOfExpression(kSerializerIrType, serializers.map { it ?: irNull() })
+        }
+    }
+
+    private val arrayGet = compilerContext.irBuiltIns.arrayClass.owner.declarations.filterIsInstance<IrSimpleFunction>()
+        .single { it.name.asString() == "get" }
+
+    /*
+    Factory to getting cached serializers via variable.
+    Must be used only in one place because for each factory creates one variable.
+    */
+    private fun IrStatementsBuilder<*>.cachedSerializerFactory(): (Int) -> IrExpression? {
+        cachedChildSerializersProperty ?: return { null }
+
+        val variable = irTemporary(irInvoke(irGetObject(irClass.companionObject()!!), cachedChildSerializersProperty.getter!!.symbol), "cached")
+        return { index: Int ->
+            if (cachedChildSerializers[index] != null) {
+                irInvoke(irGet(variable), arrayGet.symbol, irInt(index))
+            } else {
+                null
+            }
+        }
+    }
 
     override fun generateInternalConstructor(constructorDescriptor: ClassConstructorDescriptor) =
         irClass.contributeConstructor(constructorDescriptor) { ctor ->
@@ -218,7 +254,7 @@ class SerializableIrGenerator(
     private fun IrBlockBodyBuilder.createCachedDescriptorProperty(companionObject: IrClass): IrProperty {
         val serialDescIrType = serialDescClass.defaultType.toIrType()
 
-        return createCompanionValProperty(companionObject, serialDescIrType, CACHED_DESCRIPTOR_FIELD_NAME) {
+        return createValProperty(companionObject, serialDescIrType, CACHED_DESCRIPTOR_FIELD_NAME) {
             val serialDescVar = irTemporary(
                 getInstantiateDescriptorExpr(),
                 nameHint = "serialDesc"
@@ -357,10 +393,12 @@ class SerializableIrGenerator(
                 }
             }
 
+            val serializerFactory = cachedSerializerFactory()
+
             serializeAllProperties(
                 this@SerializableIrGenerator, irClass, serializableProperties,
                 objectToSerialize, localOutput, localSerialDesc,
-                kOutputClass, ignoreIndexTo, initializerAdapter
+                kOutputClass, ignoreIndexTo, initializerAdapter, serializerFactory,
             ) { it, _ ->
                 irGet(writeSelfFunction.valueParameters[3 + it])
             }
