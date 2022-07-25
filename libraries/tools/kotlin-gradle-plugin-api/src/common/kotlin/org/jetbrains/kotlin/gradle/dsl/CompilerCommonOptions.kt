@@ -14,7 +14,7 @@ interface CompilerCommonOptions : org.jetbrains.kotlin.gradle.dsl.CompilerCommon
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val apiVersion: org.gradle.api.provider.Property<kotlin.String>
+    val apiVersion: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.ApiVersion>
 
     /**
      * Provide source compatibility with the specified version of Kotlin
@@ -23,7 +23,7 @@ interface CompilerCommonOptions : org.jetbrains.kotlin.gradle.dsl.CompilerCommon
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val languageVersion: org.gradle.api.provider.Property<kotlin.String>
+    val languageVersion: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.LanguageVersion>
 
     /**
      * Compile using experimental K2. K2 is a new compiler pipeline, no compatibility guarantees are yet provided

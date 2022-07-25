@@ -19,7 +19,7 @@ internal open class CompilerCommonToolOptionsBase @javax.inject.Inject construct
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
     override val freeCompilerArgs: org.gradle.api.provider.ListProperty<kotlin.String> =
-        objectFactory.listProperty(kotlin.String::class.java).convention(emptyList())
+        objectFactory.listProperty(kotlin.String::class.java).convention(emptyList<String>())
 
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments) {
         args.allWarningsAsErrors = allWarningsAsErrors.get()

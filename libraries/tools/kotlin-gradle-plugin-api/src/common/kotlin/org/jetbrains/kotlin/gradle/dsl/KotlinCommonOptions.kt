@@ -14,18 +14,26 @@ interface KotlinCommonOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonTool
      * Possible values: "1.3 (deprecated)", "1.4 (deprecated)", "1.5", "1.6", "1.7", "1.8", "1.9 (experimental)"
      * Default value: null
      */
+    private val kotlin.String?.apiVersionCompilerOption get() = if (this != null) org.jetbrains.kotlin.config.ApiVersion.parse(this) else null
+
+    private val org.jetbrains.kotlin.config.ApiVersion?.apiVersionKotlinOption get() = this?.versionString
+
     var apiVersion: kotlin.String?
-        get() = options.apiVersion.orNull
-        set(value) = options.apiVersion.set(value)
+        get() = options.apiVersion.orNull.apiVersionKotlinOption
+        set(value) = options.apiVersion.set(value.apiVersionCompilerOption)
 
     /**
      * Provide source compatibility with the specified version of Kotlin
      * Possible values: "1.3 (deprecated)", "1.4 (deprecated)", "1.5", "1.6", "1.7", "1.8", "1.9 (experimental)"
      * Default value: null
      */
+    private val kotlin.String?.languageVersionCompilerOption get() = if (this != null) org.jetbrains.kotlin.config.LanguageVersion.fromVersionString(this) else null
+
+    private val org.jetbrains.kotlin.config.LanguageVersion?.languageVersionKotlinOption get() = this?.versionString
+
     var languageVersion: kotlin.String?
-        get() = options.languageVersion.orNull
-        set(value) = options.languageVersion.set(value)
+        get() = options.languageVersion.orNull.languageVersionKotlinOption
+        set(value) = options.languageVersion.set(value.languageVersionCompilerOption)
 
     /**
      * Compile using experimental K2. K2 is a new compiler pipeline, no compatibility guarantees are yet provided

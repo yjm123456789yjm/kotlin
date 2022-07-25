@@ -35,7 +35,7 @@ interface KotlinCommonToolOptions {
 
     /**
      * A list of additional compiler arguments
-     * Default value: emptyList()
+     * Default value: emptyList<String>()
      */
     var freeCompilerArgs: kotlin.collections.List<kotlin.String>
         get() = options.freeCompilerArgs.get()

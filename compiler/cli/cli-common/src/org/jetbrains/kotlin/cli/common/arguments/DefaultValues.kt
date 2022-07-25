@@ -10,48 +10,90 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.NO_CALL
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.JvmTarget
 import org.jetbrains.kotlin.config.LanguageVersion
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
-open class DefaultValues(val defaultValue: String, val possibleValues: List<String>? = null) {
-    object BooleanFalseDefault : DefaultValues("false")
+open class DefaultValues(
+    val defaultValue: String,
+    val type: KType,
+    val kotlinOptionsType: KType,
+    val possibleValues: List<String>? = null,
+    val fromKotlinOptionConverterProp: String? = null,
+    val toKotlinOptionConverterProp: String? = null,
+    val toArgumentConverter: String? = toKotlinOptionConverterProp
+) {
+    open class DefaultBoolean(defaultValue: Boolean) : DefaultValues(defaultValue.toString(), typeOf<Boolean>(), typeOf<Boolean>())
 
-    object BooleanTrueDefault : DefaultValues("true")
+    object BooleanFalseDefault : DefaultBoolean(false)
 
-    object StringNullDefault : DefaultValues("null")
+    object BooleanTrueDefault : DefaultBoolean(true)
 
-    object ListEmptyDefault : DefaultValues("<empty list>")
+    object StringNullDefault : DefaultValues("null", typeOf<String?>(), typeOf<String?>())
+
+    object EmptyStringListDefault : DefaultValues("emptyList<String>()", typeOf<List<String>>(), typeOf<List<String>>())
 
     object LanguageVersions : DefaultValues(
         "null",
-        LanguageVersion.values()
+        typeOf<LanguageVersion?>(),
+        typeOf<String?>(),
+        possibleValues = LanguageVersion.values()
             .filterNot { it.isUnsupported }
-            .map { "\"${it.description}\"" }
+            .map { "\"${it.description}\"" },
+        fromKotlinOptionConverterProp = """
+        if (this != null) ${typeOf<LanguageVersion>()}.fromVersionString(this) else null
+        """.trimIndent(),
+        toKotlinOptionConverterProp = """
+        this?.versionString
+        """.trimIndent()
     )
 
     object ApiVersions : DefaultValues(
         "null",
-        LanguageVersion.values()
+        typeOf<ApiVersion?>(),
+        typeOf<String?>(),
+        possibleValues = LanguageVersion.values()
             .map(ApiVersion.Companion::createByLanguageVersion)
             .filterNot { it.isUnsupported }
-            .map { "\"${it.description}\"" }
+            .map { "\"${it.description}\"" },
+        fromKotlinOptionConverterProp = """
+        if (this != null) ${typeOf<ApiVersion>()}.parse(this) else null
+        """.trimIndent(),
+        toKotlinOptionConverterProp = """
+        this?.versionString
+        """.trimIndent()
     )
 
     object JvmTargetVersions : DefaultValues(
         "null",
-        JvmTarget.supportedValues().map { "\"${it.description}\"" }
+        typeOf<JvmTarget?>(),
+        typeOf<String?>(),
+        JvmTarget.supportedValues().map { "\"${it.description}\"" },
+        fromKotlinOptionConverterProp = """
+        if (this != null) ${typeOf<JvmTarget>()}.fromString(this) else null
+        """.trimIndent(),
+        toKotlinOptionConverterProp = """
+        this?.description
+        """.trimIndent()
     )
 
     object JsEcmaVersions : DefaultValues(
         "\"v5\"",
+        typeOf<String>(),
+        typeOf<String>(),
         listOf("\"v5\"")
     )
 
     object JsModuleKinds : DefaultValues(
         "\"plain\"",
+        typeOf<String>(),
+        typeOf<String>(),
         listOf("\"plain\"", "\"amd\"", "\"commonjs\"", "\"umd\"")
     )
 
     object JsSourceMapContentModes : DefaultValues(
         "null",
+        typeOf<String?>(),
+        typeOf<String?>(),
         listOf(
             K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_NEVER,
             K2JsArgumentConstants.SOURCE_MAP_SOURCE_CONTENT_ALWAYS,
@@ -61,6 +103,8 @@ open class DefaultValues(val defaultValue: String, val possibleValues: List<Stri
 
     object JsMain : DefaultValues(
         "\"" + CALL + "\"",
+        typeOf<String>(),
+        typeOf<String>(),
         listOf("\"" + CALL + "\"", "\"" + NO_CALL + "\"")
     )
 }

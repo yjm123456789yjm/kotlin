@@ -30,7 +30,7 @@ interface CompilerCommonToolOptions {
 
     /**
      * A list of additional compiler arguments
-     * Default value: emptyList()
+     * Default value: emptyList<String>()
      */
     @get:org.gradle.api.tasks.Input
     val freeCompilerArgs: org.gradle.api.provider.ListProperty<kotlin.String>

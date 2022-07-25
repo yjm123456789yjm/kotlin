@@ -16,4 +16,8 @@ dependencies {
         // Could be reproduced by running `:kotlin-gradle-plugin-api:gPFFPMP` task
         isTransitive = false
     }
+    commonCompileOnly(project(":compiler:config"))
+    commonCompileOnly(project(":compiler:config.jvm"))
+
+    commonRuntimeOnly(project(":kotlin-compiler-embeddable"))
 }

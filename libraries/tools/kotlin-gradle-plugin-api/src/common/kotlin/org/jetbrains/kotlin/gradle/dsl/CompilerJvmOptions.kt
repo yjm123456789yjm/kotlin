@@ -21,7 +21,7 @@ interface CompilerJvmOptions : org.jetbrains.kotlin.gradle.dsl.CompilerCommonOpt
      */
     @get:org.gradle.api.tasks.Optional
     @get:org.gradle.api.tasks.Input
-    val jvmTarget: org.gradle.api.provider.Property<kotlin.String>
+    val jvmTarget: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.JvmTarget>
 
     /**
      * Name of the generated .kotlin_module file

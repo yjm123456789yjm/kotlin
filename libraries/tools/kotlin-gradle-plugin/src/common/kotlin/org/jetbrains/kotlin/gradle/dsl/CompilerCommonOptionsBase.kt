@@ -9,19 +9,19 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
     objectFactory: org.gradle.api.model.ObjectFactory
 ) : org.jetbrains.kotlin.gradle.dsl.CompilerCommonToolOptionsBase(objectFactory), org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions {
 
-    override val apiVersion: org.gradle.api.provider.Property<kotlin.String> =
-        objectFactory.property(kotlin.String::class.java)
+    override val apiVersion: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.ApiVersion> =
+        objectFactory.property(org.jetbrains.kotlin.config.ApiVersion::class.java)
 
-    override val languageVersion: org.gradle.api.provider.Property<kotlin.String> =
-        objectFactory.property(kotlin.String::class.java)
+    override val languageVersion: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.LanguageVersion> =
+        objectFactory.property(org.jetbrains.kotlin.config.LanguageVersion::class.java)
 
     override val useK2: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments) {
         super.toCompilerArguments(args)
-        args.apiVersion = apiVersion.orNull
-        args.languageVersion = languageVersion.orNull
+        args.apiVersion = apiVersion.orNull?.versionString
+        args.languageVersion = languageVersion.orNull?.versionString
         args.useK2 = useK2.get()
     }
 

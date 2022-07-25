@@ -12,8 +12,8 @@ internal class CompilerJvmOptionsBase @javax.inject.Inject constructor(
     override val javaParameters: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
-    override val jvmTarget: org.gradle.api.provider.Property<kotlin.String> =
-        objectFactory.property(kotlin.String::class.java)
+    override val jvmTarget: org.gradle.api.provider.Property<org.jetbrains.kotlin.config.JvmTarget> =
+        objectFactory.property(org.jetbrains.kotlin.config.JvmTarget::class.java)
 
     override val moduleName: org.gradle.api.provider.Property<kotlin.String> =
         objectFactory.property(kotlin.String::class.java)
@@ -27,7 +27,7 @@ internal class CompilerJvmOptionsBase @javax.inject.Inject constructor(
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments) {
         super.toCompilerArguments(args)
         args.javaParameters = javaParameters.get()
-        args.jvmTarget = jvmTarget.orNull
+        args.jvmTarget = jvmTarget.orNull?.description
         args.moduleName = moduleName.orNull
         args.noJdk = noJdk.get()
         args.useOldBackend = useOldBackend.get()
