@@ -62,4 +62,13 @@ interface KotlinCommonOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonTool
     var useK2: kotlin.Boolean
         get() = options.useK2.get()
         set(value) = options.useK2.set(value)
+
+    /**
+     * A map of enabled and disabled language features
+     * Possible values: Check 'LanguageFetaure' enum values
+     * Default value: emptyMap()
+     */
+    var languageFeatures: kotlin.collections.Map<org.jetbrains.kotlin.config.LanguageFeature, kotlin.Boolean>
+        get() = options.languageFeatures.get()
+        set(value) = options.languageFeatures.set(value)
 }

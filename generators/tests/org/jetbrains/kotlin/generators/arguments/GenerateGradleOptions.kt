@@ -17,6 +17,7 @@
 package org.jetbrains.kotlin.generators.arguments
 
 import org.jetbrains.kotlin.cli.common.arguments.*
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.utils.Printer
@@ -30,13 +31,23 @@ import kotlin.reflect.full.withNullability
 
 // Additional properties that should be included in interface
 @Suppress("unused")
-interface AdditionalGradleProperties {
+interface AdditionalToolsGradleProperties {
     @GradleOption(
         value = DefaultValues.EmptyStringListDefault::class,
         gradleInputType = GradleInputTypes.INPUT
     )
     @Argument(value = "", description = "A list of additional compiler arguments")
     var freeCompilerArgs: List<String>
+}
+
+@Suppress("unused")
+interface AdditionalCompilerGradleProperties {
+    @GradleOption(
+        value = DefaultValues.LanguageFeaturesToggles::class,
+        gradleInputType = GradleInputTypes.INPUT
+    )
+    @Argument(value = "", description = "A map of enabled and disabled language features")
+    var languageFeatures: Map<LanguageFeature, Boolean>
 }
 
 private data class GeneratedOptions(
@@ -149,7 +160,7 @@ private fun generateKotlinCommonToolOptions(
 ): GeneratedOptions {
     val commonInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.CompilerCommonToolOptions")
     val commonOptions = gradleOptions<CommonToolArguments>()
-    val additionalOptions = gradleOptions<AdditionalGradleProperties>()
+    val additionalOptions = gradleOptions<AdditionalToolsGradleProperties>()
     withPrinterToFile(fileFromFqName(apiSrcDir, commonInterfaceFqName)) {
         generateInterface(
             commonInterfaceFqName,
@@ -202,10 +213,11 @@ private fun generateKotlinCommonOptions(
 ): GeneratedOptions {
     val commonCompilerInterfaceFqName = FqName("$OPTIONS_PACKAGE_PREFIX.CompilerCommonOptions")
     val commonCompilerOptions = gradleOptions<CommonCompilerArguments>()
+    val additionalCompilerOptions = gradleOptions<AdditionalCompilerGradleProperties>()
     withPrinterToFile(fileFromFqName(apiSrcDir, commonCompilerInterfaceFqName)) {
         generateInterface(
             commonCompilerInterfaceFqName,
-            commonCompilerOptions,
+            commonCompilerOptions + additionalCompilerOptions,
             parentType = commonToolGeneratedOptions.optionsName,
         )
     }
@@ -215,7 +227,7 @@ private fun generateKotlinCommonOptions(
         generateDeprecatedInterface(
             deprecatedCommonCompilerInterfaceFqName,
             commonCompilerInterfaceFqName,
-            commonCompilerOptions,
+            commonCompilerOptions + additionalCompilerOptions,
             parentType = commonToolGeneratedOptions.deprecatedOptionsName
         )
     }
@@ -223,7 +235,11 @@ private fun generateKotlinCommonOptions(
     println("\n### Attributes common for JVM and JS\n")
     generateMarkdown(commonCompilerOptions)
 
-    return GeneratedOptions(commonCompilerInterfaceFqName, deprecatedCommonCompilerInterfaceFqName, commonCompilerOptions)
+    return GeneratedOptions(
+        commonCompilerInterfaceFqName,
+        deprecatedCommonCompilerInterfaceFqName,
+        (commonCompilerOptions + additionalCompilerOptions)
+    )
 }
 
 private fun generateKotlinCommonOptionsImpl(
@@ -544,7 +560,9 @@ private fun Printer.generateImpl(
             if (parentImplFqName != null) println("super.toCompilerArguments(args)")
             for (property in properties) {
                 val defaultValue = property.gradleValues
-                if (property.name != "freeCompilerArgs") {
+                if (property.name == "languageFeatures") {
+                    println("args.freeArgs += ${property.name}.get().entries.mapTo(mutableListOf()) { (key, value) -> \"-XXLanguage:${'$'}{if (value) \"+\" else \"-\"}${'$'}{key.name}\" }")
+                } else if (property.name != "freeCompilerArgs") {
                     val getter = if (property.gradleReturnType.endsWith("?")) ".orNull" else ".get()"
                     val toArg = defaultValue.toArgumentConverter?.substringAfter("this") ?: ""
                     println("args.${property.name} = ${property.name}$getter$toArg")
@@ -562,7 +580,7 @@ private fun Printer.generateImpl(
         withIndent {
             if (parentImplFqName != null) println("super.fillDefaultValues(args)")
             properties
-                .filter { it.name != "freeCompilerArgs" }
+                .filter { it.name != "freeCompilerArgs" && it.name != "languageFeatures" }
                 .forEach {
                     val defaultValue = it.gradleValues
                     var value = defaultValue.defaultValue
@@ -766,7 +784,7 @@ private val KProperty1<*, *>.gradleLazyReturnType: String
             classifier is KClass<*> && classifier == Set::class ->
                 "org.gradle.api.provider.SetProperty<${returnType.arguments.first().type!!.withNullability(false)}>"
             classifier is KClass<*> && classifier == Map::class ->
-                "org.gradle.api.provider.MapProperty<${returnType.arguments[0]}, ${returnType.arguments[1]}"
+                "org.gradle.api.provider.MapProperty<${returnType.arguments[0]}, ${returnType.arguments[1]}>"
             else -> "org.gradle.api.provider.Property<${returnType.withNullability(false)}>"
         }
     }

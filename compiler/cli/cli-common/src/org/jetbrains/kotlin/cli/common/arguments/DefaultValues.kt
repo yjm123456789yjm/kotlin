@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.CALL
 import org.jetbrains.kotlin.cli.common.arguments.K2JsArgumentConstants.NO_CALL
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.JvmTarget
+import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
@@ -81,6 +82,14 @@ open class DefaultValues(
         toKotlinOptionConverterProp = """
         this?.description
         """.trimIndent()
+    )
+
+    object LanguageFeaturesToggles : DefaultValues(
+        "emptyMap()",
+        typeOf<Map<LanguageFeature, Boolean>>(),
+        typeOf<Map<LanguageFeature, Boolean>>(),
+        listOf("Check 'LanguageFetaure' enum values"),
+        //toArgumentConverter = ".
     )
 
     object JsEcmaVersions : DefaultValues(

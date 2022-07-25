@@ -24,6 +24,9 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
     override val useK2: org.gradle.api.provider.Property<kotlin.Boolean> =
         objectFactory.property(kotlin.Boolean::class.java).convention(false)
 
+    override val languageFeatures: org.gradle.api.provider.MapProperty<org.jetbrains.kotlin.config.LanguageFeature, kotlin.Boolean> =
+        objectFactory.mapProperty(org.jetbrains.kotlin.config.LanguageFeature::class.java, kotlin.Boolean::class.java).convention(emptyMap())
+
     internal fun toCompilerArguments(args: org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments) {
         super.toCompilerArguments(args)
         args.apiVersion = apiVersion.orNull?.versionString
@@ -31,6 +34,7 @@ internal open class CompilerCommonOptionsBase @javax.inject.Inject constructor(
         args.optIn = optIn.get().toTypedArray()
         args.progressiveMode = progressiveMode.get()
         args.useK2 = useK2.get()
+        args.freeArgs += languageFeatures.get().entries.mapTo(mutableListOf()) { (key, value) -> "-XXLanguage:${if (value) "+" else "-"}${key.name}" }
     }
 
     internal fun fillDefaultValues(args: org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments) {

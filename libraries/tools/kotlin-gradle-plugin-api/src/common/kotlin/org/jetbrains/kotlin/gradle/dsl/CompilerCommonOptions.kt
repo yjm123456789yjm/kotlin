@@ -49,4 +49,12 @@ interface CompilerCommonOptions : org.jetbrains.kotlin.gradle.dsl.CompilerCommon
      */
     @get:org.gradle.api.tasks.Input
     val useK2: org.gradle.api.provider.Property<kotlin.Boolean>
+
+    /**
+     * A map of enabled and disabled language features
+     * Possible values: Check 'LanguageFetaure' enum values
+     * Default value: emptyMap()
+     */
+    @get:org.gradle.api.tasks.Input
+    val languageFeatures: org.gradle.api.provider.MapProperty<org.jetbrains.kotlin.config.LanguageFeature, kotlin.Boolean>
 }
