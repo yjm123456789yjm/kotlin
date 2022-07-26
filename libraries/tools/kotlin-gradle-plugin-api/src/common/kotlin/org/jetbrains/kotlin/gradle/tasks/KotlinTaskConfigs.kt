@@ -17,10 +17,7 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.work.Incremental
-import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
-import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.plugin.CompilerPluginConfig
 import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
 
@@ -81,7 +78,7 @@ interface BaseKotlinCompile : KotlinCompileTool {
     val pluginOptions: ListProperty<CompilerPluginConfig>
 }
 
-interface UsesCompilerOptions<CO : CompilerCommonOptions> : HasCompilerOptions<CO>, Task {
+interface UsesCompilerOptions<CO : CompilerCommonToolOptions> : HasCompilerOptions<CO>, Task {
     @get:Nested
     override val compilerOptions: CO
 

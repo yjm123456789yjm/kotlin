@@ -20,10 +20,11 @@ import groovy.lang.Closure
 import org.gradle.api.tasks.Input
 import org.gradle.api.tasks.Internal
 import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
+import org.jetbrains.kotlin.gradle.tasks.UsesCompilerOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinJvmCompile as KotlinJvmCompileApi
 
 @Suppress("DEPRECATION")
-interface KotlinJsCompile : KotlinCompile<KotlinJsOptions>, HasCompilerOptions<CompilerJsOptions>
+interface KotlinJsCompile : KotlinCompile<KotlinJsOptions>, UsesCompilerOptions<CompilerJsOptions>
 
 @Deprecated(
     message = "Moved into API artifact",
@@ -32,9 +33,9 @@ interface KotlinJsCompile : KotlinCompile<KotlinJsOptions>, HasCompilerOptions<C
 interface KotlinJvmCompile : KotlinJvmCompileApi
 
 @Suppress("DEPRECATION")
-interface KotlinCommonCompile : KotlinCompile<KotlinMultiplatformCommonOptions>, HasCompilerOptions<CompilerMultiplatformCommonOptions>
+interface KotlinCommonCompile : KotlinCompile<KotlinMultiplatformCommonOptions>, UsesCompilerOptions<CompilerMultiplatformCommonOptions>
 
-interface KotlinJsDce : HasCompilerOptions<CompilerJsDceOptions> {
+interface KotlinJsDce : UsesCompilerOptions<CompilerJsDceOptions> {
     @Suppress("DEPRECATION")
     @get:Internal
     val dceOptions: KotlinJsDceOptions
