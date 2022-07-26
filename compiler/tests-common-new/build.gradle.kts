@@ -61,6 +61,7 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
 
 projectTest(jUnitMode = JUnitMode.JUnit5) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
     useJUnitPlatform()
 }
