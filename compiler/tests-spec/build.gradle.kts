@@ -35,6 +35,7 @@ testsJar()
 projectTest(parallel = true) {
     workingDir = rootDir
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
 }
 
 val generateSpecTests by generator("org.jetbrains.kotlin.spec.utils.tasks.GenerateSpecTestsKt")

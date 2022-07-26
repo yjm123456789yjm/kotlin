@@ -59,6 +59,7 @@ tasks {
     "test" {
         // These dependencies are needed because ForTestCompileRuntime loads jars from dist
         dependsOn(rootProject.tasks.named("dist"))
+        dependsOn(":kotlin-reflect:result")
     }
 }
 

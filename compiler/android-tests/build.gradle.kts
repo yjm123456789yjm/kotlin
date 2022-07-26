@@ -42,6 +42,7 @@ sourceSets {
 
 projectTest {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     doFirst {
         environment("kotlin.tests.android.timeout", "45")
     }

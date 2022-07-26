@@ -52,7 +52,7 @@ public class ForTestCompileRuntime {
 
     @NotNull
     public static File reflectJarForTests() {
-        return assertExists(new File("dist/kotlinc/lib/kotlin-reflect.jar"));
+        return assertExists(new File("libraries/reflect/build/libs/kotlin-reflect-1.8.255-SNAPSHOT.jar"));
     }
 
     @NotNull

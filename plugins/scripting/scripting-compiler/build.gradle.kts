@@ -59,6 +59,7 @@ testsJar()
 
 projectTest(parallel = true) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
     systemProperty("kotlin.script.test.base.compiler.arguments", "-Xuse-old-backend")
@@ -66,6 +67,7 @@ projectTest(parallel = true) {
 
 projectTest(taskName = "testWithIr", parallel = true) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
     systemProperty("kotlin.script.test.base.compiler.arguments", "-Xuse-ir")

@@ -221,6 +221,7 @@ fun Test.setUpJsBoxTests(jsEnabled: Boolean, jsIrEnabled: Boolean) {
     inputs.files(rootDir.resolve("js/js.engines/src/org/jetbrains/kotlin/js/engine/repl.js"))
 
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
 
     if (!project.hasProperty("teamcity")) {
         dependsOn(generateTypeScriptTests)
@@ -283,6 +284,7 @@ projectTest(parallel = true, jUnitMode = JUnitMode.JUnit5, maxHeapSizeMb = 4096)
 
     inputs.dir(testDataDir)
     inputs.dir(rootDir.resolve("dist"))
+    inputs.dir(rootDir.resolve("libraries/reflect/build/libs"))
     inputs.dir(rootDir.resolve("compiler/testData"))
     inputs.dir(rootDir.resolve("libraries/stdlib/api/js"))
     inputs.dir(rootDir.resolve("libraries/stdlib/api/js-v1"))
@@ -372,6 +374,7 @@ projectTest("invalidationTest", jUnitMode = JUnitMode.JUnit4) {
     include("org/jetbrains/kotlin/incremental/*")
 
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     dependsOn(":kotlin-stdlib-js-ir:compileKotlinJs")
 
     systemProperty("kotlin.js.stdlib.klib.path", "libraries/stdlib/js-ir/build/libs/kotlin-stdlib-js-ir-js-$version.klib")
