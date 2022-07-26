@@ -57,7 +57,7 @@ sourceSets {
 
 projectTest(parallel = true) {
     workingDir = rootDir
-    dependsOn(":dist")
+    // dependsOn(":dist")
 }
 
 runtimeJar()

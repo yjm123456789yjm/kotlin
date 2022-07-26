@@ -30,7 +30,7 @@ sourceSets {
 }
 
 projectTest(parallel = false) {
-    dependsOn(":dist")
+    // dependsOn(":dist")
     workingDir = projectDir
 }
 
