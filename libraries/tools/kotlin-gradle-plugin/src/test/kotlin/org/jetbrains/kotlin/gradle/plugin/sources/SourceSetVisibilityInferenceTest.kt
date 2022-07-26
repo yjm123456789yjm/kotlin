@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.gradle.plugin.sources
 
 import org.gradle.api.Action
@@ -11,6 +13,7 @@ import org.gradle.api.attributes.AttributeContainer
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.plugin.*
@@ -321,6 +324,7 @@ class MockKotlinCompilation(
     override val output: KotlinCompilationOutput get() = throw UnsupportedOperationException()
     override val compileKotlinTaskName: String get() = throw UnsupportedOperationException()
     override val compileKotlinTask: KotlinCompile<KotlinCommonOptions> get() = throw UnsupportedOperationException()
+    override val compilerOptions: CompilerCommonOptions get() = throw UnsupportedOperationException()
     override val kotlinOptions: KotlinCommonOptions get() = throw UnsupportedOperationException()
     override fun kotlinOptions(configure: KotlinCommonOptions.() -> Unit) = throw UnsupportedOperationException()
     override fun kotlinOptions(configure: Action<KotlinCommonOptions>) = throw UnsupportedOperationException()
