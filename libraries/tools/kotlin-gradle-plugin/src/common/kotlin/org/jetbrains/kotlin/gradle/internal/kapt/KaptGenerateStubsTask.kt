@@ -24,7 +24,7 @@ import org.gradle.api.tasks.*
 import org.gradle.work.Incremental
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptionsBase
 import org.jetbrains.kotlin.gradle.report.BuildReportMode
 import org.jetbrains.kotlin.gradle.tasks.KaptGenerateStubs
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -40,7 +40,7 @@ abstract class KaptGenerateStubsTask @Inject constructor(
     workerExecutor: WorkerExecutor,
     objectFactory: ObjectFactory
 ) : KotlinCompile(
-    KotlinJvmOptionsImpl(),
+    CompilerJvmOptionsBase(objectFactory),
     workerExecutor,
     objectFactory
 ), KaptGenerateStubs {
@@ -123,11 +123,7 @@ abstract class KaptGenerateStubsTask @Inject constructor(
 
         // Also use KotlinOptions configuration that was directly set to this task
         // as 'compileKotlinArgumentsContributor' has KotlinOptions from linked KotlinCompile task
-        listOfNotNull(kotlinOptions, parentKotlinOptions.orNull)
-            .map { it as KotlinJvmOptionsImpl }
-            .forEach {
-                it.updateArguments(args)
-            }
+        (compilerOptions as CompilerJvmOptionsBase).toCompilerArguments(args)
 
         // Copied from KotlinCompile
         defaultKotlinJavaToolchain.get().updateJvmTarget(this, args)

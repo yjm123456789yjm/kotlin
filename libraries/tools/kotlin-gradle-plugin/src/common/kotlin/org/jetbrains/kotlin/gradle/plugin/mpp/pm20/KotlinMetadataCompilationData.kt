@@ -11,17 +11,14 @@ import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.tasks.TaskProvider
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformCommonOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.archivesName
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.util.disambiguateName
 import org.jetbrains.kotlin.gradle.targets.metadata.ResolvedMetadataFilesProvider
 import org.jetbrains.kotlin.gradle.targets.metadata.createMetadataDependencyTransformationClasspath
-import org.jetbrains.kotlin.gradle.utils.getValue
+import org.jetbrains.kotlin.gradle.utils.*
 import org.jetbrains.kotlin.gradle.utils.lowerCamelCaseName
-import org.jetbrains.kotlin.gradle.utils.newProperty
-import org.jetbrains.kotlin.gradle.utils.setValue
 import org.jetbrains.kotlin.konan.target.HostManager
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
@@ -118,7 +115,8 @@ internal open class KotlinCommonFragmentMetadataCompilationDataImpl(
     module,
     compileAllTask,
     metadataCompilationRegistry,
-    resolvedMetadataFiles), KotlinCommonFragmentMetadataCompilationData {
+    resolvedMetadataFiles,
+), KotlinCommonFragmentMetadataCompilationData {
 
     override val isActive: Boolean
         get() = !fragment.isNativeShared() &&
@@ -127,7 +125,12 @@ internal open class KotlinCommonFragmentMetadataCompilationDataImpl(
                             mapTo(hashSetOf()) { it.platformType }.size > 1
                 }
 
-    override val kotlinOptions: KotlinMultiplatformCommonOptions = KotlinMultiplatformCommonOptionsImpl()
+    override val compilerOptions: CompilerMultiplatformCommonOptions = CompilerMultiplatformCommonOptionsBase(project.objects)
+
+    override val kotlinOptions: KotlinMultiplatformCommonOptions = object : KotlinMultiplatformCommonOptions {
+        override val options: CompilerMultiplatformCommonOptions
+            get() = compilerOptions
+    }
 }
 
 interface KotlinNativeFragmentMetadataCompilationData :
@@ -164,7 +167,9 @@ internal open class KotlinNativeFragmentMetadataCompilationDataImpl(
     override val isActive: Boolean
         get() = fragment.isNativeShared() && fragment.containingVariants.count() > 1
 
-    override val kotlinOptions: NativeCompileOptions = NativeCompileOptions { languageSettings }
+    final override val compilerOptions: CompilerCommonOptions = CompilerCommonOptionsBase(project.objects)
+
+    override val kotlinOptions: NativeCompileOptions = NativeCompileOptions(compilerOptions) { languageSettings }
 
     override val konanTarget: KonanTarget
         get() {

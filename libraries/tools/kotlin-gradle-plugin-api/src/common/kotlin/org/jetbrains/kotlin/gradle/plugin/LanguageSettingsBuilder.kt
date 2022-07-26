@@ -5,9 +5,10 @@
 
 package org.jetbrains.kotlin.gradle.plugin
 
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.project.model.LanguageSettings
 
-interface LanguageSettingsBuilder : LanguageSettings {
+interface LanguageSettingsBuilder : LanguageSettings, HasCompilerOptions<CompilerCommonOptions> {
     override var languageVersion: String?
 
     override var apiVersion: String?

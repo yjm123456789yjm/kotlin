@@ -6,6 +6,8 @@
 @file:Suppress("PackageDirectoryMismatch") // Old package for compatibility
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
 open class KotlinNativeCompilationFactory(
@@ -24,7 +26,12 @@ open class KotlinNativeCompilationFactory(
         target.project.objects.newInstance(
             KotlinNativeCompilation::class.java,
             target.konanTarget,
-            NativeCompilationDetails(target, name) { NativeCompileOptions { defaultSourceSet.languageSettings } }
+            NativeCompilationDetails(
+                target,
+                name,
+                { CompilerCommonOptionsBase(target.project.objects) },
+                { NativeCompileOptions(compilationData.compilerOptions) { defaultSourceSet.languageSettings } }
+            )
         )
 }
 
@@ -39,6 +46,11 @@ class KotlinSharedNativeCompilationFactory(
         target.project.objects.newInstance(
             KotlinSharedNativeCompilation::class.java,
             konanTargets,
-            SharedNativeCompilationDetails(target, name) { NativeCompileOptions { defaultSourceSet.languageSettings } }
+            SharedNativeCompilationDetails(
+                target,
+                name,
+                { target.project.objects.newInstance(CompilerCommonOptions::class.java) },
+                { NativeCompileOptions(compilationData.compilerOptions) { defaultSourceSet.languageSettings } }
+            )
         )
 }

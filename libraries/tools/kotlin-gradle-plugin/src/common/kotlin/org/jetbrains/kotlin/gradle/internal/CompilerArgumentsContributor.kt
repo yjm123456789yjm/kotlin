@@ -8,8 +8,6 @@ package org.jetbrains.kotlin.gradle.internal
 import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments
 import org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
-import org.jetbrains.kotlin.gradle.dsl.fillDefaultValues
 import org.jetbrains.kotlin.gradle.logging.kotlinDebug
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompileArgumentsProvider
@@ -76,13 +74,13 @@ internal open class KotlinJvmCompilerArgumentsContributor(
     private val friendPaths = taskProvider.friendPaths
     private val compileClasspath = taskProvider.compileClasspath
     private val destinationDir = taskProvider.destinationDir
-    private val kotlinOptions = taskProvider.kotlinOptions
+    private val compilerOptions = taskProvider.compilerOptions
 
     override fun contributeArguments(
         args: K2JVMCompilerArguments,
         flags: Collection<CompilerArgumentsConfigurationFlag>
     ) {
-        args.fillDefaultValues()
+        compilerOptions.fillDefaultValues(args)
 
         super.contributeArguments(args, flags)
 
@@ -102,6 +100,6 @@ internal open class KotlinJvmCompilerArgumentsContributor(
         }
         args.destinationAsFile = destinationDir
 
-        kotlinOptions.forEach { it.updateArguments(args) }
+        compilerOptions.toCompilerArguments(args)
     }
 }

@@ -11,13 +11,12 @@ import org.gradle.api.file.ProjectLayout
 import org.gradle.api.model.ObjectFactory
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
-import org.gradle.work.NormalizeLineEndings
 import org.gradle.workers.WorkerExecutor
 import org.jetbrains.kotlin.cli.common.arguments.K2JSCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.parseCommandLineArguments
 import org.jetbrains.kotlin.compilerRunner.ArgumentUtils
+import org.jetbrains.kotlin.gradle.dsl.CompilerJsOptionsBase
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
@@ -41,7 +40,7 @@ abstract class KotlinJsIrLink @Inject constructor(
     workerExecutor: WorkerExecutor,
     private val projectLayout: ProjectLayout
 ) : Kotlin2JsCompile(
-    KotlinJsOptionsImpl(),
+    CompilerJsOptionsBase(objectFactory),
     objectFactory,
     workerExecutor
 ) {
@@ -162,6 +161,7 @@ abstract class KotlinJsIrLink @Inject constructor(
             .filterNot { it.isEmpty() }
     }
 
+    // TODO: update code
     override fun setupCompilerArgs(args: K2JSCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
         when (mode) {
             PRODUCTION -> {

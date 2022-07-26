@@ -50,6 +50,7 @@ class GradleKpmDependencyGraphResolver(
                 ?: buildSyntheticPlainModule(
                     component,
                     component.variants.singleOrNull()?.displayName ?: "default",
+                    requestingModule.project.objects
                 )
 
         fun nodeFromModule(componentResult: ResolvedComponentResult, kpmModule: KpmModule): GradleKpmDependencyGraphNode {

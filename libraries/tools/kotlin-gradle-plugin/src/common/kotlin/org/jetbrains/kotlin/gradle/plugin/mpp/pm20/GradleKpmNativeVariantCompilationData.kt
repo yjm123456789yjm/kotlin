@@ -6,13 +6,16 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp.pm20
 
 import org.gradle.api.Project
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.mpp.NativeCompileOptions
 import org.jetbrains.kotlin.konan.target.KonanTarget
 
 internal class GradleKpmNativeVariantCompilationData(
     val variant: GradleKpmNativeVariantInternal
-) : GradleKpmVariantCompilationDataInternal<KotlinCommonOptions>, KotlinNativeCompilationData<KotlinCommonOptions> {
+) : GradleKpmVariantCompilationDataInternal<KotlinCommonOptions>,
+    KotlinNativeCompilationData<KotlinCommonOptions> {
     override val konanTarget: KonanTarget
         get() = variant.konanTarget
 
@@ -25,5 +28,7 @@ internal class GradleKpmNativeVariantCompilationData(
     override val owner: GradleKpmNativeVariant
         get() = variant
 
-    override val kotlinOptions: KotlinCommonOptions = NativeCompileOptions { variant.languageSettings }
+    override val compilerOptions: CompilerCommonOptions = CompilerCommonOptionsBase(project.objects)
+
+    override val kotlinOptions: KotlinCommonOptions = NativeCompileOptions(compilerOptions) { variant.languageSettings }
 }

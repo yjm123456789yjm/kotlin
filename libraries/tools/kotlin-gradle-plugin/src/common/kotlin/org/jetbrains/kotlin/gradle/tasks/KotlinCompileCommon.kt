@@ -32,17 +32,23 @@ import javax.inject.Inject
 
 @CacheableTask
 abstract class KotlinCompileCommon @Inject constructor(
-    override val kotlinOptions: KotlinMultiplatformCommonOptions,
+    override val compilerOptions: CompilerMultiplatformCommonOptions,
     workerExecutor: WorkerExecutor,
     objectFactory: ObjectFactory
 ) : AbstractKotlinCompile<K2MetadataCompilerArguments>(objectFactory, workerExecutor),
     KotlinCommonCompile {
 
+    @Deprecated("")
+    override val kotlinOptions: KotlinMultiplatformCommonOptions = object : KotlinMultiplatformCommonOptions {
+        override val options: CompilerMultiplatformCommonOptions
+            get() = compilerOptions
+    }
+
     override fun createCompilerArgs(): K2MetadataCompilerArguments =
         K2MetadataCompilerArguments()
 
     override fun setupCompilerArgs(args: K2MetadataCompilerArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        args.apply { fillDefaultValues() }
+        (compilerOptions as CompilerMultiplatformCommonOptionsBase).fillDefaultValues(args)
         super.setupCompilerArgs(args, defaultsOnly = defaultsOnly, ignoreClasspathResolutionErrors = ignoreClasspathResolutionErrors)
 
         args.moduleName = this@KotlinCompileCommon.moduleName.get()
@@ -63,7 +69,7 @@ abstract class KotlinCompileCommon @Inject constructor(
             refinesPaths = refinesMetadataPaths.map { it.absolutePath }.toTypedArray()
         }
 
-        (kotlinOptions as KotlinMultiplatformCommonOptionsImpl).updateArguments(args)
+        (compilerOptions as CompilerMultiplatformCommonOptionsBase).toCompilerArguments(args)
     }
 
     @get:PathSensitive(PathSensitivity.RELATIVE)
@@ -80,6 +86,7 @@ abstract class KotlinCompileCommon @Inject constructor(
         inputChanges: InputChanges,
         taskOutputsBackup: TaskOutputsBackup?
     ) {
+        reportCompilerCommonOptions(compilerOptions)
         val messageCollector = GradlePrintingMessageCollector(logger, args.allWarningsAsErrors)
         val outputItemCollector = OutputItemsCollectorImpl()
         val compilerRunner = compilerRunner.get()

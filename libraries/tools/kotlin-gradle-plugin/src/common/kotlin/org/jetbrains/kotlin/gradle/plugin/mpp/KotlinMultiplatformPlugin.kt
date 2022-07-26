@@ -361,7 +361,7 @@ internal fun Project.setupGeneralKotlinExtensionParameters() {
         (sourceSet.languageSettings as? DefaultLanguageSettingsBuilder)?.run {
 
             // Set ad-hoc free compiler args from the internal project property
-            freeCompilerArgsProvider = project.provider {
+            this.freeCompilerArgs.addAll(project.provider {
                 val propertyValue = with(project.extensions.extraProperties) {
                     val sourceSetFreeCompilerArgsPropertyName = sourceSetFreeCompilerArgsPropertyName(sourceSet.name)
                     if (has(sourceSetFreeCompilerArgsPropertyName)) {
@@ -380,7 +380,7 @@ internal fun Project.setupGeneralKotlinExtensionParameters() {
                     if (explicitApiState != null && sourceSet in sourceSetsInMainCompilation)
                         add(explicitApiState)
                 }
-            }
+            })
         }
     }
 }

@@ -6,8 +6,9 @@
 package org.jetbrains.kotlin.gradle.plugin.mpp.pm20
 
 import org.gradle.api.artifacts.Configuration
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptionsBase
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.filterModuleName
@@ -38,11 +39,19 @@ abstract class GradleKpmJvmVariant @Inject constructor(
         get() = KotlinPlatformType.jvm
 }
 
-class GradleKpmJvmVariantCompilationData(val variant: GradleKpmJvmVariant) : GradleKpmVariantCompilationDataInternal<KotlinJvmOptions> {
+@Suppress("DEPRECATION")
+class GradleKpmJvmVariantCompilationData(
+    val variant: GradleKpmJvmVariant
+) : GradleKpmVariantCompilationDataInternal<KotlinJvmOptions> {
     override val owner: GradleKpmJvmVariant get() = variant
 
+    override val compilerOptions: CompilerJvmOptions = CompilerJvmOptionsBase(variant.project.objects)
+
     // TODO pull out to the variant
-    override val kotlinOptions: KotlinJvmOptions = KotlinJvmOptionsImpl()
+    override val kotlinOptions: KotlinJvmOptions = object : KotlinJvmOptions {
+        override val options: CompilerJvmOptions
+            get() = compilerOptions
+    }
 }
 
 internal fun GradleKpmVariant.ownModuleName(): String {

@@ -9,18 +9,26 @@ package org.jetbrains.kotlin.gradle.plugin.mpp
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.compile.JavaCompile
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationWithResources
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.utils.named
 import javax.inject.Inject
 
-abstract class KotlinWithJavaCompilation<KotlinOptionsType : KotlinCommonOptions> @Inject constructor(
-    target: KotlinWithJavaTarget<KotlinOptionsType>,
+abstract class KotlinWithJavaCompilation<KO : KotlinCommonOptions, out CO : CompilerCommonOptions> @Inject constructor(
+    target: KotlinWithJavaTarget<KO, CO>,
     name: String,
-    kotlinOptions: KotlinOptionsType
-) : AbstractKotlinCompilationToRunnableFiles<KotlinOptionsType>(WithJavaCompilationDetails(target, name) { kotlinOptions }),
-    KotlinCompilationWithResources<KotlinOptionsType> {
+    compilerOptionsFactory: () -> CO,
+    kotlinOptionsFactory: CompilationDetails<*>.() -> KO
+) : AbstractKotlinCompilationToRunnableFiles<KO>(
+    WithJavaCompilationDetails(
+        target,
+        name,
+        compilerOptionsFactory,
+        kotlinOptionsFactory
+    )
+), KotlinCompilationWithResources<KO> {
     lateinit var javaSourceSet: SourceSet
 
     override val processResourcesTaskName: String

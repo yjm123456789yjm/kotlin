@@ -17,6 +17,6 @@ internal fun IdeaKpmLanguageSettings(languageSettings: LanguageSettings): IdeaKp
         optInAnnotationsInUse = languageSettings.optInAnnotationsInUse.toSet(),
         compilerPluginArguments = (languageSettings as? DefaultLanguageSettingsBuilder)?.compilerPluginArguments?.toList().orEmpty(),
         compilerPluginClasspath = (languageSettings as? DefaultLanguageSettingsBuilder)?.compilerPluginClasspath?.toList().orEmpty(),
-        freeCompilerArgs = (languageSettings as? DefaultLanguageSettingsBuilder)?.freeCompilerArgs?.toList().orEmpty()
+        freeCompilerArgs = (languageSettings as? DefaultLanguageSettingsBuilder)?.freeCompilerArgs?.get()?.toList().orEmpty()
     )
 }

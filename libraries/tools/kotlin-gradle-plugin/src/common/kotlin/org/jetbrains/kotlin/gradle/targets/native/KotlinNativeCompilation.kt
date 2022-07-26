@@ -10,6 +10,7 @@ import org.gradle.api.Action
 import org.gradle.api.NamedDomainObjectContainer
 import org.gradle.api.Project
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeCompilationData
@@ -21,7 +22,16 @@ import java.io.File
 import java.util.concurrent.Callable
 import javax.inject.Inject
 
-internal class NativeCompileOptions(languageSettingsProvider: () -> LanguageSettingsBuilder) : KotlinCommonOptions {
+internal class NativeCompileOptions(
+    override val options: CompilerCommonOptions,
+    languageSettingsProvider: () -> LanguageSettingsBuilder
+) : KotlinCommonOptions {
+
+    init {
+        options.useK2.finalizeValue()
+    }
+
+    // TODO: change language settings!
     private val languageSettings: LanguageSettingsBuilder by lazy(languageSettingsProvider)
 
     override var apiVersion: String?
@@ -37,14 +47,24 @@ internal class NativeCompileOptions(languageSettingsProvider: () -> LanguageSett
         }
     
     override var useK2: Boolean
-        get() = false
-        set(@Suppress("UNUSED_PARAMETER") value) {}
+        get() = options.useK2.get()
+        set(value) = options.useK2.set(value)
 
-    override var allWarningsAsErrors: Boolean = false
-    override var suppressWarnings: Boolean = false
-    override var verbose: Boolean = false
+    override var allWarningsAsErrors: Boolean
+        get() = options.allWarningsAsErrors.get()
+        set(value) = options.allWarningsAsErrors.set(value)
 
-    override var freeCompilerArgs: List<String> = listOf()
+    override var suppressWarnings: Boolean
+        get() = options.suppressWarnings.get()
+        set(value) = options.suppressWarnings.set(value)
+
+    override var verbose: Boolean
+        get() = options.verbose.get()
+        set(value) = options.verbose.set(value)
+
+    override var freeCompilerArgs: List<String>
+        get() = options.freeCompilerArgs.get()
+        set(value) = options.freeCompilerArgs.set(value)
 }
 
 abstract class AbstractKotlinNativeCompilation(

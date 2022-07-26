@@ -10,6 +10,7 @@ import org.gradle.api.InvalidUserCodeException
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.jetbrains.kotlin.build.DEFAULT_KOTLIN_SOURCE_FILES_EXTENSIONS
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
 import org.jetbrains.kotlin.gradle.dsl.KotlinMultiplatformExtension
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
@@ -61,7 +62,9 @@ abstract class DefaultKotlinSourceSet @Inject constructor(
 
     override val kotlin: SourceDirectorySet = createDefaultSourceDirectorySet(project, "$name Kotlin source")
 
-    override val languageSettings: LanguageSettingsBuilder = DefaultLanguageSettingsBuilder()
+    override val languageSettings: LanguageSettingsBuilder = DefaultLanguageSettingsBuilder(
+        CompilerCommonOptionsBase(project.objects)
+    )
 
     override val resources: SourceDirectorySet = createDefaultSourceDirectorySet(project, "$name resources")
 

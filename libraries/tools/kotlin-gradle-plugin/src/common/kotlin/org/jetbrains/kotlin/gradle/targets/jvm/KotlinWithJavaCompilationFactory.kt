@@ -6,25 +6,26 @@
 @file:Suppress("PackageDirectoryMismatch") // Old package for compatibility
 package org.jetbrains.kotlin.gradle.plugin.mpp
 
-import org.gradle.api.Project
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 
-class KotlinWithJavaCompilationFactory<KotlinOptionsType : KotlinCommonOptions>(
-    val project: Project,
-    val target: KotlinWithJavaTarget<KotlinOptionsType>,
-    val kotlinOptionsFactory: () -> KotlinOptionsType
-) : KotlinCompilationFactory<KotlinWithJavaCompilation<KotlinOptionsType>> {
+class KotlinWithJavaCompilationFactory<KO : KotlinCommonOptions, CO : CompilerCommonOptions>(
+    private val target: KotlinWithJavaTarget<KO, CO>,
+    private val compilerOptionsFactory: () -> CO,
+    private val kotlinOptionsFactory: CompilationDetails<*>.() -> KO
+) : KotlinCompilationFactory<KotlinWithJavaCompilation<KO, CO>> {
 
-    override val itemClass: Class<KotlinWithJavaCompilation<KotlinOptionsType>>
+    override val itemClass: Class<KotlinWithJavaCompilation<KO, CO>>
         @Suppress("UNCHECKED_CAST")
-        get() = KotlinWithJavaCompilation::class.java as Class<KotlinWithJavaCompilation<KotlinOptionsType>>
+        get() = KotlinWithJavaCompilation::class.java as Class<KotlinWithJavaCompilation<KO, CO>>
 
     @Suppress("UNCHECKED_CAST")
-    override fun create(name: String): KotlinWithJavaCompilation<KotlinOptionsType> =
-        project.objects.newInstance(
+    override fun create(name: String): KotlinWithJavaCompilation<KO, CO> =
+        target.project.objects.newInstance(
             KotlinWithJavaCompilation::class.java,
             target,
             name,
-            kotlinOptionsFactory()
-        ) as KotlinWithJavaCompilation<KotlinOptionsType>
+            compilerOptionsFactory,
+            kotlinOptionsFactory
+        ) as KotlinWithJavaCompilation<KO, CO>
 }

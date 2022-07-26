@@ -15,7 +15,6 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.TaskProvider
 import org.gradle.api.tasks.bundling.AbstractArchiveTask
 import org.jetbrains.kotlin.gradle.dsl.*
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
 import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.internal.KotlinCompilationsModuleGroups
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.*
@@ -75,10 +74,13 @@ internal val CompilationDetails<*>.associateCompilationsClosure: Iterable<Compil
 open class DefaultCompilationDetails<T : KotlinCommonOptions>(
     final override val target: KotlinTarget,
     final override val compilationPurpose: String,
-    createKotlinOptions: DefaultCompilationDetails<*>.() -> T
+    createCompilerOptions: () -> CompilerCommonOptions,
+    createKotlinOptions: CompilationDetails<*>.() -> T
 ) : CompilationDetails<T>, KotlinCompilationData<T> {
 
-    override val kotlinOptions: T by lazy { createKotlinOptions() }
+    final override val compilerOptions: CompilerCommonOptions = createCompilerOptions()
+
+    override val kotlinOptions: T = createKotlinOptions()
 
     final override val project: Project
         get() = target.project
@@ -327,8 +329,14 @@ open class DefaultCompilationDetails<T : KotlinCommonOptions>(
 open class DefaultCompilationDetailsWithRuntime<T : KotlinCommonOptions>(
     target: KotlinTarget,
     compilationPurpose: String,
-    createKotlinOptions: DefaultCompilationDetails<*>.() -> T
-) : DefaultCompilationDetails<T>(target, compilationPurpose, createKotlinOptions), CompilationDetailsWithRuntime<T> {
+    createCompilerOptions: () -> CompilerCommonOptions,
+    createKotlinOptions: CompilationDetails<*>.() -> T
+) : DefaultCompilationDetails<T>(
+    target,
+    compilationPurpose,
+    createCompilerOptions,
+    createKotlinOptions
+), CompilationDetailsWithRuntime<T> {
     override val runtimeDependencyFilesHolder: GradleKpmDependencyFilesHolder = project.newDependencyFilesHolder(
         lowerCamelCaseName(
             target.disambiguationClassifier,
@@ -341,10 +349,12 @@ open class DefaultCompilationDetailsWithRuntime<T : KotlinCommonOptions>(
 open class NativeCompilationDetails(
     target: KotlinTarget,
     compilationPurpose: String,
-    createKotlinOptions: DefaultCompilationDetails<*>.() -> KotlinCommonOptions
+    createCompilerOptions: () -> CompilerCommonOptions,
+    createKotlinOptions: CompilationDetails<*>.() -> KotlinCommonOptions
 ) : DefaultCompilationDetails<KotlinCommonOptions>(
     target,
     compilationPurpose,
+    createCompilerOptions,
     createKotlinOptions
 ) {
     override val compileDependencyFilesHolder: GradleKpmDependencyFilesHolder = project.newDependencyFilesHolder(
@@ -375,13 +385,14 @@ open class NativeCompilationDetails(
 internal open class SharedNativeCompilationDetails(
     target: KotlinTarget,
     compilationPurpose: String,
-    createKotlinOptions: DefaultCompilationDetails<*>.() -> KotlinCommonOptions
-) :
-    DefaultCompilationDetails<KotlinCommonOptions>(
-        target,
-        compilationPurpose,
-        createKotlinOptions
-    ) {
+    createCompilerOptions: () -> CompilerCommonOptions,
+    createKotlinOptions: CompilationDetails<*>.() -> KotlinCommonOptions
+) : DefaultCompilationDetails<KotlinCommonOptions>(
+    target,
+    compilationPurpose,
+    createCompilerOptions,
+    createKotlinOptions
+) {
 
     override val friendArtifacts: FileCollection
         get() = super.friendArtifacts.plus(run {
@@ -478,13 +489,20 @@ internal open class VariantMappedCompilationDetailsWithRuntime<T : KotlinCommonO
         get() = GradleKpmDependencyFilesHolder.ofVariantRuntimeDependencies(variant)
 }
 
-internal class WithJavaCompilationDetails<T : KotlinCommonOptions>(
+internal class WithJavaCompilationDetails<KO : KotlinCommonOptions, CO : CompilerCommonOptions>(
     target: KotlinTarget,
     compilationPurpose: String,
-    createKotlinOptions: DefaultCompilationDetails<*>.() -> T
-) : DefaultCompilationDetailsWithRuntime<T>(target, compilationPurpose, createKotlinOptions) {
-    override val compilation: KotlinWithJavaCompilation<T>
-        get() = super.compilation as KotlinWithJavaCompilation<T>
+    createCompilerOptions: () -> CO,
+    createKotlinOptions: CompilationDetails<*>.() -> KO
+) : DefaultCompilationDetailsWithRuntime<KO>(
+    target,
+    compilationPurpose,
+    createCompilerOptions,
+    createKotlinOptions
+) {
+    @Suppress("UNCHECKED_CAST")
+    override val compilation: KotlinWithJavaCompilation<KO, CO>
+        get() = super.compilation as KotlinWithJavaCompilation<KO, CO>
 
     val javaSourceSet: SourceSet
         get() = compilation.javaSourceSet
@@ -518,7 +536,13 @@ class AndroidCompilationDetails(
 ) : DefaultCompilationDetailsWithRuntime<KotlinJvmOptions>(
     target,
     compilationPurpose,
-    { KotlinJvmOptionsImpl() }
+    { CompilerJvmOptionsBase(target.project.objects) },
+    {
+        object : KotlinJvmOptions {
+            override val options: CompilerJvmOptions
+                get() = compilationData.compilerOptions as CompilerJvmOptions
+        }
+    }
 ) {
     override val compilation: KotlinJvmAndroidCompilation get() = getCompilationInstance()
 
@@ -545,12 +569,20 @@ class AndroidCompilationDetails(
         }
 }
 
-internal class MetadataCompilationDetails(target: KotlinTarget, name: String) :
-    DefaultCompilationDetails<KotlinMultiplatformCommonOptions>(
-        target,
-        name,
-        { KotlinMultiplatformCommonOptionsImpl() }
-    ) {
+internal class MetadataCompilationDetails(
+    target: KotlinTarget,
+    name: String
+) : DefaultCompilationDetails<KotlinMultiplatformCommonOptions>(
+    target,
+    name,
+    { CompilerMultiplatformCommonOptionsBase(target.project.objects) },
+    {
+        object : KotlinMultiplatformCommonOptions {
+            override val options: CompilerMultiplatformCommonOptions
+                get() = compilationData.compilerOptions as CompilerMultiplatformCommonOptions
+        }
+    }
+) {
 
     override val friendArtifacts: FileCollection
         get() = super.friendArtifacts.plus(run {
@@ -563,7 +595,17 @@ internal class MetadataCompilationDetails(target: KotlinTarget, name: String) :
 internal open class JsCompilationDetails(
     target: KotlinTarget,
     compilationPurpose: String,
-) : DefaultCompilationDetailsWithRuntime<KotlinJsOptions>(target, compilationPurpose, { KotlinJsOptionsImpl() }) {
+) : DefaultCompilationDetailsWithRuntime<KotlinJsOptions>(
+    target,
+    compilationPurpose,
+    { CompilerJsOptionsBase(target.project.objects) },
+    {
+        object : KotlinJsOptions {
+            override val options: CompilerJsOptions
+                get() = compilationData.compilerOptions as CompilerJsOptions
+        }
+    }
+) {
 
     internal abstract class JsCompilationDependenciesHolder @Inject constructor(
         val target: KotlinTarget,

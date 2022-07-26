@@ -5,12 +5,13 @@
 
 package org.jetbrains.kotlin.gradle.targets.native.tasks.artifact
 
-import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.DefaultTask
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.*
 import org.jetbrains.kotlin.compilerRunner.KotlinNativeCompilerRunner
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonToolOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
@@ -106,12 +107,17 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
     @get:Input
     var binaryOptions: Map<String, String> = emptyMap()
 
+    @get:Nested
+    val compilerOptions: CompilerCommonToolOptions = CompilerCommonOptionsBase(project.objects)
+        .apply {
+            freeCompilerArgs.convention(PropertiesProvider(project).nativeLinkArgs)
+        }
+
+
     @get:Internal
     val kotlinOptions = object : KotlinCommonToolOptions {
-        override var allWarningsAsErrors: Boolean = false
-        override var suppressWarnings: Boolean = false
-        override var verbose: Boolean = false
-        override var freeCompilerArgs: List<String> = PropertiesProvider(project).nativeLinkArgs
+        override val options: CompilerCommonToolOptions
+            get() = compilerOptions
     }
 
     fun kotlinOptions(fn: KotlinCommonToolOptions.() -> Unit) {
@@ -122,19 +128,23 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
         fn.execute(kotlinOptions)
     }
 
-    @get:Input
+    @Deprecated("Use 'compilerOptions.allWarningsAsErrors' property instead", level = DeprecationLevel.WARNING)
+    @get:Internal
     val allWarningsAsErrors: Boolean
         get() = kotlinOptions.allWarningsAsErrors
 
-    @get:Input
+    @Deprecated("Use 'compilerOptions.suppressWarnings' property instead", level = DeprecationLevel.WARNING)
+    @get:Internal
     val suppressWarnings: Boolean
         get() = kotlinOptions.suppressWarnings
 
-    @get:Input
+    @Deprecated("Use 'compilerOptions.verbose' property instead", level = DeprecationLevel.WARNING)
+    @get:Internal
     val verbose: Boolean
         get() = kotlinOptions.verbose
 
-    @get:Input
+    @Deprecated("Use 'compilerOptions.freeCompilerArgs' property instead", level = DeprecationLevel.WARNING)
+    @get:Internal
     val freeCompilerArgs: List<String>
         get() = kotlinOptions.freeCompilerArgs
 
@@ -163,7 +173,7 @@ open class KotlinNativeLinkArtifactTask @Inject constructor(
             libraries = libraries.klibs(),
             friendModules = emptyList(), //FriendModules aren't needed here because it's no test artifact
             enableEndorsedLibs = enableEndorsedLibs,
-            kotlinOptions = kotlinOptions,
+            kotlinOptions = compilerOptions,
             compilerPlugins = emptyList(),//CompilerPlugins aren't needed here because it's no compilation but linking
             processTests = processTests,
             entryPoint = entryPoint,

@@ -9,8 +9,12 @@ import groovy.lang.Closure
 import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.tasks.Internal
+import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
 
+@Suppress("DEPRECATION")
+@Deprecated("")
 interface KotlinCompile<out T : KotlinCommonOptions> : Task {
+    @Deprecated("")
     @get:Internal
     val kotlinOptions: T
 

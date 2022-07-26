@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.Action
@@ -12,6 +14,7 @@ import org.gradle.api.attributes.HasAttributes
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.FileCollection
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import java.io.File
@@ -24,7 +27,11 @@ interface KotlinCompilationOutput {
     val allOutputs: FileCollection
 }
 
-interface KotlinCompilation<out T : KotlinCommonOptions> : Named, HasAttributes, HasKotlinDependencies {
+interface KotlinCompilation<out T : KotlinCommonOptions> : Named,
+    HasAttributes,
+    HasKotlinDependencies,
+    HasCompilerOptions<CompilerCommonOptions> {
+
     val target: KotlinTarget
 
     val compilationName: String

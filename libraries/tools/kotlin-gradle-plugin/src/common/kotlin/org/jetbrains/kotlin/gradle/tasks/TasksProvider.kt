@@ -21,7 +21,9 @@ import org.gradle.api.Task
 import org.gradle.api.UnknownTaskException
 import org.gradle.api.tasks.TaskCollection
 import org.gradle.api.tasks.TaskProvider
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJsOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerMultiplatformCommonOptions
 import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrLink
 import org.jetbrains.kotlin.gradle.tasks.configuration.*
 
@@ -88,43 +90,57 @@ internal inline fun <reified T : Task> Project.locateOrRegisterTask(
 }
 
 internal open class KotlinTasksProvider {
-    open fun registerKotlinJVMTask(
-        project: Project, taskName: String, kotlinOptions: KotlinCommonOptions, configuration: KotlinCompileConfig
-    ): TaskProvider<out KotlinCompile> {
-        return project.registerTask(taskName, KotlinCompile::class.java, constructorArgs = listOf(kotlinOptions)).also {
-            configuration.execute(it)
-        }
-    }
-
-    fun registerKotlinJSTask(
-        project: Project, taskName: String, kotlinOptions: KotlinCommonOptions, configuration: Kotlin2JsCompileConfig
-    ): TaskProvider<out Kotlin2JsCompile> {
-        return project.registerTask(
+    fun registerKotlinJVMTask(
+        project: Project,
+        taskName: String,
+        compilerOptions: CompilerJvmOptions,
+        configuration: KotlinCompileConfig
+    ): TaskProvider<out KotlinCompile> = project
+        .registerTask(
             taskName,
-            Kotlin2JsCompile::class.java,
-            constructorArgs = listOf(kotlinOptions)
+            KotlinCompile::class.java,
+            constructorArgs = listOf(compilerOptions)
         ).also {
             configuration.execute(it)
         }
-    }
 
-    fun registerKotlinJsIrTask(
-        project: Project, taskName: String, configuration: KotlinJsIrLinkConfig
-    ): TaskProvider<out KotlinJsIrLink> {
-        return project.registerTask(taskName, KotlinJsIrLink::class.java).also {
+    fun registerKotlinJSTask(
+        project: Project,
+        taskName: String,
+        compilerOptions: CompilerJsOptions,
+        configuration: Kotlin2JsCompileConfig
+    ): TaskProvider<out Kotlin2JsCompile> = project
+        .registerTask(
+            taskName,
+            Kotlin2JsCompile::class.java,
+            constructorArgs = listOf(compilerOptions)
+        ).also {
             configuration.execute(it)
         }
-    }
+
+    fun registerKotlinJsIrTask(
+        project: Project,
+        taskName: String,
+        configuration: KotlinJsIrLinkConfig
+    ): TaskProvider<out KotlinJsIrLink> = project
+        .registerTask(
+            taskName,
+            KotlinJsIrLink::class.java
+        ).also {
+            configuration.execute(it)
+        }
 
     fun registerKotlinCommonTask(
-        project: Project, taskName: String, kotlinOptions: KotlinCommonOptions, configuration: KotlinCompileCommonConfig
-    ): TaskProvider<out KotlinCompileCommon> {
-        return project.registerTask(
+        project: Project,
+        taskName: String,
+        kotlinOptions: CompilerMultiplatformCommonOptions,
+        configuration: KotlinCompileCommonConfig
+    ): TaskProvider<out KotlinCompileCommon> = project
+        .registerTask(
             taskName,
             KotlinCompileCommon::class.java,
             constructorArgs = listOf(kotlinOptions)
         ).also {
             configuration.execute(it)
         }
-    }
 }

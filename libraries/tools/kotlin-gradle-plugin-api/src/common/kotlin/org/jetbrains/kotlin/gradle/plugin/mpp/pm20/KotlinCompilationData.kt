@@ -3,17 +3,22 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.gradle.plugin.mpp.pm20
 
 import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.SourceDirectorySet
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilationOutput
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.project.model.LanguageSettings
 
-interface KotlinCompilationData<T : KotlinCommonOptions> {
+// TODO: Change 'CompilerCommonOptions' to specific type once KotlinCommonOptions will be removed
+interface KotlinCompilationData<T : KotlinCommonOptions> : HasCompilerOptions<CompilerCommonOptions> {
     val project: Project
     val owner: Any?
 

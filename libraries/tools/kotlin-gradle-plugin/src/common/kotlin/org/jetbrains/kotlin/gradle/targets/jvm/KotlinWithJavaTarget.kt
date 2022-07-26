@@ -13,17 +13,21 @@ import org.gradle.api.file.Directory
 import org.gradle.api.plugins.JavaPlugin
 import org.gradle.api.provider.Provider
 import org.gradle.jvm.tasks.Jar
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.plugin.KotlinPlatformType
 import org.jetbrains.kotlin.gradle.tasks.KOTLIN_BUILD_DIR_NAME
 import java.io.File
 import javax.inject.Inject
 
-abstract class KotlinWithJavaTarget<KotlinOptionsType : KotlinCommonOptions> @Inject constructor(
+abstract class KotlinWithJavaTarget<KO : KotlinCommonOptions, CO : CompilerCommonOptions> @Inject constructor(
     project: Project,
     override val platformType: KotlinPlatformType,
     override val targetName: String,
-    kotlinOptionsFactory: () -> KotlinOptionsType
+    compilerOptionsFactory: () -> CO,
+    kotlinOptionsFactory: CompilationDetails<*>.() -> KO
 ) : AbstractKotlinTarget(project) {
     override var disambiguationClassifier: String? = null
         internal set
@@ -40,11 +44,11 @@ abstract class KotlinWithJavaTarget<KotlinOptionsType : KotlinCommonOptions> @In
     override val artifactsTaskName: String
         get() = JavaPlugin.JAR_TASK_NAME
 
-    override val compilations: NamedDomainObjectContainer<KotlinWithJavaCompilation<KotlinOptionsType>> =
-        @Suppress("UNCHECKED_CAST")
+    @Suppress("UNCHECKED_CAST")
+    override val compilations: NamedDomainObjectContainer<KotlinWithJavaCompilation<KO, CO>> =
         project.container(
-            KotlinWithJavaCompilation::class.java as Class<KotlinWithJavaCompilation<KotlinOptionsType>>,
-            KotlinWithJavaCompilationFactory(project, this, kotlinOptionsFactory)
+            KotlinWithJavaCompilation::class.java as Class<KotlinWithJavaCompilation<KO, CO>>,
+            KotlinWithJavaCompilationFactory(this, compilerOptionsFactory, kotlinOptionsFactory)
         )
 
     private val layout = project.layout

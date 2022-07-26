@@ -10,6 +10,7 @@ import org.gradle.api.NamedDomainObjectProvider
 import org.gradle.api.Project
 import org.gradle.api.file.SourceDirectorySet
 import org.gradle.api.provider.Provider
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
 import org.jetbrains.kotlin.gradle.plugin.KotlinDependencyHandler
 import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.plugin.mpp.DefaultKotlinDependencyHandler
@@ -41,7 +42,9 @@ abstract class GradleKpmFragmentInternal @Inject constructor(
     // TODO pull up to KotlinModuleFragment
     // FIXME apply to compilation
     // FIXME check for consistency
-    override val languageSettings: LanguageSettingsBuilder = DefaultLanguageSettingsBuilder()
+    override val languageSettings: LanguageSettingsBuilder = DefaultLanguageSettingsBuilder(
+        CompilerCommonOptionsBase(project.objects)
+    )
 
     override fun refines(other: GradleKpmFragment) {
         checkCanRefine(other)

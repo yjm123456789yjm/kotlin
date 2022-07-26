@@ -3,8 +3,11 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.gradle.tasks
 
+import org.gradle.api.Action
 import org.gradle.api.Task
 import org.gradle.api.file.ConfigurableFileCollection
 import org.gradle.api.file.DirectoryProperty
@@ -14,9 +17,12 @@ import org.gradle.api.provider.Property
 import org.gradle.api.tasks.*
 import org.gradle.api.tasks.util.PatternFilterable
 import org.gradle.work.Incremental
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
 import org.jetbrains.kotlin.gradle.plugin.CompilerPluginConfig
+import org.jetbrains.kotlin.gradle.plugin.HasCompilerOptions
 
 interface KotlinCompileTool : PatternFilterable, Task {
     @get:InputFiles
@@ -75,11 +81,25 @@ interface BaseKotlinCompile : KotlinCompileTool {
     val pluginOptions: ListProperty<CompilerPluginConfig>
 }
 
-interface KotlinJvmCompile : BaseKotlinCompile, KotlinCompile<KotlinJvmOptions> {
+interface UsesCompilerOptions<CO : CompilerCommonOptions> : HasCompilerOptions<CO>, Task {
+    @get:Nested
+    override val compilerOptions: CO
+
+    fun compilerOptions(fn: CO.() -> Unit) {
+        compilerOptions.fn()
+    }
+
+    fun compilerOptions(fn: Action<CO>) {
+        fn.execute(compilerOptions)
+    }
+}
+
+@Suppress("DEPRECATION")
+interface KotlinJvmCompile : BaseKotlinCompile, KotlinCompile<KotlinJvmOptions>, UsesCompilerOptions<CompilerJvmOptions> {
 
     // JVM specific
     @get:Internal("Takes part in compiler args.")
-    val parentKotlinOptions: Property<KotlinJvmOptions>
+    val parentKotlinOptions: Property<KotlinJvmOptions> // TODO:?
 }
 
 interface KaptGenerateStubs : KotlinJvmCompile {

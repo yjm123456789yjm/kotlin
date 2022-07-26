@@ -25,19 +25,18 @@ import org.jetbrains.kotlin.cli.common.arguments.CommonCompilerArguments
 import org.jetbrains.kotlin.cli.common.arguments.CommonToolArguments
 import org.jetbrains.kotlin.compilerRunner.*
 import org.jetbrains.kotlin.compilerRunner.KotlinNativeCInteropRunner.Companion.run
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
+import org.jetbrains.kotlin.gradle.dsl.*
 import org.jetbrains.kotlin.gradle.dsl.KotlinCompile
-import org.jetbrains.kotlin.gradle.dsl.NativeCacheKind
 import org.jetbrains.kotlin.gradle.internal.ensureParentDirsCreated
 import org.jetbrains.kotlin.gradle.plugin.KotlinCompilation
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider
+import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.plugin.cocoapods.asValidFrameworkName
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinNativeFragmentMetadataCompilationData
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.isMainCompilationData
-import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
+import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToCompilerOptions
 import org.jetbrains.kotlin.gradle.targets.native.KonanPropertiesBuildService
 import org.jetbrains.kotlin.gradle.targets.native.internal.isAllowCommonizer
 import org.jetbrains.kotlin.gradle.targets.native.tasks.*
@@ -181,6 +180,9 @@ abstract class AbstractKotlinNativeCompile<
     val target: String by project.provider { compilation.konanTarget.name }
 
     // region Compiler options.
+    @get:Nested
+    open val compilerOptions: CompilerCommonOptions = compilation.compilerOptions
+
     @get:Internal
     abstract val kotlinOptions: T
     abstract fun kotlinOptions(fn: T.() -> Unit)
@@ -191,7 +193,12 @@ abstract class AbstractKotlinNativeCompile<
 
     @get:Internal
     val languageSettings: LanguageSettings by project.provider {
-        compilation.languageSettings
+        compilation.languageSettings.also {
+            applyLanguageSettingsToCompilerOptions(
+                it as LanguageSettingsBuilder,
+                compilerOptions
+            )
+        }
     }
 
     @get:Input
@@ -267,11 +274,11 @@ abstract class AbstractKotlinNativeCompile<
             compilerPluginClasspath?.let { CompilerPluginData(it, compilerPluginOptions) },
             kotlinPluginData?.orNull?.let { CompilerPluginData(it.classpath, it.options) }
         )
-        val opts = object : KotlinCommonToolOptions {
-            override var allWarningsAsErrors = kotlinOptions.allWarningsAsErrors
-            override var suppressWarnings = kotlinOptions.suppressWarnings
-            override var verbose = kotlinOptions.verbose
-            override var freeCompilerArgs = if (defaultsOnly) emptyList() else additionalCompilerOptions.get().toList()
+        val opts = CompilerCommonToolOptionsBase(objectFactory).apply {
+            allWarningsAsErrors.set(compilerOptions.allWarningsAsErrors)
+            suppressWarnings.set(compilerOptions.suppressWarnings)
+            verbose.set(compilerOptions.verbose)
+            if (!defaultsOnly) freeCompilerArgs.set(compilerOptions.freeCompilerArgs)
         }
 
         return buildKotlinNativeCommonArgs(
@@ -379,14 +386,16 @@ constructor(
     // endregion.
 
     // region Kotlin options.
+    override val compilerOptions: CompilerCommonOptions = compilation.compilerOptions
+
     override val kotlinOptions: KotlinCommonOptions by project.provider {
         compilation.kotlinOptions
     }
 
+    @Suppress("UNCHECKED_CAST")
+    @Deprecated("Use 'compilerOptions.freeCompilerArgs' instead")
     @get:Input
-    override val additionalCompilerOptions: Provider<Collection<String>> = project.provider {
-        kotlinOptions.freeCompilerArgs + ((languageSettings as? DefaultLanguageSettingsBuilder)?.freeCompilerArgs ?: emptyList())
-    }
+    override val additionalCompilerOptions: Provider<Collection<String>> = compilerOptions.freeCompilerArgs as Provider<Collection<String>>
 
     override fun kotlinOptions(fn: KotlinCommonOptions.() -> Unit) {
         kotlinOptions.fn()
@@ -425,13 +434,6 @@ constructor(
             )
         }
 
-        val localKotlinOptions = object : KotlinCommonToolOptions {
-            override var allWarningsAsErrors = kotlinOptions.allWarningsAsErrors
-            override var suppressWarnings = kotlinOptions.suppressWarnings
-            override var verbose = kotlinOptions.verbose
-            override var freeCompilerArgs = additionalCompilerOptions.get().toList()
-        }
-
         val plugins = listOfNotNull(
             compilerPluginClasspath?.let { CompilerPluginData(it, compilerPluginOptions) },
             kotlinPluginData?.orNull?.let { CompilerPluginData(it.classpath, it.options) }
@@ -445,7 +447,7 @@ constructor(
             libraries.files.filterKlibsPassedToCompiler(),
             languageSettings,
             enableEndorsedLibs,
-            localKotlinOptions,
+            compilerOptions,
             plugins,
             moduleName,
             shortModuleName,
@@ -483,6 +485,10 @@ constructor(
         this.setSource(compilation.compileKotlinTask.outputFile)
         includes.clear() // we need to include non '.kt' or '.kts' files
         disallowSourceChanges()
+
+        // We propagate compilation free args to the link task for now (see KT-33717).
+        compilerOptions.freeCompilerArgs.addAll(compilation.compilerOptions.freeCompilerArgs)
+        compilerOptions.freeCompilerArgs.addAll(PropertiesProvider(project).nativeLinkArgs)
     }
 
     override val destinationDirectory: DirectoryProperty = objectFactory.directoryProperty().apply {
@@ -506,23 +512,15 @@ constructor(
         project.getKonanCacheKind(konanTarget)
     }
 
-    inner class NativeLinkOptions : KotlinCommonToolOptions {
-        override var allWarningsAsErrors: Boolean = false
-        override var suppressWarnings: Boolean = false
-        override var verbose: Boolean = false
-        override var freeCompilerArgs: List<String> = listOf()
-    }
-
-    // We propagate compilation free args to the link task for now (see KT-33717).
+    @Deprecated("Use 'compilerOptions.freeCompilerArgs' instead")
     @get:Input
-    override val additionalCompilerOptions: Provider<Collection<String>> = project.provider {
-        kotlinOptions.freeCompilerArgs +
-                compilation.kotlinOptions.freeCompilerArgs +
-                ((languageSettings as? DefaultLanguageSettingsBuilder)?.freeCompilerArgs ?: emptyList()) +
-                PropertiesProvider(project).nativeLinkArgs
-    }
+    override val additionalCompilerOptions: Provider<Collection<String>> =
+        compilerOptions.freeCompilerArgs as Provider<Collection<String>>
 
-    override val kotlinOptions: KotlinCommonToolOptions = NativeLinkOptions()
+    override val kotlinOptions: KotlinCommonToolOptions = object : KotlinCommonToolOptions {
+        override val options: CompilerCommonToolOptions
+            get() = compilerOptions
+    }
 
     override fun kotlinOptions(fn: KotlinCommonToolOptions.() -> Unit) {
         kotlinOptions.fn()
@@ -625,15 +623,8 @@ constructor(
             kotlinPluginData?.orNull?.let { CompilerPluginData(it.classpath, it.options) }
         )
 
-        val localKotlinOptions = object : KotlinCommonToolOptions {
-            override var allWarningsAsErrors = kotlinOptions.allWarningsAsErrors
-            override var suppressWarnings = kotlinOptions.suppressWarnings
-            override var verbose = kotlinOptions.verbose
-            override var freeCompilerArgs = additionalCompilerOptions.get().toList()
-        }
-
         val externalDependenciesArgs = ExternalDependenciesBuilder(project, compilation).buildCompilerArgs()
-        val cacheArgs = CacheBuilder(project, binary, konanTarget, localKotlinOptions, externalDependenciesArgs).buildCompilerArgs()
+        val cacheArgs = CacheBuilder(project, binary, konanTarget, kotlinOptions, externalDependenciesArgs).buildCompilerArgs()
 
         val buildArgs = buildKotlinNativeBinaryLinkerArgs(
             output,
@@ -644,7 +635,7 @@ constructor(
             libraries.files.filterKlibsPassedToCompiler(),
             friendModule.files.toList(),
             enableEndorsedLibs,
-            localKotlinOptions,
+            compilerOptions,
             plugins,
             processTests,
             entryPoint,

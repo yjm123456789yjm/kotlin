@@ -8,9 +8,11 @@ package org.jetbrains.kotlin.gradle.tasks.configuration
 import org.gradle.api.Project
 import org.gradle.api.attributes.Attribute
 import org.gradle.api.provider.Provider
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
 import org.jetbrains.kotlin.gradle.dsl.KotlinTopLevelExtension
 import org.jetbrains.kotlin.gradle.internal.transforms.ClasspathEntrySnapshotTransform
+import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmAndroidCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinJvmCompilation
 import org.jetbrains.kotlin.gradle.plugin.mpp.KotlinWithJavaCompilation
@@ -18,7 +20,6 @@ import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
 import org.jetbrains.kotlin.gradle.report.BuildMetricsReporterService
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
-import org.jetbrains.kotlin.project.model.LanguageSettings
 
 internal typealias KotlinCompileConfig = BaseKotlinCompileConfig<KotlinCompile>
 
@@ -39,9 +40,7 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
             taskProvider.configure { task ->
                 task.incremental = propertiesProvider.incrementalJvm ?: true
 
-                if (propertiesProvider.useK2 == true) {
-                    task.kotlinOptions.useK2 = true
-                }
+                task.compilerOptions.useK2.convention(propertiesProvider.useK2 == true)
                 task.usePreciseJavaTracking = propertiesProvider.usePreciseJavaTracking ?: true
                 task.jvmTargetValidationMode.set(propertiesProvider.jvmTargetValidationMode)
                 task.useKotlinAbiSnapshot.value(propertiesProvider.useKotlinAbiSnapshot).disallowChanges()
@@ -60,12 +59,11 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
         }
     }
 
-    @Suppress("ConvertSecondaryConstructorToPrimary")
     constructor(compilation: KotlinCompilationData<*>) : super(compilation) {
         val javaTaskProvider = when (compilation) {
             is KotlinJvmCompilation -> compilation.compileJavaTaskProvider
             is KotlinJvmAndroidCompilation -> compilation.compileJavaTaskProvider
-            is KotlinWithJavaCompilation<*> -> compilation.compileJavaTaskProvider
+            is KotlinWithJavaCompilation<*, *> -> compilation.compileJavaTaskProvider
             else -> null
         }
 
@@ -76,10 +74,9 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
                     task.associatedJavaCompileTaskSources.from(javaTaskProvider.map { it.source })
                     task.associatedJavaCompileTaskName.value(javaTaskProvider.name)
                 }
-                task.ownModuleName.value(providers.provider {
-                    (compilation.kotlinOptions as? KotlinJvmOptions)?.moduleName ?: task.parentKotlinOptions.orNull?.moduleName
-                    ?: compilation.ownModuleName
-                })
+                task.ownModuleName.value(
+                    (compilation.compilerOptions as CompilerJvmOptions).moduleName.orElse(compilation.ownModuleName)
+                )
             }
         }
     }
@@ -96,10 +93,10 @@ internal open class BaseKotlinCompileConfig<TASK : KotlinCompile> : AbstractKotl
         private const val JAR_ARTIFACT_TYPE = "jar"
         const val CLASSPATH_ENTRY_SNAPSHOT_ARTIFACT_TYPE = "classpath-entry-snapshot"
 
-        private fun getDefaultLangSetting(project: Project, ext: KotlinTopLevelExtension): Provider<LanguageSettings> {
+        private fun getDefaultLangSetting(project: Project, ext: KotlinTopLevelExtension): Provider<LanguageSettingsBuilder> {
             return project.provider {
-                DefaultLanguageSettingsBuilder().also {
-                    it.freeCompilerArgsProvider = project.provider { listOfNotNull(ext.explicitApi?.toCompilerArg()) }
+                DefaultLanguageSettingsBuilder(CompilerCommonOptionsBase(project.objects)).also {
+                    it.freeCompilerArgs.addAll(project.provider { listOfNotNull(ext.explicitApi?.toCompilerArg()) })
                 }
             }
         }

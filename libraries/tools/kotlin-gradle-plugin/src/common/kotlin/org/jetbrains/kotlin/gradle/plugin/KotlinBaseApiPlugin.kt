@@ -9,8 +9,9 @@ import org.gradle.api.Project
 import org.gradle.api.file.FileCollection
 import org.gradle.api.provider.Provider
 import org.gradle.api.tasks.TaskProvider
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJvmOptionsBase
 import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJvmOptionsImpl
 import org.jetbrains.kotlin.gradle.dsl.KotlinProjectExtension
 import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.jetbrains.kotlin.gradle.internal.KaptWithoutKotlincTask
@@ -43,7 +44,11 @@ abstract class KotlinBaseApiPlugin : DefaultKotlinBasePlugin(), KotlinJvmFactory
     }
 
     override fun createKotlinJvmOptions(): KotlinJvmOptions {
-        return KotlinJvmOptionsImpl()
+        val compilerJvmOptions = CompilerJvmOptionsBase(myProject.objects)
+        return object : KotlinJvmOptions {
+            override val options: CompilerJvmOptions
+                get() = compilerJvmOptions
+        }
     }
 
     override val kotlinExtension: KotlinProjectExtension by lazy {
@@ -56,7 +61,7 @@ abstract class KotlinBaseApiPlugin : DefaultKotlinBasePlugin(), KotlinJvmFactory
 
     override fun registerKotlinJvmCompileTask(taskName: String): TaskProvider<out KotlinJvmCompile> {
         return taskCreator.registerKotlinJVMTask(
-            myProject, taskName, KotlinJvmOptionsImpl(), KotlinCompileConfig(myProject, kotlinExtension)
+            myProject, taskName, CompilerJvmOptionsBase(myProject.objects), KotlinCompileConfig(myProject, kotlinExtension)
         )
     }
 

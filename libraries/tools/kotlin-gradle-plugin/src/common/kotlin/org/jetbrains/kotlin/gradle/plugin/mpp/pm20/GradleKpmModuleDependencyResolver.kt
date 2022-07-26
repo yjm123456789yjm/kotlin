@@ -11,6 +11,8 @@ import org.gradle.api.artifacts.component.*
 import org.gradle.api.artifacts.result.ResolvedComponentResult
 import org.gradle.api.artifacts.result.ResolvedDependencyResult
 import org.gradle.api.capabilities.Capability
+import org.gradle.api.model.ObjectFactory
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptionsBase
 import org.jetbrains.kotlin.gradle.plugin.getKotlinPluginVersion
 import org.jetbrains.kotlin.gradle.plugin.mpp.*
 import org.jetbrains.kotlin.gradle.plugin.sources.DefaultLanguageSettingsBuilder
@@ -72,10 +74,15 @@ class GradleKpmModuleDependencyResolver(
 internal fun buildSyntheticPlainModule(
     resolvedComponentResult: ResolvedComponentResult,
     singleVariantName: String,
+    objectFactory: ObjectFactory
 ): GradleKpmExternalPlainModule {
     val moduleDependency = resolvedComponentResult.toKpmModuleDependency()
     return GradleKpmExternalPlainModule(KpmBasicModule(moduleDependency.moduleIdentifier).apply {
-        KpmBasicVariant(this@apply, singleVariantName, DefaultLanguageSettingsBuilder()).apply {
+        KpmBasicVariant(
+            this@apply,
+            singleVariantName,
+            DefaultLanguageSettingsBuilder(CompilerCommonOptionsBase(objectFactory))
+        ).apply {
             fragments.add(this)
             this.declaredModuleDependencies.addAll(
                 resolvedComponentResult.dependencies

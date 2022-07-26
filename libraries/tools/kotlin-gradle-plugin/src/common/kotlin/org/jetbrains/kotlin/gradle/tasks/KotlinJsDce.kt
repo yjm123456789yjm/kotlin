@@ -27,9 +27,10 @@ import org.jetbrains.kotlin.cli.common.arguments.DevModeOverwritingStrategies
 import org.jetbrains.kotlin.cli.common.arguments.K2JSDceArguments
 import org.jetbrains.kotlin.cli.js.dce.K2JSDce
 import org.jetbrains.kotlin.compilerRunner.runToolInSeparateProcess
+import org.jetbrains.kotlin.gradle.dsl.CompilerJsDceOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerJsDceOptionsBase
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDce
 import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptions
-import org.jetbrains.kotlin.gradle.dsl.KotlinJsDceOptionsImpl
 import org.jetbrains.kotlin.gradle.logging.GradleKotlinLogger
 import org.jetbrains.kotlin.gradle.utils.canonicalPathWithoutExtension
 import org.jetbrains.kotlin.gradle.utils.fileExtensionCasePermutations
@@ -48,22 +49,25 @@ abstract class KotlinJsDce @Inject constructor(
         include("js".fileExtensionCasePermutations().map { "**/*.$it" })
     }
 
+    override val compilerOptions: CompilerJsDceOptions = CompilerJsDceOptionsBase(objectFactory)
+
     override fun createCompilerArgs(): K2JSDceArguments = K2JSDceArguments()
 
     override fun setupCompilerArgs(args: K2JSDceArguments, defaultsOnly: Boolean, ignoreClasspathResolutionErrors: Boolean) {
-        dceOptionsImpl.updateArguments(args)
+        (compilerOptions as CompilerJsDceOptionsBase).toCompilerArguments(args)
         args.declarationsToKeep = keep.toTypedArray()
     }
-
-    private val dceOptionsImpl = KotlinJsDceOptionsImpl()
 
     // DCE can be broken in case of non-kotlin js files or modules
     @Internal
     var kotlinFilesOnly: Boolean = false
 
+    @Suppress("DEPRECATION")
     @get:Internal
-    override val dceOptions: KotlinJsDceOptions
-        get() = dceOptionsImpl
+    override val dceOptions: KotlinJsDceOptions = object : KotlinJsDceOptions {
+        override val options: CompilerJsDceOptions
+            get() = compilerOptions
+    }
 
     @get:Input
     override val keep: MutableList<String> = mutableListOf()

@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("DEPRECATION")
+
 package org.jetbrains.kotlin.gradle.plugin
 
 import org.gradle.api.Action
@@ -22,6 +24,7 @@ interface CInteropSettings : Named {
     }
 
     // TODO: Provide an interface for native compilations.
+    @Suppress("DEPRECATION")
     val compilation: KotlinCompilationData<out KotlinCommonOptions>
 
     val dependencyConfigurationName: String

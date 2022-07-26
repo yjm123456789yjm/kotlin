@@ -7,66 +7,62 @@ package org.jetbrains.kotlin.gradle.plugin.sources
 
 import org.gradle.api.InvalidUserDataException
 import org.gradle.api.file.FileCollection
-import org.gradle.api.provider.Provider
+import org.gradle.api.provider.ListProperty
 import org.jetbrains.kotlin.config.ApiVersion
 import org.jetbrains.kotlin.config.LanguageFeature
 import org.jetbrains.kotlin.config.LanguageVersion
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonOptions
 import org.jetbrains.kotlin.gradle.plugin.LanguageSettingsBuilder
-import org.jetbrains.kotlin.gradle.plugin.statistics.KotlinBuildStatsService
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompileTool
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinNativeCompile
 import org.jetbrains.kotlin.gradle.tasks.toSingleCompilerPluginOptions
-import org.jetbrains.kotlin.project.model.LanguageSettings
-import org.jetbrains.kotlin.statistics.metrics.BooleanMetrics
-import org.jetbrains.kotlin.statistics.metrics.StringMetrics
 
-internal class DefaultLanguageSettingsBuilder : LanguageSettingsBuilder {
-    private var languageVersionImpl: LanguageVersion? = null
-
+internal class DefaultLanguageSettingsBuilder(
+    override val compilerOptions: CompilerCommonOptions
+) : LanguageSettingsBuilder {
     override var languageVersion: String?
-        get() = languageVersionImpl?.versionString
+        get() = compilerOptions.languageVersion.orNull?.versionString
         set(value) {
-            languageVersionImpl = value?.let { versionString ->
-                LanguageVersion.fromVersionString(versionString) ?: throw InvalidUserDataException(
-                    "Incorrect language version. Expected one of: ${LanguageVersion.values().joinToString { "'${it.versionString}'" }}"
-                )
-            }
+            compilerOptions.languageVersion.set(
+                value?.let { versionString ->
+                    LanguageVersion.fromVersionString(versionString) ?: throw InvalidUserDataException(
+                        "Incorrect language version. Expected one of: ${LanguageVersion.values().joinToString { "'${it.versionString}'" }}"
+                    )
+                }
+            )
         }
-
-    private var apiVersionImpl: ApiVersion? = null
 
     override var apiVersion: String?
-        get() = apiVersionImpl?.versionString
+        get() = compilerOptions.apiVersion.orNull?.versionString
         set(value) {
-            apiVersionImpl = value?.let { versionString ->
-                parseApiVersionSettings(versionString) ?: throw InvalidUserDataException(
-                    "Incorrect API version. Expected one of: ${apiVersionValues.joinToString { "'${it.versionString}'" }}"
-                )
-            }
+            compilerOptions.apiVersion.set(
+                value?.let { versionString ->
+                    parseApiVersionSettings(versionString) ?: throw InvalidUserDataException(
+                        "Incorrect API version. Expected one of: ${apiVersionValues.joinToString { "'${it.versionString}'" }}"
+                    )
+                }
+            )
         }
 
-    override var progressiveMode: Boolean = false
-
-    private val enabledLanguageFeaturesImpl = mutableSetOf<LanguageFeature>()
+    override var progressiveMode: Boolean
+        get() = compilerOptions.progressiveMode.get()
+        set(value) = compilerOptions.progressiveMode.set(value)
 
     override val enabledLanguageFeatures: Set<String>
-        get() = enabledLanguageFeaturesImpl.map { it.name }.toSet()
+        get() = compilerOptions.languageFeatures.get().filterValues { it }.keys.map { it.name }.toSet()
 
     override fun enableLanguageFeature(name: String) {
         val languageFeature = parseLanguageFeature(name) ?: throw InvalidUserDataException(
             "Unknown language feature '${name}'"
         )
-        enabledLanguageFeaturesImpl += languageFeature
+        compilerOptions.languageFeatures.put(languageFeature, true)
     }
 
-    private val optInAnnotationsInUseImpl = mutableSetOf<String>()
-
-    override val optInAnnotationsInUse: Set<String> = optInAnnotationsInUseImpl
+    override val optInAnnotationsInUse: Set<String> = compilerOptions.optIn.get().toSet()
 
     override fun optIn(annotationName: String) {
-        optInAnnotationsInUseImpl += annotationName
+        compilerOptions.optIn.add(annotationName)
     }
 
     /* A Kotlin task that is responsible for code analysis of the owner of this language settings builder. */
@@ -93,44 +89,20 @@ internal class DefaultLanguageSettingsBuilder : LanguageSettingsBuilder {
             }
         }
 
-    var freeCompilerArgsProvider: Provider<List<String>>? = null
-
-    val freeCompilerArgs: List<String>
-        get() = freeCompilerArgsProvider?.get().orEmpty()
+    val freeCompilerArgs: ListProperty<String>
+        get() = compilerOptions.freeCompilerArgs
 }
 
-internal fun applyLanguageSettingsToKotlinOptions(
-    languageSettingsBuilder: LanguageSettings,
-    kotlinOptions: KotlinCommonOptions
-) = with(kotlinOptions) {
-    languageVersion = languageVersion ?: languageSettingsBuilder.languageVersion
-    apiVersion = apiVersion ?: languageSettingsBuilder.apiVersion
-    
-    val freeArgs = mutableListOf<String>().apply {
-        if (languageSettingsBuilder.progressiveMode) {
-            add("-progressive")
-        }
-    
-        languageSettingsBuilder.enabledLanguageFeatures.forEach { featureName ->
-            add("-XXLanguage:+$featureName")
-        }
-    
-        languageSettingsBuilder.optInAnnotationsInUse.forEach { annotationName ->
-            add("-opt-in=$annotationName")
-        }
-
-        if (languageSettingsBuilder is DefaultLanguageSettingsBuilder) {
-            addAll(languageSettingsBuilder.freeCompilerArgs)
-        }
-    }
-
-    freeCompilerArgs = freeCompilerArgs + freeArgs
-
-    KotlinBuildStatsService.getInstance()?.apply {
-        report(BooleanMetrics.KOTLIN_PROGRESSIVE_MODE, languageSettingsBuilder.progressiveMode)
-        apiVersion?.also { v -> report(StringMetrics.KOTLIN_API_VERSION, v) }
-        languageVersion?.also { v -> report(StringMetrics.KOTLIN_LANGUAGE_VERSION, v) }
-    }
+internal fun applyLanguageSettingsToCompilerOptions(
+    languageSettingsBuilder: LanguageSettingsBuilder,
+    compilerOptions: CompilerCommonOptions
+) {
+    compilerOptions.languageVersion.convention(languageSettingsBuilder.compilerOptions.languageVersion)
+    compilerOptions.apiVersion.convention(languageSettingsBuilder.compilerOptions.apiVersion)
+    compilerOptions.progressiveMode.convention(languageSettingsBuilder.compilerOptions.progressiveMode)
+    compilerOptions.languageFeatures.putAll(languageSettingsBuilder.compilerOptions.languageFeatures)
+    compilerOptions.optIn.addAll(languageSettingsBuilder.compilerOptions.optIn)
+    compilerOptions.freeCompilerArgs.addAll(languageSettingsBuilder.compilerOptions.freeCompilerArgs)
 }
 
 private val apiVersionValues = ApiVersion.run {

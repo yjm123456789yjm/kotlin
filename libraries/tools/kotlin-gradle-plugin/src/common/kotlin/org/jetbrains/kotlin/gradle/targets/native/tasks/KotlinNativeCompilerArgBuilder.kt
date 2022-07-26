@@ -7,7 +7,7 @@ package org.jetbrains.kotlin.gradle.targets.native.tasks
 
 import org.gradle.api.file.FileCollection
 import org.gradle.api.file.FileTree
-import org.jetbrains.kotlin.gradle.dsl.KotlinCommonToolOptions
+import org.jetbrains.kotlin.gradle.dsl.CompilerCommonToolOptions
 import org.jetbrains.kotlin.gradle.plugin.mpp.BitcodeEmbeddingMode
 import org.jetbrains.kotlin.gradle.tasks.CompilerPluginOptions
 import org.jetbrains.kotlin.konan.target.CompilerOutputKind
@@ -34,7 +34,7 @@ internal fun buildKotlinNativeKlibCompilerArgs(
 
     languageSettings: LanguageSettings,
     enableEndorsedLibs: Boolean,
-    kotlinOptions: KotlinCommonToolOptions,
+    compilerOptions: CompilerCommonToolOptions,
     compilerPlugins: List<CompilerPluginData>,
 
     moduleName: String,
@@ -62,7 +62,7 @@ internal fun buildKotlinNativeKlibCompilerArgs(
         addArg("-friend-modules", friends.joinToString(File.pathSeparator) { it.absolutePath })
     }
 
-    addAll(buildKotlinNativeCommonArgs(languageSettings, enableEndorsedLibs, kotlinOptions, compilerPlugins))
+    addAll(buildKotlinNativeCommonArgs(languageSettings, enableEndorsedLibs, compilerOptions, compilerPlugins))
 
     addAll(source.map { it.absolutePath })
     if (!commonSourcesTree.isEmpty) {
@@ -80,7 +80,7 @@ internal fun buildKotlinNativeBinaryLinkerArgs(
     friendModules: List<File>,
 
     enableEndorsedLibs: Boolean,
-    kotlinOptions: KotlinCommonToolOptions,
+    kotlinOptions: CompilerCommonToolOptions,
     compilerPlugins: List<CompilerPluginData>,
 
     processTests: Boolean,
@@ -137,7 +137,7 @@ private fun buildKotlinNativeMainArgs(
 internal fun buildKotlinNativeCommonArgs(
     languageSettings: LanguageSettings?, //null for linking
     enableEndorsedLibs: Boolean,
-    kotlinOptions: KotlinCommonToolOptions,
+    compilerOptions: CompilerCommonToolOptions,
     compilerPlugins: List<CompilerPluginData>
 ): List<String> = mutableListOf<String>().apply {
     add("-Xmulti-platform")
@@ -156,11 +156,11 @@ internal fun buildKotlinNativeCommonArgs(
         optInAnnotationsInUse.forEach { add("-opt-in=$it") }
     }
 
-    addKey("-Werror", kotlinOptions.allWarningsAsErrors)
-    addKey("-nowarn", kotlinOptions.suppressWarnings)
-    addKey("-verbose", kotlinOptions.verbose)
+    addKey("-Werror", compilerOptions.allWarningsAsErrors.get())
+    addKey("-nowarn", compilerOptions.suppressWarnings.get())
+    addKey("-verbose", compilerOptions.verbose.get())
 
-    addAll(kotlinOptions.freeCompilerArgs)
+    addAll(compilerOptions.freeCompilerArgs.get())
 }
 
 private fun MutableList<String>.addArg(parameter: String, value: String) {

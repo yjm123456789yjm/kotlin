@@ -18,11 +18,10 @@ import org.jetbrains.kotlin.gradle.plugin.*
 import org.jetbrains.kotlin.gradle.plugin.PropertiesProvider.Companion.kotlinPropertiesProvider
 import org.jetbrains.kotlin.gradle.plugin.mpp.associateWithClosure
 import org.jetbrains.kotlin.gradle.plugin.mpp.pm20.KotlinCompilationData
-import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToKotlinOptions
+import org.jetbrains.kotlin.gradle.plugin.sources.applyLanguageSettingsToCompilerOptions
 import org.jetbrains.kotlin.gradle.report.BuildMetricsReporterService
 import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.jetbrains.kotlin.gradle.tasks.KOTLIN_BUILD_DIR_NAME
-import org.jetbrains.kotlin.project.model.LanguageSettings
 
 /**
  * Configuration for the base compile task, [org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile].
@@ -33,15 +32,15 @@ import org.jetbrains.kotlin.project.model.LanguageSettings
 internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile<*>>(
     project: Project,
     private val ext: KotlinTopLevelExtension,
-    private val languageSettings: Provider<LanguageSettings>
+    private val languageSettings: Provider<LanguageSettingsBuilder>
 ) : TaskConfigAction<TASK>(project) {
 
     init {
         configureTaskProvider { taskProvider ->
             project.runOnceAfterEvaluated("apply properties and language settings to ${taskProvider.name}") {
                 taskProvider.configure {
-                    applyLanguageSettingsToKotlinOptions(
-                        languageSettings.get(), (it as org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>).kotlinOptions
+                    applyLanguageSettingsToCompilerOptions(
+                        languageSettings.get(), (it as org.jetbrains.kotlin.gradle.dsl.KotlinCompile<*>).kotlinOptions.options
                     )
                 }
             }
@@ -81,7 +80,9 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
         getKotlinBuildDir(task).map { it.dir("classpath-snapshot") }
 
     constructor(compilation: KotlinCompilationData<*>) : this(
-        compilation.project, compilation.project.topLevelExtension, compilation.project.provider { compilation.languageSettings }
+        compilation.project,
+        compilation.project.topLevelExtension,
+        compilation.project.provider { compilation.languageSettings as LanguageSettingsBuilder }
     ) {
         configureTask { task ->
             task.friendPaths.from({ compilation.friendPaths })

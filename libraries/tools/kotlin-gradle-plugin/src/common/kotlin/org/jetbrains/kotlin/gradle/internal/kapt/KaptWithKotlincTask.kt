@@ -32,7 +32,7 @@ import javax.inject.Inject
 abstract class KaptWithKotlincTask @Inject constructor(
     objectFactory: ObjectFactory
 ) : KaptTask(objectFactory),
-    CompilerArgumentAwareWithInput<K2JVMCompilerArguments>,
+    CompilerArgumentAware<K2JVMCompilerArguments>,
     CompileUsingKotlinDaemonWithNormalization {
 
     @get:Classpath
