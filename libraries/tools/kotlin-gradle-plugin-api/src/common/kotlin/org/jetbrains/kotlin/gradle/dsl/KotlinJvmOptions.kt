@@ -22,7 +22,7 @@ interface KotlinJvmOptions : org.jetbrains.kotlin.gradle.dsl.KotlinCommonOptions
      * Possible values: "1.8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18"
      * Default value: null
      */
-    private val kotlin.String?.jvmTargetCompilerOption get() = if (this != null) org.jetbrains.kotlin.config.JvmTarget.fromString(this) else null
+    private val kotlin.String?.jvmTargetCompilerOption get() = if (this != null) { org.jetbrains.kotlin.config.JvmTarget.fromString(this) ?: throw java.lang.IllegalArgumentException("Unknown JVM target version: $this") } else { null }
 
     private val org.jetbrains.kotlin.config.JvmTarget?.jvmTargetKotlinOption get() = this?.description
 

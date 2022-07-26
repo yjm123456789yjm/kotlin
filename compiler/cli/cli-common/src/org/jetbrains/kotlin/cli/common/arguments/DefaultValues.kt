@@ -77,7 +77,7 @@ open class DefaultValues(
         typeOf<String?>(),
         JvmTarget.supportedValues().map { "\"${it.description}\"" },
         fromKotlinOptionConverterProp = """
-        if (this != null) ${typeOf<JvmTarget>()}.fromString(this) else null
+        if (this != null) { ${typeOf<JvmTarget>()}.fromString(this) ?: throw ${typeOf<IllegalArgumentException>()}("Unknown JVM target version: ${'$'}this") } else { null }
         """.trimIndent(),
         toKotlinOptionConverterProp = """
         this?.description
