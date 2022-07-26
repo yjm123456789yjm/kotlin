@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-set -e # Exit if one of commands exit with non-zero exit code
-set -u # Treat unset variables and parameters other than the special parameters ‘@’ or ‘*’ as an error
-set -o pipefail # Any command failed in the pipe fails the whole pipe
-# set -x # Print shell commands as they are executed (or you can try -v which is less verbose)
+# set -e # Exit if one of commands exit with non-zero exit code
+# set -u # Treat unset variables and parameters other than the special parameters ‘@’ or ‘*’ as an error
+# set -o pipefail # Any command failed in the pipe fails the whole pipe
+set -x # Print shell commands as they are executed (or you can try -v which is less verbose)
 
 #!/bin/bash
             
@@ -39,9 +39,9 @@ set -o pipefail # Any command failed in the pipe fails the whole pipe
             }
      
             runTest "clean"
-runTest "install"
+# runTest "install"
 runTest "gradlePluginIntegrationTest"
-runTest "miscCompilerTest"
-runTest "jps-tests"
-runTest "scriptingJvmTest"
-runTest "generateTests"
+# runTest "miscCompilerTest"
+# runTest "jps-tests"
+# runTest "scriptingJvmTest"
+# runTest "generateTests"
