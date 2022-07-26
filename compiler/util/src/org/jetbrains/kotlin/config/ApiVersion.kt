@@ -6,11 +6,14 @@
 package org.jetbrains.kotlin.config
 
 import org.jetbrains.kotlin.utils.DescriptionAware
+import java.io.Serializable
 
 class ApiVersion private constructor(
-        val version: MavenComparableVersion,
-        override val versionString: String
-) : Comparable<ApiVersion>, DescriptionAware, LanguageOrApiVersion {
+    override val versionString: String
+) : Comparable<ApiVersion>, DescriptionAware, LanguageOrApiVersion, Serializable {
+
+    @Transient
+    val version: MavenComparableVersion = MavenComparableVersion(versionString)
 
     override val isStable: Boolean
         get() = this <= LATEST_STABLE
@@ -33,6 +36,8 @@ class ApiVersion private constructor(
     override fun toString() = versionString
 
     companion object {
+        private const val serialVersionUID = 1L
+
         @JvmField
         val KOTLIN_1_0 = createByLanguageVersion(LanguageVersion.KOTLIN_1_0)
 
@@ -79,7 +84,7 @@ class ApiVersion private constructor(
         fun createByLanguageVersion(version: LanguageVersion): ApiVersion = parse(version.versionString)!!
 
         fun parse(versionString: String): ApiVersion? = try {
-            ApiVersion(MavenComparableVersion(versionString), versionString)
+            ApiVersion(versionString)
         }
         catch (e: Exception) {
             null
