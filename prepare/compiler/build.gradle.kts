@@ -89,7 +89,6 @@ val distLibraryProjects = listOfNotNull(
     ":kotlin-imports-dumper-compiler-plugin",
     ":kotlin-main-kts",
     ":kotlin-preloader",
-    ":kotlin-reflect",
     ":kotlin-runner",
     ":kotlin-script-runtime",
     ":kotlin-scripting-common",
@@ -137,7 +136,7 @@ configurations.all {
 dependencies {
     api(kotlinStdlib())
     api(project(":kotlin-script-runtime"))
-    api(commonDependency("org.jetbrains.kotlin:kotlin-reflect"))
+    api(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     api(commonDependency("org.jetbrains.intellij.deps", "trove4j"))
 
     proguardLibraries(project(":kotlin-annotations-jvm"))
@@ -158,6 +157,7 @@ dependencies {
 
     librariesStripVersion(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
     librariesStripVersion(commonDependency("org.jetbrains.intellij.deps:trove4j")) { isTransitive = false }
+    librariesStripVersion(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 
     distLibraryProjects.forEach {
         libraries(project(it)) { isTransitive = false }
@@ -173,14 +173,13 @@ dependencies {
 
     sources(kotlinStdlib("jdk7", classifier = "sources"))
     sources(kotlinStdlib("jdk8", classifier = "sources"))
+    sources(commonDependency("org.jetbrains.kotlin", "kotlin-reflect", ":sources")) { isTransitive = false }
 
     if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
         sources(kotlinStdlib(classifier = "sources"))
-        sources("org.jetbrains.kotlin:kotlin-reflect:$bootstrapKotlinVersion:sources")
     } else {
         sources(project(":kotlin-stdlib", configuration = "distSources"))
         sources(project(":kotlin-stdlib-js", configuration = "distSources"))
-        sources(project(":kotlin-reflect", configuration = "sources"))
 
         distStdlibMinimalForTests(project(":kotlin-stdlib-jvm-minimal-for-test"))
 
