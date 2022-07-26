@@ -3,7 +3,7 @@ plugins {
 }
 
 tasks.register("analysisAllTests") {
-    dependsOn(":dist")
+    // dependsOn(":dist")
     dependsOn(
         ":analysis:decompiled:decompiler-to-file-stubs:test",
         ":analysis:analysis-api:test",
