@@ -53,7 +53,7 @@ class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4ContextBin
 
         val actual = StringUtil.convertLineSeparators(actualRaw.trim { it <= ' ' })
             .trimTrailingWhitespacesAndAddNewlineAtEOF()
-            .let { removeMetadataAnnotationContents(it) }
+            .let { removeMetadataAnnotationContents(it, complexCheck = false) }
 
         assertions.checkTxtAccordingToBackendAndFrontend(module, actual)
 

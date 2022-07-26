@@ -31,9 +31,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import java.io.File
-import java.io.Serializable
 import javax.lang.model.element.ElementKind
-import javax.swing.plaf.metal.MetalTextFieldUI
 import kotlin.math.sign
 
 context(Kapt4ContextForStubGeneration)
@@ -171,7 +169,7 @@ class Kapt4StubGenerator {
         val isEnum = lightClass.isEnum()
         val isAnnotation = lightClass.isAnnotationType
 
-        val metadata = when(lightClass) {
+        val metadata = when (lightClass) {
             is FirLightClassForClassOrObjectSymbol -> lightClass.kotlinOrigin?.let { metadataCalculator.calculate(it) }
             is FirLightClassForFacade -> {
                 val ktFiles = lightClass.files
@@ -181,6 +179,7 @@ class Kapt4StubGenerator {
                     else -> metadataCalculator.calculate(ktFiles)
                 }
             }
+
             else -> null
         }
 
@@ -217,7 +216,7 @@ class Kapt4StubGenerator {
 
         val superClass = treeMaker.FqName(superClassName)
 
-        val genericType = signatureParser.parseClassSignature(lightClass.signature, superClass, interfaces)
+        val genericType = signatureParser.parseClassSignature(lightClass)
 // TODO
 //        class EnumValueData(val field: FieldNode, val innerClass: InnerClassNode?, val correspondingClass: ClassNode?)
 //
@@ -527,7 +526,7 @@ class Kapt4StubGenerator {
             annotations = annotations.append(treeMaker.Annotation(type, JavacList.nil()))
         }
         if (metadata != null) {
-            annotations = annotations.append(convertMetadataAnnotation(metadata))
+            annotations = annotations.prepend(convertMetadataAnnotation(metadata))
         }
 
         val flags = when (kind) {

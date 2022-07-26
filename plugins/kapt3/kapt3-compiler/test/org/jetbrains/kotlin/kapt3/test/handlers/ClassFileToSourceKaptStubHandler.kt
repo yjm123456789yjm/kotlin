@@ -44,7 +44,7 @@ class ClassFileToSourceKaptStubHandler(testServices: TestServices) : BaseKaptHan
 
         val actual = StringUtil.convertLineSeparators(actualRaw.trim { it <= ' ' })
             .trimTrailingWhitespacesAndAddNewlineAtEOF()
-            .let { removeMetadataAnnotationContents(it) }
+            .let { removeMetadataAnnotationContents(it, complexCheck = true) }
 
         if (kaptContext.compiler.shouldStop(CompileStates.CompileState.ENTER)) {
             val log = Log.instance(kaptContext.context) as KaptJavaLogBase

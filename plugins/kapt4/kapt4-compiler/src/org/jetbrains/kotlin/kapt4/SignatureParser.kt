@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.kapt4
 
+import com.intellij.psi.*
 import com.sun.tools.javac.code.BoundKind
 import com.sun.tools.javac.code.TypeTag
 import com.sun.tools.javac.tree.JCTree.*
@@ -12,10 +13,8 @@ import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.signature.SignatureVisitor
 import java.util.*
 import org.jetbrains.kotlin.kapt4.ElementKind.*
-import org.jetbrains.kotlin.kapt4.Kapt4TreeMaker
 import org.jetbrains.kotlin.utils.SmartList
 import org.jetbrains.org.objectweb.asm.signature.SignatureReader
-import com.sun.tools.javac.util.List as JavacList
 
 /*
     Root (Class)
@@ -79,6 +78,7 @@ private class SignatureNode(val kind: ElementKind, val name: String? = null) {
     val children: MutableList<SignatureNode> = SmartList<SignatureNode>()
 }
 
+@Suppress("UnstableApiUsage")
 class SignatureParser(private val treeMaker: Kapt4TreeMaker) {
     class ClassGenericSignature(
         val typeParameters: JavacList<JCTypeParameter>,
@@ -93,25 +93,25 @@ class SignatureParser(private val treeMaker: Kapt4TreeMaker) {
         val returnType: JCExpression?
     )
 
-    fun parseClassSignature(
-        signature: String?,
-        rawSuperClass: JCExpression,
-        rawInterfaces: JavacList<JCExpression>
-    ): ClassGenericSignature {
-        if (signature == null) {
-            return ClassGenericSignature(JavacList.nil(), rawSuperClass, rawInterfaces)
+    fun parseClassSignature(psiClass: PsiClass): ClassGenericSignature {
+        val superClasses = mutableListOf<JCExpression>()
+        val interfaces = mutableListOf<JCExpression>()
+        for (superType in psiClass.superTypes) {
+            val jType = makeExpressionForClassTypeWithArguments(superType)
+            if (superType.resolvedClass?.isInterface == false) {
+                superClasses += jType
+            } else {
+                interfaces += jType
+            }
         }
-
-        val root = parse(signature)
-        val typeParameters = smartList()
-        val superClasses = smartList()
-        val interfaces = smartList()
-        root.split(typeParameters, ElementKind.TypeParameter, superClasses, SuperClass, interfaces, Interface)
-
-        val jcTypeParameters = mapJList(typeParameters) { parseTypeParameter(it) }
-        val jcSuperClass = parseType(superClasses.single().children.single())
-        val jcInterfaces = mapJList(interfaces) { parseType(it.children.single()) }
+        val jcTypeParameters = mapJList(psiClass.typeParameters.asList()) { parseTypeParameter(it) }
+        val jcSuperClass = superClasses.firstOrNull() ?: createJavaLangObjectType()
+        val jcInterfaces = JavacList.from(interfaces)
         return ClassGenericSignature(jcTypeParameters, jcSuperClass, jcInterfaces)
+    }
+
+    private fun createJavaLangObjectType(): JCExpression {
+        return treeMaker.FqName("java.lang.Object")
     }
 
     fun parseMethodSignature(
@@ -175,6 +175,38 @@ class SignatureParser(private val treeMaker: Kapt4TreeMaker) {
         val jcInterfaceBounds = mapJList(interfaceBounds) { parseBound(it) }
         val allBounds = if (jcClassBound != null) jcInterfaceBounds.prepend(jcClassBound) else jcInterfaceBounds
         return treeMaker.TypeParameter(treeMaker.name(node.name!!), allBounds)
+    }
+
+    private fun parseTypeParameter(typeParameter: PsiTypeParameter): JCTypeParameter {
+        val classBounds = mutableListOf<JCExpression>()
+        val interfaceBounds = mutableListOf<JCExpression>()
+
+        val bounds = typeParameter.bounds
+        for (bound in bounds) {
+            val boundType = bound as? PsiType ?: continue
+            val jBound = makeExpressionForClassTypeWithArguments(boundType)
+            if (boundType.resolvedClass?.isInterface == false) {
+                classBounds += jBound
+            } else {
+                interfaceBounds += jBound
+            }
+        }
+        if (classBounds.isEmpty() && interfaceBounds.isEmpty()) {
+            classBounds += createJavaLangObjectType()
+        }
+        return treeMaker.TypeParameter(treeMaker.name(typeParameter.name!!), JavacList.from(classBounds + interfaceBounds))
+    }
+
+    private fun makeExpressionForClassTypeWithArguments(type: PsiType): JCExpression {
+        val fqNameExpression = treeMaker.Type(type)
+        if (type !is PsiClassType) return fqNameExpression
+        val arguments = type.parameters.takeIf { it.isNotEmpty() } ?: return fqNameExpression
+        val jArguments = mapJList(arguments.asList()) {
+            // TODO: add variance
+            makeExpressionForClassTypeWithArguments(it)
+        }
+
+        return treeMaker.TypeApply(fqNameExpression, jArguments)
     }
 
     private fun parseBound(node: SignatureNode): JCExpression {

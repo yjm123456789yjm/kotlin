@@ -46,8 +46,10 @@ fun Assertions.checkTxtAccordingToBackendAndFrontend(module: TestModule, actual:
 }
 
 private const val KOTLIN_METADATA_GROUP = "[a-z0-9]+ = (\\{.+?\\}|[0-9]+)"
-private val KOTLIN_METADATA_REGEX = "@kotlin\\.Metadata\\(($KOTLIN_METADATA_GROUP)(, $KOTLIN_METADATA_GROUP)*\\)".toRegex()
+private val COMPLEX_KOTLIN_METADATA_REGEX = "@kotlin\\.Metadata\\(($KOTLIN_METADATA_GROUP)(, $KOTLIN_METADATA_GROUP)*\\)".toRegex()
+private val SIMPLE_KOTLIN_METADATA_REGEX = "@kotlin\\.Metadata\\(.*\\)".toRegex()
 
-fun removeMetadataAnnotationContents(s: String): String {
-    return s.replace(KOTLIN_METADATA_REGEX, "@kotlin.Metadata()")
+fun removeMetadataAnnotationContents(s: String, complexCheck: Boolean): String {
+    val regex = if (complexCheck) COMPLEX_KOTLIN_METADATA_REGEX else SIMPLE_KOTLIN_METADATA_REGEX
+    return s.replace(regex, "@kotlin.Metadata()")
 }

@@ -1,5 +1,4 @@
-class SomeClass {
-    fun foo() {}
-}
+class Some<T, K : T> : B(), A<K> where T : A<String>, T : B
 
-fun foo() {}
+interface A<R>
+abstract class B

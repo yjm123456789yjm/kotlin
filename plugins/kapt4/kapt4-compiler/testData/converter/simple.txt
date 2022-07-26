@@ -1,13 +1,19 @@
 import java.lang.System;
 
-@kotlin.Metadata(k = 2, mv = {1, 0, 3}, bv = {1, 0, 3}, d1 = {"\u0000\b\n\u0000\n\u0002\u0010\u0002\n\u0000\u001a\u0004\u0010\u00008\u0000\u00f2\u0001\u0004\n\u00020\u0001\u00a8\u0006\u0002"}, d2 = {"foo", "", "Sources of main"}, xs = "", pn = "", xi = 0)
-public final class SimpleKt {
+@kotlin.Metadata()
+public abstract interface A<R> {
+}
 
-    public SimpleKt() {
+////////////////////
+
+
+import java.lang.System;
+
+@kotlin.Metadata()
+public abstract class B {
+
+    public B() {
         super();
-    }
-
-    public static void foo() {
     }
 }
 
@@ -16,13 +22,10 @@ public final class SimpleKt {
 
 import java.lang.System;
 
-@kotlin.Metadata(k = 1, mv = {1, 0, 3}, bv = {1, 0, 3}, d1 = {"\u0000\u0010\n\u0002\u0018\u0002\n\u0002\u0010\u0000\n\u0000\n\u0002\u0010\u0002\n\u0000\u0012\u0001\u0000\u0018\u0000B\u0000J\u0004\u0010\u00028\u0001\u00f2\u0001\b\n\u00020\u0001\n\u00020\u0003\u00a8\u0006\u0004"}, d2 = {"LSomeClass;", "", "foo", "", "Sources of main"}, xs = "", pn = "", xi = 0)
-public final class SomeClass {
+@kotlin.Metadata()
+public final class Some<T extends B & A<java.lang.String>, K extends T> extends B implements A<K> {
 
-    public SomeClass() {
+    public Some() {
         super();
-    }
-
-    public final void foo() {
     }
 }

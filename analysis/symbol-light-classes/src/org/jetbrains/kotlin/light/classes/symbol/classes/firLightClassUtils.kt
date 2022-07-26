@@ -378,7 +378,7 @@ context(KtAnalysisSession)
 }
 
 context(KtAnalysisSession)
-        internal fun FirLightClassBase.createInheritanceList(forExtendsList: Boolean, superTypes: List<KtType>): PsiReferenceList {
+internal fun FirLightClassBase.createInheritanceList(forExtendsList: Boolean, superTypes: List<KtType>): PsiReferenceList {
 
     val role = if (forExtendsList) PsiReferenceList.Role.EXTENDS_LIST else PsiReferenceList.Role.IMPLEMENTS_LIST
 
@@ -412,7 +412,7 @@ context(KtAnalysisSession)
         .filter { it.needToAddTypeIntoList() }
         .mapNotNull { type ->
             if (type !is KtNonErrorClassType) return@mapNotNull null
-            mapSuperType(type, this@createInheritanceList, kotlinCollectionAsIs = true)
+            mapSuperType(type, this@createInheritanceList, kotlinCollectionAsIs = false)
         }
         .forEach { listBuilder.addReference(it) }
 

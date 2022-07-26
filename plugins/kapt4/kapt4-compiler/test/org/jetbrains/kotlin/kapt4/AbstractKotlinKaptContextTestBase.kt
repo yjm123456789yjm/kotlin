@@ -28,7 +28,7 @@ abstract class AbstractKotlinKapt4ContextTestBase(
 ) : AbstractKotlinCompilerWithTargetBackendTest(targetBackend) {
     override fun TestConfigurationBuilder.configuration() {
         globalDefaults {
-            frontend = FrontendKinds.ClassicFrontend
+            frontend = FrontendKinds.FIR
             targetPlatform = JvmPlatforms.defaultJvmPlatform
             dependencyKind = DependencyKind.Binary
         }

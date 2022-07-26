@@ -12,6 +12,7 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.psi.KtElement
 import java.util.*
 
@@ -80,9 +81,6 @@ operator fun <T : Any> JavacList<T>.plus(other: JavacList<T>): JavacList<T> {
 
 fun <T : Any> Iterable<T>.toJList(): JavacList<T> = JavacList.from(this)
 
-val PsiClass.signature: String
-    get() = ClassUtil.getClassObjectPresentation(PsiTypesUtil.getClassType(this))
-
 val PsiMethod.signature: String
     get() = ClassUtil.getAsmMethodSignature(this)
 
@@ -100,7 +98,10 @@ val PsiModifierListOwner.isConstructor: Boolean
     get() = (this is PsiMethod) && this.isConstructor
 
 val PsiType.qualifiedName: String
-    get() = resolvedClass?.qualifiedName ?: "<no name provided>"
+    get() = when (val resolvedClass = resolvedClass) {
+        is PsiTypeParameter -> resolvedClass.name
+        else -> resolvedClass?.qualifiedName
+    } ?: NO_NAME_PROVIDED
 
 val PsiElement.ktOrigin: KtElement
     get() = (this as? KtLightElement<*, *>)?.kotlinOrigin ?: TODO()
