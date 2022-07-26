@@ -82,6 +82,7 @@ projectTest(jUnitMode = JUnitMode.JUnit5) {
     dependsOn(parcelizeRuntimeForTests)
     dependsOn(robolectricClasspath)
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
     useAndroidJar()
 

@@ -49,6 +49,7 @@ if (kotlinBuildProperties.isInJpsBuildIdeaSync) {
 
 projectTest(parallel = true, maxHeapSizeMb = 3072) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
 }
 
