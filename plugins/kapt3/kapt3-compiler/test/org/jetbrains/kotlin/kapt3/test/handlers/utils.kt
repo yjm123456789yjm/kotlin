@@ -6,23 +6,41 @@
 package org.jetbrains.kotlin.kapt3.test.handlers
 
 import org.jetbrains.kotlin.test.Assertions
+import org.jetbrains.kotlin.test.model.FrontendKinds
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.utils.withExtension
 import org.jetbrains.kotlin.test.utils.withSuffixAndExtension
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
-fun Assertions.checkTxtAccordingToBackend(module: TestModule, actual: String, fileSuffix: String = "") {
+fun Assertions.checkTxtAccordingToBackendAndFrontend(module: TestModule, actual: String, fileSuffix: String = "") {
     val testDataFile = module.files.first().originalFile
     val txtFile = testDataFile.withExtension("$fileSuffix.txt")
     val irTxtFile = testDataFile.withSuffixAndExtension("${fileSuffix}.ir", ".txt")
-    val isIr = module.targetBackend?.isIR == true
-    val expectedFile = if (isIr && irTxtFile.exists()) {
-        irTxtFile
-    } else {
-        txtFile
+    val firTxtFile = testDataFile.withSuffixAndExtension("${fileSuffix}.fir", ".txt")
+    val isFir = module.frontendKind == FrontendKinds.FIR
+    val isIr = !isFir && (module.targetBackend?.isIR == true)
+
+    val expectedFile = when {
+        isFir && firTxtFile.exists() -> firTxtFile
+        isIr && irTxtFile.exists() -> irTxtFile
+        else -> txtFile
     }
+
     assertEqualsToFile(expectedFile, actual)
 
-    if (isIr && txtFile.exists() && irTxtFile.exists() && txtFile.readText() == irTxtFile.readText()) {
+    val classicText = txtFile.readText()
+    val irText = runIf(irTxtFile.exists()) { irTxtFile.readText() }
+    val firText = runIf(firTxtFile.exists()) { firTxtFile.readText() }
+
+    if (isFir && firText != null) {
+        if (firText == irText) {
+            fail { "JVM_IR and FIR golden files are identical. Remove $firTxtFile." }
+        } else if (firText == classicText) {
+            fail { "JVM and FIR golden files are identical. Remove $firTxtFile." }
+        }
+    }
+
+    if (isIr && irText != null && irText == classicText) {
         fail { "JVM and JVM_IR golden files are identical. Remove $irTxtFile." }
     }
 }

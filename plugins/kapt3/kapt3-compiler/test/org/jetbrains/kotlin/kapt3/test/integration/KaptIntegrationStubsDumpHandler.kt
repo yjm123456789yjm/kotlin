@@ -8,7 +8,7 @@ package org.jetbrains.kotlin.kapt3.test.integration
 import com.intellij.openapi.util.text.StringUtil
 import org.jetbrains.kotlin.kapt3.test.KaptContextBinaryArtifact
 import org.jetbrains.kotlin.kapt3.test.handlers.AbstractKaptHandler
-import org.jetbrains.kotlin.kapt3.test.handlers.checkTxtAccordingToBackend
+import org.jetbrains.kotlin.kapt3.test.handlers.checkTxtAccordingToBackendAndFrontend
 import org.jetbrains.kotlin.kapt3.test.handlers.removeMetadataAnnotationContents
 import org.jetbrains.kotlin.test.model.TestModule
 import org.jetbrains.kotlin.test.services.TestServices
@@ -24,7 +24,7 @@ class KaptIntegrationStubsDumpHandler(testServices: TestServices) : AbstractKapt
         val actual = StringUtil.convertLineSeparators(actualRaw.trim { it <= ' ' })
             .trimTrailingWhitespacesAndAddNewlineAtEOF()
             .let { removeMetadataAnnotationContents(it) }
-        assertions.checkTxtAccordingToBackend(module, actual, FILE_SUFFIX)
+        assertions.checkTxtAccordingToBackendAndFrontend(module, actual, FILE_SUFFIX)
     }
 
     override fun processAfterAllModules(someAssertionWasFailed: Boolean) {}

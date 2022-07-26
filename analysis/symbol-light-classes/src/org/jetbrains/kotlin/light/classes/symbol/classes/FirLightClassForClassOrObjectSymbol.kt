@@ -36,7 +36,7 @@ import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
 context(KtAnalysisSession)
-internal abstract class FirLightClassForClassOrObjectSymbol(
+abstract class FirLightClassForClassOrObjectSymbol(
     private val classOrObjectSymbol: KtNamedClassOrObjectSymbol,
     manager: PsiManager
 ) : FirLightClassBase(manager),

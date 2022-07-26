@@ -8,6 +8,10 @@ package org.jetbrains.kotlin.kapt4
 import com.intellij.openapi.Disposable
 import com.sun.tools.javac.tree.TreeMaker
 import com.sun.tools.javac.util.Context
+import org.jetbrains.kotlin.analysis.api.KtAnalysisApiInternals
+import org.jetbrains.kotlin.analysis.api.components.KtMetadataCalculator
+import org.jetbrains.kotlin.analysis.api.lifetime.KtAlwaysAccessibleLifetimeTokenFactory
+import org.jetbrains.kotlin.analysis.api.session.KtAnalysisSessionProvider
 import org.jetbrains.kotlin.analysis.api.standalone.buildStandaloneAnalysisAPISession
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -23,6 +27,7 @@ import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.org.objectweb.asm.Opcodes
 
 object Kapt4Main {
+    @OptIn(KtAnalysisApiInternals::class)
     fun run(
         configuration: CompilerConfiguration,
         options: KaptOptions,
@@ -40,7 +45,8 @@ object Kapt4Main {
                 module = it
             }
         }
-        val project = analysisSession.project
+        val ktAnalysisSession = KtAnalysisSessionProvider.getInstance(analysisSession.project)
+            .getAnalysisSessionByUseSiteKtModule(module, KtAlwaysAccessibleLifetimeTokenFactory)
         val ktFiles = module.ktFiles
 
         val lightClasses = buildList {
@@ -58,6 +64,7 @@ object Kapt4Main {
             WriterBackedKaptLogger(isVerbose = false),
             lightClasses.keys.toList(),
             lightClasses,
+            ktAnalysisSession.ktMetadataCalculator
         )
 
         val generator = with(context) { Kapt4StubGenerator() }
@@ -71,6 +78,7 @@ class Kapt4ContextForStubGeneration(
     logger: KaptLogger,
     val classes: List<KtLightClass>,
     val origins: Map<KtLightClass, KtFile>,
+    val metadataCalculator: KtMetadataCalculator
 ) : KaptContext(options, withJdk, logger) {
     val treeMaker = TreeMaker.instance(context) as Kapt4TreeMaker
 

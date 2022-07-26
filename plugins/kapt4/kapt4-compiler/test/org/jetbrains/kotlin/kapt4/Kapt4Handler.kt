@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.kapt3.base.javac.KaptJavaLogBase
 import org.jetbrains.kotlin.kapt3.base.parseJavaFiles
 import org.jetbrains.kotlin.kapt3.test.KaptTestDirectives
 import org.jetbrains.kotlin.kapt3.test.handlers.ClassFileToSourceKaptStubHandler
-import org.jetbrains.kotlin.kapt3.test.handlers.checkTxtAccordingToBackend
+import org.jetbrains.kotlin.kapt3.test.handlers.checkTxtAccordingToBackendAndFrontend
 import org.jetbrains.kotlin.kapt3.test.handlers.removeMetadataAnnotationContents
 import org.jetbrains.kotlin.kapt3.test.messageCollectorProvider
 import org.jetbrains.kotlin.test.model.AnalysisHandler
@@ -55,6 +55,8 @@ class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4ContextBin
             .trimTrailingWhitespacesAndAddNewlineAtEOF()
             .let { removeMetadataAnnotationContents(it) }
 
+        assertions.checkTxtAccordingToBackendAndFrontend(module, actual)
+
         if (kaptContext.compiler.shouldStop(CompileStates.CompileState.ENTER)) {
             val log = Log.instance(kaptContext.context) as KaptJavaLogBase
 
@@ -80,7 +82,7 @@ class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4ContextBin
             val actualErrorsStr = actualErrors.joinToString(lineSeparator) { it.toDirectiveView() }
 
             if (expectedErrors.isEmpty()) {
-//                assertions.fail { "There were errors during analysis:\n$actualErrorsStr\n\nStubs:\n\n$actual" }
+                assertions.fail { "There were errors during analysis:\n$actualErrorsStr\n\nStubs:\n\n$actual" }
             } else {
                 val expectedErrorsStr = expectedErrors.joinToString(lineSeparator) { it.toDirectiveView() }
                 if (expectedErrorsStr != actualErrorsStr) {
@@ -91,8 +93,6 @@ class Kapt4Handler(testServices: TestServices) : AnalysisHandler<Kapt4ContextBin
                 }
             }
         }
-
-        assertions.checkTxtAccordingToBackend(module, actual)
     }
 
     private fun getJavaFiles(

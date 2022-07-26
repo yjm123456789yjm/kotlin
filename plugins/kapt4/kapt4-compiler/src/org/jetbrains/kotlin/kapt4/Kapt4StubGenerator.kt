@@ -20,6 +20,8 @@ import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
 import org.jetbrains.kotlin.kapt3.base.stubs.KotlinPosition
 import org.jetbrains.kotlin.kapt4.ErrorTypeCorrector.TypeKind.*
+import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForClassOrObjectSymbol
+import org.jetbrains.kotlin.light.classes.symbol.FirLightClassForFacade
 import org.jetbrains.kotlin.load.java.JvmAbi
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
@@ -29,7 +31,9 @@ import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import java.io.File
+import java.io.Serializable
 import javax.lang.model.element.ElementKind
+import javax.swing.plaf.metal.MetalTextFieldUI
 import kotlin.math.sign
 
 context(Kapt4ContextForStubGeneration)
@@ -167,12 +171,26 @@ class Kapt4StubGenerator {
         val isEnum = lightClass.isEnum()
         val isAnnotation = lightClass.isAnnotationType
 
+        val metadata = when(lightClass) {
+            is FirLightClassForClassOrObjectSymbol -> lightClass.kotlinOrigin?.let { metadataCalculator.calculate(it) }
+            is FirLightClassForFacade -> {
+                val ktFiles = lightClass.files
+                when (ktFiles.size) {
+                    0 -> null
+                    1 -> metadataCalculator.calculate(ktFiles.single())
+                    else -> metadataCalculator.calculate(ktFiles)
+                }
+            }
+            else -> null
+        }
+
         val modifiers = convertModifiers(
             lightClass,
             flags.toLong(),
             if (isEnum) ElementKind.ENUM else ElementKind.CLASS,
             packageFqName,
-            lightClass.annotations.toList()
+            lightClass.annotations.toList(),
+            metadata
         )
 
         // TODO: check
@@ -393,8 +411,8 @@ class Kapt4StubGenerator {
 
         if (declaration.isStatic) {
             access = access or Opcodes.ACC_STATIC
-            if (declaration !is PsiClass) {
-                // access = access or Opcodes.ACC_FINAL
+            if (declaration is PsiMethod) {
+                 access = access and Opcodes.ACC_FINAL.inv()
             }
         }
 
@@ -403,6 +421,24 @@ class Kapt4StubGenerator {
         }
 
         return access
+    }
+
+    private fun convertMetadataAnnotation(metadata: Metadata): JCAnnotation {
+        val argumentsWithNames = mapOf(
+            "k" to metadata.kind,
+            "mv" to metadata.metadataVersion.toList(),
+            "bv" to metadata.bytecodeVersion.toList(),
+            "d1" to metadata.data1.toList(),
+            "d2" to metadata.data2.toList(),
+            "xs" to metadata.extraString,
+            "pn" to metadata.packageName,
+            "xi" to metadata.extraInt,
+        )
+        val arguments = argumentsWithNames.map { (name, value) ->
+            val jValue = convertLiteralExpression(containingClass = null, value)
+            treeMaker.Assign(treeMaker.SimpleName(name), jValue)
+        }
+        return treeMaker.Annotation(treeMaker.FqName(Metadata::class.java.canonicalName), JavacList.from(arguments))
     }
 
     // TODO
@@ -460,9 +496,10 @@ class Kapt4StubGenerator {
         access: Int,
         kind: ElementKind,
         packageFqName: String,
-        allAnnotations: List<PsiAnnotation>
+        allAnnotations: List<PsiAnnotation>,
+        metadata: Metadata?
     ): JCModifiers {
-        return convertModifiers(containingClass, access.toLong(), kind, packageFqName, allAnnotations)
+        return convertModifiers(containingClass, access.toLong(), kind, packageFqName, allAnnotations, metadata)
     }
 
     private fun convertModifiers(
@@ -470,7 +507,8 @@ class Kapt4StubGenerator {
         access: Long,
         kind: ElementKind,
         packageFqName: String,
-        allAnnotations: List<PsiAnnotation>
+        allAnnotations: List<PsiAnnotation>,
+        metadata: Metadata?
     ): JCModifiers {
         var seenOverride = false
         fun convertAndAdd(list: JavacList<JCAnnotation>, annotation: PsiAnnotation): JavacList<JCAnnotation> {
@@ -487,6 +525,9 @@ class Kapt4StubGenerator {
         if (isDeprecated(access)) {
             val type = treeMaker.Type(Type.getType(java.lang.Deprecated::class.java))
             annotations = annotations.append(treeMaker.Annotation(type, JavacList.nil()))
+        }
+        if (metadata != null) {
+            annotations = annotations.append(convertMetadataAnnotation(metadata))
         }
 
         val flags = when (kind) {
@@ -536,7 +577,8 @@ class Kapt4StubGenerator {
         val modifiers = convertModifiers(
             containingClass,
             access, ElementKind.FIELD, packageFqName,
-            fieldAnnotations
+            fieldAnnotations,
+            metadata = null
         )
 
         val name = field.name
@@ -627,7 +669,7 @@ class Kapt4StubGenerator {
         return null
     }
 
-    private fun convertLiteralExpression(containingClass: PsiClass, value: Any?): JCExpression {
+    private fun convertLiteralExpression(containingClass: PsiClass?, value: Any?): JCExpression {
         fun convertDeeper(value: Any?) = convertLiteralExpression(containingClass, value)
 
         convertValueOfPrimitiveTypeOrString(value)?.let { return it }
@@ -739,7 +781,8 @@ class Kapt4StubGenerator {
                 (getDeclarationAccessFlags(method).toLong() and VISIBILITY_MODIFIERS.inv())
             else
                 getDeclarationAccessFlags(method).toLong(),
-            ElementKind.METHOD, packageFqName, visibleAnnotations
+            ElementKind.METHOD, packageFqName, visibleAnnotations,
+            metadata = null
         )
 
         if (containingClass.isInterface && !method.isAbstract && !method.isStatic) {
@@ -768,7 +811,8 @@ class Kapt4StubGenerator {
                 info.flags or varargs or Flags.PARAMETER,
                 ElementKind.PARAMETER,
                 packageFqName,
-                info.visibleAnnotations + info.invisibleAnnotations // TODO
+                info.visibleAnnotations + info.invisibleAnnotations, // TODO
+                metadata = null
             )
 
             val name = info.name.takeIf { isValidIdentifier(it) } ?: ("p" + index + "_" + info.name.hashCode().ushr(1))
