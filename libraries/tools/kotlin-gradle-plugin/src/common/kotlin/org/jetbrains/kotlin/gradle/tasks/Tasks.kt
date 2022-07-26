@@ -532,6 +532,10 @@ abstract class KotlinCompile @Inject constructor(
     @Suppress("TYPEALIAS_EXPANSION_DEPRECATION") KotlinJvmCompileDsl,
     UsesKotlinJavaToolchain {
 
+    init {
+        compilerOptions.moduleName.convention(moduleName)
+    }
+
     @Deprecated("")
     override val kotlinOptions: KotlinJvmOptions = object : KotlinJvmOptions {
         override val options: CompilerJvmOptions
