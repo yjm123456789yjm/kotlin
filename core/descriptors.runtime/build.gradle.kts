@@ -37,6 +37,7 @@ val generateTests by generator("org.jetbrains.kotlin.generators.tests.GenerateRu
 
 projectTest(parallel = true) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
 }
 

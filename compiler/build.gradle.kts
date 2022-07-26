@@ -54,6 +54,7 @@ sourceSets {
 
 projectTest(parallel = true) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
 
     workingDir = rootDir
     systemProperty("kotlin.test.script.classpath", testSourceSet.output.classesDirs.joinToString(File.pathSeparator))
