@@ -31,6 +31,10 @@ internal class CompilerJvmOptionsBase @javax.inject.Inject constructor(
         args.moduleName = moduleName.orNull
         args.noJdk = noJdk.get()
         args.useOldBackend = useOldBackend.get()
+
+        // Arguments with always default values when used from build tools
+        args.noStdlib = true
+        args.noReflect = true
     }
 
     internal fun fillDefaultValues(args: org.jetbrains.kotlin.cli.common.arguments.K2JVMCompilerArguments) {
@@ -40,5 +44,9 @@ internal class CompilerJvmOptionsBase @javax.inject.Inject constructor(
         args.moduleName = null
         args.noJdk = false
         args.useOldBackend = false
+
+        // Arguments with always default values when used from build tools
+        args.noStdlib = true
+        args.noReflect = true
     }
 }

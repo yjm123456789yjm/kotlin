@@ -599,7 +599,7 @@ private fun Printer.generateImpl(
 private fun Printer.addAdditionalJvmArgs(implType: FqName) {
     // Adding required 'noStdlib' and 'noReflect' compiler arguments for JVM compilation
     // Otherwise compilation via build tools will fail
-    if (implType.shortName().toString() == "KotlinJvmOptionsBase") {
+    if (implType.shortName().toString() == "CompilerJvmOptionsBase") {
         println()
         println("// Arguments with always default values when used from build tools")
         println("args.noStdlib = true")
