@@ -78,8 +78,8 @@ dependencies {
     commonRuntimeOnly(project(":kotlin-scripting-compiler-embeddable"))
     commonRuntimeOnly(project(":kotlin-scripting-compiler-impl-embeddable"))
 
-    embedded(project(":kotlin-gradle-build-metrics"))
-    embedded(project(":kotlin-gradle-statistics"))
+    embedded(project(":kotlin-gradle-build-metrics")) { isTransitive = false }
+    embedded(project(":kotlin-gradle-statistics")) { isTransitive = false }
     embedded(commonDependency("org.jetbrains.intellij.deps:asm-all")) { isTransitive = false }
     embedded(commonDependency("com.google.code.gson:gson")) { isTransitive = false }
     embedded(commonDependency("com.google.guava:guava")) { isTransitive = false }
