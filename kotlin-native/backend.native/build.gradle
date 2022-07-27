@@ -105,12 +105,6 @@ configurations {
 
 dependencies {
     trove4j_jar "org.jetbrains.intellij.deps:trove4j:1.0.20181211@jar"
-    kotlin_compiler_jar project(kotlinCompilerModule)
-    kotlin_stdlib_jar kotlinStdLibModule
-    use(DependenciesKt) {
-        kotlin_reflect_jar commonDependency("org.jetbrains.kotlin:kotlin-reflect")
-    }
-    kotlin_script_runtime_jar project(":kotlin-script-runtime")
 
     compilerApi project(":kotlin-native:utilities:basic-utils")
 
@@ -156,8 +150,6 @@ jar {
     dependsOn ':kotlin-native:runtime:hostRuntime', 'external_jars'
 }
 
-def externalJars = ['compiler', 'stdlib', 'reflect', 'script_runtime']
-
 task trove4jCopy(type: Copy) {
     from configurations.getByName("trove4j_jar") {
         include "trove4j*.jar"
@@ -167,21 +159,7 @@ task trove4jCopy(type: Copy) {
     }
 } 
 
-externalJars.each { arg ->
-    def jar = arg.replace('_', '-') // :(
-    task("${arg}Copy", type: Copy) {
-        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
-        from configurations.getByName("kotlin_${arg}_jar") {
-            include "kotlin-${jar}*.jar"
-            rename "kotlin-${jar}(.*).jar", "kotlin-${jar}.jar"
-
-            into 'build/external_jars'
-        }
-    }
-}
-
 task external_jars(type: Copy) {
-    dependsOn externalJars.collect { "${it}Copy" }
     dependsOn trove4jCopy
 }
 
