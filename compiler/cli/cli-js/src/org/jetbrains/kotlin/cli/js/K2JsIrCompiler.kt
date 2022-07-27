@@ -276,9 +276,6 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         if (arguments.irProduceKlibDir || arguments.irProduceKlibFile) {
-//            if (arguments.irProduceKlibFile) {
-//                require(outputFile.extension == KLIB_FILE_EXTENSION) { "Please set up .klib file as output" }
-//            }
 
             generateKLib(
                 sourceModule,
@@ -314,15 +311,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     }
                 )
 
-                val outputFile = outputDir.resolve("$outputName.js")
-                outputFile.parentFile.mkdirs()
-                outputFile.write(outputs)
-                outputs.dependencies.forEach { (name, content) ->
-                    outputDir.resolve("$name.js").let {
-                        it.parentFile.mkdirs()
-                        it.write(content)
-                    }
-                }
+                outputs.write(outputDir, outputName)
 
                 messageCollector.report(INFO, "Executable production duration (IC): ${System.currentTimeMillis() - beforeIc2Js}ms")
 
@@ -441,17 +430,9 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
                 val outputs = compiledModule.outputs.values.single()
 
-                val outputFile = outputDir.resolve("$outputName.js")
-                outputFile.parentFile.mkdirs()
-                outputFile.write(outputs)
-                outputs.dependencies.forEach { (name, content) ->
-                    outputDir.resolve("$name.js").let {
-                        it.parentFile.mkdirs()
-                        it.write(content)
-                    }
-                }
+                outputs.write(outputDir, outputName)
                 if (arguments.generateDts) {
-                    val dtsFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "d.ts")!!
+                    val dtsFile = outputDir.resolve("$outputName.d.ts")!!
                     dtsFile.writeText(compiledModule.tsDefinitions ?: error("No ts definitions"))
                 }
             } catch (e: CompilationException) {
@@ -470,6 +451,18 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         return OK
+    }
+
+    private fun CompilationOutputs.write(outputDir: File, outputName: String) {
+        val outputFile = outputDir.resolve("$outputName.js")
+        outputFile.parentFile.mkdirs()
+        outputFile.write(this)
+        dependencies.forEach { (name, content) ->
+            outputDir.resolve("$name.js").let {
+                it.parentFile.mkdirs()
+                it.write(content)
+            }
+        }
     }
 
     private fun File.write(outputs: CompilationOutputs) {
