@@ -166,9 +166,15 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
         if (!checkKotlinPackageUsage(environmentForJS.configuration, sourcesFiles)) return ExitCode.COMPILATION_ERROR
 
-        val outputFilePath = arguments.outputFile
-        if (outputFilePath == null) {
-            messageCollector.report(ERROR, "IR: Specify output file via -output", null)
+        val outputDirPath = arguments.outputDir
+        val outputName = arguments.outputName
+        if (outputDirPath == null) {
+            messageCollector.report(ERROR, "IR: Specify output dir via -Xir-output-dir", null)
+            return ExitCode.COMPILATION_ERROR
+        }
+
+        if (outputName == null) {
+            messageCollector.report(ERROR, "IR: Specify output name via -Xir-output-name", null)
             return ExitCode.COMPILATION_ERROR
         }
 
@@ -185,12 +191,11 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
             reportCompiledSourcesList(messageCollector, sourcesFiles)
         }
 
-        val outputFile = File(outputFilePath)
-
-        val moduleName = arguments.irModuleName ?: FileUtil.getNameWithoutExtension(outputFile)
+        val moduleName = arguments.irModuleName ?: outputName
         configurationJs.put(CommonConfigurationKeys.MODULE_NAME, moduleName)
 
-        val outputDir: File = outputFile.parentFile ?: outputFile.absoluteFile.parentFile!!
+        val outputDir = File(outputDirPath)
+
         try {
             configurationJs.put(JSConfigurationKeys.OUTPUT_DIR, outputDir.canonicalFile)
         } catch (e: IOException) {
@@ -206,7 +211,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         val icCaches = if (cacheDirectories.isNotEmpty()) {
             messageCollector.report(INFO, "")
             messageCollector.report(INFO, "Building cache:")
-            messageCollector.report(INFO, "to: ${outputFilePath}")
+            messageCollector.report(INFO, "to: ${outputDir}")
             messageCollector.report(INFO, arguments.cacheDirectories ?: "")
             messageCollector.report(INFO, libraries.toString())
 
@@ -271,21 +276,24 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
         }
 
         if (arguments.irProduceKlibDir || arguments.irProduceKlibFile) {
-            if (arguments.irProduceKlibFile) {
-                require(outputFile.extension == KLIB_FILE_EXTENSION) { "Please set up .klib file as output" }
-            }
+//            if (arguments.irProduceKlibFile) {
+//                require(outputFile.extension == KLIB_FILE_EXTENSION) { "Please set up .klib file as output" }
+//            }
 
             generateKLib(
                 sourceModule,
                 irFactory = IrFactoryImpl,
-                outputKlibPath = outputFile.path,
+                outputKlibPath = if (arguments.irProduceKlibFile)
+                    outputDir.resolve("$outputName.klib").normalize().absolutePath
+                else
+                    outputDirPath,
                 nopack = arguments.irProduceKlibDir,
                 jsOutputName = arguments.irPerModuleOutputName,
             )
         }
 
         if (arguments.irProduceJs) {
-            messageCollector.report(INFO, "Produce executable: $outputFilePath")
+            messageCollector.report(INFO, "Produce executable: $outputDirPath")
             messageCollector.report(INFO, arguments.cacheDirectories ?: "")
 
             if (icCaches.isNotEmpty()) {
@@ -306,9 +314,14 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
                     }
                 )
 
+                val outputFile = outputDir.resolve("$outputName.js")
+                outputFile.parentFile.mkdirs()
                 outputFile.write(outputs)
                 outputs.dependencies.forEach { (name, content) ->
-                    outputFile.resolveSibling("$name.js").write(content)
+                    outputDir.resolve("$name.js").let {
+                        it.parentFile.mkdirs()
+                        it.write(content)
+                    }
                 }
 
                 messageCollector.report(INFO, "Executable production duration (IC): ${System.currentTimeMillis() - beforeIc2Js}ms")
@@ -339,6 +352,7 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
 
             if (arguments.wasm) {
+                val outputFile = File(arguments.outputFile)
                 val (allModules, backendContext) = compileToLoweredIr(
                     depsDescriptors = module,
                     phaseConfig = PhaseConfig(wasmPhases),
@@ -427,9 +441,14 @@ class K2JsIrCompiler : CLICompiler<K2JSCompilerArguments>() {
 
                 val outputs = compiledModule.outputs.values.single()
 
+                val outputFile = outputDir.resolve("$outputName.js")
+                outputFile.parentFile.mkdirs()
                 outputFile.write(outputs)
                 outputs.dependencies.forEach { (name, content) ->
-                    outputFile.resolveSibling("$name.js").write(content)
+                    outputDir.resolve("$name.js").let {
+                        it.parentFile.mkdirs()
+                        it.write(content)
+                    }
                 }
                 if (arguments.generateDts) {
                     val dtsFile = outputFile.withReplacedExtensionOrNull(outputFile.extension, "d.ts")!!
