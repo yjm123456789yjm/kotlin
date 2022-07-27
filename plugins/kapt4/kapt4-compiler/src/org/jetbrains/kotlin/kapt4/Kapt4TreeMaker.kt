@@ -17,7 +17,6 @@ import com.sun.tools.javac.tree.TreeMaker
 import com.sun.tools.javac.util.Context
 import com.sun.tools.javac.util.Name
 import com.sun.tools.javac.util.Names
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.codegen.AsmUtil
 import org.jetbrains.kotlin.name.FqName
 
@@ -30,17 +29,17 @@ class Kapt4TreeMaker(
     val nameTable: Name.Table = Names.instance(context).table
 
     @Suppress("FunctionName")
-    fun Type(type: Type): JCTree.JCExpression {
+    fun RawType(type: Type): JCTree.JCExpression {
         convertBuiltinType(type)?.let { return it }
         if (type.sort == ARRAY) {
-            return TypeArray(Type(AsmUtil.correctElementType(type)))
+            return TypeArray(RawType(AsmUtil.correctElementType(type)))
         }
         return FqName(type.internalName)
     }
 
     // TODO
     @Suppress("FunctionName")
-    fun Type(type: PsiType?): JCTree.JCExpression {
+    fun RawType(type: PsiType?): JCTree.JCExpression {
 //        convertBuiltinType(type)?.let { return it }
 //        if (type.sort == ARRAY) {
 //            return TypeArray(Type(AsmUtil.correctElementType(type)))
@@ -49,6 +48,19 @@ class Kapt4TreeMaker(
             TODO()
         }
         return FqName(type.qualifiedName)
+    }
+
+    @Suppress("FunctionName")
+    fun TypeWithArguments(type: PsiType?): JCTree.JCExpression {
+        val fqNameExpression = RawType(type)
+        if (type !is PsiClassType) return fqNameExpression
+        val arguments = type.parameters.takeIf { it.isNotEmpty() } ?: return fqNameExpression
+        val jArguments = mapJList(arguments) {
+            // TODO: add variance
+            TypeWithArguments(it)
+        }
+
+        return TypeApply(fqNameExpression, jArguments)
     }
 
     @Suppress("FunctionName")

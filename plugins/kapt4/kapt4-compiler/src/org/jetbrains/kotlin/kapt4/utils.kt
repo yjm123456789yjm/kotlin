@@ -12,8 +12,10 @@ import com.intellij.psi.util.PsiTypesUtil
 import com.intellij.psi.util.PsiUtil
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.psi.KtElement
+import org.jetbrains.org.objectweb.asm.Opcodes
 import java.util.*
 
 val PsiModifierListOwner.isPublic: Boolean get() = hasModifier(JvmModifier.PUBLIC)
@@ -28,6 +30,10 @@ val PsiModifierListOwner.isSynthetic: Boolean get() = false //TODO()
 val PsiModifierListOwner.isVolatile: Boolean get() = hasModifier(JvmModifier.VOLATILE)
 
 typealias JavacList<T> = com.sun.tools.javac.util.List<T>
+
+inline fun <T, R> mapJList(values: Array<T>?, f: (T) -> R?): JavacList<R> {
+    return mapJList(values?.asList(), f)
+}
 
 inline fun <T, R> mapJList(values: Iterable<T>?, f: (T) -> R?): JavacList<R> {
     if (values == null) return JavacList.nil()
@@ -98,10 +104,13 @@ val PsiModifierListOwner.isConstructor: Boolean
     get() = (this is PsiMethod) && this.isConstructor
 
 val PsiType.qualifiedName: String
-    get() = when (val resolvedClass = resolvedClass) {
-        is PsiTypeParameter -> resolvedClass.name
-        else -> resolvedClass?.qualifiedName
-    } ?: NO_NAME_PROVIDED
+    get() {
+        if (this is PsiPrimitiveType) return name
+        return when (val resolvedClass = resolvedClass) {
+            is PsiTypeParameter -> resolvedClass.name
+            else -> resolvedClass?.qualifiedName
+        } ?: NO_NAME_PROVIDED
+    }
 
 val PsiElement.ktOrigin: KtElement
     get() = (this as? KtLightElement<*, *>)?.kotlinOrigin ?: TODO()
@@ -112,3 +121,39 @@ val PsiClass.defaultType: PsiType
 
 val PsiType.resolvedClass: PsiClass?
     get() = (this as? PsiClassType)?.resolve()
+
+fun getDeclarationAccessFlags(declaration: PsiModifierListOwner): Int {
+    var access = 0
+    if (declaration.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
+        access = access or Opcodes.ACC_DEPRECATED
+    }
+    val visibilityFlag = when {
+        declaration.isPublic -> Opcodes.ACC_PUBLIC
+        declaration.isPrivate -> Opcodes.ACC_PRIVATE
+        declaration.isProtected -> Opcodes.ACC_PROTECTED
+        else -> 0
+    }
+    access = access or visibilityFlag
+
+    val modalityFlag = when {
+        declaration.isConstructor -> 0
+        declaration.isFinal -> Opcodes.ACC_FINAL
+        declaration.isAbstract -> Opcodes.ACC_ABSTRACT
+        else -> 0
+    }
+
+    access = access or modalityFlag
+
+    if (declaration.isStatic) {
+        access = access or Opcodes.ACC_STATIC
+        if (declaration is PsiMethod) {
+            access = access and Opcodes.ACC_FINAL.inv()
+        }
+    }
+
+    if (declaration.isVolatile) {
+        access = access or Opcodes.ACC_VOLATILE
+    }
+
+    return access
+}

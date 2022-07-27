@@ -3,6 +3,8 @@
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
+@file:Suppress("UnstableApiUsage")
+
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.psi.*
@@ -14,7 +16,6 @@ import com.sun.tools.javac.tree.JCTree.*
 import kotlinx.kapt.KaptIgnored
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.base.kapt3.KaptFlag
-import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.kapt3.base.javac.kaptError
 import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
@@ -149,7 +150,7 @@ class Kapt4StubGenerator {
         "ACC_DEPRECATED" to Opcodes.ACC_DEPRECATED,
     )
 
-    private fun showOpcodes(flags: Int) = allAccOpcodes.filter { (flags and it.second) != 0}.map { it.first }
+    private fun showOpcodes(flags: Int) = allAccOpcodes.filter { (flags and it.second) != 0 }.map { it.first }
 
     private fun convertClass(
         lightClass: PsiClass,
@@ -166,7 +167,7 @@ class Kapt4StubGenerator {
 
         val flags = getClassAccessFlags(lightClass, isInner)
 
-        val isEnum = lightClass.isEnum()
+        val isEnum = lightClass.isEnum
         val isAnnotation = lightClass.isAnnotationType
 
         val metadata = when (lightClass) {
@@ -204,7 +205,7 @@ class Kapt4StubGenerator {
         val simpleName = getClassName(lightClass, isDefaultImpls, packageFqName)
         if (!isValidIdentifier(simpleName)) return null
 
-        val interfaces = mapJList(lightClass.interfaces.toList()) {
+        val interfaces = mapJList(lightClass.interfaces) {
             if (isAnnotation && it.qualifiedName == "java/lang/annotation/Annotation") return@mapJList null
             treeMaker.FqName(treeMaker.getQualifiedName(it))
         }
@@ -261,7 +262,7 @@ class Kapt4StubGenerator {
 //        }
 //
         val fieldsPositions = mutableMapOf<JCTree, MemberData>()
-        val fields = mapJList<PsiField, JCTree>(lightClass.fields.asIterable()) { field ->
+        val fields = mapJList<PsiField, JCTree>(lightClass.fields) { field ->
 //            if (field.isEnumValue()) {
 //                null
 //            } else {
@@ -272,7 +273,7 @@ class Kapt4StubGenerator {
         }
 
         val methodsPositions = mutableMapOf<JCTree, MemberData>()
-        val methods = mapJList<PsiMethod, JCTree>(lightClass.methods.asIterable()) { method ->
+        val methods = mapJList<PsiMethod, JCTree>(lightClass.methods) { method ->
 //            if (isEnum) {
 //                if (method.name == "values" && method.desc == "()[L${lightClass.name};") return@mapJList null
 //                if (method.name == "valueOf" && method.desc == "(Ljava/lang/String;)L${lightClass.name};") return@mapJList null
@@ -283,7 +284,7 @@ class Kapt4StubGenerator {
             }
         }
 
-        val nestedClasses = mapJList(lightClass.allInnerClasses.asList()) { innerClass ->
+        val nestedClasses = mapJList(lightClass.allInnerClasses) { innerClass ->
 //            TODO
 //            if (enumValuesData.any { it.innerClass == innerClass }) return@mapJList null
 //            if (innerClass.outerName != lightClass.name) return@mapJList null
@@ -383,42 +384,6 @@ class Kapt4StubGenerator {
         if (isNested) {
             access = access or Opcodes.ACC_STATIC
         }
-        return access
-    }
-
-    private fun getDeclarationAccessFlags(declaration: PsiModifierListOwner): Int {
-        var access = 0
-        if (declaration.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
-            access = access or Opcodes.ACC_DEPRECATED
-        }
-        val visibilityFlag = when {
-            declaration.isPublic -> Opcodes.ACC_PUBLIC
-            declaration.isPrivate -> Opcodes.ACC_PRIVATE
-            declaration.isProtected -> Opcodes.ACC_PROTECTED
-            else -> 0
-        }
-        access = access or visibilityFlag
-
-        val modalityFlag = when {
-            declaration.isConstructor -> 0
-            declaration.isFinal -> Opcodes.ACC_FINAL
-            declaration.isAbstract -> Opcodes.ACC_ABSTRACT
-            else -> 0
-        }
-
-        access = access or modalityFlag
-
-        if (declaration.isStatic) {
-            access = access or Opcodes.ACC_STATIC
-            if (declaration is PsiMethod) {
-                 access = access and Opcodes.ACC_FINAL.inv()
-            }
-        }
-
-        if (declaration.isVolatile) {
-            access = access or Opcodes.ACC_VOLATILE
-        }
-
         return access
     }
 
@@ -522,7 +487,7 @@ class Kapt4StubGenerator {
         var annotations = allAnnotations.fold(JavacList.nil(), ::convertAndAdd)
 
         if (isDeprecated(access)) {
-            val type = treeMaker.Type(Type.getType(java.lang.Deprecated::class.java))
+            val type = treeMaker.RawType(Type.getType(java.lang.Deprecated::class.java))
             annotations = annotations.append(treeMaker.Annotation(type, JavacList.nil()))
         }
         if (metadata != null) {
@@ -590,38 +555,19 @@ class Kapt4StubGenerator {
 //            return null
 //        }
 
-        fun typeFromAsm() = signatureParser.parseFieldSignature(field.signature, treeMaker.Type(type))
+//        fun typeFromAsm() = signatureParser.parseFieldSignature(field.signature, treeMaker.RawType(type))
 
         // Enum type must be an identifier (Javac requirement)
         val typeExpression = if (isEnum(access)) {
             treeMaker.SimpleName(treeMaker.getQualifiedName(type).substringAfterLast('.'))
-        } else if (/*descriptor is PropertyDescriptor && descriptor.isDelegated TODO*/false) {
-            TODO()
-//            getNonErrorType(
-//                (origin.element as? KtProperty)?.delegateExpression?.getType(kaptContext.bindingContext),
-//                RETURN_TYPE,
-//                ktTypeProvider = { null },
-//                ifNonError = ::typeFromAsm
-//            )
         } else {
-            getNonErrorType(
-                field.type,
-                RETURN_TYPE,
-                ktTypeProvider = {
-                     TODO()
-//                    val fieldOrigin = (origins[field]?.element as? KtCallableDeclaration)
-//                        ?.takeIf { it !is KtFunction }
-//
-//                    fieldOrigin?.typeReference
-                },
-                ifNonError = ::typeFromAsm
-            )
+            treeMaker.TypeWithArguments(type)
         }
 
         lineMappings.registerField(containingClass, field)
 
         val initializer = explicitInitializer ?: convertPropertyInitializer(containingClass, field)
-        return treeMaker.VarDef(modifiers, treeMaker.name(name), typeExpression, initializer)// TODO: .keepKdocCommentsIfNecessary(field)
+        return treeMaker.VarDef(modifiers, treeMaker.name(name), typeExpression, initializer) // TODO: .keepKdocCommentsIfNecessary(field)
     }
 
     private fun convertPropertyInitializer(containingClass: PsiClass, field: PsiField): JCExpression? {
@@ -692,7 +638,7 @@ class Kapt4StubGenerator {
                     "InvalidFieldName"
                 }
 
-                treeMaker.Select(treeMaker.Type(enumType), treeMaker.name(valueName))
+                treeMaker.Select(treeMaker.RawType(enumType), treeMaker.name(valueName))
             }
 
             is List<*> -> treeMaker.NewArray(null, JavacList.nil(), mapJList(value, ::convertDeeper))
@@ -789,7 +735,6 @@ class Kapt4StubGenerator {
         }
 
         val asmReturnType = method.returnType ?: PsiType.VOID
-        val jcReturnType = if (isConstructor) null else treeMaker.Type(method.returnType)
 
         val parametersInfo = method.getParametersInfo(containingClass, isInner)
 
@@ -815,14 +760,12 @@ class Kapt4StubGenerator {
             )
 
             val name = info.name.takeIf { isValidIdentifier(it) } ?: ("p" + index + "_" + info.name.hashCode().ushr(1))
-            val type = treeMaker.Type(info.type)
+            val type = treeMaker.TypeWithArguments(info.type)
             treeMaker.VarDef(modifiers, treeMaker.name(name), type, null)
         }
-
-        val exceptionTypes = mapJList(method.throwsList.referencedTypes.asList()) { treeMaker.FqName(it.qualifiedName) }
-
-        val (genericSignature, returnType) =
-            extractMethodSignatureTypes(exceptionTypes, jcReturnType, method, parameters)
+        val typeParameters = mapJList(method.typeParameters) { signatureParser.convertTypeParameter(it) }
+        val exceptionTypes = mapJList(method.throwsTypes) { treeMaker.TypeWithArguments(it as PsiType) }
+        val returnType = if (isConstructor) null else treeMaker.TypeWithArguments(method.returnType) // TODO: handle error type
 
         val defaultValue = null //method.annotationDefault?.let { convertLiteralExpression(containingClass, it) }
 
@@ -835,13 +778,13 @@ class Kapt4StubGenerator {
         } else if (isConstructor) {
             val superConstructor = containingClass.superClass?.constructors?.firstOrNull { !it.isPrivate }
             val superClassConstructorCall = if (superConstructor != null) {
-                val args = mapJList(superConstructor.parameterList.parameters.asList()) { param ->
+                val args = mapJList(superConstructor.parameterList.parameters) { param ->
                     convertLiteralExpression(containingClass, getDefaultValue(param.type))
                 }
                 val call = treeMaker.Apply(JavacList.nil(), treeMaker.SimpleName("super"), args)
                 JavacList.of<JCStatement>(treeMaker.Exec(call))
             } else {
-                JavacList.nil<JCStatement>()
+                JavacList.nil()
             }
             treeMaker.Block(0, superClassConstructorCall)
         } else if (asmReturnType == PsiType.VOID) {
@@ -854,76 +797,10 @@ class Kapt4StubGenerator {
         lineMappings.registerMethod(containingClass, method)
 
         return treeMaker.MethodDef(
-            modifiers, treeMaker.name(name), returnType, genericSignature.typeParameters,
-            genericSignature.parameterTypes, genericSignature.exceptionTypes,
+            modifiers, treeMaker.name(name), returnType, typeParameters,
+            parameters, exceptionTypes,
             body, defaultValue
         ).keepSignature(lineMappings, method).keepKdocCommentsIfNecessary(method)
-    }
-
-    // TODO
-    private fun extractMethodSignatureTypes(
-        exceptionTypes: JavacList<JCExpression>,
-        jcReturnType: JCExpression?,
-        method: PsiMethod,
-        parameters: JavacList<JCVariableDecl>
-    ): Pair<SignatureParser.MethodGenericSignature, JCExpression?> {
-        val genericSignature = signatureParser.parseMethodSignature(
-            method.signature, parameters, exceptionTypes, jcReturnType,
-            nonErrorParameterTypeProvider = { index, lazyType ->
-                lazyType.invoke()
-            //                TODO()
-//                if (descriptor is PropertySetterDescriptor && valueParametersFromDescriptor.size == 1 && index == 0) {
-//                    getNonErrorType(descriptor.correspondingProperty.returnType, METHOD_PARAMETER_TYPE,
-//                                    ktTypeProvider = {
-//                                        val setterOrigin = (psiElement as? KtCallableDeclaration)
-//                                            ?.takeIf { it !is KtFunction }
-//
-//                                        setterOrigin?.typeReference
-//                                    },
-//                                    ifNonError = { lazyType() })
-//                } else if (descriptor is FunctionDescriptor && valueParametersFromDescriptor.size == parameters.size) {
-//                    val parameterDescriptor = valueParametersFromDescriptor[index]
-//                    val sourceElement = when {
-//                        psiElement is KtFunction -> psiElement
-//                        descriptor is ConstructorDescriptor && descriptor.isPrimary -> (psiElement as? KtClassOrObject)?.primaryConstructor
-//                        else -> null
-//                    }
-//
-//                    getNonErrorType(
-//                        parameterDescriptor.type, METHOD_PARAMETER_TYPE,
-//                        ktTypeProvider = {
-//                            if (sourceElement == null) return@getNonErrorType null
-//
-//                            if (sourceElement.hasDeclaredReturnType() && isContinuationParameter(parameterDescriptor)) {
-//                                val continuationTypeFqName = StandardNames.CONTINUATION_INTERFACE_FQ_NAME
-//                                val functionReturnType = sourceElement.typeReference!!.text
-//                                KtPsiFactory(kaptContext.project).createType("$continuationTypeFqName<$functionReturnType>")
-//                            } else {
-//                                sourceElement.valueParameters.getOrNull(index)?.typeReference
-//                            }
-//                        },
-//                        ifNonError = { lazyType() })
-//                } else {
-//                    lazyType()
-//                }
-            })
-
-        val returnType = getNonErrorType(
-            method.returnType, RETURN_TYPE,
-            ktTypeProvider = {
-                     TODO()
-//                when (psiElement) {
-//                    is KtFunction -> psiElement.typeReference
-//                    is KtProperty -> if (descriptor is PropertyGetterDescriptor) psiElement.typeReference else null
-//                    is KtPropertyAccessor -> if (descriptor is PropertyGetterDescriptor) psiElement.property.typeReference else null
-//                    is KtParameter -> if (descriptor is PropertyGetterDescriptor) psiElement.typeReference else null
-//                    else -> null
-//                }
-            },
-            ifNonError = { genericSignature.returnType }
-        )
-
-        return Pair(genericSignature, returnType)
     }
 
     private fun JCMethodDecl.keepSignature(lineMappings: Kapt4LineMappingCollector, method: PsiMethod): JCMethodDecl {
@@ -942,8 +819,9 @@ class Kapt4StubGenerator {
     }
 
     private tailrec fun checkIfValidTypeName(containingClass: PsiClass, type: PsiType): Boolean {
-        if (type is PsiArrayType) {
-            return checkIfValidTypeName(containingClass, type.componentType)
+        when (type) {
+            is PsiArrayType -> return checkIfValidTypeName(containingClass, type.componentType)
+            is PsiPrimitiveType -> return true
         }
 
 //        TODO
