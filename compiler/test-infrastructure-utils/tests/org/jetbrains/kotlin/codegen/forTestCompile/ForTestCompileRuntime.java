@@ -16,7 +16,10 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 public class ForTestCompileRuntime {
     private static volatile SoftReference<ClassLoader> reflectJarClassLoader = new SoftReference<>(null);
@@ -55,7 +58,11 @@ public class ForTestCompileRuntime {
     @NotNull
     public static File reflectJarForTests() {
         String version = FilesKt.readText(assertExists(new File("dist/build.txt")), Charsets.UTF_8).trim();
-        return assertExists(new File("libraries/reflect/build/libs/kotlin-reflect-" + version + ".jar"), ":kotlin-reflect:result");
+        String jars = Arrays.stream(Objects.requireNonNull(new File("libraries/reflect/build/libs").listFiles()))
+                .map(File::getPath)
+                .collect(Collectors.joining(","));
+        throw new IllegalStateException("--- bobko" + jars);
+        //return assertExists(new File("libraries/reflect/build/libs/kotlin-reflect-" + version + ".jar"), ":kotlin-reflect:result");
     }
 
     @NotNull
