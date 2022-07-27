@@ -191,6 +191,7 @@ dependencies {
     distCommonContents(kotlinStdlib(suffix = "common", classifier = "sources"))
 
     distMavenContents(kotlinStdlib(classifier = "sources"))
+    distMavenContents(project(":kotlin-reflect"))
 
     buildNumber(project(":prepare:build.version", configuration = "buildVersion"))
 

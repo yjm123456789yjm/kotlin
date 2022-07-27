@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.codegen.forTestCompile;
 
-import kotlin.io.FilesKt;
-import kotlin.text.Charsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
@@ -16,10 +14,7 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.Objects;
-import java.util.stream.Collectors;
 
 public class ForTestCompileRuntime {
     private static volatile SoftReference<ClassLoader> reflectJarClassLoader = new SoftReference<>(null);
@@ -57,12 +52,7 @@ public class ForTestCompileRuntime {
 
     @NotNull
     public static File reflectJarForTests() {
-        String version = FilesKt.readText(assertExists(new File("dist/build.txt")), Charsets.UTF_8).trim();
-        String jars = Arrays.stream(Objects.requireNonNull(new File("libraries/reflect/build/libs").listFiles()))
-                .map(File::getPath)
-                .collect(Collectors.joining(","));
-        throw new IllegalStateException("--- bobko" + jars);
-        //return assertExists(new File("libraries/reflect/build/libs/kotlin-reflect-" + version + ".jar"), ":kotlin-reflect:result");
+        return assertExists(new File("dist/maven/kotlin-reflect.jar"));
     }
 
     @NotNull
@@ -107,13 +97,8 @@ public class ForTestCompileRuntime {
 
     @NotNull
     private static File assertExists(@NotNull File file) {
-        return assertExists(file, "dist");
-    }
-
-    @NotNull
-    private static File assertExists(@NotNull File file, @NotNull String gradleTaskToRun) {
         if (!file.exists()) {
-            throw new IllegalStateException(String.format("%s does not exist. Run 'gradlew %s'", file, gradleTaskToRun));
+            throw new IllegalStateException(file + " does not exist. Run 'gradlew dist'");
         }
         return file;
     }
