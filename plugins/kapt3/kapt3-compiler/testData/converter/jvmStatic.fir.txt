@@ -35,13 +35,13 @@ import java.lang.System;
 
 @kotlin.Metadata()
 public final class JvmStaticTest {
+    @org.jetbrains.annotations.NotNull()
+    public static final JvmStaticTest.Companion Companion = null;
     private static final int one = 1;
     public static final int two = 2;
     public static final char c = 'C';
     public final byte three = (byte)3;
     public final char d = 'D';
-    @org.jetbrains.annotations.NotNull()
-    public static final JvmStaticTest.Companion Companion = null;
 
     public JvmStaticTest() {
         super();

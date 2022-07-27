@@ -8,6 +8,7 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.psi.*
+import com.intellij.psi.util.PsiUtil
 import com.sun.tools.javac.code.Flags
 import com.sun.tools.javac.code.TypeTag
 import com.sun.tools.javac.parser.Tokens
@@ -608,7 +609,23 @@ class Kapt4StubGenerator {
 //
         if (field.isFinal) {
             val type = field.type
-            return convertLiteralExpression(containingClass, getDefaultValue(type))
+            return if (propertyInitializer is PsiLiteralExpression) {
+                val rawValue = propertyInitializer.value
+                val rawNumberValue = rawValue as? Number
+                val actualValue = when (type) {
+                    PsiType.BYTE -> rawNumberValue?.toByte()
+                    PsiType.SHORT -> rawNumberValue?.toShort()
+                    PsiType.INT -> rawNumberValue?.toInt()
+                    PsiType.LONG -> rawNumberValue?.toLong()
+                    PsiType.FLOAT -> rawNumberValue?.toFloat()
+                    PsiType.DOUBLE -> rawNumberValue?.toDouble()
+                    PsiType.CHAR -> rawNumberValue?.toChar()
+                    else -> null
+                } ?: rawValue
+                convertValueOfPrimitiveTypeOrString(actualValue)
+            } else {
+                convertLiteralExpression(containingClass, getDefaultValue(type))
+            }
         }
 
         return null
@@ -668,7 +685,7 @@ class Kapt4StubGenerator {
 
     private fun convertValueOfPrimitiveTypeOrString(value: Any?): JCExpression? {
         fun specialFpValueNumerator(value: Double): Double = if (value.isNaN()) 0.0 else 1.0 * value.sign
-        return when (value) {
+        val convertedValue = when (value) {
             is Char -> treeMaker.Literal(TypeTag.CHAR, value.code)
             is Byte -> treeMaker.TypeCast(treeMaker.TypeIdent(TypeTag.BYTE), treeMaker.Literal(TypeTag.INT, value.toInt()))
             is Short -> treeMaker.TypeCast(treeMaker.TypeIdent(TypeTag.SHORT), treeMaker.Literal(TypeTag.INT, value.toInt()))
@@ -688,9 +705,10 @@ class Kapt4StubGenerator {
                     value.isFinite() -> treeMaker.Literal(value)
                     else -> treeMaker.Binary(Tag.DIV, treeMaker.Literal(specialFpValueNumerator(value)), treeMaker.Literal(0.0))
                 }
-
             else -> null
         }
+
+        return convertedValue
     }
 
 
