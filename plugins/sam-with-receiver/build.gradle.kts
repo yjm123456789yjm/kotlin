@@ -55,6 +55,7 @@ testsJar()
 
 projectTest(parallel = true) {
     dependsOn(":dist")
+    dependsOn(":kotlin-reflect:result")
     workingDir = rootDir
     useJUnitPlatform()
 }
