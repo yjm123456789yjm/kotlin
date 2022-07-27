@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.codegen.forTestCompile;
 
+import kotlin.io.FilesKt;
+import kotlin.text.Charsets;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.kotlin.utils.ExceptionUtilsKt;
 
@@ -52,7 +54,8 @@ public class ForTestCompileRuntime {
 
     @NotNull
     public static File reflectJarForTests() {
-        return assertExists(new File("libraries/reflect/build/libs/kotlin-reflect-1.8.255-SNAPSHOT.jar"));
+        String version = FilesKt.readText(assertExists(new File("dist/build.txt")), Charsets.UTF_8).trim();
+        return assertExists(new File("libraries/reflect/build/libs/kotlin-reflect-" + version + ".jar"), ":kotlin-reflect:result");
     }
 
     @NotNull
@@ -97,8 +100,13 @@ public class ForTestCompileRuntime {
 
     @NotNull
     private static File assertExists(@NotNull File file) {
+        return assertExists(file, "dist");
+    }
+
+    @NotNull
+    private static File assertExists(@NotNull File file, @NotNull String gradleTaskToRun) {
         if (!file.exists()) {
-            throw new IllegalStateException(file + " does not exist. Run 'gradlew dist'");
+            throw new IllegalStateException(String.format("%s does not exist. Run 'gradlew %s'", file, gradleTaskToRun));
         }
         return file;
     }
