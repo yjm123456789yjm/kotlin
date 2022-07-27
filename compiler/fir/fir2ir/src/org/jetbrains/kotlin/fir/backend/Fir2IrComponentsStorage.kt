@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.fir.backend
 
+import org.jetbrains.kotlin.config.LanguageVersionSettings
 import org.jetbrains.kotlin.fir.FirSession
 import org.jetbrains.kotlin.fir.backend.generators.AnnotationGenerator
 import org.jetbrains.kotlin.fir.backend.generators.CallAndReferenceGenerator
@@ -24,6 +25,7 @@ class Fir2IrComponentsStorage(
     override val symbolTable: SymbolTable,
     override val irFactory: IrFactory,
     override val signatureComposer: FirBasedSignatureComposer,
+    override val languageVersionSettings: LanguageVersionSettings,
     override val extensions: Fir2IrExtensions,
     override val generateSignatures: Boolean
 ) : Fir2IrComponents {
