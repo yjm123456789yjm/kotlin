@@ -62,9 +62,9 @@ internal abstract class AbstractKotlinCompileConfig<TASK : AbstractKotlinCompile
             val buildMetricsService = BuildMetricsService.registerIfAbsent(project)?.also {
                 task.buildMetricsService.value(it)
             }
-
-            buildMetricsService?.let { BuildReportsService.registerIfAbsent(project, it) }
-                ?.let { task.buildReportsService.value(it) }
+            BuildReportsService.registerIfAbsent(project, buildMetricsService)?.also {
+                task.buildReportsService.value(it)
+            }
 
             propertiesProvider.kotlinDaemonJvmArgs?.let { kotlinDaemonJvmArgs ->
                 task.kotlinDaemonJvmArguments.set(providers.provider {
