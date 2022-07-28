@@ -44,7 +44,11 @@ internal class KtFirPropertyGetterSymbol(
 
     override val isDefault: Boolean get() = withValidityAssertion { firSymbol.fir is FirDefaultPropertyAccessor }
     override val isInline: Boolean get() = withValidityAssertion { firSymbol.isInline }
-    override val isOverride: Boolean get() = withValidityAssertion { firSymbol.isOverride }
+    override val isOverride: Boolean get() = withValidityAssertion {
+            if (firSymbol.isOverride) return@withValidityAssertion true
+            // TODO: handle var which overrides val
+            return firSymbol.fir.propertySymbol?.isOverride == true
+        }
     override val hasBody: Boolean get() = withValidityAssertion { firSymbol.fir.body != null }
 
     override val modality: Modality get() = withValidityAssertion { firSymbol.modalityOrFinal }
