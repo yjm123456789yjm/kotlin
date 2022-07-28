@@ -86,6 +86,7 @@ internal fun KtSymbolWithModality.computeModalityForMethod(
     }
     if (isTopLevel) {
         result.add(PsiModifier.STATIC)
+        result.add(PsiModifier.FINAL)
     }
 }
 context(KtAnalysisSession)
