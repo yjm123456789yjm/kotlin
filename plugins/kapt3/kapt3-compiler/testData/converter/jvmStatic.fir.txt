@@ -47,7 +47,7 @@ public final class JvmStaticTest {
         super();
     }
 
-    public static final int getOne() {
+    public static int getOne() {
         return 0;
     }
 

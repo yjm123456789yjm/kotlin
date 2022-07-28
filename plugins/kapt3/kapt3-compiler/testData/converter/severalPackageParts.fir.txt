@@ -9,7 +9,7 @@ public final class AKt {
         super();
     }
 
-    public static final void foo() {
+    public static void foo() {
     }
 }
 
@@ -26,6 +26,6 @@ public final class BKt {
         super();
     }
 
-    public static final void bar() {
+    public static void bar() {
     }
 }
