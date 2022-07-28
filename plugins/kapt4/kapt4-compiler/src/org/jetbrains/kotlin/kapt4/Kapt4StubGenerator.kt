@@ -533,6 +533,9 @@ class Kapt4StubGenerator {
         // not needed anymore
 
         val fieldAnnotations = field.annotations.asList()
+
+        if (isIgnored(fieldAnnotations)) return null
+
 //        val fieldAnnotations = when {
 //            !isIrBackend && descriptor is PropertyDescriptor -> descriptor.backingField?.annotations
 //            else -> descriptor?.annotations
@@ -777,7 +780,7 @@ class Kapt4StubGenerator {
                 metadata = null
             )
 
-            val name = info.name.takeIf { isValidIdentifier(it) } ?: ("p" + index + "_" + info.name.hashCode().ushr(1))
+            val name = info.name.takeIf { isValidIdentifier(it) } ?: "p$index"
             val type = treeMaker.TypeWithArguments(info.type)
             treeMaker.VarDef(modifiers, treeMaker.name(name), type, null)
         }
