@@ -63,4 +63,6 @@ internal class FirLightNoArgConstructor(
     override fun hashCode(): Int = containingClass.hashCode()
 
     override fun isValid(): Boolean = super.isValid() && containingClass.isValid
+
+    override fun isOverride(): Boolean = false
 }

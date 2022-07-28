@@ -107,6 +107,13 @@ internal fun KtAnnotatedSymbol.computeAnnotations(
     val parentIsAnnotation = (parent as? PsiClass)?.isAnnotationType == true
 
     val result = mutableListOf<PsiAnnotation>()
+
+    if (parent is FirLightMethod) {
+        if (parent.isDelegated || parent.isOverride()) {
+            result.add(FirLightSimpleAnnotation(java.lang.Override::class.java.name, parent))
+        }
+    }
+
     if (annotations.isEmpty()) {
         if (parentIsAnnotation) {
             result.add(createRetentionRuntimeAnnotation(parent))

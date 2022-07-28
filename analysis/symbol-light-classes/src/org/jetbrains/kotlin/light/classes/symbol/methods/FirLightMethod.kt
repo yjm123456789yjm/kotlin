@@ -103,4 +103,6 @@ internal abstract class FirLightMethod(
         val moduleName = (getKtModule(project) as? KtSourceModule)?.moduleName ?: return defaultName
         return mangleInternalName(defaultName, moduleName)
     }
+
+    abstract fun isOverride(): Boolean
 }

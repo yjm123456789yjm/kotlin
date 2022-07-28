@@ -68,4 +68,6 @@ internal abstract class FirLightMethodForSymbol(
         lightMemberOrigin?.originalElement ?: functionSymbol.psi as? KtDeclaration
 
     override fun isValid(): Boolean = super.isValid() && functionSymbol.isValid()
+
+    override fun isOverride(): Boolean = functionSymbol.getDirectlyOverriddenSymbols().isNotEmpty()
 }
