@@ -55,6 +55,7 @@ object AnalysisApiFirTestServiceRegistrar : AnalysisApiTestServiceRegistrar() {
             registerService(KotlinAsJavaSupport::class.java, KotlinAsJavaFirSupport(project))
             registerService(KtCompilerPluginsProvider::class.java, KtCompilerPluginsProviderForTests(project))
             registerService(ReadWriteAccessChecker::class.java, ReadWriteAccessCheckerFirImpl())
+            registerService(KotlinReferenceProviderContributor::class.java, KotlinFirReferenceContributor::class.java)
         }
 
         with(PsiElementFinder.EP.getPoint(project)) {
@@ -63,9 +64,5 @@ object AnalysisApiFirTestServiceRegistrar : AnalysisApiTestServiceRegistrar() {
         }
     }
 
-    override fun registerApplicationServices(application: MockApplication, testServices: TestServices) {
-        application.apply {
-            registerService(KotlinReferenceProviderContributor::class.java, KotlinFirReferenceContributor::class.java)
-        }
-    }
+    override fun registerApplicationServices(application: MockApplication, testServices: TestServices) {}
 }

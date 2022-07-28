@@ -39,28 +39,6 @@ import org.jetbrains.kotlin.psi.KotlinReferenceProvidersService
 import org.jetbrains.kotlin.psi.KtFile
 
 /**
- * Configure Application environment for Analysis API standalone mode.
- *
- * In particular, this will register:
- *   * [KotlinReferenceProvidersService]
- *   * [KotlinReferenceProviderContributor]
- */
-public fun configureApplicationEnvironment(app: MockApplication) {
-    if (app.getServiceIfCreated(KotlinReferenceProvidersService::class.java) == null) {
-        app.registerService(
-            KotlinReferenceProvidersService::class.java,
-            HLApiReferenceProviderService::class.java
-        )
-    }
-    if (app.getServiceIfCreated(KotlinReferenceProviderContributor::class.java) == null) {
-        app.registerService(
-            KotlinReferenceProviderContributor::class.java,
-            KotlinFirReferenceContributor::class.java
-        )
-    }
-}
-
-/**
  * Configure Project environment for Analysis API standalone mode.
  *
  * In particular, this will register:
@@ -77,6 +55,8 @@ public fun configureApplicationEnvironment(app: MockApplication) {
  *   * [KotlinDeclarationProviderFactory]
  *   * [KotlinPackageProviderFactory]
  *   * [PackagePartProviderFactory]
+ *   * [KotlinReferenceProvidersService]
+ *   * [KotlinReferenceProviderContributor]
  *
  *  Note that [ProjectStructureProvider] is built by using
  *    * given [ktFiles] as Kotlin sources
@@ -118,6 +98,16 @@ internal fun configureProjectEnvironment(
     project.registerService(
         KotlinAnnotationsResolverFactory::class.java,
         KotlinStaticAnnotationsResolverFactory(ktFiles)
+    )
+
+    project.registerService(
+        KotlinReferenceProvidersService::class.java,
+        HLApiReferenceProviderService::class.java
+    )
+
+    project.registerService(
+        KotlinReferenceProviderContributor::class.java,
+        KotlinFirReferenceContributor::class.java
     )
 
     RegisterComponentService.registerLLFirResolveSessionService(project)
