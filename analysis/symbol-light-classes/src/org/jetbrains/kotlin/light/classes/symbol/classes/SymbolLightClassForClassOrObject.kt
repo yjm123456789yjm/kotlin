@@ -147,11 +147,14 @@ internal abstract class SymbolLightClassForClassOrObject(
                         lightMemberOrigin = null,
                         isTopLevel = false,
                         forceStatic = true,
-                        takePropertyVisibility = true
+                        takePropertyVisibility = it.isConstOrJvmField
                     )
                 }
         }
     }
+
+    private val KtPropertySymbol.isConstOrJvmField: Boolean
+        get() = isConst || hasJvmFieldAnnotation()
 
     private val KtPropertySymbol.isConst: Boolean
         get() = (this as? KtKotlinPropertySymbol)?.isConst == true
