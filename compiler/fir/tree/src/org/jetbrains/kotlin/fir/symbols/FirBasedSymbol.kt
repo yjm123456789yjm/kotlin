@@ -41,7 +41,8 @@ abstract class FirBasedSymbol<E : FirDeclaration> {
 
     val resolvedAnnotationsWithArguments: List<FirAnnotation>
         get() {
-            ensureResolved(FirResolvePhase.ARGUMENTS_OF_ANNOTATIONS)
+            // TODO: check KT-53371
+            ensureResolved(FirResolvePhase.BODY_RESOLVE)
             return fir.annotations
         }
 
