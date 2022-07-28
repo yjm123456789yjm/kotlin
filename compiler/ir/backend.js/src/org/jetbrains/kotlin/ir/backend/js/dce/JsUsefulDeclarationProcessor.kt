@@ -131,21 +131,16 @@ internal class JsUsefulDeclarationProcessor(
         if (irClass.containsMetadata()) {
             if (!irClass.getJsSubtypeCheckableInterfaces().isNullOrEmpty()) {
                 context.intrinsics.bitMaskSymbol.constructors.single().owner.enqueue(irClass, "interface metadata")
-                context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "interface metadata")
             }
 
-            if (irClass.isInterface && irClass.isExported(context)) {
-                context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "export interface id")
+            if (irClass.isJsReflectedClass()) {
+                context.intrinsics.metadataInterfaceConstructorSymbol.owner.enqueue(irClass, "interface metadata")
+                context.intrinsics.getInterfaceIdSymbol.owner.enqueue(irClass, "interface metadata")
             }
 
             when {
                 irClass.isObject -> context.intrinsics.metadataObjectConstructorSymbol.owner.enqueue(irClass, "object metadata")
-                irClass.isJsReflectedClass() -> {
-                    context.intrinsics.metadataInterfaceConstructorSymbol.owner.enqueue(irClass, "interface metadata")
-                    context.intrinsics.getInterfaceIdSymbol.owner.enqueue(irClass, "interface metadata")
-                    context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "interface metadata")
-                }
-
+                irClass.isInterface -> context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "interface id")
                 else -> context.intrinsics.metadataClassConstructorSymbol.owner.enqueue(irClass, "class metadata")
             }
         }
