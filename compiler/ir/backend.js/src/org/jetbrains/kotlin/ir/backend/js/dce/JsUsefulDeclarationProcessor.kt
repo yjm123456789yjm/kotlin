@@ -134,6 +134,10 @@ internal class JsUsefulDeclarationProcessor(
                 context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "interface metadata")
             }
 
+            if (irClass.isInterface && irClass.isExported(context)) {
+                context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "export interface id")
+            }
+
             when {
                 irClass.isObject -> context.intrinsics.metadataObjectConstructorSymbol.owner.enqueue(irClass, "object metadata")
                 irClass.isJsReflectedClass() -> {
