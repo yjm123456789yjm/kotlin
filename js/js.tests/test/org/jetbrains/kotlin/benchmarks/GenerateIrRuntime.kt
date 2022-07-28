@@ -298,7 +298,7 @@ class GenerateIrRuntime {
 
         val args = K2JSCompilerArguments().apply {
             libraries = ""
-            outputFile = klibDirectory.path
+            outputDir = klibDirectory.path
             sourceMap = false
             irProduceKlibDir = true
             irOnly = true
