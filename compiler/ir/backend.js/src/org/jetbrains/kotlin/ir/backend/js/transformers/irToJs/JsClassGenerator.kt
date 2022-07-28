@@ -116,7 +116,6 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         if (irClass.isInterface) {
             if (irClass.isJsReflectedClass()) {
                 classBlock.statements += generateClassMetadata()
-                classBlock.statements += generateInterfacesMetadata()
             } else {
                 classBlock.statements += generateInterfaceDeclaration()
             }
@@ -221,6 +220,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             }
 
             classBlock.statements += generateClassMetadata()
+            classBlock.statements += generateInterfacesMetadata()
         }
 
         context.staticContext.classModels[irClass.symbol] = classModel
