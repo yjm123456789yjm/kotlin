@@ -95,13 +95,6 @@ public class StandaloneAnalysisAPISessionBuilder(
         )
     }
 
-    private fun registerApplicationServices() {
-        kotlinCoreProjectEnvironment.environment.application.apply {
-            registerService(KotlinReferenceProvidersService::class.java, HLApiReferenceProviderService::class.java)
-            registerService(KotlinReferenceProviderContributor::class.java, KotlinFirReferenceContributor::class.java)
-        }
-    }
-
     public fun <T : Any> registerApplicationService(serviceInterface: Class<T>, serviceImplementation: T) {
         kotlinCoreProjectEnvironment.environment.application.apply {
             registerService(serviceInterface, serviceImplementation)
@@ -141,6 +134,10 @@ public class StandaloneAnalysisAPISessionBuilder(
             registerService(LLFirBuiltinsSessionFactory::class.java, LLFirBuiltinsSessionFactory(this))
             RegisterComponentService.registerLLFirLibrarySessionFactory(this)
             RegisterComponentService.registerLLFirNonUnderContentRootSessionFactory(this)
+
+            registerService(KotlinReferenceProvidersService::class.java, HLApiReferenceProviderService::class.java)
+            registerService(KotlinReferenceProviderContributor::class.java, KotlinFirReferenceContributor::class.java)
+
             RegisterComponentService.registerLLFirResolveSessionService(this)
             registerService(
                 PackagePartProviderFactory::class.java,
@@ -204,8 +201,6 @@ public class StandaloneAnalysisAPISessionBuilder(
             modules,
             allSourceFiles,
         )
-
-        registerApplicationServices()
 
         val project = kotlinCoreProjectEnvironment.project
         val ktFiles = allSourceFiles.filterIsInstance<KtFile>()

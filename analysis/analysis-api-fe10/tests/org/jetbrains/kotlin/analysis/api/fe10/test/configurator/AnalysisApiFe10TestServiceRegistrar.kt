@@ -39,14 +39,11 @@ object AnalysisApiFe10TestServiceRegistrar : AnalysisApiTestServiceRegistrar() {
 
             registerService(SymbolLightClassFacadeCache::class.java)
             registerService(ReadWriteAccessChecker::class.java, ReadWriteAccessCheckerDescriptorsImpl())
+            registerService(KotlinReferenceProviderContributor::class.java, KtFe10KotlinReferenceProviderContributor::class.java)
         }
         AnalysisHandlerExtension.registerExtension(project, KtFe10AnalysisHandlerExtension())
         KotlinCoreEnvironment.registerKotlinLightClassSupport(project)
     }
 
-    override fun registerApplicationServices(application: MockApplication, testServices: TestServices) {
-        application.apply {
-            registerService(KotlinReferenceProviderContributor::class.java, KtFe10KotlinReferenceProviderContributor::class.java)
-        }
-    }
+    override fun registerApplicationServices(application: MockApplication, testServices: TestServices) {}
 }
