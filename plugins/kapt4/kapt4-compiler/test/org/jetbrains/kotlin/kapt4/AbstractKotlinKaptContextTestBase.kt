@@ -49,6 +49,8 @@ abstract class AbstractKotlinKapt4ContextTestBase(
         handlersStep(Kapt4ContextBinaryArtifact.Kind) {
             useHandlers(::Kapt4Handler)
         }
+
+        useAfterAnalysisCheckers(::TemporaryKapt4Suppressor)
     }
 }
 
