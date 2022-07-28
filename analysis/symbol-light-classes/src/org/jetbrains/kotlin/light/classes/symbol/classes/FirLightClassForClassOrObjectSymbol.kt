@@ -131,7 +131,7 @@ abstract class FirLightClassForClassOrObjectSymbol(
             getDeclaredMemberScope().getCallableSymbols()
                 .filterIsInstance<KtPropertySymbol>()
                 .applyIf(isInterface) {
-                    filter { it.hasJvmFieldAnnotation() || it.isConst }
+                    filter { it.isConst }
                 }
                 .mapTo(result) {
                     FirLightFieldForPropertySymbol(
@@ -141,11 +141,14 @@ abstract class FirLightClassForClassOrObjectSymbol(
                         lightMemberOrigin = null,
                         isTopLevel = false,
                         forceStatic = true,
-                        takePropertyVisibility = true
+                        takePropertyVisibility = it.isConstOrJvmField
                     )
                 }
         }
     }
+
+    private val KtPropertySymbol.isConstOrJvmField: Boolean
+        get() = isConst || hasJvmFieldAnnotation()
 
     private val KtPropertySymbol.isConst: Boolean
         get() = (this as? KtKotlinPropertySymbol)?.isConst == true
