@@ -37,7 +37,13 @@ internal object FirAnnotationValueConverter {
         }
 
     private fun <T> FirConstExpression<T>.convertConstantExpression(): KtConstantAnnotationValue? {
-        val constantValue = KtConstantValueFactory.createConstantValue(value, psi as? KtElement) ?: return null
+        val valueOfProperType = when (kind) {
+            ConstantValueKind.Byte -> (value as Long).toByte()
+            ConstantValueKind.Short -> (value as Long).toShort()
+            ConstantValueKind.Int -> (value as Long).toInt()
+            else -> value
+        }
+        val constantValue = KtConstantValueFactory.createConstantValue(valueOfProperType, psi as? KtElement) ?: return null
         return KtConstantAnnotationValue(constantValue)
     }
 

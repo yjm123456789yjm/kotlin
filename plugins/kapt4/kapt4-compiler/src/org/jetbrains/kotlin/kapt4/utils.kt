@@ -209,21 +209,21 @@ private fun computeClassAccessFlags(klass: PsiClass): Int {
     var access = computeCommonAccessFlags(klass)
     val classKindFlag = when {
         klass.isInterface -> Opcodes.ACC_INTERFACE
-        klass.isAnnotationType -> Opcodes.ACC_ANNOTATION
         klass.isEnum -> {
             // enum can not be final
             access = access and Opcodes.ACC_FINAL.inv()
             Opcodes.ACC_ENUM
         }
 
+        klass.isRecord -> Opcodes.ACC_RECORD
         else -> 0
     }
     access = access or classKindFlag
+    if (klass.isAnnotationType) {
+        access = access or Opcodes.ACC_ANNOTATION
+    }
     if (klass.isAbstract) {
         access = access or Opcodes.ACC_ABSTRACT
-    }
-    if (klass.isRecord) {
-        access = access or Opcodes.ACC_RECORD
     }
     return access
 }

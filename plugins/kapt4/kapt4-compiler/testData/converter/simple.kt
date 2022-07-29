@@ -1,4 +1,16 @@
-class Some<T, K : T> : B(), A<K> where T : A<String>, T : B
+//annotation class Ann(
+//    val b: Byte,
+//    val s: Short,
+//    val i: Int,
+//    val l: Long,
+//    val ss: String,
+//    val c: Char,
+//    vararg val arr: IntArray
+)
 
-interface A<R>
-abstract class B
+//annotation class Ann(
+//    vararg val i: Int
+//)
+
+//@Ann(1, 2, 3)
+//class Base

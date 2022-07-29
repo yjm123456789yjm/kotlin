@@ -8,7 +8,6 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.psi.*
-import com.intellij.psi.util.PsiUtil
 import com.sun.tools.javac.code.Flags
 import com.sun.tools.javac.code.TypeTag
 import com.sun.tools.javac.parser.Tokens
@@ -17,6 +16,7 @@ import com.sun.tools.javac.tree.JCTree.*
 import kotlinx.kapt.KaptIgnored
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.base.kapt3.KaptFlag
+import org.jetbrains.kotlin.builtins.StandardNames
 import org.jetbrains.kotlin.kapt3.base.javac.kaptError
 import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
@@ -153,6 +153,7 @@ class Kapt4StubGenerator {
 
     private fun showOpcodes(flags: Int) = allAccOpcodes.filter { (flags and it.second) != 0 }.map { it.first }
 
+    @Suppress("InconsistentCommentForJavaParameter")
     private fun convertClass(
         lightClass: PsiClass,
         lineMappings: Kapt4LineMappingCollector,
@@ -168,9 +169,6 @@ class Kapt4StubGenerator {
 
         val flags = lightClass.accessFlags//getClassAccessFlags(lightClass, isInner)
 
-        val isEnum = lightClass.isEnum
-        val isAnnotation = lightClass.isAnnotationType
-
         val metadata = when (lightClass) {
             is FirLightClassForClassOrObjectSymbol -> lightClass.kotlinOrigin?.let { metadataCalculator.calculate(it) }
             is FirLightClassForFacade -> {
@@ -185,6 +183,7 @@ class Kapt4StubGenerator {
             else -> null
         }
 
+        val isEnum = lightClass.isEnum
         val modifiers = convertModifiers(
             lightClass,
             flags.toLong(),
@@ -208,51 +207,18 @@ class Kapt4StubGenerator {
 
         val genericType = signatureParser.parseClassSignature(lightClass)
 
-        class EnumValueData(val field: PsiField, val initializerClass: PsiEnumConstantInitializer?, val correspondingClass: PsiClass?)
-
-        val enumValuesData = lightClass.fields.filterIsInstance<PsiEnumConstant>().map { field ->
-
-            EnumValueData(field, field.initializingClass, null)
-        }
-
-//        val enumValuesData = lightClass.fields.filter { it.isEnumValue() }.map { field ->
-//            var foundInnerClass: InnerClassNode? = null
-//            var correspondingClass: ClassNode? = null
-//
-//            for (innerClass in lightClass.innerClasses) {
-//                // Class should have the same name as enum value
-//                if (innerClass.innerName != field.name) continue
-//                val classNode = compiledClassByName[innerClass.name] ?: continue
-//
-//                // Super class name of the class should be our enum class
-//                if (classNode.superName != lightClass.name) continue
-//
-//                correspondingClass = classNode
-//                foundInnerClass = innerClass
-//                break
-//            }
-//
-//            EnumValueData(field, foundInnerClass, correspondingClass)
-//        }
-
-        val enumValues: JavacList<JCTree> = mapJList(enumValuesData) { data ->
-
+        val enumValues: JavacList<JCTree> = mapJList(lightClass.fields) { field ->
+            if (field !is PsiEnumConstant) return@mapJList null
             val constructorArguments = lightClass.constructors.firstOrNull()?.parameters?.mapNotNull { it.type as? PsiType }.orEmpty()
-//            val constructorArguments = Type.getArgumentTypes(lightClass.methods.firstOrNull {
-//                it.name == "<init>" && Type.getArgumentsAndReturnSizes(it.desc).shr(2) >= 2
-//            }?.desc ?: "()Z")
-
-            val args = mapJList(constructorArguments.drop(2)) { convertLiteralExpression(lightClass, getDefaultValue(it)) }
-
-            val def = data.correspondingClass?.let { convertClass(it, lineMappings, packageFqName, false) }
+            val args = mapJList(constructorArguments) { convertLiteralExpression(lightClass, getDefaultValue(it)) }
 
             convertField(
-                data.field, lightClass, lineMappings, packageFqName, treeMaker.NewClass(
+                field, lightClass, lineMappings, packageFqName, treeMaker.NewClass(
                     /* enclosing = */ null,
                     /* typeArgs = */ JavacList.nil(),
-                    /* lightClass = */ treeMaker.Ident(treeMaker.name(data.field.name)),
+                    /* lightClass = */ treeMaker.Ident(treeMaker.name(field.name)),
                     /* args = */ args,
-                    /* def = */ def
+                    /* def = */ null
                 )
             )
         }
@@ -267,10 +233,9 @@ class Kapt4StubGenerator {
 
         val methodsPositions = mutableMapOf<JCTree, MemberData>()
         val methods = mapJList<PsiMethod, JCTree>(lightClass.methods) { method ->
-//            if (isEnum) {
-//                if (method.name == "values" && method.desc == "()[L${lightClass.name};") return@mapJList null
-//                if (method.name == "valueOf" && method.desc == "(Ljava/lang/String;)L${lightClass.name};") return@mapJList null
-//            }
+            if (isEnum && method.isSyntheticStaticEnumMethod()) {
+                return@mapJList null
+            }
 
             convertMethod(method, lightClass, lineMappings, packageFqName, isInner)?.also {
                 methodsPositions[it] = MemberData(method.name, method.signature, lineMappings.getPosition(lightClass, method))
@@ -278,9 +243,6 @@ class Kapt4StubGenerator {
         }
 
         val nestedClasses = mapJList(lightClass.allInnerClasses) { innerClass ->
-//            TODO
-//            if (enumValuesData.any { it.innerClass == innerClass }) return@mapJList null
-//            if (innerClass.outerName != lightClass.name) return@mapJList null
             convertClass(innerClass, lineMappings, packageFqName, false)
         }
 
@@ -300,6 +262,15 @@ class Kapt4StubGenerator {
             superTypes.interfaces,
             JavacList.from(enumValues + sortedFields + sortedMethods + nestedClasses)
         ).keepKdocCommentsIfNecessary(lightClass)
+    }
+
+    private fun PsiMethod.isSyntheticStaticEnumMethod(): Boolean {
+        if (!this.isStatic) return false
+        return when (name) {
+            StandardNames.ENUM_VALUES.asString() -> parameters.isEmpty()
+            StandardNames.ENUM_VALUE_OF.asString() -> (parameters.singleOrNull()?.type as? PsiClassType)?.qualifiedName == "java.lang.String"
+            else -> false
+        }
     }
 
     private class MemberData(val name: String, val descriptor: String, val position: KotlinPosition?)
@@ -701,21 +672,20 @@ class Kapt4StubGenerator {
             is Byte -> treeMaker.TypeCast(treeMaker.TypeIdent(TypeTag.BYTE), treeMaker.Literal(TypeTag.INT, value.toInt()))
             is Short -> treeMaker.TypeCast(treeMaker.TypeIdent(TypeTag.SHORT), treeMaker.Literal(TypeTag.INT, value.toInt()))
             is Boolean, is Int, is Long, is String -> treeMaker.Literal(value)
-            is Float ->
-                when {
-                    value.isFinite() -> treeMaker.Literal(value)
-                    else -> treeMaker.Binary(
-                        Tag.DIV,
-                        treeMaker.Literal(specialFpValueNumerator(value.toDouble()).toFloat()),
-                        treeMaker.Literal(0.0F)
-                    )
-                }
+            is Float -> when {
+                value.isFinite() -> treeMaker.Literal(value)
+                else -> treeMaker.Binary(
+                    Tag.DIV,
+                    treeMaker.Literal(specialFpValueNumerator(value.toDouble()).toFloat()),
+                    treeMaker.Literal(0.0F)
+                )
+            }
 
-            is Double ->
-                when {
-                    value.isFinite() -> treeMaker.Literal(value)
-                    else -> treeMaker.Binary(Tag.DIV, treeMaker.Literal(specialFpValueNumerator(value)), treeMaker.Literal(0.0))
-                }
+            is Double -> when {
+                value.isFinite() -> treeMaker.Literal(value)
+                else -> treeMaker.Binary(Tag.DIV, treeMaker.Literal(specialFpValueNumerator(value)), treeMaker.Literal(0.0))
+            }
+
             else -> null
         }
 

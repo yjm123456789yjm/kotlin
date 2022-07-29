@@ -1,7 +1,14 @@
 import java.lang.System;
 
 @kotlin.Metadata()
-public abstract interface A<R> {
+@java.lang.annotation.Retention()
+public abstract interface Ann extends java.lang.annotation.Annotation {
+
+    public abstract int x();
+
+    public abstract java.lang.String y();
+
+    public abstract char c();
 }
 
 ////////////////////
@@ -10,22 +17,10 @@ public abstract interface A<R> {
 import java.lang.System;
 
 @kotlin.Metadata()
-public abstract class B {
+@Ann()
+public final class Base {
 
-    public B() {
-        super();
-    }
-}
-
-////////////////////
-
-
-import java.lang.System;
-
-@kotlin.Metadata()
-public final class Some<T extends B & A<java.lang.String>, K extends T> extends B implements A<K> {
-
-    public Some() {
+    public Base() {
         super();
     }
 }
