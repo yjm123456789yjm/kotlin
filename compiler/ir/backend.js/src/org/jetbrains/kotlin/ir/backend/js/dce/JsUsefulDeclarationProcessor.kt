@@ -129,7 +129,7 @@ internal class JsUsefulDeclarationProcessor(
         super.processClass(irClass)
 
         if (irClass.containsMetadata()) {
-            if (!irClass.getJsSubtypeCheckableInterfaces().isNullOrEmpty()) {
+            if (irClass.isInterface && irClass.isJsSubtypeCheckable()) {
                 context.intrinsics.bitMaskSymbol.constructors.single().owner.enqueue(irClass, "interface metadata")
             }
 
