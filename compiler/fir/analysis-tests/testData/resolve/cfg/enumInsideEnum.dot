@@ -1,0 +1,72 @@
+digraph enumInsideEnum_kt {
+    graph [nodesep=3]
+    node [shape=box penwidth=2]
+    edge [penwidth=2]
+
+    subgraph cluster_0 {
+        color=red
+        0 [label="Enter function <init>" style="filled" fillcolor=red];
+        1 [label="Delegated constructor call: super<R|kotlin/Enum<Nested1>|>()"];
+        2 [label="Exit function <init>" style="filled" fillcolor=red];
+    }
+    0 -> {1};
+    1 -> {2};
+
+    subgraph cluster_1 {
+        color=red
+        3 [label="Enter function <init>" style="filled" fillcolor=red];
+        4 [label="Delegated constructor call: super<R|Nested1|>()"];
+        5 [label="Exit function <init>" style="filled" fillcolor=red];
+    }
+    3 -> {4};
+    4 -> {5};
+
+    subgraph cluster_2 {
+        color=red
+        6 [label="Enter function <init>" style="filled" fillcolor=red];
+        7 [label="Delegated constructor call: super<R|kotlin/Enum<Nested1.WHITE.<anonymous>.Nested2>|>()"];
+        8 [label="Exit function <init>" style="filled" fillcolor=red];
+    }
+    6 -> {7};
+    7 -> {8};
+
+    subgraph cluster_3 {
+        color=red
+        9 [label="Enter function <init>" style="filled" fillcolor=red];
+        10 [label="Delegated constructor call: super<R|Nested1.WHITE.<anonymous>.Nested2|>()"];
+        11 [label="Exit function <init>" style="filled" fillcolor=red];
+    }
+    9 -> {10};
+    10 -> {11};
+
+    subgraph cluster_4 {
+        color=red
+        12 [label="Enter function <init>" style="filled" fillcolor=red];
+        13 [label="Delegated constructor call: super<R|kotlin/Enum<Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3>|>()"];
+        14 [label="Exit function <init>" style="filled" fillcolor=red];
+    }
+    12 -> {13};
+    13 -> {14};
+
+    subgraph cluster_5 {
+        color=red
+        15 [label="Enter class Nested3" style="filled" fillcolor=red];
+        16 [label="Exit class Nested3" style="filled" fillcolor=red];
+    }
+    15 -> {16} [color=green];
+
+    subgraph cluster_6 {
+        color=red
+        19 [label="Enter class Nested2" style="filled" fillcolor=red];
+        20 [label="Exit class Nested2" style="filled" fillcolor=red];
+    }
+    19 -> {20} [color=green];
+
+    subgraph cluster_7 {
+        color=red
+        23 [label="Enter class Nested1" style="filled" fillcolor=red];
+        24 [label="Exit class Nested1" style="filled" fillcolor=red];
+    }
+    23 -> {24} [color=green];
+
+}

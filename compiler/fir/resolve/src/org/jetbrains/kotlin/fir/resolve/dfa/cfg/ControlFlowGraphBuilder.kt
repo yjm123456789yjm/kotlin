@@ -128,6 +128,14 @@ class ControlFlowGraphBuilder {
      */
     private val ignoredFunctionCalls: MutableSet<FirFunctionCall> = mutableSetOf()
 
+    /*
+     * There are cases when one anonymous object is declared inside another (e.g. if
+     *   enum declared inside other enum entry)
+     * We should track such cases and treat them in a special way, because otherwise
+     *   we can lose enter node from outer anonymous object while exiting inner one
+     */
+    private val anonymousObjectStack: Stack<FirAnonymousObject> = stackOf()
+
     // ----------------------------------- API for node builders -----------------------------------
 
     private var idCounter: Int = Random.nextInt()
@@ -472,7 +480,13 @@ class ControlFlowGraphBuilder {
     fun enterAnonymousObject(anonymousObject: FirAnonymousObject): AnonymousObjectEnterNode {
         val enterNode = createAnonymousObjectEnterNode(anonymousObject)
         // TODO: looks like there was some problem with enum initializers that causes `lastNodes` to be empty
-        lastNodes.popOrNull()?.let { addEdge(it, enterNode, preferredKind = EdgeKind.Forward) }
+        lastNodes.topOrNull()?.let { lastNode ->
+            addEdge(lastNode, enterNode, preferredKind = EdgeKind.Forward)
+            if (anonymousObjectStack.isEmpty) {
+                lastNodes.pop()
+            }
+        }
+        anonymousObjectStack.push(anonymousObject)
         lastNodes.push(enterNode)
         enterClass()
         return enterNode
@@ -502,13 +516,18 @@ class ControlFlowGraphBuilder {
         //     }
         //     println(x)
         visitLocalClassFunctions(anonymousObject, exitNode)
-        lastNodes.push(exitNode)
+        anonymousObjectStack.pop()
+        if (anonymousObjectStack.isEmpty) {
+            lastNodes.push(exitNode)
+        }
         return exitNode to graph
     }
 
     fun exitAnonymousObjectExpression(anonymousObjectExpression: FirAnonymousObjectExpression): AnonymousObjectExpressionExitNode {
         return createAnonymousObjectExpressionExitNode(anonymousObjectExpression).also {
-            addNewSimpleNodeIfPossible(it)
+            if (anonymousObjectStack.isEmpty) {
+                addNewSimpleNodeIfPossible(it)
+            }
         }
     }
 

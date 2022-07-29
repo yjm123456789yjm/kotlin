@@ -1,0 +1,54 @@
+FILE: enumInsideEnum.kt
+    public final enum class Nested1 : R|kotlin/Enum<Nested1>| {
+        private constructor(): R|Nested1| {
+            super<R|kotlin/Enum<Nested1>|>()
+        }
+
+        public final static enum entry WHITE: R|Nested1| = object : R|Nested1| {
+            private constructor(): R|<anonymous>| {
+                super<R|Nested1|>()
+            }
+
+            local final enum class Nested2 : R|kotlin/Enum<Nested1.WHITE.<anonymous>.Nested2>| {
+                private constructor(): R|Nested1.WHITE.<anonymous>.Nested2| {
+                    super<R|kotlin/Enum<Nested1.WHITE.<anonymous>.Nested2>|>()
+                }
+
+                public final static enum entry BLACK: R|Nested1.WHITE.<anonymous>.Nested2| = object : R|Nested1.WHITE.<anonymous>.Nested2| {
+                    private constructor(): R|<anonymous>| {
+                        super<R|Nested1.WHITE.<anonymous>.Nested2|>()
+                    }
+
+                    local final enum class Nested3 : R|kotlin/Enum<Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3>| {
+                        private constructor(): R|Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3| {
+                            super<R|kotlin/Enum<Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3>|>()
+                        }
+
+                        public final static enum entry RED: R|Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3|
+                        public final static fun values(): R|kotlin/Array<Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3>| {
+                        }
+
+                        public final static fun valueOf(value: R|kotlin/String|): R|Nested1.WHITE.<anonymous>.Nested2.BLACK.<anonymous>.Nested3| {
+                        }
+
+                    }
+
+                }
+
+                public final static fun values(): R|kotlin/Array<Nested1.WHITE.<anonymous>.Nested2>| {
+                }
+
+                public final static fun valueOf(value: R|kotlin/String|): R|Nested1.WHITE.<anonymous>.Nested2| {
+                }
+
+            }
+
+        }
+
+        public final static fun values(): R|kotlin/Array<Nested1>| {
+        }
+
+        public final static fun valueOf(value: R|kotlin/String|): R|Nested1| {
+        }
+
+    }
