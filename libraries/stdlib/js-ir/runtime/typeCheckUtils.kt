@@ -53,7 +53,7 @@ internal external interface Metadata {
 internal external interface Ctor {
     var `$metadata$`: Metadata?
     var constructor: Ctor?
-    var prototype: dynamic
+    var `$imask$`: dynamic
 }
 
 private var iid: Int? = null
