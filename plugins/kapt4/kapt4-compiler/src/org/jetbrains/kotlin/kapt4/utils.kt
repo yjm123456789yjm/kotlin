@@ -9,11 +9,8 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.*
 import com.intellij.psi.util.ClassUtil
 import com.intellij.psi.util.PsiTypesUtil
-import com.intellij.psi.util.PsiUtil
-import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
 import org.jetbrains.kotlin.builtins.StandardNames
-import org.jetbrains.kotlin.codegen.signature.BothSignatureWriter
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.org.objectweb.asm.Opcodes
 import java.util.*
@@ -28,6 +25,10 @@ val PsiModifierListOwner.isAbstract: Boolean get() = hasModifier(JvmModifier.ABS
 val PsiModifierListOwner.isStatic: Boolean get() = hasModifier(JvmModifier.STATIC)
 val PsiModifierListOwner.isSynthetic: Boolean get() = false //TODO()
 val PsiModifierListOwner.isVolatile: Boolean get() = hasModifier(JvmModifier.VOLATILE)
+val PsiModifierListOwner.isSynchronized: Boolean get() = hasModifier(JvmModifier.SYNCHRONIZED)
+val PsiModifierListOwner.isNative: Boolean get() = hasModifier(JvmModifier.NATIVE)
+val PsiModifierListOwner.isStrict: Boolean get() = hasModifier(JvmModifier.STRICTFP)
+val PsiModifierListOwner.isTransient: Boolean get() = hasModifier(JvmModifier.TRANSIENT)
 
 typealias JavacList<T> = com.sun.tools.javac.util.List<T>
 
@@ -122,11 +123,26 @@ val PsiClass.defaultType: PsiType
 val PsiType.resolvedClass: PsiClass?
     get() = (this as? PsiClassType)?.resolve()
 
-fun getDeclarationAccessFlags(declaration: PsiModifierListOwner): Int {
-    var access = 0
-    if (declaration.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
-        access = access or Opcodes.ACC_DEPRECATED
+val PsiModifierListOwner.accessFlags: Int
+    get() = when (this) {
+        is PsiClass -> computeClassAccessFlags(this)
+        is PsiMethod -> computeMethodAccessFlags(this)
+        is PsiField -> computeFieldAccessFlags(this)
+        is PsiParameter -> computeParameterAccessFlags(this)
+        else -> 0
     }
+
+private fun computeCommonAccessFlags(declaration: PsiModifierListOwner): Int {
+    /*
+     * int ACC_PUBLIC = 0x0001; // class, field, method
+     * int ACC_PRIVATE = 0x0002; // class, field, method
+     * int ACC_PROTECTED = 0x0004; // class, field, method
+     * int ACC_FINAL = 0x0010; // class, field, method, parameter
+     * int ACC_SYNTHETIC = 0x1000; // class, field, method, parameter, module *  <-- TODO
+     * int ACC_MANDATED = 0x8000; // field, method, parameter, module, module * <-- TODO
+     * int ACC_DEPRECATED = 0x20000; // class, field, method
+     */
+    var access = 0
     val visibilityFlag = when {
         declaration.isPublic -> Opcodes.ACC_PUBLIC
         declaration.isPrivate -> Opcodes.ACC_PRIVATE
@@ -134,26 +150,139 @@ fun getDeclarationAccessFlags(declaration: PsiModifierListOwner): Int {
         else -> 0
     }
     access = access or visibilityFlag
-
-    val modalityFlag = when {
-        declaration.isConstructor -> 0
-        declaration.isFinal -> Opcodes.ACC_FINAL
-        declaration.isAbstract -> Opcodes.ACC_ABSTRACT
-        else -> 0
+    if (declaration.isFinal) {
+        access = access or Opcodes.ACC_FINAL
     }
-
-    access = access or modalityFlag
-
-    if (declaration.isStatic) {
-        access = access or Opcodes.ACC_STATIC
-        if (declaration is PsiMethod) {
-            access = access and Opcodes.ACC_FINAL.inv()
-        }
+    if (declaration.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
+        access = access or Opcodes.ACC_DEPRECATED
     }
-
-    if (declaration.isVolatile) {
-        access = access or Opcodes.ACC_VOLATILE
-    }
-
     return access
 }
+
+private fun computeParameterAccessFlags(parameter: PsiParameter): Int {
+    /*
+     * int ACC_SYNTHETIC = 0x1000; // class, field, method, parameter, module *
+     * int ACC_MANDATED = 0x8000; // field, method, parameter, module, module * <-- TODO
+     */
+    return if (parameter.isFinal) {
+        Opcodes.ACC_FINAL
+    } else {
+        0
+    }
+}
+
+// TODO
+//val parentClass = lightClass.parent as? PsiClass
+//
+//var access = lightClass.accessFlags
+//access = access or when {
+//    lightClass.isRecord -> Opcodes.ACC_RECORD
+//    lightClass.isInterface -> Opcodes.ACC_INTERFACE
+//    lightClass.isEnum -> Opcodes.ACC_ENUM
+//    else -> 0
+//}
+//
+//if (parentClass?.isInterface == true) {
+//    // Classes inside interfaces should always be public and static.
+//    // See com.sun.tools.javac.comp.Enter.visitClassDef for more information.
+//    return (access or Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC) and
+//            Opcodes.ACC_PRIVATE.inv() and Opcodes.ACC_PROTECTED.inv() // Remove private and protected modifiers
+//}
+//
+//if (isNested) {
+//    access = access or Opcodes.ACC_STATIC
+//}
+//if (lightClass.isAnnotationType) {
+//    access = access or Opcodes.ACC_ANNOTATION
+//}
+//return access
+private fun computeClassAccessFlags(klass: PsiClass): Int {
+    /*
+     * int ACC_SUPER = 0x0020; // class <-- TODO
+     * int ACC_INTERFACE = 0x0200; // class
+     * int ACC_ABSTRACT = 0x0400; // class, method
+     * int ACC_ANNOTATION = 0x2000; // class
+     * int ACC_ENUM = 0x4000; // class(?) field inner
+     * int ACC_MODULE = 0x8000; // class <-- TODO
+     * int ACC_RECORD = 0x10000; // class
+     */
+    var access = computeCommonAccessFlags(klass)
+    val classKindFlag = when {
+        klass.isInterface -> Opcodes.ACC_INTERFACE
+        klass.isAnnotationType -> Opcodes.ACC_ANNOTATION
+        klass.isEnum -> {
+            // enum can not be final
+            access = access and Opcodes.ACC_FINAL.inv()
+            Opcodes.ACC_ENUM
+        }
+
+        else -> 0
+    }
+    access = access or classKindFlag
+    if (klass.isAbstract) {
+        access = access or Opcodes.ACC_ABSTRACT
+    }
+    if (klass.isRecord) {
+        access = access or Opcodes.ACC_RECORD
+    }
+    return access
+}
+
+private fun computeMethodAccessFlags(method: PsiMethod): Int {
+    /*
+     * int ACC_STATIC = 0x0008; // field, method
+     * int ACC_SYNCHRONIZED = 0x0020; // method
+     * int ACC_BRIDGE = 0x0040; // method <-- TODO
+     * int ACC_VARARGS = 0x0080; // method
+     * int ACC_NATIVE = 0x0100; // method
+     * int ACC_ABSTRACT = 0x0400; // class, method
+     * int ACC_STRICT = 0x0800; // method
+     * int ACC_MANDATED = 0x8000; // field, method, parameter, module, module * <-- TODO
+     */
+    var access = computeCommonAccessFlags(method)
+    if (method.isStatic) {
+        access = access or Opcodes.ACC_STATIC
+    }
+    if (method.isSynchronized) {
+        access = access or Opcodes.ACC_SYNCHRONIZED
+    }
+    if (method.parameters.any { (it as PsiParameter).isVarArgs }) {
+        access = access or Opcodes.ACC_VARARGS
+    }
+    if (method.isNative) {
+        access = access or Opcodes.ACC_NATIVE
+    }
+    if (method.isAbstract) {
+        access = access or Opcodes.ACC_ABSTRACT
+    }
+    if (method.isStrict) {
+        access = access or Opcodes.ACC_STRICT
+    }
+    return access
+}
+
+private fun computeFieldAccessFlags(field: PsiField): Int {
+    /*
+     * int ACC_STATIC = 0x0008; // field, method
+     * int ACC_VOLATILE = 0x0040; // field
+     * int ACC_TRANSIENT = 0x0080; // field
+     * int ACC_SYNTHETIC = 0x1000; // class, field, method, parameter, module * <-- TODO
+     * int ACC_ENUM = 0x4000; // class(?) field inner
+     * int ACC_MANDATED = 0x8000; // field, method, parameter, module, module * <-- TODO
+     */
+    var access = computeCommonAccessFlags(field)
+    if (field.isStatic) {
+        access = access or Opcodes.ACC_STATIC
+    }
+    if (field.isVolatile) {
+        access = access or Opcodes.ACC_VOLATILE
+    }
+    if (field.isTransient) {
+        access = access or Opcodes.ACC_TRANSIENT
+    }
+    if (field is PsiEnumConstant) {
+        access = access or Opcodes.ACC_ENUM
+    }
+    return access
+}
+

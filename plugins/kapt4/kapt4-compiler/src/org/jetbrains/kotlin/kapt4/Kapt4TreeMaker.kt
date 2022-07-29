@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.kapt4
 
 import com.intellij.openapi.Disposable
+import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
@@ -44,23 +45,29 @@ class Kapt4TreeMaker(
 //        if (type.sort == ARRAY) {
 //            return TypeArray(Type(AsmUtil.correctElementType(type)))
 //        }
-        if (type == null) {
-            TODO()
+        return when (type) {
+            is PsiArrayType -> TypeArray(RawType(type.componentType))
+            null -> TODO()
+            else -> FqName(type.qualifiedName)
         }
-        return FqName(type.qualifiedName)
     }
 
     @Suppress("FunctionName")
     fun TypeWithArguments(type: PsiType?): JCTree.JCExpression {
-        val fqNameExpression = RawType(type)
-        if (type !is PsiClassType) return fqNameExpression
-        val arguments = type.parameters.takeIf { it.isNotEmpty() } ?: return fqNameExpression
-        val jArguments = mapJList(arguments) {
-            // TODO: add variance
-            TypeWithArguments(it)
-        }
+        return when (type) {
+            is PsiArrayType -> TypeArray(TypeWithArguments(type.componentType))
+            is PsiClassType -> {
+                val rawBase = RawType(type)
+                val arguments = type.parameters.takeIf { it.isNotEmpty() } ?: return rawBase
+                val jArguments = mapJList(arguments) {
+                    // TODO: add variance
+                    TypeWithArguments(it)
+                }
 
-        return TypeApply(fqNameExpression, jArguments)
+                return TypeApply(rawBase, jArguments)
+            }
+            else -> RawType(type)
+        }
     }
 
     @Suppress("FunctionName")

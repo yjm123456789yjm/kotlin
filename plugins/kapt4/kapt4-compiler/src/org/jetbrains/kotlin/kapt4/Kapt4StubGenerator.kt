@@ -166,7 +166,7 @@ class Kapt4StubGenerator {
         val isNested = isInnerOrNested && lightClass.isStatic
         val isInner = isInnerOrNested && !isNested
 
-        val flags = getClassAccessFlags(lightClass, isInner)
+        val flags = lightClass.accessFlags//getClassAccessFlags(lightClass, isInner)
 
         val isEnum = lightClass.isEnum
         val isAnnotation = lightClass.isAnnotationType
@@ -206,22 +206,15 @@ class Kapt4StubGenerator {
         val simpleName = getClassName(lightClass, isDefaultImpls, packageFqName)
         if (!isValidIdentifier(simpleName)) return null
 
-        val interfaces = mapJList(lightClass.interfaces) {
-            if (isAnnotation && it.qualifiedName == "java/lang/annotation/Annotation") return@mapJList null
-            treeMaker.FqName(treeMaker.getQualifiedName(it))
-        }
-
-        val superClassName = when (val superClass = lightClass.superClass) {
-            null -> treeMaker.getQualifiedName(java.lang.Object::class.java.canonicalName)
-            else -> treeMaker.getQualifiedName(superClass)
-        }
-
-        val superClass = treeMaker.FqName(superClassName)
-
         val genericType = signatureParser.parseClassSignature(lightClass)
-// TODO
-//        class EnumValueData(val field: FieldNode, val innerClass: InnerClassNode?, val correspondingClass: ClassNode?)
-//
+
+        class EnumValueData(val field: PsiField, val initializerClass: PsiEnumConstantInitializer?, val correspondingClass: PsiClass?)
+
+        val enumValuesData = lightClass.fields.filterIsInstance<PsiEnumConstant>().map { field ->
+
+            EnumValueData(field, field.initializingClass, null)
+        }
+
 //        val enumValuesData = lightClass.fields.filter { it.isEnumValue() }.map { field ->
 //            var foundInnerClass: InnerClassNode? = null
 //            var correspondingClass: ClassNode? = null
@@ -241,36 +234,35 @@ class Kapt4StubGenerator {
 //
 //            EnumValueData(field, foundInnerClass, correspondingClass)
 //        }
-//
-//        val enumValues: JavacList<JCTree> = mapJList(enumValuesData) { data ->
+
+        val enumValues: JavacList<JCTree> = mapJList(enumValuesData) { data ->
+
+            val constructorArguments = lightClass.constructors.firstOrNull()?.parameters?.mapNotNull { it.type as? PsiType }.orEmpty()
 //            val constructorArguments = Type.getArgumentTypes(lightClass.methods.firstOrNull {
 //                it.name == "<init>" && Type.getArgumentsAndReturnSizes(it.desc).shr(2) >= 2
 //            }?.desc ?: "()Z")
-//
-//            val args = mapJList(constructorArguments.drop(2)) { convertLiteralExpression(lightClass, getDefaultValue(it)) }
-//
-//            val def = data.correspondingClass?.let { convertClass(it, lineMappings, packageFqName, false) }
-//
-//            convertField(
-//                data.field, lightClass, lineMappings, packageFqName, treeMaker.NewClass(
-//                    /* enclosing = */ null,
-//                    /* typeArgs = */ JavacList.nil(),
-//                    /* lightClass = */ treeMaker.Ident(treeMaker.name(data.field.name)),
-//                    /* args = */ args,
-//                    /* def = */ def
-//                )
-//            )
-//        }
-//
+
+            val args = mapJList(constructorArguments.drop(2)) { convertLiteralExpression(lightClass, getDefaultValue(it)) }
+
+            val def = data.correspondingClass?.let { convertClass(it, lineMappings, packageFqName, false) }
+
+            convertField(
+                data.field, lightClass, lineMappings, packageFqName, treeMaker.NewClass(
+                    /* enclosing = */ null,
+                    /* typeArgs = */ JavacList.nil(),
+                    /* lightClass = */ treeMaker.Ident(treeMaker.name(data.field.name)),
+                    /* args = */ args,
+                    /* def = */ def
+                )
+            )
+        }
+
         val fieldsPositions = mutableMapOf<JCTree, MemberData>()
         val fields = mapJList<PsiField, JCTree>(lightClass.fields) { field ->
-//            if (field.isEnumValue()) {
-//                null
-//            } else {
-                convertField(field, lightClass, lineMappings, packageFqName)?.also {
+            runUnless(field is PsiEnumConstant) { convertField(field, lightClass, lineMappings, packageFqName)?.also {
                     fieldsPositions[it] = MemberData(field.name, field.signature, lineMappings.getPosition(lightClass, field))
                 }
-//            }
+            }
         }
 
         val methodsPositions = mutableMapOf<JCTree, MemberData>()
@@ -306,7 +298,7 @@ class Kapt4StubGenerator {
             genericType.typeParameters,
             superTypes.superClass,
             superTypes.interfaces,
-            /*enumValues + */JavacList.from(sortedFields + sortedMethods + nestedClasses)
+            JavacList.from(enumValues + sortedFields + sortedMethods + nestedClasses)
         ).keepKdocCommentsIfNecessary(lightClass)
     }
 
@@ -367,7 +359,7 @@ class Kapt4StubGenerator {
     private fun getClassAccessFlags(lightClass: PsiClass, isNested: Boolean): Int {
         val parentClass = lightClass.parent as? PsiClass
 
-        var access = getDeclarationAccessFlags(lightClass)
+        var access = lightClass.accessFlags
         access = access or when {
             lightClass.isRecord -> Opcodes.ACC_RECORD
             lightClass.isInterface -> Opcodes.ACC_INTERFACE
@@ -384,6 +376,9 @@ class Kapt4StubGenerator {
 
         if (isNested) {
             access = access or Opcodes.ACC_STATIC
+        }
+        if (lightClass.isAnnotationType) {
+            access = access or Opcodes.ACC_ANNOTATION
         }
         return access
     }
@@ -434,7 +429,20 @@ class Kapt4StubGenerator {
                 }
             }
         )
-//
+
+        val values = mapJList<_, JCExpression>(annotation.parameterList.attributes) {
+            val expr = when (val value = it.value) {
+                is PsiLiteral -> convertLiteralExpression(containingClass = null, value.value)
+                is PsiArrayInitializerExpression -> {
+                    val arguments = mapJList(value.initializers) { convertLiteralExpression(containingClass = null, it) }
+                    treeMaker.NewArray(null, null, arguments)
+                }
+
+                else -> treeMaker.SimpleName("stub")
+            }
+            treeMaker.Assign(treeMaker.SimpleName(it.name ?: NO_NAME_PROVIDED), expr)
+        }
+
 //        val argMapping = ktAnnotation?.calleeExpression
 //            ?.getResolvedCall(kaptContext.bindingContext)?.valueArguments
 //            ?.mapKeys { it.key.name.asString() }
@@ -453,7 +461,7 @@ class Kapt4StubGenerator {
 //            }
 //        }
 //
-        return treeMaker.Annotation(annotationFqName, JavacList.nil())
+        return treeMaker.Annotation(annotationFqName, values)
     }
 
     private fun convertModifiers(
@@ -541,7 +549,7 @@ class Kapt4StubGenerator {
 //            else -> descriptor?.annotations
 //        } ?: Annotations.EMPTY
 
-        val access = getDeclarationAccessFlags(field)
+        val access = field.accessFlags
         val modifiers = convertModifiers(
             containingClass,
             access, ElementKind.FIELD, packageFqName,
@@ -744,9 +752,9 @@ class Kapt4StubGenerator {
         val modifiers = convertModifiers(
             containingClass,
             if (containingClass.isEnum && isConstructor)
-                (getDeclarationAccessFlags(method).toLong() and VISIBILITY_MODIFIERS.inv())
+                (method.accessFlags.toLong() and VISIBILITY_MODIFIERS.inv())
             else
-                getDeclarationAccessFlags(method).toLong(),
+                method.accessFlags.toLong(),
             ElementKind.METHOD, packageFqName, visibleAnnotations,
             metadata = null
         )
@@ -755,18 +763,18 @@ class Kapt4StubGenerator {
             modifiers.flags = modifiers.flags or Flags.DEFAULT
         }
 
-        val asmReturnType = method.returnType ?: PsiType.VOID
+        val returnType = method.returnType ?: PsiType.VOID
 
         val parametersInfo = method.getParametersInfo(containingClass, isInner)
 
-        if (!checkIfValidTypeName(containingClass, asmReturnType)
+        if (!checkIfValidTypeName(containingClass, returnType)
             || parametersInfo.any { !checkIfValidTypeName(containingClass, it.type) }
         ) {
             return null
         }
 
         @Suppress("NAME_SHADOWING")
-        val parameters = mapJListIndexed(parametersInfo) { index, info ->
+        val jParameters = mapJListIndexed(parametersInfo) { index, info ->
             val lastParameter = index == parametersInfo.lastIndex
             val isArrayType = info.type is PsiArrayType
 
@@ -784,9 +792,9 @@ class Kapt4StubGenerator {
             val type = treeMaker.TypeWithArguments(info.type)
             treeMaker.VarDef(modifiers, treeMaker.name(name), type, null)
         }
-        val typeParameters = mapJList(method.typeParameters) { signatureParser.convertTypeParameter(it) }
-        val exceptionTypes = mapJList(method.throwsTypes) { treeMaker.TypeWithArguments(it as PsiType) }
-        val returnType = if (isConstructor) null else treeMaker.TypeWithArguments(method.returnType) // TODO: handle error type
+        val jTypeParameters = mapJList(method.typeParameters) { signatureParser.convertTypeParameter(it) }
+        val jExceptionTypes = mapJList(method.throwsTypes) { treeMaker.TypeWithArguments(it as PsiType) }
+        val jReturnType = if (isConstructor) null else treeMaker.TypeWithArguments(returnType) // TODO: handle error type
 
         val defaultValue = null //method.annotationDefault?.let { convertLiteralExpression(containingClass, it) }
 
@@ -794,7 +802,7 @@ class Kapt4StubGenerator {
             null
         } else if (method.isAbstract) {
             null
-        } else if (isConstructor && containingClass.isEnum()) {
+        } else if (isConstructor && containingClass.isEnum) {
             treeMaker.Block(0, JavacList.nil())
         } else if (isConstructor) {
             val superConstructor = containingClass.superClass?.constructors?.firstOrNull { !it.isPrivate }
@@ -808,18 +816,18 @@ class Kapt4StubGenerator {
                 JavacList.nil()
             }
             treeMaker.Block(0, superClassConstructorCall)
-        } else if (asmReturnType == PsiType.VOID) {
+        } else if (returnType == PsiType.VOID) {
             treeMaker.Block(0, JavacList.nil())
         } else {
-            val returnStatement = treeMaker.Return(convertLiteralExpression(containingClass, getDefaultValue(asmReturnType)))
+            val returnStatement = treeMaker.Return(convertLiteralExpression(containingClass, getDefaultValue(returnType)))
             treeMaker.Block(0, JavacList.of(returnStatement))
         }
 
         lineMappings.registerMethod(containingClass, method)
 
         return treeMaker.MethodDef(
-            modifiers, treeMaker.name(name), returnType, typeParameters,
-            parameters, exceptionTypes,
+            modifiers, treeMaker.name(name), jReturnType, jTypeParameters,
+            jParameters, jExceptionTypes,
             body, defaultValue
         ).keepSignature(lineMappings, method).keepKdocCommentsIfNecessary(method)
     }

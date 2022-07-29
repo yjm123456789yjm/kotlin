@@ -20,7 +20,9 @@ class SignatureParser(private val treeMaker: Kapt4TreeMaker) {
     fun parseClassSignature(psiClass: PsiClass): ClassGenericSignature {
         val superClasses = mutableListOf<JCExpression>()
         val interfaces = mutableListOf<JCExpression>()
+        val isAnnotation = psiClass.isAnnotationType
         for (superType in psiClass.superTypes) {
+            if (isAnnotation && superType.qualifiedName == "java.lang.annotation.Annotation") continue
             val jType = treeMaker.TypeWithArguments(superType)
             if (superType.resolvedClass?.isInterface == false) {
                 superClasses += jType
