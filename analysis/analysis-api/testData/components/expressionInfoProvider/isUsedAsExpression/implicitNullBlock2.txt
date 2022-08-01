@@ -1,0 +1,5 @@
+expression: LAMBDA_EXPRESSION
+text: {
+    Unit
+}
+isUsedAsExpression: true
