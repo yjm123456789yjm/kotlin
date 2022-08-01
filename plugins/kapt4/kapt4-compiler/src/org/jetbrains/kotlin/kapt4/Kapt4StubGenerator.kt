@@ -17,6 +17,7 @@ import kotlinx.kapt.KaptIgnored
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.base.kapt3.KaptFlag
 import org.jetbrains.kotlin.builtins.StandardNames
+import org.jetbrains.kotlin.descriptors.annotations.KotlinTarget
 import org.jetbrains.kotlin.kapt3.base.javac.kaptError
 import org.jetbrains.kotlin.kapt3.base.javac.reportKaptError
 import org.jetbrains.kotlin.kapt3.base.stubs.KaptStubLineInformation
@@ -29,10 +30,12 @@ import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtTypeReference
 import org.jetbrains.kotlin.resolve.ArrayFqNames
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 import org.jetbrains.kotlin.utils.addToStdlib.runUnless
 import org.jetbrains.org.objectweb.asm.Opcodes
 import org.jetbrains.org.objectweb.asm.Type
 import java.io.File
+import java.lang.annotation.ElementType
 import javax.lang.model.element.ElementKind
 import kotlin.math.sign
 
@@ -73,6 +76,20 @@ class Kapt4StubGenerator {
         private val KOTLIN_PACKAGE = FqName("kotlin")
 
         private val ARRAY_OF_FUNCTIONS = (ArrayFqNames.PRIMITIVE_TYPE_TO_ARRAY.values + ArrayFqNames.ARRAY_OF_FUNCTION).toSet()
+
+        private val kotlin2JvmTargetMap = mapOf(
+            AnnotationTarget.CLASS to ElementType.TYPE,
+            AnnotationTarget.ANNOTATION_CLASS to ElementType.ANNOTATION_TYPE,
+            AnnotationTarget.CONSTRUCTOR to ElementType.CONSTRUCTOR,
+            AnnotationTarget.LOCAL_VARIABLE to ElementType.LOCAL_VARIABLE,
+            AnnotationTarget.FUNCTION to ElementType.METHOD,
+            AnnotationTarget.PROPERTY_GETTER to ElementType.METHOD,
+            AnnotationTarget.PROPERTY_SETTER to ElementType.METHOD,
+            AnnotationTarget.FIELD to ElementType.FIELD,
+            AnnotationTarget.VALUE_PARAMETER to ElementType.PARAMETER,
+            AnnotationTarget.TYPE_PARAMETER to ElementType.TYPE_PARAMETER,
+            AnnotationTarget.TYPE to ElementType.TYPE_USE
+        )
     }
 
     private val correctErrorTypes = options[KaptFlag.CORRECT_ERROR_TYPES]
@@ -183,6 +200,10 @@ class Kapt4StubGenerator {
             else -> null
         }
 
+        val javaRetentionAnnotation = runIf(lightClass.isAnnotationType) {
+            lightClass.getAnnotation("kotlin.annotation.Target")?.let { createJavaTargetAnnotation(it) }
+        }
+
         val isEnum = lightClass.isEnum
         val modifiers = convertModifiers(
             lightClass,
@@ -190,7 +211,8 @@ class Kapt4StubGenerator {
             if (isEnum) ElementKind.ENUM else ElementKind.CLASS,
             packageFqName,
             lightClass.annotations.toList(),
-            metadata
+            metadata,
+            javaRetentionAnnotation?.let { JavacList.of(javaRetentionAnnotation) } ?: JavacList.nil()
         )
 
         // TODO: check
@@ -427,15 +449,38 @@ class Kapt4StubGenerator {
         }
     }
 
+    private fun createJavaTargetAnnotation(retentionAnnotation: PsiAnnotation): JCAnnotation? {
+        val kotlinTargetNames = mutableListOf<String>()
+
+        fun collect(value: PsiAnnotationMemberValue?) {
+            when (value) {
+                is PsiArrayInitializerMemberValue -> value.initializers.forEach { collect(it) }
+                is PsiExpression -> kotlinTargetNames += value.text.substringAfterLast(".")
+            }
+        }
+
+        collect(retentionAnnotation.parameterList.attributes.firstOrNull()?.value)
+
+        val kotlinTargets = kotlinTargetNames.map { AnnotationTarget.valueOf(it) }
+        val javaTargets = kotlinTargets.mapNotNull { kotlin2JvmTargetMap[it] }
+        if (javaTargets.isEmpty()) return null
+        val jArguments = mapJList(javaTargets) { treeMaker.SimpleName("${ElementType::class.java.canonicalName}.${it.name}") }
+        return treeMaker.Annotation(
+            treeMaker.FqName(java.lang.annotation.Target::class.java.canonicalName),
+            JavacList.of(treeMaker.Assign(treeMaker.SimpleName("value"), treeMaker.NewArray(null, null,jArguments)))
+        )
+    }
+
     private fun convertModifiers(
         containingClass: PsiClass,
         access: Int,
         kind: ElementKind,
         packageFqName: String,
         allAnnotations: List<PsiAnnotation>,
-        metadata: Metadata?
+        metadata: Metadata?,
+        additionalAnnotations: JavacList<JCAnnotation> = JavacList.nil()
     ): JCModifiers {
-        return convertModifiers(containingClass, access.toLong(), kind, packageFqName, allAnnotations, metadata)
+        return convertModifiers(containingClass, access.toLong(), kind, packageFqName, allAnnotations, metadata, additionalAnnotations)
     }
 
     private fun convertModifiers(
@@ -444,7 +489,8 @@ class Kapt4StubGenerator {
         kind: ElementKind,
         packageFqName: String,
         allAnnotations: List<PsiAnnotation>,
-        metadata: Metadata?
+        metadata: Metadata?,
+        additionalAnnotations: JavacList<JCAnnotation> = JavacList.nil()
     ): JCModifiers {
         var seenOverride = false
         fun convertAndAdd(list: JavacList<JCAnnotation>, annotation: PsiAnnotation): JavacList<JCAnnotation> {
@@ -462,6 +508,7 @@ class Kapt4StubGenerator {
             val type = treeMaker.RawType(Type.getType(java.lang.Deprecated::class.java))
             annotations = annotations.append(treeMaker.Annotation(type, JavacList.nil()))
         }
+        annotations = annotations.prependList(additionalAnnotations)
         if (metadata != null) {
             annotations = annotations.prepend(convertMetadataAnnotation(metadata))
         }
