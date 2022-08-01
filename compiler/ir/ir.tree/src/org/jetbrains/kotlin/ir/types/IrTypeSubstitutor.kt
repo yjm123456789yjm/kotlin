@@ -55,24 +55,7 @@ abstract class AbstractIrTypeSubstitutor(private val irBuiltIns: IrBuiltIns) : T
         return when (irType) {
             is IrSimpleType -> {
                 with(irType.toBuilder()) {
-                    arguments = irType.arguments.map {
-                        val substituted = substituteTypeArgument(it)
-                        // In case of inline classes, we need to replace star projection of its parameter with upper bound
-                        // Otherwise, the class will be mapped to underlying type with upper bound Any?
-                        // This is a problem, if the underlying type is Array<T>
-                        // For example,
-                        //   @JvmInline
-                        //   value class IC<T: Int>(val array: Array<T>)
-                        // should be mapped to [java/lang/Integer;, and not to [java/lang/Object;
-                        if (substituted is IrStarProjection &&
-                            ((it.typeOrNull?.classifierOrNull?.owner as? IrTypeParameter)?.parent as? IrClass)
-                                ?.isSingleFieldValueClass == true
-                        ) {
-                            makeTypeProjection(it.typeOrNull!!.erasedUpperBound.defaultType, Variance.INVARIANT)
-                        } else {
-                            substituted
-                        }
-                    }
+                    arguments = irType.arguments.map { substituteTypeArgument(it) }
                     buildSimpleType()
                 }
             }
@@ -83,29 +66,6 @@ abstract class AbstractIrTypeSubstitutor(private val irBuiltIns: IrBuiltIns) : T
                 throw AssertionError("Unexpected type: $irType")
         }
     }
-
-    // TODO: Remove duplication
-    private val IrType.erasedUpperBound: IrClass
-        get() =
-            when (val classifier = classifierOrNull) {
-                is IrClassSymbol -> classifier.owner
-                is IrTypeParameterSymbol -> classifier.owner.erasedUpperBound
-                is IrScriptSymbol -> classifier.owner.targetClass!!.owner
-                else -> error(render())
-            }
-
-    private val IrTypeParameter.erasedUpperBound: IrClass
-        get() {
-            // Pick the (necessarily unique) non-interface upper bound if it exists
-            for (type in superTypes) {
-                return type.classOrNull?.owner ?: continue
-            }
-
-            // Otherwise, choose either the first IrClass supertype or recurse.
-            // In the first case, all supertypes are interface types and the choice was arbitrary.
-            // In the second case, there is only a single supertype.
-            return superTypes.first().erasedUpperBound
-        }
 
     private fun substituteTypeArgument(typeArgument: IrTypeArgument): IrTypeArgument {
         if (typeArgument is IrStarProjection) return typeArgument
