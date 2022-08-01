@@ -19,7 +19,6 @@ import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrClassReference
 import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.impl.IrGetObjectValueImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
@@ -117,7 +116,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             if (irClass.isJsReflectedClass()) {
                 classBlock.statements += generateClassMetadata()
             } else {
-                classBlock.statements += generateInterfaceDeclaration()
+                classModel.preDeclarationBlock.statements += generateInterfaceVariableDeclaration()
             }
         } else {
             for (property in properties) {
@@ -230,11 +229,11 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
     private fun generateInterfaceId(): JsExpression? {
         return runIf(irClass.isInterface) {
-            (generateInterfaceDeclaration() as? JsVars)?.vars?.single()?.initExpression
+            (generateInterfaceVariableDeclaration() as? JsVars)?.vars?.single()?.initExpression
         }
     }
 
-    private fun generateInterfaceDeclaration(): JsStatement {
+    private fun generateInterfaceVariableDeclaration(): JsStatement {
         val backendContext = context.staticContext.backendContext
         val generateInterfaceId = backendContext.intrinsics.generateInterfaceIdSymbol
         val generateInterfaceIdCall = backendContext.createIrBuilder(irClass.symbol).irCall(generateInterfaceId)
