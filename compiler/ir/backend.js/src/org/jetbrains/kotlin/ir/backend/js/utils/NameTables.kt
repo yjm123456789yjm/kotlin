@@ -151,7 +151,10 @@ fun jsFunctionSignature(declaration: IrFunction, context: JsIrBackendContext): S
         nameBuilder.append("_r$${it.type.asString()}")
     }
     declaration.valueParameters.ifNotEmpty {
-        joinTo(nameBuilder, "") { "_${it.type.asString()}" }
+        joinTo(nameBuilder, "") {
+            val defaultValueSign = if (it.origin == JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER) "?" else ""
+            "_${it.type.asString()}$defaultValueSign"
+        }
     }
     declaration.returnType.let {
         // Return type is only used in signature for inline class and Unit types because

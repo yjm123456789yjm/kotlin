@@ -282,7 +282,8 @@ open class DefaultParameterInjector(
     open val context: CommonBackendContext,
     private val skipInline: Boolean = true,
     private val skipExternalMethods: Boolean = false,
-    private val forceSetOverrideSymbols: Boolean = true
+    private val forceSetOverrideSymbols: Boolean = true,
+    private val isMaskRequired: Boolean = true,
 ) : IrElementTransformerVoid(), BodyLoweringPass {
 
     override fun lower(irBody: IrBody, container: IrDeclaration) {
@@ -346,7 +347,13 @@ open class DefaultParameterInjector(
         expression.transformChildrenVoid()
         return visitFunctionAccessExpression(expression) {
             with(expression) {
-                IrConstructorCallImpl.fromSymbolOwner(startOffset, endOffset, type, it as IrConstructorSymbol, LoweredStatementOrigins.DEFAULT_DISPATCH_CALL)
+                IrConstructorCallImpl.fromSymbolOwner(
+                    startOffset,
+                    endOffset,
+                    type,
+                    it as IrConstructorSymbol,
+                    LoweredStatementOrigins.DEFAULT_DISPATCH_CALL
+                )
             }
         }
     }
@@ -403,13 +410,17 @@ open class DefaultParameterInjector(
 
         val realArgumentsNumber = declaration.valueParameters.size
         val maskValues = IntArray((declaration.valueParameters.size + 31) / 32)
-        assert(
-            ((if (isStatic(expression.symbol.owner) && stubFunction.extensionReceiverParameter != null) 1 else 0) +
-                    stubFunction.valueParameters.size - realArgumentsNumber - maskValues.size) in listOf(0, 1)
-        ) {
-            "argument count mismatch: expected $realArgumentsNumber arguments + ${maskValues.size} masks + optional handler/marker, " +
-                    "got ${stubFunction.valueParameters.size} total in ${stubFunction.render()}"
+
+        if (isMaskRequired) {
+            assert(
+                ((if (isStatic(expression.symbol.owner) && stubFunction.extensionReceiverParameter != null) 1 else 0) +
+                        stubFunction.valueParameters.size - realArgumentsNumber - maskValues.size) in listOf(0, 1)
+            ) {
+                "argument count mismatch: expected $realArgumentsNumber arguments + ${maskValues.size} masks + optional handler/marker, " +
+                        "got ${stubFunction.valueParameters.size} total in ${stubFunction.render()}"
+            }
         }
+
         var sourceParameterIndex = -1
         val valueParametersPrefix =
             if (isStatic(expression.symbol.owner))

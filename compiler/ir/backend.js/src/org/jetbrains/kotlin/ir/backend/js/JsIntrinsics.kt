@@ -31,6 +31,7 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     // TODO: Should we drop operator intrinsics in favor of IrDynamicOperatorExpression?
 
     // Global variables
+    val void = getInternalProperty("void")
     val globalThis = getInternalProperty("globalThis")
 
     // Equality operations:
@@ -341,8 +342,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     val createSharedBox = getInternalFunction("sharedBoxCreate")
     val readSharedBox = getInternalFunction("sharedBoxRead")
     val writeSharedBox = getInternalFunction("sharedBoxWrite")
-
-    val jsUndefined = getInternalFunction("jsUndefined")
 
     val linkageErrorSymbol = getInternalFunction("throwLinkageError")
 

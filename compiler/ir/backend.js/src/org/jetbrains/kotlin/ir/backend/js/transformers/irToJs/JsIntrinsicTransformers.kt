@@ -137,14 +137,14 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
             }
 
             add(intrinsics.jsArrayGet) { call, context ->
-                val args = translateCallArguments(call, context)
+                val args = translateCallArguments(call, context, isOperator = true)
                 val array = args[0]
                 val index = args[1]
                 JsArrayAccess(array, index)
             }
 
             add(intrinsics.jsArraySet) { call, context ->
-                val args = translateCallArguments(call, context)
+                val args = translateCallArguments(call, context, isOperator = true)
                 val array = args[0]
                 val index = args[1]
                 val value = args[2]
@@ -172,10 +172,10 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
 
             for ((type, prefix) in intrinsics.primitiveToTypedArrayMap) {
                 add(intrinsics.primitiveToSizeConstructor[type]!!) { call, context ->
-                    JsNew(JsNameRef("${prefix}Array"), translateCallArguments(call, context))
+                    JsNew(JsNameRef("${prefix}Array"), translateCallArguments(call, context, isOperator = true))
                 }
                 add(intrinsics.primitiveToLiteralConstructor[type]!!) { call, context ->
-                    JsNew(JsNameRef("${prefix}Array"), translateCallArguments(call, context))
+                    JsNew(JsNameRef("${prefix}Array"), translateCallArguments(call, context, isOperator = true))
                 }
             }
 
@@ -234,9 +234,6 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
                 val value = args[1]
                 jsAssignment(JsNameRef(Namer.SHARED_BOX_V, box), value)
             }
-            add(intrinsics.jsUndefined) { _, _ ->
-                JsPrefixOperation(JsUnaryOperator.VOID, JsIntLiteral(1))
-            }
 
             val suspendInvokeTransform: (IrCall, JsGenerationContext) -> JsExpression = { call, context: JsGenerationContext ->
                 // Because it is intrinsic, we know everything about this function
@@ -262,8 +259,8 @@ class JsIntrinsicTransformers(backendContext: JsIrBackendContext) {
     operator fun get(symbol: IrSymbol): IrCallTransformer? = transformers[symbol]
 }
 
-private fun translateCallArguments(expression: IrCall, context: JsGenerationContext): List<JsExpression> {
-    return translateCallArguments(expression, context, IrElementToJsExpressionTransformer())
+private fun translateCallArguments(expression: IrCall, context: JsGenerationContext, isOperator: Boolean = false): List<JsExpression> {
+    return translateCallArguments(expression, context, IrElementToJsExpressionTransformer(), allowDropTailVoids = !isOperator)
 }
 
 private fun MutableMap<IrSymbol, IrCallTransformer>.add(functionSymbol: IrSymbol, t: IrCallTransformer) {
@@ -295,5 +292,5 @@ private inline fun MutableMap<IrSymbol, IrCallTransformer>.withTranslatedArgs(
     function: IrSimpleFunctionSymbol,
     crossinline t: (List<JsExpression>) -> JsExpression
 ) {
-    put(function) { call, context -> t(translateCallArguments(call, context)) }
+    put(function) { call, context -> t(translateCallArguments(call, context, isOperator = true)) }
 }

@@ -328,6 +328,7 @@ fun translateCallArguments(
     expression: IrMemberAccessExpression<IrFunctionSymbol>,
     context: JsGenerationContext,
     transformer: IrElementToJsExpressionTransformer,
+    allowDropTailVoids: Boolean = true
 ): List<JsExpression> {
     val size = expression.valueArgumentsCount
 
@@ -336,13 +337,15 @@ fun translateCallArguments(
     val validWithNullArgs = expression.validWithNullArgs()
     val arguments = (0 until size)
         .mapTo(ArrayList(size)) { index ->
-            val argument = expression.getValueArgument(index)
-            argument?.accept(transformer, context)
+            expression.getValueArgument(index).checkOnNullability(validWithNullArgs)
         }
-        .onEach { result ->
-            if (result == null) {
-                assert(validWithNullArgs)
-            }
+        .dropLastWhile {
+            allowDropTailVoids &&
+                    it is IrGetField &&
+                    it.symbol.owner.correspondingPropertySymbol == context.staticContext.backendContext.intrinsics.void
+        }
+        .map {
+            it!!.accept(transformer, context)
         }
         .mapIndexed { index, result ->
             val isEmptyExternalVararg = validWithNullArgs &&
@@ -360,6 +363,13 @@ fun translateCallArguments(
     check(!expression.symbol.isSuspend) { "Suspend functions should be lowered" }
     return arguments
 }
+
+private fun IrExpression?.checkOnNullability(validWithNullArgs: Boolean) =
+    also {
+        if (it == null) {
+            assert(validWithNullArgs)
+        }
+    }
 
 private fun IrMemberAccessExpression<*>.validWithNullArgs() =
     this is IrFunctionAccessExpression && symbol.owner.isExternalOrInheritedFromExternal()
