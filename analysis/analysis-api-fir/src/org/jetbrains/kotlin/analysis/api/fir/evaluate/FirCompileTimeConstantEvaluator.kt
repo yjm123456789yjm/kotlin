@@ -14,6 +14,7 @@ import org.jetbrains.kotlin.fir.declarations.FirCallableDeclaration
 import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
 import org.jetbrains.kotlin.fir.declarations.FirSimpleFunction
 import org.jetbrains.kotlin.fir.declarations.utils.isConst
+import org.jetbrains.kotlin.fir.declarations.utils.isFinal
 import org.jetbrains.kotlin.fir.declarations.utils.referredPropertySymbol
 import org.jetbrains.kotlin.fir.expressions.*
 import org.jetbrains.kotlin.fir.expressions.builder.buildConstExpression
@@ -23,7 +24,9 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolvedSymbol
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
+import org.jetbrains.kotlin.fir.symbols.impl.FirFieldSymbol
 import org.jetbrains.kotlin.fir.symbols.impl.FirPropertySymbol
+import org.jetbrains.kotlin.fir.symbols.impl.isStatic
 import org.jetbrains.kotlin.fir.types.*
 import org.jetbrains.kotlin.fir.types.impl.*
 import org.jetbrains.kotlin.psi.KtElement
@@ -31,6 +34,7 @@ import org.jetbrains.kotlin.resolve.constants.evaluate.CompileTimeType
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalBinaryOp
 import org.jetbrains.kotlin.resolve.constants.evaluate.evalUnaryOp
 import org.jetbrains.kotlin.types.ConstantValueKind
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 /**
  * An evaluator that transform numeric operation, such as div, into compile-time constant iff involved operands, such as explicit receiver
@@ -44,7 +48,11 @@ internal object FirCompileTimeConstantEvaluator {
     ): FirConstExpression<*>? =
         when (fir) {
             is FirPropertyAccessExpression -> {
-                fir.referredPropertySymbol?.toConstExpression(mode)
+                when (val symbol = fir.toResolvedCallableSymbol()) {
+                    is FirPropertySymbol -> symbol.toConstExpression(mode)
+                    is FirFieldSymbol -> symbol.toConstExpression(mode)
+                    else -> null
+                }
             }
             is FirConstExpression<*> -> {
                 fir.adaptToConstKind()
@@ -72,6 +80,14 @@ internal object FirCompileTimeConstantEvaluator {
                 evaluate(fir.initializer, mode)
             }
             else -> null
+        }
+    }
+
+    private fun FirFieldSymbol.toConstExpression(mode: KtConstantEvaluationMode): FirConstExpression<*>? {
+        return runIf(isStatic && isFinal) {
+            // NB: the initializer could be [FirLazyExpression] in [BodyBuildingMode.LAZY_BODIES].
+            this.ensureResolved(FirResolvePhase.BODY_RESOLVE) // to unwrap lazy body
+            evaluate(fir.initializer, mode)
         }
     }
 

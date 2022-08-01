@@ -24,4 +24,3 @@ enum class Nested1 {
     };
 }
 
-fun foo() {}

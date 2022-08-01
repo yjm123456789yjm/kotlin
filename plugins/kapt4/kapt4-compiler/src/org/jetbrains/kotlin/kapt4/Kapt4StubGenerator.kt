@@ -402,37 +402,29 @@ class Kapt4StubGenerator {
         )
 
         val values = mapJList<_, JCExpression>(annotation.parameterList.attributes) {
-            val expr = when (val value = it.value) {
-                is PsiLiteral -> convertLiteralExpression(containingClass = null, value.value)
-                is PsiArrayInitializerExpression -> {
-                    val arguments = mapJList(value.initializers) { convertLiteralExpression(containingClass = null, it) }
-                    treeMaker.NewArray(null, null, arguments)
-                }
-
-                else -> treeMaker.SimpleName("stub")
-            }
-            treeMaker.Assign(treeMaker.SimpleName(it.name ?: NO_NAME_PROVIDED), expr)
+            val name = it.name ?: return@mapJList null
+            val value = it.value ?: return@mapJList null
+            val expr = convertPsiAnnotationMemberValue(value)
+            treeMaker.Assign(treeMaker.SimpleName(name), expr)
         }
 
-//        val argMapping = ktAnnotation?.calleeExpression
-//            ?.getResolvedCall(kaptContext.bindingContext)?.valueArguments
-//            ?.mapKeys { it.key.name.asString() }
-//            ?: emptyMap()
-//
-//        val constantValues = pairedListToMap(annotation.values)
-//
-//        val values = if (argMapping.isNotEmpty()) {
-//            argMapping.mapNotNull { (parameterName, arg) ->
-//                if (arg is DefaultValueArgument) return@mapNotNull null
-//                convertAnnotationArgumentWithName(containingClass, constantValues[parameterName], arg, parameterName)
-//            }
-//        } else {
-//            constantValues.mapNotNull { (parameterName, arg) ->
-//                convertAnnotationArgumentWithName(containingClass, arg, null, parameterName)
-//            }
-//        }
-//
         return treeMaker.Annotation(annotationFqName, values)
+    }
+
+    private fun convertPsiAnnotationMemberValue(value: PsiAnnotationMemberValue): JCExpression {
+        return when (value) {
+            is PsiArrayInitializerMemberValue -> {
+                val arguments = mapJList(value.initializers) {
+                    convertPsiAnnotationMemberValue(it)
+                }
+                treeMaker.NewArray(null, null, arguments)
+            }
+
+            is PsiLiteral -> convertLiteralExpression(containingClass = null, value.value)
+            is PsiExpression -> treeMaker.SimpleName(value.text)
+            is PsiAnnotation -> TODO()
+            else -> error("Should not be here")
+        }
     }
 
     private fun convertModifiers(

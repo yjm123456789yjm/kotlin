@@ -1,16 +1,17 @@
-//annotation class Ann(
-//    val b: Byte,
-//    val s: Short,
-//    val i: Int,
-//    val l: Long,
-//    val ss: String,
-//    val c: Char,
-//    vararg val arr: IntArray
+annotation class Ann(
+    val b: Byte,
+    val s: Short,
+    val i: Int,
+    val l: Long,
+    val ss: String,
+    val c: Char,
+    val arr: IntArray,
+    val some: SomeEnum
 )
 
-//annotation class Ann(
-//    vararg val i: Int
-//)
+enum class SomeEnum {
+    A, B
+}
 
-//@Ann(1, 2, 3)
-//class Base
+@Ann(1, 2, 3, 4, "hello", 'c', {5, 6, 7}, SomeEnum.A)
+class Base
