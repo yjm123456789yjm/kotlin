@@ -31,7 +31,12 @@ class CollectInterfacesForInstanceCheckLowering(val context: JsIrBackendContext)
 
         override fun visitCall(expression: IrCall): IrExpression {
             if (expression.symbol == context.intrinsics.isInterfaceSymbol) {
-                val interfaceReference = expression.getValueArgument(1) as IrCall
+                var interfaceReference = expression.getValueArgument(1) as IrCall
+
+                if (interfaceReference.symbol == context.intrinsics.getInterfaceIdInRuntimeSymbol) {
+                    interfaceReference = interfaceReference.getValueArgument(0) as IrCall
+                }
+
                 val interfaceType = interfaceReference.takeIf { it.typeArgumentsCount > 0 }?.getTypeArgument(0)
                 val interfaceSymbol = interfaceType?.classifierOrNull as? IrClassSymbol
 

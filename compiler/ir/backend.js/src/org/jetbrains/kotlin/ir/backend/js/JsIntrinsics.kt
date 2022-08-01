@@ -112,6 +112,7 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
 
     val isInterfaceSymbol = getInternalFunction("isInterface")
     val getInterfaceIdSymbol = getInternalFunction("getInterfaceId")
+    val getInterfaceIdInRuntimeSymbol = getInternalFunction("getInterfaceIdInRuntime")
     val isArraySymbol = getInternalFunction("isArray")
     //    val isCharSymbol = getInternalFunction("isChar")
     val isObjectSymbol = getInternalFunction("isObject")
