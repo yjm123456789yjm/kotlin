@@ -90,8 +90,8 @@ internal fun captureStack(instance: Throwable, constructorFunction: Any) {
 internal fun newThrowable(message: String?, cause: Throwable?): Throwable {
     val throwable = js("new Error()")
     throwable.message = if (isUndefined(message)) {
-        if (isUndefined(cause)) message else cause?.toString() ?: undefined
-    } else message ?: undefined
+        if (isUndefined(cause)) message else cause?.toString() ?: void
+    } else message ?: void
     throwable.cause = cause
     throwable.name = "Throwable"
     return throwable.unsafeCast<Throwable>()
@@ -109,10 +109,10 @@ internal fun setPropertiesToThrowableInstance(this_: dynamic, message: String?, 
             @Suppress("SENSELESS_COMPARISON")
             if (message !== null) {
                 // undefined
-                cause?.toString() ?: undefined
+                cause?.toString() ?: void
             } else {
                 // real null
-                undefined
+                void
             }
         } else message
     }
@@ -135,7 +135,7 @@ internal fun errorCode(description: String): Nothing {
 }
 
 @Suppress("SENSELESS_COMPARISON")
-internal fun isUndefined(value: dynamic): Boolean = value === undefined
+internal fun isUndefined(value: dynamic): Boolean = value === void
 
 internal fun <T, R> boxIntrinsic(@Suppress("UNUSED_PARAMETER") x: T): R = error("Should be lowered")
 internal fun <T, R> unboxIntrinsic(@Suppress("UNUSED_PARAMETER") x: T): R = error("Should be lowered")

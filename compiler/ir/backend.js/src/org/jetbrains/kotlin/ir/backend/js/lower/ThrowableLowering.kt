@@ -31,7 +31,8 @@ class ThrowableLowering(
 
     private val void = context.intrinsics.void
 
-    private fun undefinedValue(): IrExpression = IrGetFieldImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, void.owner.backingField!!.symbol, nothingNType)
+    private fun undefinedValue(): IrExpression =
+        IrGetFieldImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, void.owner.backingField!!.symbol, nothingNType)
 
     data class ThrowableArguments(
         val message: IrExpression,

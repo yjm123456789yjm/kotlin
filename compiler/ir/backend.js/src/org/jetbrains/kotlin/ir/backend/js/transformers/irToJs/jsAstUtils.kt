@@ -345,7 +345,7 @@ fun translateCallArguments(
                     it.symbol.owner.correspondingPropertySymbol == context.staticContext.backendContext.intrinsics.void
         }
         .map {
-            it!!.accept(transformer, context)
+            it?.accept(transformer, context)
         }
         .mapIndexed { index, result ->
             val isEmptyExternalVararg = validWithNullArgs &&

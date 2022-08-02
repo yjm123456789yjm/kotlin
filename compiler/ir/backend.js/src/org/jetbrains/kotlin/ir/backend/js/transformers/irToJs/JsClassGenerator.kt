@@ -271,7 +271,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         // interface I { foo() = "OK" }
         // interface II : I
         // II.prototype.foo = I.prototype.foo
-        if (!irClass.isInterface) {
+        if (!irClass.isInterface && !declaration.overriddenSymbols.any { !it.owner.parentAsClass.isInterface }) {
             val isFakeOverride = declaration.isFakeOverride
             val missedOverrides = mutableListOf<IrSimpleFunction>()
             declaration.collectRealOverrides()
@@ -342,11 +342,13 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         val fastPrototype = generateFastPrototype()
         val suspendArity = generateSuspendArity()
 
+        val undefined = context.getNameForField(context.staticContext.backendContext.intrinsics.void.owner.backingField!!)
+
         val constructorCall = JsInvocation(
             JsNameRef(context.getNameForStaticFunction(metadataConstructor.owner)),
             listOf(simpleName, interfaces, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
                 .dropLastWhile { it == null }
-                .map { it ?: Namer.JS_UNDEFINED }
+                .map { it ?: undefined.makeRef() }
         )
 
         return jsAssignment(JsNameRef(Namer.METADATA, classNameRef), constructorCall).makeStmt()

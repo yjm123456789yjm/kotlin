@@ -12,7 +12,7 @@ internal fun interfaceMeta(
     associatedObjects: dynamic,
     suspendArity: Array<Int>?,
 ): Metadata {
-    return createMetadata("interface", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, js("undefined"))
+    return createMetadata("interface", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, void)
 }
 
 internal fun objectMeta(
@@ -38,7 +38,7 @@ internal fun classMeta(
 }
 
 // Seems like we need to disable this check if variables are used inside js annotation
-@Suppress("UNUSED_PARAMETER")
+@Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
 private fun createMetadata(
     kind: String,
     name: String?,
@@ -48,18 +48,19 @@ private fun createMetadata(
     suspendArity: Array<Int>?,
     fastPrototype: Prototype?
 ): Metadata {
+    val undef = void
     return js("""({
     kind: kind,
     simpleName: name,
-    interfaceId: kind === "interface" ? -1 : undefined,
+    interfaceId: kind === "interface" ? -1 : undef,
     interfaces: interfaces || [],
     associatedObjectKey: associatedObjectKey,
     associatedObjects: associatedObjects,
     suspendArity: suspendArity,
     fastPrototype: fastPrototype,
-    ${'$'}kClass$: undefined,
+    ${'$'}kClass$: undef,
     interfacesCache: {
-       isComplete: fastPrototype === undefined && (interfaces === undefined || interfaces.length === 0),
+       isComplete: fastPrototype === undef && (interfaces === undef || interfaces.length === 0),
        implementInterfaceMemo: {}
     }
 })""")
