@@ -71,6 +71,9 @@ constructor(
         compilation: KotlinJsCompilation = defaultCompilation
     ): List<JsBinary> {
         if (target is KotlinJsIrTarget) {
+            target.legacyTarget
+                ?.let { throw IllegalStateException("Can't use `executable()` with 'both' compiler type") }
+
             target.whenBrowserConfigured {
                 (this as KotlinJsIrSubTarget).produceExecutable()
             }
@@ -87,9 +90,6 @@ constructor(
         }
 
         if (target is KotlinJsTarget) {
-            target.irTarget
-                ?.let { throw IllegalStateException("Can't use `executable()` with 'both' compiler type") }
-
             target.whenBrowserConfigured {
                 (this as KotlinJsSubTarget).produceExecutable()
             }

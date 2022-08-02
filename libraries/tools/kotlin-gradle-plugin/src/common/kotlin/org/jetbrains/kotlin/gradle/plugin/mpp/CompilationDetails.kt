@@ -622,7 +622,7 @@ internal open class JsCompilationDetails(
 
     override val defaultSourceSetName: String
         get() {
-            val classifier = if (target is KotlinJsTarget && target.irTarget != null)
+            val classifier = if (target is KotlinJsTarget && target.mixedMode)
                 target.disambiguationClassifierInPlatform
             else target.disambiguationClassifier
 
@@ -645,7 +645,7 @@ internal class JsIrCompilationDetails(target: KotlinTarget, compilationPurpose: 
         get() {
             val target = target as KotlinJsIrTarget
             return lowerCamelCaseName(
-                if (target.mixedMode)
+                if (target.legacyTarget != null)
                     target.disambiguationClassifierInPlatform
                 else
                     target.disambiguationClassifier,

@@ -12,7 +12,6 @@ import org.jetbrains.kotlin.gradle.targets.js.ir.KotlinJsIrCompilation
 class KotlinJsCompilationFactory(
     val project: Project,
     val target: KotlinOnlyTarget<KotlinJsCompilation>,
-    val irTarget: KotlinOnlyTarget<KotlinJsIrCompilation>?
 ) : KotlinCompilationFactory<KotlinJsCompilation> {
     override val itemClass: Class<KotlinJsCompilation>
         get() = KotlinJsCompilation::class.java
