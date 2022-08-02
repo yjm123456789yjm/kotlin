@@ -1,0 +1,35 @@
+package
+
+@kotlin.OptIn(markerClass = {kotlin.experimental.ExperimentalTypeInference::class}) public fun </*0*/ W> flow(/*0*/ @kotlin.BuilderInference block: FlowCollector<W>.() -> kotlin.Unit): Flow<W>
+public fun </*0*/ F : kotlin.Any> foo(/*0*/ bar: F, /*1*/ block: Scope<F>.(F) -> kotlin.Unit): kotlin.Unit
+public fun test(): kotlin.Unit
+public fun Flow<*>.collect(): kotlin.Unit
+
+public interface Flow</*0*/ out O> {
+    public abstract fun collect(/*0*/ collector: FlowCollector<O>): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public fun interface FlowCollector</*0*/ in I> {
+    public abstract fun emit(/*0*/ value: I): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public final class FlowCollectorImpl</*0*/ C> : FlowCollector<C> {
+    public constructor FlowCollectorImpl</*0*/ C>()
+    public open override /*1*/ fun emit(/*0*/ value: C): kotlin.Unit
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
+
+public final class Scope</*0*/ S> {
+    public constructor Scope</*0*/ S>()
+    public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
+}
