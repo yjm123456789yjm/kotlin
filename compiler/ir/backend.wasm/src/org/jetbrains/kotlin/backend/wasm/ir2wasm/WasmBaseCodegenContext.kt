@@ -35,6 +35,7 @@ interface WasmBaseCodegenContext {
     fun referenceInterfaceId(irInterface: IrClassSymbol): WasmSymbol<Int>
 
     fun referenceStringLiteral(string: String): WasmSymbol<Int>
+    fun referenceConstStringLiteral(string: String): WasmSymbol<Int>
 
     fun transformType(irType: IrType): WasmType
     fun transformFieldType(irType: IrType): WasmType

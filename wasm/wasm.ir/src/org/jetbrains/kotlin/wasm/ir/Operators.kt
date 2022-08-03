@@ -34,7 +34,7 @@ enum class WasmImmediateKind {
     STRUCT_TYPE_IDX,
     STRUCT_FIELD_IDX,
     TYPE_IMM,
-    HEAP_TYPE
+    HEAP_TYPE,
 }
 
 sealed class WasmImmediate {
@@ -378,7 +378,27 @@ enum class WasmOp(
 
     BR_ON_NON_FUNC("br_on_non_func", 0xfb63, listOf(LABEL_IDX)),
     BR_ON_NON_DATA("br_on_non_data", 0xfb64, listOf(LABEL_IDX)),
-    BR_ON_NON_I31("br_on_non_i31", 0xfb65, listOf(LABEL_IDX)),
+    BR_ON_NON_I31("br_on_non_i31", 0xfb65, CONST_I32),
+
+    // stringref proposal
+    STRING_CONST("string.const", 0xfb82, CONST_I32),
+    STRING_CONCAT("string.concat", 0xfb88),
+    STRING_EQ("string.eq", 0xfb89),
+    STRING_AS_ITER("string.eq", 0xfba0),
+
+    STRING_NEW_WTF16_ARRAY("string.new_wtf16_array", 0xfbb1),
+    STRING_MEASURE_WTF16("string.measure_wtf16", 0xfb85),
+    STRING_ENCODE_WTF16_ARRAY("encode_wtf16_array", 0xfbb3),
+
+    STRINGVIEW_ITER_NEXT("stringview_iter.next", 0xfba1),
+    STRINGVIEW_ITER_ADVANCE("stringview_iter.advance", 0xfba2),
+    STRINGVIEW_ITER_REWIND("stringview_iter.rewind", 0xfba3),
+    STRINGVIEW_ITER_SLICE("stringview_iter.slice", 0xfba4),
+    STRINGVIEW_AS_WTF16("string.as_wtf16", 0xfb98),
+    STRINGVIEW_WTF16_LENGTH("stringview_wtf16.length", 0xfb99),
+    STRINGVIEW_WTF16_GET_CODEUNIT("stringview_wtf16.get_codeunit", 0xfb9a),
+    STRINGVIEW_WTF16_SLICE("stringview_wtf16.slice", 0xfb9c),
+
 
     // Pseudo-instruction, just alias for a normal call. It's used to easily spot get_unit on the wasm level.
     GET_UNIT("call", 0x10, FUNC_IDX)

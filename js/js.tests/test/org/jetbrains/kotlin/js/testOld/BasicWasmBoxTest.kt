@@ -189,6 +189,7 @@ abstract class BasicWasmBoxTest(
                     .run(
                         "--experimental-wasm-gc",
                         "--experimental-wasm-eh",
+                        "--experimental-wasm-stringref",
                         *jsFilesBefore.map { File(it).absolutePath }.toTypedArray(),
                         "--module",
                         "./test.mjs",

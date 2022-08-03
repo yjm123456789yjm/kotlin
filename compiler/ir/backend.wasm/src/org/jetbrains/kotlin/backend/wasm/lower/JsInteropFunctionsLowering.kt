@@ -206,8 +206,10 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             builtIns.doubleType,
             context.wasmSymbols.voidType ->
                 return null
-
         }
+
+        if (this.classFqName?.toString() == "kotlin.StringRefString")
+            return FunctionBasedAdapter(adapters.kotlinToJsStringRefAdapter.owner)
 
         if (isExternalType(this))
             return null
@@ -273,6 +275,9 @@ class JsInteropFunctionsLowering(val context: WasmBackendContext) : DeclarationT
             context.wasmSymbols.voidType ->
                 return null
         }
+
+        if (this.classFqName?.toString() == "kotlin.StringRefString")
+            return FunctionBasedAdapter(adapters.jsToKotlinStringRefAdapter.owner)
 
         if (isExternalType(this))
             return null

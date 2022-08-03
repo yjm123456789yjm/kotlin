@@ -9,10 +9,7 @@
 
 package kotlin.wasm.internal
 
-import kotlin.wasm.internal.reftypes.anyref
-import kotlin.wasm.internal.reftypes.dataref
-import kotlin.wasm.internal.reftypes.funcref
-import kotlin.wasm.internal.reftypes.i31ref
+import kotlin.wasm.internal.reftypes.*
 
 @WasmOp(WasmOp.UNREACHABLE)
 internal fun wasm_unreachable(): Nothing =
@@ -391,3 +388,47 @@ internal external fun wasm_ref_as_data(x: anyref): dataref
 
 @WasmOp(WasmOp.REF_AS_I31)
 internal external fun wasm_ref_as_i31(x: anyref): i31ref
+
+// stringref proposal
+
+@WasmOp(WasmOp.STRING_NEW_WTF16_ARRAY)
+internal external fun wasm_string_new_wtf16_array(codeunits: WasmCharArray, start: Int, end: Int): stringref
+
+@WasmOp(WasmOp.STRING_MEASURE_WTF16)
+internal external fun wasm_string_measure_wtf16(string: stringref): Int
+
+@WasmOp(WasmOp.STRING_ENCODE_WTF16_ARRAY)
+internal external fun wasm_string_encode_wtf16_array(string: stringref, array: WasmCharArray, start: Int): Int
+
+@WasmOp(WasmOp.STRING_CONCAT)
+internal external fun wasm_string_concat(string1: stringref, string2: stringref): stringref
+
+@WasmOp(WasmOp.STRING_EQ)
+internal external fun wasm_string_eq(string1: stringref, string2: stringref): Boolean
+
+@WasmOp(WasmOp.STRINGVIEW_AS_WTF16)
+internal external fun wasm_string_as_wtf16(string: stringref): stringview_wtf16
+
+@WasmOp(WasmOp.STRINGVIEW_WTF16_LENGTH)
+internal external fun wasm_stringview_wtf16_length(stringView: stringview_wtf16): Int
+
+@WasmOp(WasmOp.STRINGVIEW_WTF16_GET_CODEUNIT)
+internal external fun wasm_stringview_wtf16_get_codeunit(stringView: stringview_wtf16, pos: Int): Int
+
+@WasmOp(WasmOp.STRINGVIEW_WTF16_SLICE)
+internal external fun wasm_stringview_wtf16_slice(stringView: stringview_wtf16, start: Int, end: Int): stringref
+
+@WasmOp(WasmOp.STRING_AS_ITER)
+internal external fun wasm_string_as_iter(string: stringref): stringview_iter
+
+@WasmOp(WasmOp.STRINGVIEW_ITER_NEXT)
+internal external fun wasm_stringview_iter_next(view: stringview_iter): Int
+
+@WasmOp(WasmOp.STRINGVIEW_ITER_ADVANCE)
+internal external fun wasm_stringview_iter_advance(view: stringview_iter, codepoints: Int): Int
+
+@WasmOp(WasmOp.STRINGVIEW_ITER_REWIND)
+internal external fun wasm_stringview_iter_rewind(view: stringview_iter, codepoints: Int): Int
+
+@WasmOp(WasmOp.STRINGVIEW_ITER_SLICE)
+internal external fun wasm_stringview_iter_slice(view: stringview_iter, codepoints: Int): Int

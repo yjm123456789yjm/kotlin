@@ -6,6 +6,7 @@
 package kotlin.wasm.internal
 
 import kotlin.wasm.internal.reftypes.anyref
+import kotlin.wasm.internal.reftypes.stringref
 
 internal external interface ExternalInterfaceType
 
@@ -236,3 +237,6 @@ internal fun jsToKotlinAnyAdapter(x: ExternalInterfaceType): Any? =
 internal fun jsToKotlinByteAdapter(x: Int): Byte = x.toByte()
 internal fun jsToKotlinShortAdapter(x: Int): Short = x.toShort()
 internal fun jsToKotlinCharAdapter(x: Int): Char = x.toChar()
+
+internal fun kotlinToJsStringRefAdapter(x: StringRefString?): stringref? = x?.reference
+internal fun jsToKotlinStringRefAdapter(x: stringref): StringRefString = StringRefString(x)

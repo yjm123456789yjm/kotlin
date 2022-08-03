@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.backend.wasm.ir2wasm
 
+import com.sun.org.apache.xpath.internal.compiler.OpCodes
 import org.jetbrains.kotlin.backend.wasm.WasmBackendContext
 import org.jetbrains.kotlin.backend.wasm.utils.*
 import org.jetbrains.kotlin.config.AnalysisFlags.allowFullyQualifiedNameInKClass
@@ -129,7 +130,23 @@ class DeclarationGenerator(
         val bodyBuilder = BodyGenerator(functionCodegenContext, hierarchyDisjointUnions)
 
         require(declaration.body is IrBlockBody) { "Only IrBlockBody is supported" }
-        declaration.body?.acceptVoid(bodyBuilder)
+        if (declaration.name.asString() == "lolkek1") {
+            bodyBuilder.body.buildConstStringSymbol(context.referenceConstStringLiteral("lol kek"))
+            bodyBuilder.body.buildConstStringSymbol(context.referenceConstStringLiteral("lol kek"))
+
+            bodyBuilder.body.buildInstr(WasmOp.STRING_MEASURE_WTF16)
+            val wasmGcType: WasmSymbol<WasmTypeDeclaration> = context.referenceGcType(context.backendContext.wasmSymbols.getInternalClass("WasmCharArray"))
+            bodyBuilder.body.buildInstr(WasmOp.ARRAY_NEW_DEFAULT, WasmImmediate.GcType(wasmGcType))
+
+            bodyBuilder.body.buildConstI32(0)
+
+            bodyBuilder.body.buildInstr(WasmOp.STRING_ENCODE_WTF16_ARRAY)
+
+
+            bodyBuilder.body.buildInstr(WasmOp.RETURN)
+        } else {
+            declaration.body?.acceptVoid(bodyBuilder)
+        }
 
         // Return implicit this from constructions to avoid extra tmp
         // variables on constructor call sites.
@@ -446,6 +463,8 @@ fun generateDefaultInitializerForType(type: WasmType, g: WasmExpressionBuilder) 
     WasmF64 -> g.buildConstF64(0.0)
     is WasmRefNullType -> g.buildRefNull(type.heapType)
     is WasmAnyRef -> g.buildRefNull(WasmHeapType.Simple.Any)
+    is WasmStringRef -> g.buildRefNull(WasmHeapType.Simple.StringRef)
+    is WasmStringViewWTF16 -> g.buildRefNull(WasmHeapType.Simple.StringViewWtf16)
     WasmUnreachableType -> error("Unreachable type can't be initialized")
     else -> error("Unknown value type ${type.name}")
 }

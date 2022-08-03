@@ -62,6 +62,10 @@ class WasmModuleCodegenContextImpl(
         return wasmFragment.stringLiteralId.reference(string)
     }
 
+    override fun referenceConstStringLiteral(string: String): WasmSymbol<Int> {
+        return wasmFragment.constStringLiteralId.reference(string)
+    }
+
     override fun generateTypeInfo(irClass: IrClassSymbol, typeInfo: ConstantDataElement) {
         wasmFragment.typeInfo.define(irClass, typeInfo)
     }

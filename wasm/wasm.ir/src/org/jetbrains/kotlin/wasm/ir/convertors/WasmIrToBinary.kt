@@ -75,6 +75,12 @@ class WasmIrToBinary(outputStream: OutputStream, val module: WasmModule, val mod
                 tags.forEach { appendTag(it) }
             }
 
+            appendSection(14u) {
+                b.writeByte(0)
+                appendVectorSize(constantStrings.size)
+                constantStrings.forEach { appendConstString(it) }
+            }
+
             appendSection(6u) {
                 appendVectorSize(globals.size)
                 globals.forEach { appendGlobal(it) }
@@ -351,6 +357,12 @@ class WasmIrToBinary(outputStream: OutputStream, val module: WasmModule, val mod
         appendType(c.type)
         b.writeVarUInt1(c.isMutable)
         appendExpr(c.init)
+    }
+
+    private fun appendConstString(s: String) {
+        val utf8Array = s.toByteArray(Charsets.UTF_8)
+        appendVectorSize(utf8Array.size)
+        b.writeBytes(utf8Array)
     }
 
     private fun appendTag(t: WasmTag) {

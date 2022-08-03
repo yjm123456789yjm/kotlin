@@ -58,7 +58,7 @@ class WasmIrToText : SExpressionBuilder() {
             appendElement("align=$alignEffective")
     }
 
-    private fun appendInstr(wasmInstr: WasmInstr) {
+    private fun appendInstr(wasmInstr: WasmInstr, constantStrings: List<String>) {
         val op = wasmInstr.operator
         if (op == WasmOp.END || op == WasmOp.ELSE || op == WasmOp.CATCH)
             indent--
@@ -75,8 +75,13 @@ class WasmIrToText : SExpressionBuilder() {
             }
             return
         }
+
         wasmInstr.immediates.forEach {
-            appendImmediate(it)
+            if (wasmInstr.operator == WasmOp.STRING_CONST && it is WasmImmediate.SymbolI32) {
+                appendElement("\"${constantStrings[it.value.owner]}\"")
+            } else {
+                appendImmediate(it)
+            }
         }
     }
 
@@ -212,19 +217,19 @@ class WasmIrToText : SExpressionBuilder() {
                         is WasmFunction.Imported -> appendImportedFunction(it)
                         is WasmMemory -> appendMemory(it)
                         is WasmTable -> appendTable(it)
-                        is WasmGlobal -> appendGlobal(it)
+                        is WasmGlobal -> appendGlobal(it, constantStrings)
                         is WasmTag -> appendTag(it)
                         else -> error("Unknown import kind ${it::class}")
                     }
                 }
-                definedFunctions.forEach { appendDefinedFunction(it) }
+                definedFunctions.forEach { appendDefinedFunction(it, constantStrings) }
                 tables.forEach { appendTable(it) }
                 memories.forEach { appendMemory(it) }
-                globals.forEach { appendGlobal(it) }
+                globals.forEach { appendGlobal(it, constantStrings) }
                 exports.forEach { appendExport(it) }
-                elements.forEach { appendWasmElement(it) }
+                elements.forEach { appendWasmElement(it, constantStrings) }
                 startFunction?.let { appendStartFunction(it) }
-                data.forEach { appendData(it) }
+                data.forEach { appendData(it, constantStrings) }
                 tags.forEach { appendTag(it) }
             }
         }
@@ -296,7 +301,7 @@ class WasmIrToText : SExpressionBuilder() {
         }
     }
 
-    private fun appendDefinedFunction(function: WasmFunction.Defined) {
+    private fun appendDefinedFunction(function: WasmFunction.Defined, constantStrings: List<String>) {
         newLineList("func") {
             appendModuleFieldReference(function)
             sameLineList("type") { appendModuleFieldReference(function.type) }
@@ -307,7 +312,7 @@ class WasmIrToText : SExpressionBuilder() {
                 }
             }
             function.locals.forEach { if (!it.isParameter) appendLocal(it) }
-            function.instructions.forEach { appendInstr(it) }
+            function.instructions.forEach { appendInstr(it, constantStrings) }
         }
     }
 
@@ -333,7 +338,7 @@ class WasmIrToText : SExpressionBuilder() {
         limits.maxSize?.let { appendElement(it.toString()) }
     }
 
-    private fun appendGlobal(global: WasmGlobal) {
+    private fun appendGlobal(global: WasmGlobal, constantStrings: List<String>) {
         newLineList("global") {
             appendModuleFieldReference(global)
 
@@ -344,7 +349,7 @@ class WasmIrToText : SExpressionBuilder() {
             else
                 appendType(global.type)
 
-            global.init.forEach { appendInstr(it) }
+            global.init.forEach { appendInstr(it, constantStrings) }
         }
     }
 
@@ -357,7 +362,7 @@ class WasmIrToText : SExpressionBuilder() {
         }
     }
 
-    private fun appendWasmElement(element: WasmElement) {
+    private fun appendWasmElement(element: WasmElement, constantStrings: List<String>) {
         newLineList("elem") {
             when (val mode = element.mode) {
                 WasmElement.Mode.Passive -> {
@@ -366,7 +371,7 @@ class WasmIrToText : SExpressionBuilder() {
                     if (mode.table.id != 0) {
                         sameLineList("table") { appendModuleFieldReference(mode.table) }
                     }
-                    sameLineList("") { appendInstr(mode.offset.single()) }
+                    sameLineList("") { appendInstr(mode.offset.single(), constantStrings) }
                 }
                 WasmElement.Mode.Declarative -> {
                     appendElement("declare")
@@ -385,7 +390,7 @@ class WasmIrToText : SExpressionBuilder() {
                 for (value in element.values) {
                     require(value is WasmTable.Value.Expression)
                     sameLineList("item") {
-                        appendInstr(value.expr.single())
+                        appendInstr(value.expr.single(), constantStrings)
                     }
                 }
             }
@@ -398,7 +403,7 @@ class WasmIrToText : SExpressionBuilder() {
         }
     }
 
-    private fun appendData(wasmData: WasmData) {
+    private fun appendData(wasmData: WasmData, constantStrings: List<String>) {
         newLineList("data") {
             when (val mode = wasmData.mode) {
                 is WasmDataMode.Active -> {
@@ -406,7 +411,7 @@ class WasmIrToText : SExpressionBuilder() {
                         sameLineList("memory") { appendElement(mode.memoryIdx.toString()) }
                     }
                     sameLineList("") {
-                        appendInstr(mode.offset.single())
+                        appendInstr(mode.offset.single(), constantStrings)
                     }
                 }
                 WasmDataMode.Passive -> {

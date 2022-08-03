@@ -1,19 +1,19 @@
-// FILE: externals.js
+@JsFun("(a, b) => a + b")
+private external fun jsf(a: StringRefString, b: StringRefString): StringRefString
 
-function id(str) {
-    return str
+
+fun lolkek(): Int {
+
+    val a = StringRefString.fromString("lol")
+    val b = StringRefString.fromString("kek")
+
+    val sss = jsf(a, b)
+    println(sss)
+
+    return 42
 }
 
-// FILE: externals.kt
-
-external fun id(str: String): String
-
 fun box(): String {
-    var x = "1234567890"
-    for (i in 1 until 20) {
-        x += x
-        val stringFromJs = id(x)
-        if (!stringFromJs.equals(x)) return "FAIL"
-    }
+    println(lolkek())
     return "OK"
 }

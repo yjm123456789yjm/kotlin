@@ -40,6 +40,7 @@ constructor(
     override fun exec() {
         val newArgs = mutableListOf<String>()
         newArgs.addAll(d8Args)
+        newArgs.add("--experimental-wasm-stringref")
         if (inputFileProperty.isPresent) {
             val inputFile = inputFileProperty.asFile.get()
             workingDir = inputFile.parentFile

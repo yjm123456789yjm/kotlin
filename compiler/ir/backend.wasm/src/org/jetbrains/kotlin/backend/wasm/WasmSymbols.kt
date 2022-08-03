@@ -270,6 +270,9 @@ class WasmSymbols(
         val jsToKotlinByteAdapter = getInternalFunction("jsToKotlinByteAdapter")
         val jsToKotlinShortAdapter = getInternalFunction("jsToKotlinShortAdapter")
         val jsToKotlinCharAdapter = getInternalFunction("jsToKotlinCharAdapter")
+        // stringref
+        val jsToKotlinStringRefAdapter = getInternalFunction("jsToKotlinStringRefAdapter")
+        val kotlinToJsStringRefAdapter = getInternalFunction("kotlinToJsStringRefAdapter")
     }
 
     val jsInteropAdapters = JsInteropAdapters()
@@ -312,7 +315,7 @@ class WasmSymbols(
     private fun getInternalFunction(name: String) = getFunction(name, wasmInternalPackage)
 
     private fun getIrClass(fqName: FqName): IrClassSymbol = symbolTable.referenceClass(getClass(fqName))
-    private fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
+    fun getInternalClass(name: String): IrClassSymbol = getIrClass(FqName("kotlin.wasm.internal.$name"))
     fun getKFunctionType(type: IrType, list: List<IrType>): IrType {
         return irBuiltIns.functionN(list.size).typeWith(list + type)
     }

@@ -29,6 +29,10 @@ abstract class WasmExpressionBuilder {
         buildInstr(WasmOp.I32_CONST, WasmImmediate.SymbolI32(value))
     }
 
+    fun buildConstStringSymbol(value: WasmSymbol<Int>) {
+        buildInstr(WasmOp.STRING_CONST, WasmImmediate.SymbolI32(value))
+    }
+
     fun buildUnreachable() {
         buildInstr(WasmOp.UNREACHABLE)
     }

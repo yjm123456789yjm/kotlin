@@ -38,6 +38,8 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
         ReferencableElements<IrClassSymbol, Int>()
     val stringLiteralId =
         ReferencableElements<String, Int>()
+    val constStringLiteralId =
+        ReferencableElements<String, Int>()
 
     private val tagFuncType = WasmFunctionType(
         listOf(
@@ -121,6 +123,13 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
             currentDataSectionAddress += typeInfoElement.sizeInBytes
         }
 
+        val constStringsList = mutableListOf<String>()
+        constStringLiteralId.unbound.onEachIndexed { index, entry ->
+            constStringsList.add(entry.key)
+            entry.value.bind(index)
+        }
+
+
         val stringDataSectionStart = currentDataSectionAddress
         val stringDataSectionBytes = mutableListOf<Byte>()
         val stringAddrs = mutableMapOf<String, Int>()
@@ -197,7 +206,8 @@ class WasmCompiledModuleFragment(val irBuiltIns: IrBuiltIns) {
             startFunction = null,  // Module is initialized via export call
             elements = emptyList(),
             data = data,
-            tags = listOf(tag)
+            tags = listOf(tag),
+            constantStrings = constStringsList,
         )
         module.calculateIds()
         return module
