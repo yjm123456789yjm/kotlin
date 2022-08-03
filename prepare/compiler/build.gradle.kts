@@ -48,6 +48,8 @@ val libraries by configurations.creating {
     exclude("org.jetbrains.kotlin", "kotlin-stdlib-common")
 }
 
+val userDepsLibraries by configurations.creating
+
 val librariesStripVersion by configurations.creating
 
 // Compiler plugins should be copied without `kotlin-` prefix
@@ -76,6 +78,10 @@ val outputJar = fileFrom(buildDir, "libs", "$compilerBaseName.jar")
 
 val compilerModules: Array<String> by rootProject.extra
 
+val distUserDepsProjects = listOf(
+    ":kotlin-reflect",
+)
+
 val distLibraryProjects = listOfNotNull(
     ":kotlin-annotation-processing",
     ":kotlin-annotation-processing-cli",
@@ -89,10 +95,6 @@ val distLibraryProjects = listOfNotNull(
     ":kotlin-imports-dumper-compiler-plugin",
     ":kotlin-main-kts",
     ":kotlin-preloader",
-    // Although, Kotlin compiler is compiled against reflect of an older version (which is bundled into minimal supported IDEA). We put
-    // SNAPSHOT reflect into the dist because we use reflect dist in user code compile classpath (see JvmArgumentsKt.configureStandardLibs).
-    // We can use reflect of a bigger version in Kotlin compiler runtime, because kotlin-reflect follows backwards binary compatibility
-    ":kotlin-reflect",
     ":kotlin-runner",
     ":kotlin-script-runtime",
     ":kotlin-scripting-common",
@@ -161,9 +163,14 @@ dependencies {
 
     librariesStripVersion(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) { isTransitive = false }
     librariesStripVersion(commonDependency("org.jetbrains.intellij.deps:trove4j")) { isTransitive = false }
+    librariesStripVersion(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 
     distLibraryProjects.forEach {
         libraries(project(it)) { isTransitive = false }
+    }
+
+    distUserDepsProjects.forEach {
+        userDepsLibraries(project(it)) { isTransitive = false }
     }
 
     distCompilerPluginProjects.forEach {
@@ -373,6 +380,9 @@ val distKotlinc = distTask<Sync>("distKotlinc") {
         from(compilerPluginsFiles) {
             rename { it.removePrefix("kotlin-") }
         }
+    }
+    into("user_deps") {
+        from(userDepsLibraries)
     }
 }
 
