@@ -44,13 +44,13 @@ val buildSh by tasks.creating(Exec::class) {
 
 val buildSamplesWithPlatformLibs by tasks.creating {
     dependsOn(":csvparser:assemble")
-    dependsOn(":curl:assemble")
     dependsOn(":echoServer:assemble")
     dependsOn(":globalState:assemble")
     dependsOn(":html5Canvas:assemble")
     dependsOn(":workers:assemble")
 
     if (isMacos || isLinux) {
+        dependsOn(":curl:assemble")
         dependsOn(":nonBlockingEchoServer:assemble")
         dependsOn(":tensorflow:assemble")
     }
