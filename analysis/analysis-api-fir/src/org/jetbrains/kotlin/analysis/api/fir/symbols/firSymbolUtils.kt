@@ -16,11 +16,10 @@ import org.jetbrains.kotlin.analysis.api.impl.base.KtContextReceiverImpl
 import org.jetbrains.kotlin.analysis.api.symbols.KtValueParameterSymbol
 import org.jetbrains.kotlin.analysis.api.types.KtType
 import org.jetbrains.kotlin.analysis.utils.printer.getElementTextInContext
-import org.jetbrains.kotlin.fir.declarations.FirContextReceiver
-import org.jetbrains.kotlin.fir.declarations.FirDeclaration
-import org.jetbrains.kotlin.fir.declarations.FirResolvePhase
-import org.jetbrains.kotlin.fir.declarations.FirTypeParameterRefsOwner
+import org.jetbrains.kotlin.fir.declarations.*
+import org.jetbrains.kotlin.fir.expressions.FirPropertyAccessExpression
 import org.jetbrains.kotlin.fir.psi
+import org.jetbrains.kotlin.fir.references.impl.FirPropertyFromParameterResolvedNamedReference
 import org.jetbrains.kotlin.fir.renderer.FirRenderer
 import org.jetbrains.kotlin.fir.symbols.FirBasedSymbol
 import org.jetbrains.kotlin.fir.symbols.ensureResolved
@@ -89,8 +88,14 @@ internal fun FirCallableSymbol<*>.dispatchReceiverType(
     return dispatchReceiverType?.let { builder.typeBuilder.buildKtType(it) }
 }
 
-internal fun FirVariableSymbol<*>.getKtConstantInitializer(): KtInitializerValue? {
+internal fun FirVariableSymbol<*>.getKtConstantInitializer(forAnnotationDefaultValue: Boolean): KtInitializerValue? {
     ensureResolved(FirResolvePhase.BODY_RESOLVE)
-    val firInitializer = fir.initializer ?: return null
-    return firInitializer.asKtInitializerValue()
+    var firInitializer = fir.initializer ?: return null
+    if (firInitializer is FirPropertyAccessExpression) {
+        val calleeReference = firInitializer.calleeReference
+        if (calleeReference is FirPropertyFromParameterResolvedNamedReference) {
+            firInitializer = (calleeReference.resolvedSymbol.fir as? FirValueParameter)?.defaultValue ?: firInitializer
+        }
+    }
+    return firInitializer.asKtInitializerValue(moduleData.session, forAnnotationDefaultValue)
 }

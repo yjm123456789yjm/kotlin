@@ -83,7 +83,7 @@ internal abstract class FirLightMethod(
     override fun getThrowsList(): PsiReferenceList =
         KotlinLightReferenceListBuilder(manager, language, PsiReferenceList.Role.THROWS_LIST) //TODO()
 
-    override fun getDefaultValue(): PsiAnnotationMemberValue? = null //TODO()
+    override fun getDefaultValue(): PsiAnnotationMemberValue? = null
 
     protected fun <T> T.computeJvmMethodName(
         defaultName: String,

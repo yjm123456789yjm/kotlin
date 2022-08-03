@@ -19,6 +19,9 @@ import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtParameter
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.KtConstantInitializerValue
+import org.jetbrains.kotlin.analysis.api.KtConstantValueForAnnotation
+import org.jetbrains.kotlin.analysis.api.KtNonConstantInitializerValue
 import org.jetbrains.kotlin.analysis.api.symbols.*
 
 context(KtAnalysisSession)
@@ -184,4 +187,18 @@ internal class FirLightAccessorMethodForSymbol(
     override fun isValid(): Boolean = super.isValid() && propertyAccessorSymbol.isValid()
 
     override fun isOverride(): Boolean = propertyAccessorSymbol.isOverride
+
+    private val _defaultValue: PsiAnnotationMemberValue? by lazyPub {
+        if (!containingClass.isAnnotationType) return@lazyPub null
+        when (val initializer = containingPropertySymbol.initializer) {
+            is KtConstantInitializerValue -> initializer.constant.createPsiLiteral(this)
+            is KtConstantValueForAnnotation -> initializer.annotationValue.toAnnotationMemberValue(this)
+            is KtNonConstantInitializerValue -> null
+            null -> null
+        }
+    }
+
+    override fun getDefaultValue(): PsiAnnotationMemberValue? {
+        return _defaultValue
+    }
 }
