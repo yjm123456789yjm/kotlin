@@ -24,7 +24,7 @@ import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
 
 class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
-    DefaultArgumentStubGenerator(context, skipExternalMethods = true, forceSetOverrideSymbols = false) {
+    DefaultArgumentStubGenerator(context, skipExternalMethods = true, forceSetOverrideSymbols = false, keepOriginalArguments = true) {
     private val void = context.intrinsics.void
 
     private fun IrBuilderWithScope.createDefaultResolutionExpression(
@@ -98,8 +98,6 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
             return listOf(originalFun, defaultFunStub)
         }
 
-        defaultFunStub.saveOriginalArguments(originalFun)
-
         if (!defaultFunStub.isFakeOverride) {
             with(defaultFunStub) {
                 valueParameters.forEach {
@@ -160,18 +158,6 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                 }
             })
         }
-    }
-
-    private fun IrFunction.saveOriginalArguments(originalDeclaration: IrFunction) {
-        val currentDispatchReceiver = dispatchReceiverParameter
-        val currentExtensionReceiver = extensionReceiverParameter
-
-        typeParameters = emptyList()
-        valueParameters = emptyList()
-        copyParameterDeclarationsFrom(originalDeclaration)
-
-        dispatchReceiverParameter = currentDispatchReceiver
-        extensionReceiverParameter = currentExtensionReceiver
     }
 
     private fun IrFunction.generateJsNameAnnotationCall(): IrConstructorCall {

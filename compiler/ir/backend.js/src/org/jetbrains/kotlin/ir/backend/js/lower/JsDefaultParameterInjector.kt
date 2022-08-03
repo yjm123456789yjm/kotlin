@@ -15,7 +15,7 @@ import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
 
 class JsDefaultParameterInjector(context: JsIrBackendContext) :
-    DefaultParameterInjector(context, skipExternalMethods = true, forceSetOverrideSymbols = false, isMaskRequired = false) {
+    DefaultParameterInjector(context, skipExternalMethods = true, forceSetOverrideSymbols = false, keepOriginalArguments = true) {
     private val void = context.intrinsics.void
 
     override fun nullConst(startOffset: Int, endOffset: Int, type: IrType): IrExpression =
