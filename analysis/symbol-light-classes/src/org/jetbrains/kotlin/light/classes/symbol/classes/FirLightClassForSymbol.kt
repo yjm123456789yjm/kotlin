@@ -43,7 +43,7 @@ internal open class FirLightClassForSymbol(
 
     private val _modifierList: PsiModifierList? by lazyPub {
 
-        val modifiers = mutableSetOf(classOrObjectSymbol.toPsiVisibilityForClass(isTopLevel))
+        val modifiers = mutableSetOf(classOrObjectSymbol.toPsiVisibilityForClass())
         classOrObjectSymbol.computeSimpleModality()?.run {
             modifiers.add(this)
         }

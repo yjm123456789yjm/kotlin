@@ -88,7 +88,7 @@ class FirLightClassForFacade(
                     if (callableSymbol !is KtFunctionSymbol && callableSymbol !is KtKotlinPropertySymbol) continue
                     if (callableSymbol !is KtSymbolWithVisibility) continue
                     if ((callableSymbol as? KtAnnotatedSymbol)?.hasInlineOnlyAnnotation() == true) continue
-                    val isPrivate = callableSymbol.toPsiVisibilityForMember(isTopLevel = true) == PsiModifier.PRIVATE
+                    val isPrivate = callableSymbol.toPsiVisibilityForMember() == PsiModifier.PRIVATE
                     if (isPrivate && multiFileClass) continue
                     yield(callableSymbol)
                 }
@@ -116,9 +116,9 @@ class FirLightClassForFacade(
             if (multiFileClass && !propertySymbol.isConst) continue
 
             val isLateInitWithPublicAccessors = if (propertySymbol.isLateInit) {
-                val getterIsPublic = propertySymbol.getter?.toPsiVisibilityForMember(isTopLevel = true)
+                val getterIsPublic = propertySymbol.getter?.toPsiVisibilityForMember()
                     ?.let { it == PsiModifier.PUBLIC } ?: true
-                val setterIsPublic = propertySymbol.setter?.toPsiVisibilityForMember(isTopLevel = true)
+                val setterIsPublic = propertySymbol.setter?.toPsiVisibilityForMember()
                     ?.let { it == PsiModifier.PUBLIC } ?: true
                 getterIsPublic && setterIsPublic
             } else false

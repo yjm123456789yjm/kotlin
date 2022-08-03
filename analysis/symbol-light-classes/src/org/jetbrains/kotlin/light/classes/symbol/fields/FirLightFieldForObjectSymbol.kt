@@ -29,7 +29,7 @@ internal class FirLightFieldForObjectSymbol(
     override fun getName(): String = name
 
     private val _modifierList: PsiModifierList by lazyPub {
-        val modifiers = setOf(objectSymbol.toPsiVisibilityForMember(isTopLevel = false), PsiModifier.STATIC, PsiModifier.FINAL)
+        val modifiers = setOf(objectSymbol.toPsiVisibilityForMember(), PsiModifier.STATIC, PsiModifier.FINAL)
         val notNullAnnotation = FirLightSimpleAnnotation(NotNull::class.java.name, this)
         FirLightMemberModifierList(this, modifiers, listOf(notNullAnnotation))
     }

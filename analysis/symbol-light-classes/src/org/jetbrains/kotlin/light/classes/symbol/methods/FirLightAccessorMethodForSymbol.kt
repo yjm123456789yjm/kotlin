@@ -106,8 +106,8 @@ internal class FirLightAccessorMethodForSymbol(
 
         val visibility = isOverrideMethod.ifTrue {
             tryGetEffectiveVisibility(containingPropertySymbol)
-                ?.toPsiVisibilityForMember(isTopLevel)
-        } ?: propertyAccessorSymbol.toPsiVisibilityForMember(isTopLevel)
+                ?.toPsiVisibilityForMember()
+        } ?: propertyAccessorSymbol.toPsiVisibilityForMember()
         modifiers.add(visibility)
 
         if (!suppressStatic &&

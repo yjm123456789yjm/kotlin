@@ -80,7 +80,7 @@ internal class FirLightFieldForPropertySymbol(
         }
 
         val visibility =
-            if (takePropertyVisibility) propertySymbol.toPsiVisibilityForMember(isTopLevel = false) else PsiModifier.PRIVATE
+            if (takePropertyVisibility) propertySymbol.toPsiVisibilityForMember() else PsiModifier.PRIVATE
         modifiers.add(visibility)
 
         if (!suppressFinal) {

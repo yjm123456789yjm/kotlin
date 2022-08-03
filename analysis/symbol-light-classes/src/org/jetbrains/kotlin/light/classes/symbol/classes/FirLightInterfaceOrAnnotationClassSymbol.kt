@@ -31,7 +31,7 @@ internal abstract class FirLightInterfaceOrAnnotationClassSymbol(
 
     private val _modifierList: PsiModifierList? by lazyPub {
 
-        val modifiers = mutableSetOf(classOrObjectSymbol.toPsiVisibilityForClass(isTopLevel), PsiModifier.ABSTRACT)
+        val modifiers = mutableSetOf(classOrObjectSymbol.toPsiVisibilityForClass(), PsiModifier.ABSTRACT)
         if (!isTopLevel && !classOrObjectSymbol.isInner) {
             modifiers.add(PsiModifier.STATIC)
         }
