@@ -1,3 +1,4 @@
+// FIR_ALMOST_DONE
 // IGNORE_BACKEND: JVM_IR
 
 package modifiers

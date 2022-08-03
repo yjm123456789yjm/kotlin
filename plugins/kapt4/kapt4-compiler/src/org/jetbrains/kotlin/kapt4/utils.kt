@@ -134,6 +134,7 @@ val PsiModifierListOwner.accessFlags: Int
 
 private fun computeCommonAccessFlags(declaration: PsiModifierListOwner): Int {
     /*
+     * int ACC_STATIC = 0x0008; // field, method; class didn't mentioned but actually used
      * int ACC_PUBLIC = 0x0001; // class, field, method
      * int ACC_PRIVATE = 0x0002; // class, field, method
      * int ACC_PROTECTED = 0x0004; // class, field, method
@@ -156,6 +157,9 @@ private fun computeCommonAccessFlags(declaration: PsiModifierListOwner): Int {
     if (declaration.annotations.any { it.hasQualifiedName(StandardNames.FqNames.deprecated.asString()) }) {
         access = access or Opcodes.ACC_DEPRECATED
     }
+    if (declaration.isStatic) {
+        access = access or Opcodes.ACC_STATIC
+    }
     return access
 }
 
@@ -171,31 +175,6 @@ private fun computeParameterAccessFlags(parameter: PsiParameter): Int {
     }
 }
 
-// TODO
-//val parentClass = lightClass.parent as? PsiClass
-//
-//var access = lightClass.accessFlags
-//access = access or when {
-//    lightClass.isRecord -> Opcodes.ACC_RECORD
-//    lightClass.isInterface -> Opcodes.ACC_INTERFACE
-//    lightClass.isEnum -> Opcodes.ACC_ENUM
-//    else -> 0
-//}
-//
-//if (parentClass?.isInterface == true) {
-//    // Classes inside interfaces should always be public and static.
-//    // See com.sun.tools.javac.comp.Enter.visitClassDef for more information.
-//    return (access or Opcodes.ACC_PUBLIC or Opcodes.ACC_STATIC) and
-//            Opcodes.ACC_PRIVATE.inv() and Opcodes.ACC_PROTECTED.inv() // Remove private and protected modifiers
-//}
-//
-//if (isNested) {
-//    access = access or Opcodes.ACC_STATIC
-//}
-//if (lightClass.isAnnotationType) {
-//    access = access or Opcodes.ACC_ANNOTATION
-//}
-//return access
 private fun computeClassAccessFlags(klass: PsiClass): Int {
     /*
      * int ACC_SUPER = 0x0020; // class <-- TODO
@@ -230,7 +209,6 @@ private fun computeClassAccessFlags(klass: PsiClass): Int {
 
 private fun computeMethodAccessFlags(method: PsiMethod): Int {
     /*
-     * int ACC_STATIC = 0x0008; // field, method
      * int ACC_SYNCHRONIZED = 0x0020; // method
      * int ACC_BRIDGE = 0x0040; // method <-- TODO
      * int ACC_VARARGS = 0x0080; // method
@@ -240,9 +218,7 @@ private fun computeMethodAccessFlags(method: PsiMethod): Int {
      * int ACC_MANDATED = 0x8000; // field, method, parameter, module, module * <-- TODO
      */
     var access = computeCommonAccessFlags(method)
-    if (method.isStatic) {
-        access = access or Opcodes.ACC_STATIC
-    }
+
     if (method.isSynchronized) {
         access = access or Opcodes.ACC_SYNCHRONIZED
     }
@@ -263,7 +239,6 @@ private fun computeMethodAccessFlags(method: PsiMethod): Int {
 
 private fun computeFieldAccessFlags(field: PsiField): Int {
     /*
-     * int ACC_STATIC = 0x0008; // field, method
      * int ACC_VOLATILE = 0x0040; // field
      * int ACC_TRANSIENT = 0x0080; // field
      * int ACC_SYNTHETIC = 0x1000; // class, field, method, parameter, module * <-- TODO
@@ -271,9 +246,6 @@ private fun computeFieldAccessFlags(field: PsiField): Int {
      * int ACC_MANDATED = 0x8000; // field, method, parameter, module, module * <-- TODO
      */
     var access = computeCommonAccessFlags(field)
-    if (field.isStatic) {
-        access = access or Opcodes.ACC_STATIC
-    }
     if (field.isVolatile) {
         access = access or Opcodes.ACC_VOLATILE
     }

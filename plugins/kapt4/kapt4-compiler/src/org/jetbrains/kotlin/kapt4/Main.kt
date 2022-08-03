@@ -91,7 +91,10 @@ class Kapt4ContextForStubGeneration(
     }
 }
 
-const val NO_NAME_PROVIDED = "<no name provided>"
+val NO_NAME_PROVIDED: String
+    get() {
+        return "<no name provided>"
+    }
 
 private const val LONG_DEPRECATED = Opcodes.ACC_DEPRECATED.toLong()
 internal fun isDeprecated(access: Long) = (access and LONG_DEPRECATED) != 0L

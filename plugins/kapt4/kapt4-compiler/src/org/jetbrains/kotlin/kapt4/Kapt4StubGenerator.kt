@@ -264,7 +264,7 @@ class Kapt4StubGenerator {
             }
         }
 
-        val nestedClasses = mapJList(lightClass.allInnerClasses) { innerClass ->
+        val nestedClasses = mapJList(lightClass.innerClasses) { innerClass ->
             convertClass(innerClass, lineMappings, packageFqName, false)
         }
 
