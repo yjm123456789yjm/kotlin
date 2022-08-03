@@ -49388,6 +49388,12 @@ public class FirBlackBoxCodegenTestGenerated extends AbstractFirBlackBoxCodegenT
         }
 
         @Test
+        @TestMetadata("equals.kt")
+        public void testEquals() throws Exception {
+            runTest("compiler/testData/codegen/box/unit/equals.kt");
+        }
+
+        @Test
         @TestMetadata("ifElse.kt")
         public void testIfElse() throws Exception {
             runTest("compiler/testData/codegen/box/unit/ifElse.kt");
