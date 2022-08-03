@@ -7,11 +7,13 @@ package org.jetbrains.kotlin.light.classes.symbol
 
 import com.intellij.psi.*
 import org.jetbrains.kotlin.analysis.api.KtAnalysisSession
+import org.jetbrains.kotlin.analysis.api.annotations.annotations
 import org.jetbrains.kotlin.analysis.api.lifetime.isValid
 import org.jetbrains.kotlin.analysis.api.symbols.KtEnumEntrySymbol
 import org.jetbrains.kotlin.asJava.builder.LightMemberOrigin
 import org.jetbrains.kotlin.asJava.classes.cannotModify
 import org.jetbrains.kotlin.asJava.classes.lazyPub
+import org.jetbrains.kotlin.descriptors.annotations.AnnotationUseSiteTarget
 import org.jetbrains.kotlin.psi.KtEnumEntry
 import org.jetbrains.kotlin.utils.addToStdlib.ifTrue
 
@@ -26,7 +28,11 @@ internal class FirLightFieldForEnumEntry(
         FirLightMemberModifierList(
             containingDeclaration = this@FirLightFieldForEnumEntry,
             modifiers = setOf(PsiModifier.STATIC, PsiModifier.FINAL, PsiModifier.PUBLIC),
-            annotations = emptyList()
+            annotations = enumEntrySymbol.computeAnnotations(
+                this,
+                nullability = NullabilityType.Unknown, // there is no need to add nullability annotations on enum entries
+                annotationUseSiteTarget = AnnotationUseSiteTarget.FIELD
+            )
         )
     }
 
