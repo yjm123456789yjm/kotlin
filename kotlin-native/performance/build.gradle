@@ -313,6 +313,13 @@ subprojects.each {
 
 task teamCityStat(type:Exec) {
     def analyzer = findAnalyzerBinary()
+    if (System.getProperty("os.name").startsWith("Windows")) {
+        String mingw = System.getenv("MINGW64_DIR") ?: "C:\\msys64\\mingw64"
+        String mingwBin = "$mingw\\bin"
+        String oldPath = System.getenv("PATH") ?: ""
+        String newPath = oldPath == "" ? mingwBin : "$oldPath;$mingwBin"
+        environment "PATH", newPath
+    }
     commandLine analyzer, "-r", "teamcity",
         "--artifactory-url", "https://repo.labs.intellij.net/kotlin-native-benchmarks",
         "--teamcity-url", "http://buildserver.labs.intellij.net",
