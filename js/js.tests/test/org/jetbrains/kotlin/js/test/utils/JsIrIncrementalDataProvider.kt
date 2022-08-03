@@ -46,13 +46,13 @@ private class TestArtifactCache(val moduleName: String, val binaryAsts: MutableM
 
 class JsIrIncrementalDataProvider(private val testServices: TestServices) : TestService {
     private val fullRuntimeKlib: String = System.getProperty("kotlin.js.full.stdlib.path")
-    private val defaultRuntimeKlib = System.getProperty("kotlin.js.reduced.stdlib.path")
+//    private val defaultRuntimeKlib = System.getProperty("kotlin.js.reduced.stdlib.path")
     private val kotlinTestKLib = System.getProperty("kotlin.js.kotlin.test.path")
 
     private val predefinedKlibHasIcCache = mutableMapOf<String, TestArtifactCache?>(
         File(fullRuntimeKlib).absolutePath to null,
         File(kotlinTestKLib).absolutePath to null,
-        File(defaultRuntimeKlib).absolutePath to null
+//        File(defaultRuntimeKlib).absolutePath to null
     )
 
     private val icCache: MutableMap<String, TestArtifactCache> = mutableMapOf()
