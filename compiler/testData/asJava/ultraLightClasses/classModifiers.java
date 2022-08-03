@@ -5,19 +5,19 @@ public class Open /* pkg.Open*/ {
 
 
   class Private ...
-  
+
     class Private2 ...
-  
+
     class StaticInternal ...
-  
+
   }
 
-private static final class Private /* pkg.Open.Private*/ extends pkg.Open {
+static final class Private /* pkg.Open.Private*/ extends pkg.Open {
   public  Private();//  .ctor()
 
 }
 
-protected final class Private2 /* pkg.Open.Private2*/ {
+public final class Private2 /* pkg.Open.Private2*/ {
   public  Private2();//  .ctor()
 
 }
@@ -42,7 +42,7 @@ public abstract class Season /* pkg.Season*/ {
 
 
   class Nested ...
-  
+
   }
 
 public static final class Nested /* pkg.Season.Nested*/ extends pkg.Season {

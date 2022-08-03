@@ -74,7 +74,7 @@ public final class C1 /* C1*/ {
 
   }
 
-private static final class Companion /* C1.Companion*/ {
+static final class Companion /* C1.Companion*/ {
   private  Companion();//  .ctor()
 
 }

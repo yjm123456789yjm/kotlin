@@ -59,7 +59,7 @@ internal class SymbolLightConstructor(
         if (containingClass is SymbolLightClassForEnumEntry)
             setOf(PsiModifier.PACKAGE_LOCAL)
         else
-            setOf(constructorSymbol.toPsiVisibilityForMember(isTopLevel = false))
+            setOf(constructorSymbol.toPsiVisibilityForMember())
     }
 
     private val _modifierList: PsiModifierList by lazyPub {
