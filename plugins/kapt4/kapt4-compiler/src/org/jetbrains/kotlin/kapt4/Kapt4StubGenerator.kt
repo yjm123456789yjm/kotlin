@@ -426,25 +426,30 @@ class Kapt4StubGenerator {
         val values = mapJList<_, JCExpression>(annotation.parameterList.attributes) {
             val name = it.name ?: return@mapJList null
             val value = it.value ?: return@mapJList null
-            val expr = convertPsiAnnotationMemberValue(value)
+            val expr = convertPsiAnnotationMemberValue(containingClass, value, packageFqName, filtered)
             treeMaker.Assign(treeMaker.SimpleName(name), expr)
         }
 
         return treeMaker.Annotation(annotationFqName, values)
     }
 
-    private fun convertPsiAnnotationMemberValue(value: PsiAnnotationMemberValue): JCExpression {
+    private fun convertPsiAnnotationMemberValue(
+        containingClass: PsiClass,
+        value: PsiAnnotationMemberValue,
+        packageFqName: String? = "",
+        filtered: Boolean = true
+    ): JCExpression {
         return when (value) {
             is PsiArrayInitializerMemberValue -> {
                 val arguments = mapJList(value.initializers) {
-                    convertPsiAnnotationMemberValue(it)
+                    convertPsiAnnotationMemberValue(containingClass, it, packageFqName, filtered)
                 }
                 treeMaker.NewArray(null, null, arguments)
             }
 
             is PsiLiteral -> convertLiteralExpression(containingClass = null, value.value)
             is PsiExpression -> treeMaker.SimpleName(value.text)
-            is PsiAnnotation -> TODO()
+            is PsiAnnotation -> convertAnnotation(containingClass, value, packageFqName, filtered) ?: TODO()
             else -> error("Should not be here")
         }
     }
@@ -805,7 +810,9 @@ class Kapt4StubGenerator {
         val jExceptionTypes = mapJList(method.throwsTypes) { treeMaker.TypeWithArguments(it as PsiType) }
         val jReturnType = if (isConstructor) null else treeMaker.TypeWithArguments(returnType) // TODO: handle error type
 
-        val defaultValue = null //method.annotationDefault?.let { convertLiteralExpression(containingClass, it) }
+        val defaultValue = (method as? PsiAnnotationMethod)?.defaultValue?.let {
+            convertPsiAnnotationMemberValue(containingClass, it, packageFqName)
+        }
 
         val body = if (defaultValue != null) {
             null

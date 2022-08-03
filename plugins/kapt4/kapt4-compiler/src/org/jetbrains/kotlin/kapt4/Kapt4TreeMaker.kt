@@ -10,6 +10,8 @@ import com.intellij.psi.PsiArrayType
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassType
 import com.intellij.psi.PsiType
+import com.intellij.psi.PsiWildcardType
+import com.sun.tools.javac.code.BoundKind
 import com.sun.tools.javac.code.TypeTag
 import org.jetbrains.org.objectweb.asm.Type
 import org.jetbrains.org.objectweb.asm.Type.*
@@ -44,9 +46,10 @@ class Kapt4TreeMaker(
 //        convertBuiltinType(type)?.let { return it }
 //        if (type.sort == ARRAY) {
 //            return TypeArray(Type(AsmUtil.correctElementType(type)))
-//        }
+//        } )
         return when (type) {
             is PsiArrayType -> TypeArray(RawType(type.componentType))
+            is PsiWildcardType -> Wildcard(TypeBoundKind(BoundKind.UNBOUND), null)
             null -> TODO()
             else -> FqName(type.qualifiedName)
         }
