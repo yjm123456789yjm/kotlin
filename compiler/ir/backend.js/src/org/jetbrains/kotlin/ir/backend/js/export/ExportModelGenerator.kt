@@ -636,7 +636,6 @@ class ExportModelGenerator(val context: JsIrBackendContext, val generateNamespac
         if (function.origin == JsLoweredDeclarationOrigin.BRIDGE_WITHOUT_STABLE_NAME ||
             function.origin == JsLoweredDeclarationOrigin.BRIDGE_PROPERTY_ACCESSOR ||
             function.origin == JsLoweredDeclarationOrigin.BRIDGE_WITH_STABLE_NAME ||
-            function.origin == IrDeclarationOrigin.FUNCTION_FOR_DEFAULT_PARAMETER ||
             function.origin == JsLoweredDeclarationOrigin.OBJECT_GET_INSTANCE_FUNCTION ||
             function.origin == JsLoweredDeclarationOrigin.JS_SHADOWED_EXPORT ||
             function.origin == JsLoweredDeclarationOrigin.ENUM_GET_INSTANCE_FUNCTION
