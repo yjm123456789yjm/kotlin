@@ -12,9 +12,8 @@ internal class BitMask(vararg activeBits: Int) {
 
     init {
         val maxElement = activeBits.max()
-        val countOfNumbers = maxElement.toDouble() / INT_SIZE.toDouble()
-        val size = nativeCeil(countOfNumbers)
-        intArray = IntArray(size)
+        val positionInsideArray = maxElement / INT_SIZE
+        intArray = IntArray(positionInsideArray + 1)
 
         for (activeBit in activeBits) {
             val numberIndex = activeBit / INT_SIZE
@@ -39,11 +38,6 @@ internal class BitMask(vararg activeBits: Int) {
             if (max < e) max = e
         }
         return max
-    }
-
-    @Suppress("UNUSED_PARAMETER")
-    private fun nativeCeil(a: Double): Int {
-        return js("Math.ceil(a)").unsafeCast<Int>()
     }
 
     @Suppress("UNUSED_PARAMETER", "UNUSED_VARIABLE")
