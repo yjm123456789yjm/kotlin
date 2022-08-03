@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.lower
 
+import org.jetbrains.kotlin.backend.common.ir.ValueRemapper
 import org.jetbrains.kotlin.backend.common.lower.*
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
@@ -18,6 +19,7 @@ import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
+import org.jetbrains.kotlin.ir.symbols.IrValueSymbol
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
 
@@ -26,17 +28,17 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
     private val void = context.intrinsics.void
 
     private fun IrBuilderWithScope.createDefaultResolutionExpression(
-        fromParameter: IrValueParameter,
+        defaultExpression: IrExpression?,
         toParameter: IrValueParameter,
     ): IrExpression? {
-        return fromParameter.defaultValue?.let { defaultValue ->
+        return defaultExpression?.let {
             irIfThenElse(
                 toParameter.type,
                 irEqeqeq(
                     irGet(toParameter, context.irBuiltIns.anyNType),
                     irGetField(null, void.owner.backingField!!)
                 ),
-                defaultValue.expression,
+                it,
                 irGet(toParameter)
             )
         }
@@ -48,7 +50,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
         val variables = mutableMapOf<IrValueParameter, IrValueDeclaration>()
 
         val defaultResolutionStatements = valueParameters.mapNotNull { valueParameter ->
-            irBuilder.createDefaultResolutionExpression(valueParameter, valueParameter)?.let { initializer ->
+            irBuilder.createDefaultResolutionExpression(valueParameter.defaultValue?.expression, valueParameter)?.let { initializer ->
                 JsIrBuilder.buildVar(
                     valueParameter.type,
                     this@introduceDefaultResolution,
@@ -96,14 +98,10 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
             return listOf(originalFun, defaultFunStub)
         }
 
-        defaultFunStub.typeParameters = emptyList()
-        defaultFunStub.valueParameters = emptyList()
-        defaultFunStub.copyParameterDeclarationsFrom(originalFun)
+        defaultFunStub.saveOriginalArguments(originalFun)
 
         if (!defaultFunStub.isFakeOverride) {
             with(defaultFunStub) {
-                body = generateSpecializedForJsDefaultStubBody(originalFun)
-
                 valueParameters.forEach {
                     if (it.defaultValue != null) {
                         it.origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
@@ -134,8 +132,16 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
         return listOf(originalFun, defaultFunStub)
     }
 
-    private fun IrFunction.generateSpecializedForJsDefaultStubBody(originalDeclaration: IrFunction): IrBody {
+    override fun IrFunction.generateDefaultStubBody(originalDeclaration: IrFunction): IrBody {
         val irBuilder = context.createIrBuilder(symbol, startOffset, endOffset)
+        val variables = buildMap<IrValueSymbol, IrValueSymbol> {
+            originalDeclaration.dispatchReceiverParameter?.let {
+                set(it.symbol, dispatchReceiverParameter!!.symbol)
+            }
+            originalDeclaration.extensionReceiverParameter?.let {
+                set(it.symbol, extensionReceiverParameter!!.symbol)
+            }
+        }
 
         return irBuilder.irBlockBody(this) {
             +irReturn(irCall(originalDeclaration).apply {
@@ -144,12 +150,28 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                 extensionReceiver = extensionReceiverParameter?.let { irGet(it) }
 
                 originalDeclaration.valueParameters.forEachIndexed { index, irValueParameter ->
-                    val exportedParameter = valueParameters[index]
-                    val value = createDefaultResolutionExpression(irValueParameter, exportedParameter) ?: irGet(exportedParameter)
+                    val parameterItself = valueParameters[index]
+
+                    val value = createDefaultResolutionExpression(
+                        irValueParameter.defaultValue?.expression?.transform(ValueRemapper(variables), null),
+                        parameterItself
+                    ) ?: irGet(parameterItself)
                     putValueArgument(index, value)
                 }
             })
         }
+    }
+
+    private fun IrFunction.saveOriginalArguments(originalDeclaration: IrFunction) {
+        val currentDispatchReceiver = dispatchReceiverParameter
+        val currentExtensionReceiver = extensionReceiverParameter
+
+        typeParameters = emptyList()
+        valueParameters = emptyList()
+        copyParameterDeclarationsFrom(originalDeclaration)
+
+        dispatchReceiverParameter = currentDispatchReceiver
+        extensionReceiverParameter = currentExtensionReceiver
     }
 
     private fun IrFunction.generateJsNameAnnotationCall(): IrConstructorCall {
