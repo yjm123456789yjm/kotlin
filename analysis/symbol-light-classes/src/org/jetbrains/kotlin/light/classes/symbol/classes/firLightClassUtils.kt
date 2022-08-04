@@ -264,6 +264,7 @@ context(KtAnalysisSession)
     suppressStatic: Boolean = false,
 ) {
     if (declaration is KtKotlinPropertySymbol && declaration.isConst) return
+    if (declaration.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED) return
 
     if (declaration.visibility.isPrivateOrPrivateToThis() &&
         declaration.getter?.hasBody == false &&
@@ -346,6 +347,7 @@ context(KtAnalysisSession)
     fun hasBackingField(property: KtPropertySymbol): Boolean = when (property) {
         is KtSyntheticJavaPropertySymbol -> true
         is KtKotlinPropertySymbol -> when {
+            property.origin == KtSymbolOrigin.SOURCE_MEMBER_GENERATED -> false
             property.modality == Modality.ABSTRACT -> false
             property.isHiddenOrSynthetic() -> false
             property.isLateInit -> true
