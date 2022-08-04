@@ -223,10 +223,12 @@ public interface CopyActionContext {
 private object DefaultCopyActionContext : CopyActionContext {
     override fun Path.copyTo(target: Path, followLinks: Boolean, ignoreExistingDirectory: Boolean): CopyActionResult {
         val options = LinkFollowing.toLinkOptions(followLinks)
-        if ((this.isDirectory(*options) && target.isDirectory(LinkOption.NOFOLLOW_LINKS)).not())
+        if (ignoreExistingDirectory && this.isDirectory(*options) && target.isDirectory(LinkOption.NOFOLLOW_LINKS)) {
+            // do nothing, the destination directory already exists
+        } else {
             this.copyTo(target, *options)
+        }
 
-        // else: do nothing, the destination directory already exists
         return CopyActionResult.CONTINUE
     }
 }
