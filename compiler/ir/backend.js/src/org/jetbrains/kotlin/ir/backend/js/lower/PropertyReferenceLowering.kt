@@ -9,18 +9,20 @@ import org.jetbrains.kotlin.backend.common.BodyLoweringPass
 import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.js.utils.Namer
+import org.jetbrains.kotlin.ir.backend.js.utils.getJsSubtypeCheckableInterfaces
+import org.jetbrains.kotlin.ir.backend.js.utils.isJsReflectedClass
+import org.jetbrains.kotlin.ir.backend.js.utils.isJsSubtypeCheckable
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.builders.declarations.buildFun
 import org.jetbrains.kotlin.ir.builders.declarations.buildValueParameter
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
-import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
-import org.jetbrains.kotlin.ir.expressions.impl.IrFunctionExpressionImpl
-import org.jetbrains.kotlin.ir.types.IrSimpleType
-import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.expressions.impl.*
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.copyTo
 import org.jetbrains.kotlin.ir.util.file
+import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 import org.jetbrains.kotlin.name.Name
@@ -30,6 +32,7 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
     private val referenceBuilderSymbol = context.kpropertyBuilder
     private val localDelegateBuilderSymbol = context.klocalDelegateBuilder
     private val jsClassSymbol = context.intrinsics.jsClass
+    private val arrayOfSymbol = context.irBuiltIns.arrayOf
 
     private val throwISE = context.throwISEsymbol
 
@@ -78,7 +81,7 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
 
             // 0 - name
             // 1 - paramCount
-            // 2 - type
+            // 2 - superTypes
             // 3 - getter
             // 4 - setter
 
@@ -89,7 +92,7 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
                 +irReturn(irCall(referenceBuilderSymbol).apply {
                     putValueArgument(0, reference.nameExpression())
                     putValueArgument(1, irInt(arity))
-                    putValueArgument(2, reference.getJsTypeConstructor())
+                    putValueArgument(2, reference.getJsSuperTypes())
                     putValueArgument(3, buildGetterLambda(factoryDeclaration, reference, valueParameters))
                     putValueArgument(4, buildSetterLambda(factoryDeclaration, reference, valueParameters))
                 })
@@ -190,11 +193,56 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
             return IrConstImpl.string(startOffset, endOffset, context.irBuiltIns.stringType, propertyName)
         }
 
-        private fun IrExpression.getJsTypeConstructor(): IrExpression {
-            val irCall = IrCallImpl(startOffset, endOffset, jsClassSymbol.owner.returnType, jsClassSymbol, 1, 0)
-            irCall.putTypeArgument(0, type)
-            return irCall
+        private fun IrExpression.getJsSuperTypes(): IrExpression {
+            val listOfClasses = IrCallImpl(startOffset, endOffset, arrayOfSymbol.owner.returnType, arrayOfSymbol, 0, 1)
+
+            val classDeclaration = type.classifierOrNull?.owner as? IrDeclaration
+            val subtypableInterfaces = classDeclaration?.getJsSubtypeCheckableInterfaces()?.toMutableList() ?: mutableListOf()
+
+            if (classDeclaration is IrClass && classDeclaration.isInterface && classDeclaration.isJsSubtypeCheckable()) {
+                subtypableInterfaces.add(
+                    IrClassReferenceImpl(
+                        startOffset,
+                        endOffset,
+                        context.dynamicType,
+                        classDeclaration.symbol,
+                        context.dynamicType
+                    )
+                )
+            }
+
+            val subtypableInterfacesAsVararg = IrVarargImpl(
+                startOffset,
+                endOffset,
+                context.dynamicType,
+                context.dynamicType,
+                subtypableInterfaces.map { it.getJsTypeConstructor() }
+            )
+
+            return listOfClasses.apply {
+                putValueArgument(0, subtypableInterfacesAsVararg)
+            }
         }
+
+        private fun IrClassReference.getJsTypeConstructor(): IrExpression {
+            val irCall = IrCallImpl(startOffset, endOffset, jsClassSymbol.owner.returnType, jsClassSymbol, 1, 0)
+                .also { it.putTypeArgument(0, symbol.defaultType) }
+
+            val declaration = symbol.owner as? IrDeclaration ?: return irCall
+
+            return when {
+                declaration.isJsReflectedClass() -> IrDynamicMemberExpressionImpl(
+                    startOffset,
+                    endOffset,
+                    context.dynamicType,
+                    Namer.INTERFACES_MASK,
+                    irCall
+                )
+
+                else -> irCall
+            }
+        }
+
 
         override fun visitPropertyReference(expression: IrPropertyReference): IrExpression {
             expression.transformChildrenVoid(this)
@@ -232,13 +280,13 @@ class PropertyReferenceLowering(private val context: JsIrBackendContext) : BodyL
             val isMutable = expression.setter != null
 
             // 0 - name
-            // 1 - type
+            // 1 - sueprTypes
             // 2 - isMutable
             // 3 - lambda
 
             expression.run {
                 builderCall.putValueArgument(0, IrConstImpl.string(startOffset, endOffset, context.irBuiltIns.stringType, localName))
-                builderCall.putValueArgument(1, expression.getJsTypeConstructor())
+                builderCall.putValueArgument(1, expression.getJsSuperTypes())
                 builderCall.putValueArgument(2, IrConstImpl.boolean(startOffset, endOffset, context.irBuiltIns.booleanType, isMutable))
                 builderCall.putValueArgument(3, buildLocalDelegateLambda(expression))
             }

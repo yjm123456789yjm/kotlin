@@ -7,30 +7,43 @@ package kotlin.js
 
 import kotlin.reflect.KProperty
 
-internal fun getPropertyCallableRef(name: String, paramCount: Int, type: dynamic, getter: dynamic, setter: dynamic): KProperty<*> {
+internal fun getPropertyCallableRef(
+    name: String,
+    paramCount: Int,
+    superTypes: IntArray,
+    getter: dynamic,
+    setter: dynamic
+): KProperty<*> {
     getter.get = getter
     getter.set = setter
     getter.callableName = name
     return getPropertyRefClass(
         getter,
         getKPropMetadata(paramCount, setter),
-        getInterfaceMaskFor(getter, type)
+        getInterfaceMaskFor(getter, superTypes)
     ).unsafeCast<KProperty<*>>()
 }
 
-internal fun getLocalDelegateReference(name: String, type: dynamic, mutable: Boolean, lambda: dynamic): KProperty<*> {
-    return getPropertyCallableRef(name, 0, type, lambda, if (mutable) lambda else null)
+internal fun getLocalDelegateReference(name: String, superTypes: IntArray, mutable: Boolean, lambda: dynamic): KProperty<*> {
+    return getPropertyCallableRef(name, 0, superTypes, lambda, if (mutable) lambda else null)
 }
 
-private fun getPropertyRefClass(obj: Ctor, metadata: Metadata, imask: BitMask): dynamic {
+private fun getPropertyRefClass(obj: Ctor, metadata: Metadata, imask: BitMask?): dynamic {
     obj.`$metadata$` = metadata;
     obj.constructor = obj;
-    obj.`$imask$` = imask
+    imask?.let { obj.`$imask$` = it }
     return obj;
 }
 
-private fun getInterfaceMaskFor(obj: Ctor, type: dynamic): BitMask =
-    obj.`$imask$` ?: BitMask(getInterfaceIdInRuntime(type))
+private fun getInterfaceMaskFor(obj: Ctor, superTypes: IntArray): BitMask? {
+    val alreadyCreatedMask = obj.`$imask$`.unsafeCast<BitMask?>()
+
+    if (alreadyCreatedMask != null || superTypes.size == 0) {
+        return alreadyCreatedMask
+    }
+
+    return BitMask(*superTypes)
+}
 
 @Suppress("UNUSED_PARAMETER")
 private fun getKPropMetadata(paramCount: Int, setter: Any?): dynamic {

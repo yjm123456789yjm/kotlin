@@ -524,12 +524,6 @@ private val privateMemberUsagesLoweringPhase = makeBodyLoweringPhase(
     description = "Rewrite the private member usages"
 )
 
-private val propertyReferenceLoweringPhase = makeBodyLoweringPhase(
-    ::PropertyReferenceLowering,
-    name = "PropertyReferenceLowering",
-    description = "Transform property references"
-)
-
 private val interopCallableReferenceLoweringPhase = makeBodyLoweringPhase(
     ::InteropCallableReferenceLowering,
     name = "InteropCallableReferenceLowering",
@@ -826,6 +820,13 @@ private val collectClassesForInstanceCheckLowering = makeDeclarationTransformerP
     prerequisite = setOf(collectInterfacesForInstanceCheckLowering)
 )
 
+private val propertyReferenceLoweringPhase = makeBodyLoweringPhase(
+    ::PropertyReferenceLowering,
+    name = "PropertyReferenceLowering",
+    description = "Transform property references",
+    prerequisite = setOf(collectClassesForInstanceCheckLowering)
+)
+
 private val cleanupLoweringPhase = makeBodyLoweringPhase(
     { CleanupLowering() },
     name = "CleanupLowering",
@@ -900,7 +901,6 @@ val loweringList = listOf<Lowering>(
     externalEnumUsageLoweringPhase,
     enumEntryRemovalLoweringPhase,
     suspendFunctionsLoweringPhase,
-    propertyReferenceLoweringPhase,
     interopCallableReferenceLoweringPhase,
     jsSuspendArityStorePhase,
     addContinuationToNonLocalSuspendFunctionsLoweringPhase,
@@ -941,6 +941,7 @@ val loweringList = listOf<Lowering>(
     constLoweringPhase,
     inlineClassDeclarationLoweringPhase,
     inlineClassUsageLoweringPhase,
+    propertyReferenceLoweringPhase,
     autoboxingTransformerPhase,
     blockDecomposerLoweringPhase,
     objectDeclarationLoweringPhase,

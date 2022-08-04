@@ -9,6 +9,7 @@ import org.jetbrains.kotlin.backend.common.DeclarationTransformer
 import org.jetbrains.kotlin.backend.common.lower.createIrBuilder
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
+import org.jetbrains.kotlin.ir.backend.js.utils.JsAnnotations
 import org.jetbrains.kotlin.ir.backend.js.utils.isJsSubtypeCheckable
 import org.jetbrains.kotlin.ir.builders.irCall
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -20,6 +21,7 @@ import org.jetbrains.kotlin.ir.types.IrType
 import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.constructors
+import org.jetbrains.kotlin.ir.util.getAnnotation
 import org.jetbrains.kotlin.ir.util.isInterface
 
 class CollectClassesForInstanceCheckLowering(val context: JsIrBackendContext) : DeclarationTransformer {
@@ -28,24 +30,34 @@ class CollectClassesForInstanceCheckLowering(val context: JsIrBackendContext) : 
     private val subtypingCache = mutableMapOf<IrClassSymbol, Set<IrClassSymbol>>()
 
     override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
-        if (declaration !is IrClass || declaration.isInterface) return null
+        if (declaration !is IrClass) return null
 
         val allImplementedSubtypeInterfaces = declaration.getAllImplementedSubtypeCheckableInterfaces()
 
         if (allImplementedSubtypeInterfaces.isEmpty()) return null
 
-        declaration.annotations += context.createIrBuilder(declaration.symbol).irCall(jsSubtypeCheckableCtor).apply {
-            val classReferences = allImplementedSubtypeInterfaces.map {
-                IrClassReferenceImpl(
-                    UNDEFINED_OFFSET,
-                    UNDEFINED_OFFSET,
-                    context.dynamicType,
-                    it,
-                    it.defaultType
-                )
+        val alreadyCreatedAnnotation = declaration.getAnnotation(JsAnnotations.JsSubtypeCheckableFqn)
+        val newJsSubtypableAnnotationCall = context.createIrBuilder(declaration.symbol).irCall(jsSubtypeCheckableCtor)
+            .apply {
+                val classReferences = allImplementedSubtypeInterfaces.map {
+                    IrClassReferenceImpl(
+                        UNDEFINED_OFFSET,
+                        UNDEFINED_OFFSET,
+                        context.dynamicType,
+                        it,
+                        it.defaultType
+                    )
+                }
+
+                val varargClassReferences =
+                    IrVarargImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.dynamicType, context.dynamicType, classReferences)
+
+                putValueArgument(0, varargClassReferences)
             }
 
-            putValueArgument(0, IrVarargImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, context.dynamicType, context.dynamicType, classReferences))
+        declaration.annotations = when (alreadyCreatedAnnotation) {
+            null -> declaration.annotations + newJsSubtypableAnnotationCall
+            else -> declaration.annotations.map { if (it === alreadyCreatedAnnotation) newJsSubtypableAnnotationCall else it }
         }
 
         return null
