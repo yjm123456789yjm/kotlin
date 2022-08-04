@@ -52,7 +52,7 @@ import java.nio.file.attribute.BasicFileAttributes
  * @throws Exception if [onError] rethrows.
  */
 @ExperimentalPathApi
-@SinceKotlin("1.7")
+@SinceKotlin("1.8")
 public fun Path.copyToRecursively(
     target: Path,
     onError: (Path, Exception) -> OnErrorResult = { _, exception -> throw exception },
@@ -119,7 +119,7 @@ public fun Path.copyToRecursively(
  * @throws Exception if [onError] rethrows.
  */
 @ExperimentalPathApi
-@SinceKotlin("1.7")
+@SinceKotlin("1.8")
 public fun Path.copyToRecursively(
     target: Path,
     onError: (Path, Exception) -> OnErrorResult = { _, exception -> throw exception },
@@ -172,7 +172,7 @@ public fun Path.copyToRecursively(
  * Enum that specifies further actions when copying a file in the [Path.copyToRecursively] function.
  */
 @ExperimentalPathApi
-@SinceKotlin("1.7")
+@SinceKotlin("1.8")
 public enum class CopyActionResult {
     /**
      * Continue with the next file in the traversal order.
@@ -195,7 +195,7 @@ public enum class CopyActionResult {
  * Enum that specifies further actions when an exception occurs in the [Path.copyToRecursively] function.
  */
 @ExperimentalPathApi
-@SinceKotlin("1.7")
+@SinceKotlin("1.8")
 public enum class OnErrorResult {
     /**
      * If the file that caused the error if a directory, skip the directory and its content, and
@@ -212,7 +212,7 @@ public enum class OnErrorResult {
 }
 
 @ExperimentalPathApi
-@SinceKotlin("1.7")
+@SinceKotlin("1.8")
 public interface CopyActionContext {
     // TODO: "ignoreExistingDirectory" -> "skipExistingDirectory" ?
     //       "copyTo" -> "copyToOrIgnoreExistingDirectory" ?
@@ -271,7 +271,7 @@ private fun OnErrorResult.toFileVisitResult() = when (this) {
  * @throws IOException if any file in the tree can't be deleted for any reason.
  */
 @ExperimentalPathApi
-@SinceKotlin("1.7")
+@SinceKotlin("1.8")
 public fun Path.deleteRecursively(): Unit {
     val suppressedExceptions = this.deleteRecursivelyImpl()
 
