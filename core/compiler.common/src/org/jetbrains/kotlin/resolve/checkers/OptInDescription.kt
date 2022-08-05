@@ -12,7 +12,7 @@ data class OptInDescription(
     val annotationFqName: FqName,
     val severity: Severity,
     val message: String?,
-    val subclassesOnly: Boolean = false
+    val subclassesOnly: Boolean,
 ) {
     enum class Severity { WARNING, ERROR, FUTURE_ERROR }
 

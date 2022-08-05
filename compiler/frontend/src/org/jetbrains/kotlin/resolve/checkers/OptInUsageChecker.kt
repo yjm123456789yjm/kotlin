@@ -107,7 +107,7 @@ class OptInUsageChecker(project: Project) : CallChecker {
             val methodDescriptor = resultingDescriptor.getSingleAbstractMethod()
             val samOptIns = methodDescriptor.loadOptIns(moduleAnnotationsResolver, bindingContext, languageVersionSettings)
                 .map { (fqName, _, message) ->
-                    OptInDescription(fqName, OptInDescription.Severity.WARNING, message)
+                    OptInDescription(fqName, OptInDescription.Severity.WARNING, message, subclassesOnly = false)
                 }
             reportNotAllowedOptIns(samOptIns, reportOn, context)
         }
@@ -451,8 +451,7 @@ class OptInUsageChecker(project: Project) : CallChecker {
                 else -> null
             }
             val bindingContext = context.trace.bindingContext
-            if (targetClass != null && targetClass.loadOptInForMarkerAnnotation() != null
-            ) {
+            if (targetClass != null && targetClass.loadOptInForMarkerAnnotation() != null) {
                 if (!element.isUsageAsAnnotationOrImport() &&
                     !element.isUsageAsOptInArgument(bindingContext)
                 ) {
