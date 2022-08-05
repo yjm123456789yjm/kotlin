@@ -25,7 +25,14 @@ internal fun getPropertyCallableRef(
 }
 
 internal fun getLocalDelegateReference(name: String, superTypes: IntArray, mutable: Boolean, lambda: dynamic): KProperty<*> {
-    return getPropertyCallableRef(name, 0, superTypes, lambda, if (mutable) lambda else null)
+    lambda.get = lambda
+    lambda.set = if (mutable) lambda else null
+    lambda.callableName = name
+    return getPropertyRefClass(
+        lambda,
+        getKPropMetadata(0, lambda),
+        getInterfaceMaskFor(lambda, superTypes)
+    ).unsafeCast<KProperty<*>>()
 }
 
 private fun getPropertyRefClass(obj: Ctor, metadata: Metadata, imask: BitMask?): dynamic {
