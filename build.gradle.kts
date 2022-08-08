@@ -399,7 +399,8 @@ allprojects {
     }
     configurations.all {
         resolutionStrategy.eachDependency {
-            if (requested.group == "org.jetbrains.kotlin") {
+            // fix me
+            if (requested.group == "org.jetbrains.kotlin" && project.path != ":kotlin-native:build-tools") {
                 val expectedReflectVersion = commonDependencyVersion("org.jetbrains.kotlin", "kotlin-reflect")
                 if (project.path !in dependencyOnSnapshotReflectWhitelist && requested.name == "kotlin-reflect") {
                     check(requested.version == expectedReflectVersion) {
@@ -408,10 +409,10 @@ allprojects {
                                 "Please use 'commonDependency(\"org.jetbrains.kotlin:kotlin-reflect\") { isTransitive = false }'"
                     }
                 }
-                if (requested.name == "kotlin-stdlib") {
-                    check(requested.version != expectedReflectVersion) {
-                        "kotlin-stdlib from kotlin-reflect leaked into project '${project.path}'. Make sure " +
-                                "that dependency on the reflect isn't transitive"
+                if (requested.name.startsWith("kotlin-stdlib")) {
+                    check(requested.version.let { it == kotlinVersion || it == bootstrapKotlinVersion }) {
+                        "Broken classpath: '${requested.name}' should have '$kotlinVersion' version. " +
+                                "But it was '${requested.version}'."
                     }
                 }
             }
