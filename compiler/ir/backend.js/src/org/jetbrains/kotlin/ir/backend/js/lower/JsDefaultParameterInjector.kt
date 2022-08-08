@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.ir.backend.js.lower
 
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.backend.common.lower.DefaultParameterInjector
+import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
@@ -18,7 +19,7 @@ class JsDefaultParameterInjector(context: JsIrBackendContext) :
     DefaultParameterInjector(context, skipExternalMethods = true, forceSetOverrideSymbols = false, keepOriginalArguments = true) {
     private val void = context.intrinsics.void
 
-    override fun nullConst(startOffset: Int, endOffset: Int, type: IrType): IrExpression =
+    override fun nullConst(startOffset: Int, endOffset: Int, irParameter: IrValueParameter): IrExpression =
         IrGetFieldImpl(
             startOffset,
             endOffset,

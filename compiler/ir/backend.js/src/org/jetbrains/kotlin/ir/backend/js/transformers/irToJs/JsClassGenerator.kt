@@ -271,7 +271,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         // interface I { foo() = "OK" }
         // interface II : I
         // II.prototype.foo = I.prototype.foo
-        if (!irClass.isInterface && !declaration.overriddenSymbols.all { !it.owner.parentAsClass.isInterface }) {
+        if (!irClass.isInterface) {
             val isFakeOverride = declaration.isFakeOverride
             val missedOverrides = mutableListOf<IrSimpleFunction>()
             declaration.collectRealOverrides()
