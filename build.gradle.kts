@@ -387,9 +387,43 @@ val gradlePluginProjects = listOf(
 
 val ignoreTestFailures by extra(project.kotlinBuildProperties.ignoreTestFailures)
 
+val dependencyOnSnapshotReflectWhitelist = setOf(
+    ":kotlin-compiler",
+    ":tools:binary-compatibility-validator",
+    ":tools:kotlin-stdlib-gen",
+)
+
 allprojects {
     if (!project.path.startsWith(":kotlin-ide.")) {
         pluginManager.apply("common-configuration")
+    }
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin") {
+                val expectedReflectVersion = commonDependencyVersion("org.jetbrains.kotlin", "kotlin-reflect")
+                if (project.path !in dependencyOnSnapshotReflectWhitelist && requested.name == "kotlin-reflect") {
+                    check(requested.version == expectedReflectVersion) {
+                        """
+                            'kotlin-reflect' should have '$expectedReflectVersion' version. But it was '${requested.version}'
+                            Suggestions:
+                                1. Use 'commonDependency("org.jetbrains.kotlin:kotlin-reflect") { isTransitive = false }'
+                                2. Avoid 'kotlin-reflect' leakage from transitive dependencies with 'exclude("org.jetbrains.kotlin")'
+                        """.trimIndent()
+                    }
+                }
+                if (requested.name.startsWith("kotlin-stdlib")) {
+                    check(requested.version != expectedReflectVersion) {
+                        """
+                            '${requested.name}' has a wrong version. It's not allowed to be '$expectedReflectVersion'
+                            Suggestions:
+                                1. Most likely, it leaked from 'kotlin-reflect' transitive dependencies. Use 'isTransitive = false' for
+                                   'kotlin-reflect' dependencies
+                                2. Avoid '${requested.name}' leakage from other transitive dependencies with 'exclude("org.jetbrains.kotlin")'
+                        """.trimIndent()
+                    }
+                }
+            }
+        }
     }
     val mirrorRepo: String? = findProperty("maven.repository.mirror")?.toString()
 
