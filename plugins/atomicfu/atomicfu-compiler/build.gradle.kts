@@ -118,11 +118,11 @@ projectTest(jUnitMode = JUnitMode.JUnit5) {
 }
 
 fun Test.setupV8() {
-    dependsOn(":js:js.tests:unzipV8")
-    doFirst {
-        val unzipV8Task = project.tasks.getByPath(":js:js.tests:unzipV8")
-        systemProperty("javascript.engine.path.V8", File(unzipV8Task.outputs.files.single().path, "d8"))
-    }
+//     dependsOn(":js:js.tests:unzipV8")
+//     doFirst {
+//         val unzipV8Task = project.tasks.getByPath(":js:js.tests:unzipV8")
+//         systemProperty("javascript.engine.path.V8", File(unzipV8Task.outputs.files.single().path, "d8"))
+//     }
 }
 
 fun Test.setUpJsIrBoxTests() {
