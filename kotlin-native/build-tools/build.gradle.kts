@@ -14,6 +14,28 @@ plugins {
     id("gradle-plugin-dependency-configuration")
 }
 
+//val myApi by configurations.creating {
+//    extendsFrom(configurations["api"])
+//}
+//
+//val myApiElements by configurations.creating {
+//    extendsFrom(configurations["apiElements"])
+//}
+//
+//val myApiElementsWithFixedAttribute by configurations.creating {
+//    extendsFrom(configurations["apiElementsWithFixedAttribute"])
+//}
+//
+//configurations.all {
+//    if (name != "api" && name != "apiElements" && name != "apiElementsWithFixedAttribute" && name != "commonApi" &&
+//            name != "commonApiElements" && name != "commonCompileOnly" && name != "commonCompileOnlyApi") {
+//        logger.lifecycle(name + " " + files)
+//    }
+//}
+
+//configurations.all {
+//}
+
 buildscript {
     val rootBuildDirectory by extra(project.file("../.."))
 
@@ -22,6 +44,14 @@ buildscript {
             maven(url = it)
         }
     }
+
+//    configurations.all {
+//        resolutionStrategy.eachDependency {
+//            if (requested.name.startsWith("kotlin-stdlib")) {
+//                useVersion("1.8.255-SNAPSHOT")
+//            }
+//        }
+//    }
 
     apply(from = rootBuildDirectory.resolve("kotlin-native/gradle/loadRootProperties.gradle"))
     dependencies {
@@ -52,6 +82,12 @@ repositories {
     mavenCentral()
     gradlePluginPortal()
 }
+
+//configurations.all {
+//    resolutionStrategy {
+//        force("org.codehaus.groovy:groovy-all:2.4.11")
+//    }
+//}
 
 dependencies {
     api(gradleApi())
