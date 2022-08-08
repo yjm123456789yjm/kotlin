@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBody
 import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
 import org.jetbrains.kotlin.ir.expressions.IrExpression
+import org.jetbrains.kotlin.ir.expressions.IrSetValue
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
@@ -33,8 +34,8 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
             irIfThenElse(
                 toParameter.type,
                 irEqeqeq(
-                    irGet(toParameter, context.irBuiltIns.anyNType),
-                    irGetField(null, void.owner.backingField!!)
+                    irGet(toParameter, toParameter.type),
+                    irGetField(null, void.owner.backingField!!, toParameter.type)
                 ),
                 it,
                 irGet(toParameter)
@@ -42,32 +43,28 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
         }
     }
 
-    private fun IrBuilderWithScope.createResolutionVariable(
+    private fun IrBuilderWithScope.createResolutionStatement(
         parameter: IrValueParameter,
         defaultExpression: IrExpression?,
-        parent: IrDeclarationParent,
-    ): IrVariable? {
-        return createDefaultResolutionExpression(defaultExpression, parameter)?.let { initializer ->
-            JsIrBuilder.buildVar(
-                parameter.type,
-                parent,
-                name = parameter.name.asString(),
-                initializer = initializer
-            )
+    ): IrSetValue? {
+        return createDefaultResolutionExpression(defaultExpression, parameter)?.let {
+            JsIrBuilder.buildSetValue(parameter.symbol, it)
         }
     }
 
     private fun IrConstructor.introduceDefaultResolution(): IrConstructor {
         val irBuilder = context.createIrBuilder(symbol, startOffset, endOffset)
 
-        val variables = mutableMapOf<IrValueParameter, IrValueDeclaration>()
+        val variables = mutableMapOf<IrValueParameter, IrValueParameter>()
 
-        val defaultResolutionStatements = valueParameters.mapNotNull { param ->
-            irBuilder.createResolutionVariable(
-                param,
-                param.defaultValue?.expression?.transform(VariableRemapper(variables), null),
-                this
-            )?.also { variables[param] = it }
+        valueParameters = valueParameters.map { param ->
+            param.takeIf { it.defaultValue != null }
+                ?.copyTo(this, isAssignable = true, origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER)
+                ?.also { new -> variables[param] = new } ?: param
+        }
+
+        val defaultResolutionStatements = valueParameters.mapNotNull {
+            irBuilder.createResolutionStatement(it, it.defaultValue?.expression)
         }
 
         if (variables.isNotEmpty()) {
@@ -77,18 +74,11 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                 statements += defaultResolutionStatements
                 statements += body?.statements ?: emptyList()
             }
+
+            context.mapping.defaultArgumentsDispatchFunction[this] = this
         }
 
-
-        return also {
-            valueParameters.forEach {
-                if (it.defaultValue != null) {
-                    it.origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
-                }
-            }
-            // Hack to insert undefined values inside default parameters
-            context.mapping.defaultArgumentsDispatchFunction[it] = it
-        }
+        return this
     }
 
     override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
@@ -156,13 +146,10 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
         return irBuilder.irBlockBody(this) {
             +valueParameters.zip(originalDeclaration.valueParameters)
                 .mapNotNull { (new, original) ->
-                    createResolutionVariable(
+                    createResolutionStatement(
                         new,
                         original.defaultValue?.expression?.transform(VariableRemapper(variables), null),
-                        this@generateDefaultStubBody
-                    )?.also {
-                        variables[original] = it
-                    }
+                    )
                 }
 
             +irReturn(irCall(originalDeclaration).apply {
