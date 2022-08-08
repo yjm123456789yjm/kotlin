@@ -25,7 +25,7 @@ class GrandDerivedFourth : DerivedFourth()
 open class Marked
 
 @SubclassOptInRequired(Marker::class)
-class DerivedMarked : <!OPT_IN_USAGE_ERROR!>Marked<!>()
+open class DerivedMarked : <!OPT_IN_USAGE_ERROR!>Marked<!>()
 
 fun test() {
     val b = Base()

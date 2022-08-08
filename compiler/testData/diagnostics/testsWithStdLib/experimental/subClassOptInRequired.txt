@@ -51,7 +51,7 @@ public interface DerivedInterface : BaseInterface {
     public open override /*1*/ /*fake_override*/ fun toString(): kotlin.String
 }
 
-@kotlin.SubclassOptInRequired(markerClass = Marker::class) public final class DerivedMarked : Marked {
+@kotlin.SubclassOptInRequired(markerClass = Marker::class) public open class DerivedMarked : Marked {
     public constructor DerivedMarked()
     public open override /*1*/ /*fake_override*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
     public open override /*1*/ /*fake_override*/ fun hashCode(): kotlin.Int
