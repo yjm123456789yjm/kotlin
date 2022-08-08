@@ -113,10 +113,9 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         }
 
         if (irClass.isInterface) {
-            if (irClass.isJsReflectedClass()) {
-                classBlock.statements += generateClassMetadata()
-            } else {
-                classModel.preDeclarationBlock.statements += generateInterfaceVariableDeclaration()
+            classModel.preDeclarationBlock.statements += when {
+                irClass.isJsReflectedClass() -> generateClassMetadata()
+                else -> generateInterfaceVariableDeclaration()
             }
         } else {
             for (property in properties) {
@@ -218,8 +217,8 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                 }
             }
 
-            classBlock.statements += generateClassMetadata()
-            classBlock.statements += generateInterfacesMetadata()
+            classModel.preDeclarationBlock.statements += generateClassMetadata()
+            classModel.preDeclarationBlock.statements += generateInterfacesMetadata()
         }
 
         context.staticContext.classModels[irClass.symbol] = classModel
@@ -491,10 +490,19 @@ private fun IrOverridableDeclaration<*>.overridesExternal(): Boolean {
 }
 
 private val IrClassifierSymbol.isInterface get() = (owner as? IrClass)?.isInterface == true
-private val IrClassifierSymbol.isEffectivelyExternal get() = (owner as? IrDeclaration)?.isEffectivelyExternal() == true
+
+private fun IrClass.getAllRelatedSymbols(): Set<IrClassSymbol> {
+    val superTypes = superTypes.map { it.classifierOrFail as IrClassSymbol }
+    val checkableInterfaces = getJsSubtypeCheckableInterfaces()?.map { it.symbol as IrClassSymbol } ?: emptyList()
+
+    return buildSet {
+        addAll(checkableInterfaces)
+        addAll(superTypes)
+    }
+}
 
 class JsIrClassModel(val klass: IrClass) {
-    val superClasses = klass.superTypes.map { it.classifierOrFail as IrClassSymbol }
+    val superClasses = klass.getAllRelatedSymbols()
 
     val preDeclarationBlock = JsCompositeBlock()
     val postDeclarationBlock = JsCompositeBlock()

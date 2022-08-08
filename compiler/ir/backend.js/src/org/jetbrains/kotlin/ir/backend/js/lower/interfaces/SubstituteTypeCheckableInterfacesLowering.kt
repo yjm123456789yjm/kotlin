@@ -22,12 +22,12 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrClassReferenceImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrDynamicMemberExpressionImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.types.classifierOrNull
 import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.util.isInterface
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.transformChildrenVoid
 
+private const val IS_INTERFACE_INTERFACE_POSITION = 1
 private const val REFERENCE_BUILDERS_SUPERTYPES_POSITION = 2
 private const val LOCAL_DELEGATE_BUILDER_SUPERTYPES_POSITION = 1
 
@@ -39,20 +39,31 @@ class SubstituteTypeCheckableInterfacesLowering(context: JsIrBackendContext) : B
     }
 
     private class SubstituteTypeCheckableInterfacesTransformer(private val context: JsIrBackendContext) : IrElementTransformerVoid() {
-        private val arrayOfSymbol = context.irBuiltIns.arrayOf
-        private val jsClassSymbol = context.intrinsics.jsClass
+        private val isInterfaceSymbol = context.intrinsics.isInterfaceSymbol
         private val referenceBuilderSymbol = context.kpropertyBuilder
         private val localDelegateBuilderSymbol = context.klocalDelegateBuilder
+
+        private val arrayOfSymbol get() = context.irBuiltIns.arrayOf
+        private val jsClassSymbol get() = context.intrinsics.jsClass
+        private val getInterfaceIdSymbol get() = context.intrinsics.getInterfaceIdSymbol
 
         override fun visitCall(expression: IrCall): IrExpression {
             with(expression) {
                 when (symbol) {
+                    isInterfaceSymbol -> putValueArgument(IS_INTERFACE_INTERFACE_POSITION, getInterfaceId())
                     referenceBuilderSymbol -> putValueArgument(REFERENCE_BUILDERS_SUPERTYPES_POSITION, getJsSuperTypes())
                     localDelegateBuilderSymbol -> putValueArgument(LOCAL_DELEGATE_BUILDER_SUPERTYPES_POSITION, getJsSuperTypes())
                 }
             }
 
             return super.visitCall(expression)
+        }
+
+        private fun IrCall.getInterfaceId(): IrExpression {
+            val jsClassCall = getValueArgument(IS_INTERFACE_INTERFACE_POSITION) as IrCall
+            if (jsClassCall.symbol != jsClassSymbol) return jsClassCall
+            val interfaceDeclaration = jsClassCall.getTypeArgument(0)?.classOrNull?.owner ?: error("Unexpected usage of jsClass intrinsic")
+            return interfaceDeclaration.getJsTypeConstructor(jsClassCall)
         }
 
         private fun IrCall.getJsSuperTypes(): IrExpression {
@@ -101,18 +112,22 @@ class SubstituteTypeCheckableInterfacesLowering(context: JsIrBackendContext) : B
             val irCall = IrCallImpl(startOffset, endOffset, jsClassSymbol.owner.returnType, jsClassSymbol, 1, 0)
                 .also { it.putTypeArgument(0, symbol.defaultType) }
 
-            val declaration = symbol.owner as? IrDeclaration ?: return irCall
+            val declaration = symbol.owner as? IrClass ?: return irCall
+            return declaration.getJsTypeConstructor(irCall)
+        }
 
+        private fun IrClass.getJsTypeConstructor(jsClassCall: IrCall): IrExpression {
             return when {
-                declaration.isJsReflectedClass() -> IrDynamicMemberExpressionImpl(
+                isJsReflectedClass() -> IrCallImpl(
                     startOffset,
                     endOffset,
-                    context.dynamicType,
-                    Namer.INTERFACES_MASK,
-                    irCall
-                )
+                    context.irBuiltIns.intType,
+                    getInterfaceIdSymbol,
+                    0,
+                    1,
+                ).apply { putValueArgument(0, jsClassCall) }
 
-                else -> irCall
+                else -> jsClassCall
             }
         }
     }

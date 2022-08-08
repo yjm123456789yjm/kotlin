@@ -47,7 +47,6 @@ class TypeOperatorLowering(val context: JsIrBackendContext) : BodyLoweringPass {
     private val eqeq = context.irBuiltIns.eqeqSymbol
 
     private val isInterfaceSymbol get() = context.intrinsics.isInterfaceSymbol
-    private val getInterfaceIdSymbol get() = context.intrinsics.getInterfaceIdSymbol
     private val isArraySymbol get() = context.intrinsics.isArraySymbol
     private val isSuspendFunctionSymbol = context.intrinsics.isSuspendFunctionSymbol
 
@@ -358,13 +357,6 @@ class TypeOperatorLowering(val context: JsIrBackendContext) : BodyLoweringPass {
                 var irType = wrapTypeReference(toType)
                 return JsIrBuilder.buildCall(isInterfaceSymbol).apply {
                     putValueArgument(0, argument)
-
-                    val interfaceDeclaration = toType.classifierOrNull?.owner as? IrClass
-
-                    if (interfaceDeclaration?.isJsReflectedClass() == true) {
-                        irType = JsIrBuilder.buildCall(getInterfaceIdSymbol).apply { putValueArgument(0, irType) }
-                    }
-
                     putValueArgument(1, irType)
                 }
             }
