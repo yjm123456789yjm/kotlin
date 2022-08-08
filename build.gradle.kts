@@ -387,9 +387,33 @@ val gradlePluginProjects = listOf(
 
 val ignoreTestFailures by extra(project.kotlinBuildProperties.ignoreTestFailures)
 
+val dependencyOnSnapshotReflectWhitelist = setOf(
+    ":kotlin-compiler",
+    ":tools:binary-compatibility-validator",
+)
+
 allprojects {
     if (!project.path.startsWith(":kotlin-ide.")) {
         pluginManager.apply("common-configuration")
+    }
+    configurations.all {
+        resolutionStrategy.eachDependency {
+            if (requested.group == "org.jetbrains.kotlin") {
+                val expectedReflectVersion = commonDependencyVersion("org.jetbrains.kotlin", "kotlin-reflect")
+                if (project.path !in dependencyOnSnapshotReflectWhitelist && requested.name == "kotlin-reflect") {
+                    check(requested.version == expectedReflectVersion) {
+                        "Project '${project.path}' depends on wrong kotlin-reflect. " +
+                                "Please use 'commonDependency(\"org.jetbrains.kotlin:kotlin-reflect\") { isTransitive = false }'"
+                    }
+                }
+                if (requested.name == "kotlin-stdlib") {
+                    check(requested.version != expectedReflectVersion) {
+                        "kotlin-stdlib from kotlin-reflect leaked into project '${project.path}'. Make sure " +
+                                "that dependency on the reflect isn't transitive"
+                    }
+                }
+            }
+        }
     }
     val mirrorRepo: String? = findProperty("maven.repository.mirror")?.toString()
 
