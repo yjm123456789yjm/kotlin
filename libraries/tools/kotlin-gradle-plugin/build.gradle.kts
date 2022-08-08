@@ -47,11 +47,14 @@ dependencies {
     commonCompileOnly(project(":kotlin-scripting-compiler"))
     commonCompileOnly(project(":kotlin-gradle-statistics"))
     commonCompileOnly(project(":kotlin-gradle-build-metrics"))
-    commonCompileOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
+    commonCompileOnly(kotlinStdlib("jdk7"))
     commonCompileOnly("com.android.tools.build:gradle:3.6.4") {
         exclude("org.jetbrains.kotlin")
     }
-    commonCompileOnly("com.android.tools.build:gradle-api:3.6.4")
+    commonCompileOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
+    commonCompileOnly("com.android.tools.build:gradle-api:3.6.4") {
+        exclude("org.jetbrains.kotlin")
+    }
     commonCompileOnly("com.android.tools.build:builder:3.6.4") {
         exclude("org.jetbrains.kotlin")
     }

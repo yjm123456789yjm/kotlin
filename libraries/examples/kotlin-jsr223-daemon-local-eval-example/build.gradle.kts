@@ -30,7 +30,9 @@ dependencies {
     compilerClasspath(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     compilerClasspath(kotlinStdlib())
     compilerClasspath(commonDependency("org.jetbrains.intellij.deps", "trove4j"))
-    compilerClasspath(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    compilerClasspath(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
+        exclude("org.jetbrains.kotlin")
+    }
     compilerClasspath(project(":kotlin-compiler-embeddable"))
     compilerClasspath(project(":kotlin-scripting-compiler-embeddable"))
     compilerClasspath(project(":kotlin-scripting-compiler-impl-embeddable"))
