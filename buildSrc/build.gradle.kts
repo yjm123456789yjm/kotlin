@@ -200,7 +200,9 @@ dependencies {
 
     implementation("io.ktor:ktor-client-auth:$ktorVersion")
     implementation("io.ktor:ktor-client-core:$ktorVersion")
-    implementation("io.ktor:ktor-client-cio:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion") {
+        exclude("org.jetbrains.kotlin")
+    }
 
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
     if (kotlinBuildProperties.isInJpsBuildIdeaSync) {

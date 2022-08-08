@@ -11,7 +11,9 @@ plugins {
 dependencies {
     api(project(":compiler:fir:tree"))
 
-    implementation(kotlinxCollectionsImmutable())
+    implementation(kotlinxCollectionsImmutable()) {
+        exclude("org.jetbrains.kotlin")
+    }
     implementation(project(":compiler:psi"))
 
     compileOnly(intellijCore())

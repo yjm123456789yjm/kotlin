@@ -3,10 +3,15 @@ plugins {
 }
 
 dependencies {
-    implementation("io.ktor:ktor-client-cio:1.4.0")
+    implementation(kotlinStdlib("jdk7"))
+    implementation("io.ktor:ktor-client-cio:1.4.0") {
+        exclude("org.jetbrains.kotlin")
+    }
     implementation(commonDependency("com.google.code.gson:gson"))
     implementation("org.apache.velocity:velocity:1.7")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.0.0-RC") {
+        exclude("org.jetbrains.kotlin")
+    }
 }
 
 val generateNpmVersions by generator(

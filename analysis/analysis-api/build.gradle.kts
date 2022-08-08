@@ -8,7 +8,9 @@ kotlin {
 }
 
 dependencies {
-    implementation(kotlinxCollectionsImmutable())
+    implementation(kotlinxCollectionsImmutable()) {
+        exclude("org.jetbrains.kotlin")
+    }
     compileOnly(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
 
     compileOnly(project(":compiler:psi"))

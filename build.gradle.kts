@@ -390,6 +390,7 @@ val ignoreTestFailures by extra(project.kotlinBuildProperties.ignoreTestFailures
 val dependencyOnSnapshotReflectWhitelist = setOf(
     ":kotlin-compiler",
     ":tools:binary-compatibility-validator",
+    ":tools:kotlin-stdlib-gen",
 )
 
 allprojects {
@@ -402,7 +403,8 @@ allprojects {
                 val expectedReflectVersion = commonDependencyVersion("org.jetbrains.kotlin", "kotlin-reflect")
                 if (project.path !in dependencyOnSnapshotReflectWhitelist && requested.name == "kotlin-reflect") {
                     check(requested.version == expectedReflectVersion) {
-                        "Project '${project.path}' depends on wrong kotlin-reflect. " +
+                        "Broken classpath: 'kotlin-reflect' should have '$expectedReflectVersion' version. " +
+                                "But it was '${requested.version}'. " +
                                 "Please use 'commonDependency(\"org.jetbrains.kotlin:kotlin-reflect\") { isTransitive = false }'"
                     }
                 }

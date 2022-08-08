@@ -30,7 +30,9 @@ dependencies {
     testApi(commonDependency("junit:junit"))
     testApiJUnit5(vintageEngine = true)
 
-    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-core:1.2.2") {
+        exclude("org.jetbrains.kotlin")
+    }
     testImplementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.2.2")
 
     testRuntimeOnly(intellijCore())

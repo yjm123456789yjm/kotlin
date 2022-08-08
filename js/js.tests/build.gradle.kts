@@ -79,7 +79,9 @@ dependencies {
 
     testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-serialization-json"))
     testImplementation(commonDependency("io.ktor", "ktor-client-core"))
-    testImplementation(commonDependency("io.ktor", "ktor-client-cio"))
+    testImplementation(commonDependency("io.ktor", "ktor-client-cio")) {
+        exclude("org.jetbrains.kotlin")
+    }
     testImplementation(commonDependency("io.ktor", "ktor-client-websockets"))
 }
 

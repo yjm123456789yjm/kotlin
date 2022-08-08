@@ -9,7 +9,9 @@ dependencies {
     api(kotlinStdlib())
     api(project(":kotlin-scripting-common"))
     testApi(commonDependency("junit"))
-    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
+        exclude("org.jetbrains.kotlin")
+    }
 }
 
 sourceSets {
