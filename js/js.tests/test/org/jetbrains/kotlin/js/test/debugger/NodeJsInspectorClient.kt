@@ -8,11 +8,14 @@ import io.ktor.client.*
 import io.ktor.client.engine.cio.*
 import io.ktor.client.plugins.websocket.*
 import io.ktor.websocket.*
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import org.jetbrains.kotlin.utils.addToStdlib.cast
+import java.util.logging.ConsoleHandler
+import java.util.logging.Level
 import java.util.logging.Logger
 import kotlin.coroutines.*
 
@@ -91,7 +94,12 @@ private const val NODE_WS_DEBUG_URL_PREFIX = "Debugger listening on ws://"
  */
 private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : NodeJsInspectorClientContext, CDPRequestEvaluator {
 
-    private val logger = Logger.getLogger(this::class.java.name)
+    private val logger = Logger.getLogger(this::class.java.name).apply {
+        val handler = ConsoleHandler()
+        handler.level = Level.FINE
+        level = Level.FINE
+        addHandler(handler)
+    }
 
     private val nodeProcess = ProcessBuilder(
         System.getProperty("javascript.engine.path.NodeJs"),
@@ -150,14 +158,18 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
      * Starts a loop that waits for incoming Chrome DevTools Protocol messages and invokes [receiveMessage] when one is received.
      * The loop stops as soon as at least one message is received *and* [receiveMessage] returns `true`.
      */
+    @OptIn(ExperimentalCoroutinesApi::class)
     suspend fun listenForMessages(receiveMessage: (String) -> Boolean) {
         val session = webSocketSession ?: error("Session closed")
         do {
+            if (session.incoming.isClosedForReceive) {
+                logger.warning("Channel closed for receive")
+            }
             val message = when (val frame = session.incoming.receive()) {
                 is Frame.Text -> frame.readText()
                 else -> error("Unexpected frame kind: $frame")
             }
-            logger.fine {
+            logger.finer {
                 "Received message:\n${prettyPrintJson(message)}"
             }
         } while (!receiveMessage(message))
@@ -177,7 +189,7 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
 
     private suspend fun sendPlainTextMessage(message: String) {
         val session = webSocketSession ?: error("Session closed")
-        logger.fine {
+        logger.finer {
             "Sent message:\n${prettyPrintJson(message)}"
         }
         session.send(message)
@@ -207,6 +219,7 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
      * Releases all the resources and destroys the Node.js process.
      */
     suspend fun release() {
+        logger.fine("Releasing resources")
         webSocketSession?.close()
         webSocketSession = null
         webSocketClient.close()

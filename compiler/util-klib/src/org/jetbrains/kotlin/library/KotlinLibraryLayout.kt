@@ -34,6 +34,8 @@ interface KotlinLibraryLayout {
         get() = File(libFile, component!!)
     val manifestFile
         get() = File(componentDir, KLIB_MANIFEST_FILE_NAME)
+    val sourcesDir
+        get() = File(componentDir, "sources")
     val resourcesDir
         get() = File(componentDir, "resources")
     val pre_1_4_manifest: File

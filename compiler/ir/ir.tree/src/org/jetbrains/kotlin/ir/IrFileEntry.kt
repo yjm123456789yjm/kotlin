@@ -5,6 +5,8 @@
 
 package org.jetbrains.kotlin.ir
 
+import java.io.Reader
+
 const val UNDEFINED_OFFSET: Int = -1
 
 data class SourceRangeInfo(
@@ -20,6 +22,9 @@ data class SourceRangeInfo(
 interface IrFileEntry {
     val name: String
     val maxOffset: Int
+
+    fun createSourceReader(): Reader?
+
     fun getSourceRangeInfo(beginOffset: Int, endOffset: Int): SourceRangeInfo
     fun getLineNumber(offset: Int): Int
     fun getColumnNumber(offset: Int): Int

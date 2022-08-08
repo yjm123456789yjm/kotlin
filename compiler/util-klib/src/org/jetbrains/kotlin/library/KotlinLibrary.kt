@@ -73,6 +73,8 @@ interface IrLibrary {
     fun strings(fileIndex: Int): ByteArray
     fun declarations(fileIndex: Int): ByteArray
     fun bodies(fileIndex: Int): ByteArray
+
+    fun source(fileIndex: Int): ByteArray?
 }
 
 val BaseKotlinLibrary.uniqueName: String

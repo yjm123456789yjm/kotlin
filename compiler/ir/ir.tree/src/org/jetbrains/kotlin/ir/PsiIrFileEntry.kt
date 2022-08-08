@@ -8,6 +8,9 @@ package org.jetbrains.kotlin.ir
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
+import com.intellij.util.text.CharSequenceReader
+import java.io.InputStreamReader
+import java.io.Reader
 import kotlin.reflect.KClass
 
 class PsiIrFileEntry(val psiFile: PsiFile) : IrFileEntry {
@@ -16,6 +19,8 @@ class PsiIrFileEntry(val psiFile: PsiFile) : IrFileEntry {
     override val maxOffset: Int
     private val lineStartOffsets: IntArray
     private val fileViewProvider = psiFile.viewProvider
+
+    override fun createSourceReader(): Reader = InputStreamReader(psiFile.virtualFile.inputStream)
 
     init {
         val document = fileViewProvider.document ?: throw AssertionError("No document for $psiFile")

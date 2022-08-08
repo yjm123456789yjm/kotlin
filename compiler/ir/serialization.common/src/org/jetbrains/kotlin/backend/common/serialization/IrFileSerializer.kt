@@ -120,6 +120,7 @@ open class IrFileSerializer(
     private val bodiesOnlyForInlines: Boolean = false,
     private val skipExpects: Boolean = false,
     private val addDebugInfo: Boolean = true,
+    private val addSources: Boolean = false,
     private val normalizeAbsolutePaths: Boolean = false,
     private val sourceBaseDirs: Collection<String>
 ) {
@@ -1462,7 +1463,8 @@ open class IrFileSerializer(
             IrMemoryStringWriter(protoStringArray).writeIntoMemory(),
             IrMemoryArrayWriter(protoBodyArray.map { it.toByteArray() }).writeIntoMemory(),
             IrMemoryDeclarationWriter(topLevelDeclarations).writeIntoMemory(),
-            if (addDebugInfo) IrMemoryStringWriter(protoDebugInfoArray).writeIntoMemory() else null
+            if (addDebugInfo) IrMemoryStringWriter(protoDebugInfoArray).writeIntoMemory() else null,
+            if (addSources) file.fileEntry.createSourceReader()?.readText()?.toByteArray() else null
         )
     }
 

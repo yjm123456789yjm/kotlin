@@ -13,6 +13,7 @@ import org.jetbrains.kotlin.ir.declarations.IrDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrFunction
 import org.jetbrains.kotlin.resolve.jvm.JvmClassName
+import java.io.Reader
 
 class MultifileFacadeFileEntry(
     private val className: JvmClassName,
@@ -23,6 +24,8 @@ class MultifileFacadeFileEntry(
 
     override val maxOffset: Int
         get() = UNDEFINED_OFFSET
+
+    override fun createSourceReader(): Reader? = null
 
     override fun getSourceRangeInfo(beginOffset: Int, endOffset: Int): SourceRangeInfo =
         error("Multifile facade doesn't support debug info: $className")

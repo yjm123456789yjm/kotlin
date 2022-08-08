@@ -126,6 +126,7 @@ open class ExtractingBaseLibraryImpl(zipped: KotlinLibraryLayoutImpl) :
     ExtractingKotlinLibraryLayout(zipped) {
     override val manifestFile: File by lazy { zipped.extract(zipped.manifestFile) }
     override val resourcesDir: File by lazy { zipped.extractDir(zipped.resourcesDir) }
+    override val sourcesDir: File by lazy { zipped.extractDir(zipped.sourcesDir) }
 }
 
 class ExtractingMetadataLibraryImpl(val zipped: MetadataLibraryLayoutImpl) :

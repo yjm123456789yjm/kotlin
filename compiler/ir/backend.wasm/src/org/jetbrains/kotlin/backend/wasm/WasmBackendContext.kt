@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.addChild
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.name.Name
+import java.io.Reader
 
 class WasmBackendContext(
     val module: ModuleDescriptor,
@@ -69,6 +70,8 @@ class WasmBackendContext(
         IrFileImpl(object : IrFileEntry {
             override val name = "<implicitDeclarations>"
             override val maxOffset = UNDEFINED_OFFSET
+
+            override fun createSourceReader(): Reader? = null
 
             override fun getSourceRangeInfo(beginOffset: Int, endOffset: Int) =
                 SourceRangeInfo(
@@ -138,6 +141,8 @@ class WasmBackendContext(
         return IrFileImpl(object : IrFileEntry {
             override val name = "<$name>"
             override val maxOffset = UNDEFINED_OFFSET
+
+            override fun createSourceReader(): Reader? = null
 
             override fun getSourceRangeInfo(beginOffset: Int, endOffset: Int) =
                 SourceRangeInfo(

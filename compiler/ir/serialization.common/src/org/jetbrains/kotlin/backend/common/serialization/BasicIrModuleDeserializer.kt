@@ -57,7 +57,8 @@ abstract class BasicIrModuleDeserializer(
             val fileStream = klib.file(i).codedInputStream
             val fileProto = ProtoFile.parseFrom(fileStream, ExtensionRegistryLite.newInstance())
             val fileReader = IrLibraryFileFromBytes(IrKlibBytesSource(klib, i))
-            val file = fileReader.createFile(moduleFragment, fileProto)
+            val source = klib.source(i)
+            val file = fileReader.createFile(moduleFragment, fileProto, source)
 
             fileDeserializationStates.add(deserializeIrFile(fileProto, file, fileReader, i, delegate, containsErrorCode))
             if (!strategyResolver(file.fileEntry.name).onDemand)

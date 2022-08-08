@@ -143,7 +143,18 @@ fun generateIrForKlibSerialization(
             val irData = compiledIrFiles[f] ?: error("No Ir Data found for file $f")
             val metaFile = compiledMetaFiles[f] ?: error("No Meta Data found for file $f")
             val irFile = with(irData) {
-                SerializedIrFile(fileData, String(fqn), f.path.replace('\\', '/'), types, signatures, strings, bodies, declarations, debugInfo)
+                SerializedIrFile(
+                    fileData,
+                    String(fqn),
+                    f.path.replace('\\', '/'),
+                    types,
+                    signatures,
+                    strings,
+                    bodies,
+                    declarations,
+                    debugInfo,
+                    sourceText,
+                )
             }
             storage.add(KotlinFileSerializedData(metaFile.metadata, irFile))
         }
@@ -293,7 +304,7 @@ fun deserializeDependencies(
 
 fun getFunctionFactoryCallback(stdlibModule: IrModuleFragment) = { packageFragmentDescriptor: PackageFragmentDescriptor ->
     IrFileImpl(
-        NaiveSourceBasedFileEntryImpl("${packageFragmentDescriptor.fqName}-[K][Suspend]Functions"),
+        NaiveSourceBasedFileEntryImpl("${packageFragmentDescriptor.fqName}-[K][Suspend]Functions", sourceReader = { null }),
         packageFragmentDescriptor,
         stdlibModule
     ).also { stdlibModule.files += it }
@@ -759,7 +770,18 @@ fun serializeModuleIntoKlib(
         incrementalResultsConsumer?.run {
             processPackagePart(ioFile, compiledFile.metadata, empty, empty)
             with(compiledFile.irData) {
-                processIrFile(ioFile, fileData, types, signatures, strings, declarations, bodies, fqName.toByteArray(), debugInfo)
+                processIrFile(
+                    ioFile,
+                    fileData,
+                    types,
+                    signatures,
+                    strings,
+                    declarations,
+                    bodies,
+                    fqName.toByteArray(),
+                    debugInfo,
+                    sourceText
+                )
             }
         }
     }

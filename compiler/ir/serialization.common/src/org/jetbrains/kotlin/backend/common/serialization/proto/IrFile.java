@@ -3,6 +3,8 @@
 
 package org.jetbrains.kotlin.backend.common.serialization.proto;
 
+import java.io.Reader;
+
 /**
  * Protobuf type {@code org.jetbrains.kotlin.backend.common.serialization.proto.IrFile}
  */

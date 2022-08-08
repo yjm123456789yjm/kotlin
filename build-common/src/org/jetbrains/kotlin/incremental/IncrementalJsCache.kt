@@ -137,8 +137,8 @@ open class IncrementalJsCache(
         }
 
         for ((srcFile, irData) in incrementalResults.irFileData) {
-            val (fileData, types, signatures, strings, declarations, bodies, fqn, debugInfos) = irData
-            irTranslationResults.put(srcFile, fileData, types, signatures, strings, declarations, bodies, fqn, debugInfos)
+            val (fileData, types, signatures, strings, declarations, bodies, fqn, debugInfos, sourceText) = irData
+            irTranslationResults.put(srcFile, fileData, types, signatures, strings, declarations, bodies, fqn, debugInfos, sourceText)
         }
     }
 
@@ -270,6 +270,7 @@ private object IrTranslationResultValueExternalizer : DataExternalizer<IrTransla
         output.writeArray(value.bodies)
         output.writeArray(value.fqn)
         value.debugInfo?.let { output.writeArray(it) }
+        value.sourceText?.let { output.writeArray(it) }
     }
 
     private fun DataOutput.writeArray(array: ByteArray) {
@@ -304,8 +305,9 @@ private object IrTranslationResultValueExternalizer : DataExternalizer<IrTransla
         val bodies = input.readArray()
         val fqn = input.readArray()
         val debugInfos = input.readArrayOrNull()
+        val sourceText = input.readArrayOrNull()
 
-        return IrTranslationResultValue(fileData, types, signatures, strings, declarations, bodies, fqn, debugInfos)
+        return IrTranslationResultValue(fileData, types, signatures, strings, declarations, bodies, fqn, debugInfos, sourceText)
     }
 }
 
@@ -331,10 +333,20 @@ private class IrTranslationResultMap(
         newDeclarations: ByteArray,
         newBodies: ByteArray,
         fqn: ByteArray,
-        debugInfos: ByteArray?
+        debugInfos: ByteArray?,
+        sourceText: ByteArray?,
     ) {
-        storage[pathConverter.toPath(sourceFile)] =
-            IrTranslationResultValue(newFiledata, newTypes, newSignatures, newStrings, newDeclarations, newBodies, fqn, debugInfos)
+        storage[pathConverter.toPath(sourceFile)] = IrTranslationResultValue(
+            newFiledata,
+            newTypes,
+            newSignatures,
+            newStrings,
+            newDeclarations,
+            newBodies,
+            fqn,
+            debugInfos,
+            sourceText
+        )
     }
 
     operator fun get(sourceFile: File): IrTranslationResultValue? =

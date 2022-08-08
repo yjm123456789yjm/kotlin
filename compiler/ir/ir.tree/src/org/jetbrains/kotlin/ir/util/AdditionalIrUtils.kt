@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.name.SpecialNames
 import org.jetbrains.kotlin.resolve.descriptorUtil.module
 import java.io.File
+import java.io.Reader
 
 val IrConstructor.constructedClass get() = this.parent as IrClass
 
@@ -187,7 +188,8 @@ val IrFileEntry.lineStartOffsets: IntArray
 class NaiveSourceBasedFileEntryImpl(
     override val name: String,
     private val lineStartOffsets: IntArray = intArrayOf(),
-    override val maxOffset: Int = UNDEFINED_OFFSET
+    override val maxOffset: Int = UNDEFINED_OFFSET,
+    private val sourceReader: () -> Reader?
 ) : IrFileEntry {
     val lineStartOffsetsAreEmpty: Boolean
         get() = lineStartOffsets.isEmpty()
@@ -205,6 +207,8 @@ class NaiveSourceBasedFileEntryImpl(
             return if (index >= 0) index else -index - 2
         }
     }
+
+    override fun createSourceReader(): Reader? = sourceReader()
 
     override fun getLineNumber(offset: Int): Int {
         if (offset == SYNTHETIC_OFFSET) return 0

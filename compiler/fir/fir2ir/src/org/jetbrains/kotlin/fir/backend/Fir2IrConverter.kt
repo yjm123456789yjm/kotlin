@@ -39,6 +39,9 @@ import org.jetbrains.kotlin.ir.interpreter.checker.IrConstTransformer
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
 import org.jetbrains.kotlin.psi.KtFile
+import java.io.FileInputStream
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 
 class Fir2IrConverter(
     private val moduleDescriptor: FirModuleDescriptor,
@@ -133,6 +136,9 @@ class Fir2IrConverter(
     }
 
     private fun registerFileAndClasses(file: FirFile, moduleFragment: IrModuleFragment) {
+
+        fun makeSourceReader() = file.sourceFile?.getContentsAsStream()?.let { InputStreamReader(it, StandardCharsets.UTF_8) }
+
         val fileEntry = when (file.origin) {
             FirDeclarationOrigin.Source ->
                 file.psi?.let { PsiIrFileEntry(it as KtFile) }
@@ -141,13 +147,19 @@ class Fir2IrConverter(
                             NaiveSourceBasedFileEntryImpl(
                                 file.sourceFile?.path ?: file.sourceFile?.name ?: file.name,
                                 linesMapping.lineStartOffsets,
-                                linesMapping.lastOffset
+                                linesMapping.lastOffset,
+                                sourceReader = ::makeSourceReader
                             )
+
                         is KtPsiSourceFileLinesMapping -> PsiIrFileEntry(linesMapping.psiFile)
                         else ->
-                            NaiveSourceBasedFileEntryImpl(file.sourceFile?.path ?: file.sourceFile?.name ?: file.name)
+                            NaiveSourceBasedFileEntryImpl(
+                                file.sourceFile?.path ?: file.sourceFile?.name ?: file.name,
+                                sourceReader = ::makeSourceReader
+                            )
                     }
-            FirDeclarationOrigin.Synthetic -> NaiveSourceBasedFileEntryImpl(file.name)
+
+            FirDeclarationOrigin.Synthetic -> NaiveSourceBasedFileEntryImpl(file.name, sourceReader = { null })
             else -> error("Unsupported file origin: ${file.origin}")
         }
         val irFile = IrFileImpl(

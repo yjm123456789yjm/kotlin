@@ -17,6 +17,9 @@ import org.jetbrains.kotlin.library.IrLibrary
 import org.jetbrains.kotlin.library.encodings.WobblyTF8
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.protobuf.ExtensionRegistryLite
+import java.io.ByteArrayInputStream
+import java.io.InputStreamReader
+import java.nio.charset.StandardCharsets
 import org.jetbrains.kotlin.backend.common.serialization.proto.IdSignature as ProtoIdSignature
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrConstructorCall as ProtoConstructorCall
 import org.jetbrains.kotlin.backend.common.serialization.proto.IrDeclaration as ProtoDeclaration
@@ -186,9 +189,19 @@ class IrKlibBytesSource(private val klib: IrLibrary, private val fileIndex: Int)
 internal fun IrLibraryFile.deserializeFqName(fqn: List<Int>): String =
     fqn.joinToString(".", transform = ::string)
 
-fun IrLibraryFile.createFile(module: IrModuleFragment, fileProto: ProtoFile): IrFile {
+fun IrLibraryFile.createFile(
+    module: IrModuleFragment,
+    fileProto: org.jetbrains.kotlin.backend.common.serialization.proto.IrFile,
+    source: ByteArray?
+): IrFile {
     val fileName = fileProto.fileEntry.name
-    val fileEntry = NaiveSourceBasedFileEntryImpl(fileName, fileProto.fileEntry.lineStartOffsetList.toIntArray())
+    val fileEntry = NaiveSourceBasedFileEntryImpl(
+        fileName,
+        fileProto.fileEntry.lineStartOffsetList.toIntArray(),
+        sourceReader = {
+            source?.let { InputStreamReader(ByteArrayInputStream(it), StandardCharsets.UTF_8) }
+        }
+    )
     val fqName = FqName(deserializeFqName(fileProto.fqNameList))
     val packageFragmentDescriptor = EmptyPackageFragmentDescriptor(module.descriptor, fqName)
     val symbol = IrFileSymbolImpl(packageFragmentDescriptor)

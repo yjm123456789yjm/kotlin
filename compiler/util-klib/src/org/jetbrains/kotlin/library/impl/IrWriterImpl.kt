@@ -9,6 +9,8 @@ import org.jetbrains.kotlin.library.IrKotlinLibraryLayout
 import org.jetbrains.kotlin.library.IrWriter
 import org.jetbrains.kotlin.library.SerializedIrFile
 import org.jetbrains.kotlin.library.SerializedIrModule
+import kotlin.math.abs
+import kotlin.math.log10
 
 abstract class IrWriterImpl(val irLayout: IrKotlinLibraryLayout) : IrWriter {
     override fun addDataFlowGraph(dataFlowGraph: ByteArray) {
@@ -29,6 +31,13 @@ class IrMonoliticWriterImpl(_irLayout: IrKotlinLibraryLayout) : IrWriterImpl(_ir
             IrArrayWriter(map { it.strings }).writeIntoFile(irLayout.irStrings.absolutePath)
             IrArrayWriter(map { it.bodies }).writeIntoFile(irLayout.irBodies.absolutePath)
             IrArrayWriter(mapNotNull { it.debugInfo }).writeIntoFile(irLayout.irDebugInfo.absolutePath)
+
+            val maxNumberOfDigitsInFileNumber = log10(abs((size - 1).toDouble())).toInt() + 1
+            val format = "%0$maxNumberOfDigitsInFileNumber"
+            forEachIndexed { index, file ->
+
+                file.sourceText?.let { irLayout.sourcesDir.child("${format.format(index)}_${file.fqName}.kt").writeBytes(it) }
+            }
         }
     }
 }

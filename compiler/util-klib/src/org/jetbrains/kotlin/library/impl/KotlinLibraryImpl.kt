@@ -93,6 +93,13 @@ abstract class IrLibraryImpl(
             it.dataFlowGraphFile.let { if (it.exists) it.readBytes() else null }
         }
     }
+
+    override fun source(fileIndex: Int): ByteArray? {
+        // TODO: Should this be realFiles?
+        return access.inPlace {
+            it.sourcesDir.listFilesOrEmpty.getOrNull(fileIndex)?.readBytes()
+        }
+    }
 }
 
 class IrMonoliticLibraryImpl(_access: IrLibraryAccess<IrKotlinLibraryLayout>) : IrLibraryImpl(_access) {
