@@ -7,6 +7,7 @@ package org.jetbrains.kotlin.ir.backend.js.lower
 
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.backend.common.lower.DefaultParameterInjector
+import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.declarations.IrValueParameter
 import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
@@ -14,17 +15,25 @@ import org.jetbrains.kotlin.ir.expressions.impl.IrCallImpl
 import org.jetbrains.kotlin.ir.expressions.impl.IrGetFieldImpl
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
 import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.util.isVararg
 
 class JsDefaultParameterInjector(context: JsIrBackendContext) :
     DefaultParameterInjector(context, skipExternalMethods = true, forceSetOverrideSymbols = false, keepOriginalArguments = true) {
     private val void = context.intrinsics.void
 
-    override fun nullConst(startOffset: Int, endOffset: Int, irParameter: IrValueParameter): IrExpression =
-        IrGetFieldImpl(
-            startOffset,
-            endOffset,
-            void.owner.backingField!!.symbol,
-            context.irBuiltIns.anyNType
-        )
+    override fun nullConst(startOffset: Int, endOffset: Int, irParameter: IrValueParameter): IrExpression? =
+        if (irParameter.isVararg && !irParameter.hasDefaultValue()) {
+            null
+        } else {
+            IrGetFieldImpl(
+                startOffset,
+                endOffset,
+                void.owner.backingField!!.symbol,
+                context.irBuiltIns.anyNType
+            )
+        }
+
+    private fun IrValueParameter.hasDefaultValue(): Boolean =
+        origin == JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
 }
 

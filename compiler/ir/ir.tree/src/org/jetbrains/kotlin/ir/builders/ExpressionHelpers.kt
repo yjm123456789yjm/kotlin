@@ -161,6 +161,17 @@ fun IrBuilderWithScope.irGetObjectValue(type: IrType, classSymbol: IrClassSymbol
 fun IrBuilderWithScope.irEqeqeq(arg1: IrExpression, arg2: IrExpression) =
     context.eqeqeq(startOffset, endOffset, arg1, arg2)
 
+fun IrBuilderWithScope.irEqeqeqWithoutBox(arg1: IrExpression, arg2: IrExpression) =
+    primitiveOp2(
+        startOffset,
+        endOffset,
+        context.irBuiltIns.eqeqeqSymbol,
+        context.irBuiltIns.booleanType,
+        IrStatementOrigin.SYNTHETIC_NOT_AUTOBOXED_CHECK,
+        arg1,
+        arg2
+    )
+
 fun IrBuilderWithScope.irNull() =
     irNull(context.irBuiltIns.nothingNType)
 

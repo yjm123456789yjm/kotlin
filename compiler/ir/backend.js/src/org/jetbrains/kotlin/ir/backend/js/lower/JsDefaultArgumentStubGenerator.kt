@@ -33,7 +33,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
         return defaultExpression?.let {
             irIfThenElse(
                 toParameter.type,
-                irEqeqeq(
+                irEqeqeqWithoutBox(
                     irGet(toParameter, toParameter.type),
                     irGetField(null, void.owner.backingField!!, toParameter.type)
                 ),
