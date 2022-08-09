@@ -222,6 +222,7 @@ class KotlinConstraintSystemCompleter(
             languageVersionSettings.supportsFeature(LanguageFeature.UseBuilderInferenceWithoutAnnotation)
 
         val builder = getBuilder()
+        var builderInferenceIsAlreadyUsedForOneArgument = false
         for (argument in lambdaArguments) {
             if (!argument.atom.hasBuilderInferenceAnnotation) {
                 if (!useBuilderInferenceWithoutAnnotation) continue
@@ -231,6 +232,16 @@ class KotlinConstraintSystemCompleter(
                 .flatMap { it.extractTypeVariables() }.filter { it !in fixedTypeVariables }
 
             if (notFixedInputTypeVariables.isEmpty()) continue
+            if (!argument.atom.hasBuilderInferenceAnnotation &&
+                builderInferenceIsAlreadyUsedForOneArgument &&
+                argument.inputTypes.any {
+                    val constructor = it.constructor
+                    constructor is TypeVariableTypeConstructor && constructor in notFixedInputTypeVariables
+                }
+            ) {
+                continue
+            }
+            builderInferenceIsAlreadyUsedForOneArgument = true
 
             for (variable in notFixedInputTypeVariables) {
                 builder.markPostponedVariable(notFixedTypeVariables.getValue(variable).typeVariable)

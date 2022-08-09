@@ -23,6 +23,7 @@ import org.jetbrains.kotlin.fir.symbols.impl.FirTypeParameterSymbol
 import org.jetbrains.kotlin.fir.types.ConeErrorType
 import org.jetbrains.kotlin.fir.types.ConeKotlinType
 import org.jetbrains.kotlin.fir.types.ConeTypeVariable
+import org.jetbrains.kotlin.fir.types.ConeTypeVariableType
 import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionContext
 import org.jetbrains.kotlin.resolve.calls.inference.components.ConstraintSystemCompletionMode
 import org.jetbrains.kotlin.resolve.calls.inference.components.TypeVariableDependencyInformationProvider
@@ -193,11 +194,22 @@ class ConstraintSystemCompleter(components: BodyResolveComponents, private val c
         // We assume useBuilderInferenceWithoutAnnotation = true for FIR
 
         val builder = getBuilder()
-        for (argument in lambdaArguments) {
+        var builderInferenceIsAlreadyUsedForOneArgument = false
+        // For unclear reason, initially here V we have arguments in reversed order in comparison with K1
+        for (argument in lambdaArguments.reversed()) {
             val notFixedInputTypeVariables = argument.inputTypes
                 .flatMap { it.extractTypeVariables() }.filter { it !in fixedTypeVariables }
 
             if (notFixedInputTypeVariables.isEmpty()) continue
+            if (!argument.atom.hasBuilderInferenceAnnotation() &&
+                builderInferenceIsAlreadyUsedForOneArgument &&
+                argument.inputTypes.any {
+                    it is ConeTypeVariableType && it.lookupTag in notFixedInputTypeVariables
+                }
+            ) {
+                continue
+            }
+            builderInferenceIsAlreadyUsedForOneArgument = true
 
             for (variable in notFixedInputTypeVariables) {
                 builder.markPostponedVariable(notFixedTypeVariables.getValue(variable).typeVariable)
