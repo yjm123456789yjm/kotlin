@@ -15,6 +15,7 @@ import org.jetbrains.kotlin.fir.references.FirResolvedNamedReference
 import org.jetbrains.kotlin.fir.resolve.ScopeSession
 import org.jetbrains.kotlin.fir.resolve.createFunctionalType
 import org.jetbrains.kotlin.fir.resolve.fullyExpandedType
+import org.jetbrains.kotlin.fir.resolve.inference.hasBuilderInferenceAnnotation
 import org.jetbrains.kotlin.fir.resolve.inference.preprocessCallableReference
 import org.jetbrains.kotlin.fir.resolve.inference.preprocessLambdaArgument
 import org.jetbrains.kotlin.fir.resolve.transformers.ReturnTypeCalculator
@@ -47,7 +48,8 @@ fun Candidate.resolveArgumentExpression(
     sink: CheckerSink,
     context: ResolutionContext,
     isReceiver: Boolean,
-    isDispatch: Boolean
+    isDispatch: Boolean,
+    hasBuilderInferenceAnnotation: Boolean
 ) {
     when (argument) {
         is FirFunctionCall, is FirWhenExpression, is FirTryExpression, is FirCheckNotNullCall, is FirElvisExpression -> resolveSubCallArgument(
@@ -107,7 +109,9 @@ fun Candidate.resolveArgumentExpression(
             else
                 preprocessCallableReference(argument, expectedType, context)
         // TODO:!
-        is FirAnonymousFunctionExpression -> preprocessLambdaArgument(csBuilder, argument, expectedType, expectedTypeRef, context, sink)
+        is FirAnonymousFunctionExpression -> preprocessLambdaArgument(
+            csBuilder, argument, expectedType, expectedTypeRef, context, sink, hasBuilderInferenceAnnotation
+        )
         // TODO:!
         //TODO: Collection literal
         is FirWrappedArgumentExpression -> resolveArgumentExpression(
@@ -118,7 +122,8 @@ fun Candidate.resolveArgumentExpression(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            hasBuilderInferenceAnnotation
         )
         is FirBlock -> resolveBlockArgument(
             csBuilder,
@@ -128,7 +133,8 @@ fun Candidate.resolveArgumentExpression(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            hasBuilderInferenceAnnotation
         )
         else -> resolvePlainExpressionArgument(csBuilder, argument, expectedType, sink, context, isReceiver, isDispatch)
     }
@@ -142,7 +148,8 @@ private fun Candidate.resolveBlockArgument(
     sink: CheckerSink,
     context: ResolutionContext,
     isReceiver: Boolean,
-    isDispatch: Boolean
+    isDispatch: Boolean,
+    hasBuilderInferenceAnnotation: Boolean
 ) {
     val returnArguments = block.returnExpressions()
     if (returnArguments.isEmpty()) {
@@ -168,7 +175,8 @@ private fun Candidate.resolveBlockArgument(
             sink,
             context,
             isReceiver,
-            isDispatch
+            isDispatch,
+            hasBuilderInferenceAnnotation
         )
     }
 }
@@ -456,7 +464,8 @@ internal fun Candidate.resolveArgument(
         sink,
         context,
         isReceiver,
-        false
+        isDispatch = false,
+        hasBuilderInferenceAnnotation = parameter?.hasBuilderInferenceAnnotation() == true
     )
 }
 
