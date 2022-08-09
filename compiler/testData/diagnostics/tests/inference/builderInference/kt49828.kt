@@ -209,13 +209,13 @@ fun test() {
             add("")
             with (get()) {
                 with (listOf(1)) {
-                    <!STUB_TYPE_IN_RECEIVER_CAUSES_AMBIGUITY!><!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE, OVERLOAD_RESOLUTION_AMBIGUITY, OVERLOAD_RESOLUTION_AMBIGUITY_BECAUSE_OF_STUB_TYPES!>bar<!>()<!>
+                    <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE, OVERLOAD_RESOLUTION_AMBIGUITY!>bar<!>()
                 }
             }
         },
         {
             put(1, "one")
-            <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE, OVERLOAD_RESOLUTION_AMBIGUITY, OVERLOAD_RESOLUTION_AMBIGUITY_BECAUSE_OF_STUB_TYPES!>foo11<!>(<!STUB_TYPE_IN_ARGUMENT_CAUSES_AMBIGUITY!>entries()<!>)
+            <!DEBUG_INFO_ELEMENT_WITH_ERROR_TYPE, OVERLOAD_RESOLUTION_AMBIGUITY!>foo11<!>(entries())
         }
     )
 }
