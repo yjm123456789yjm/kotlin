@@ -3,7 +3,24 @@
 fun test() {
     foo(
         flow { emit(0) }
-    ) { it.collect <!TOO_MANY_ARGUMENTS!>{}<!> }
+    ) { it.collect {} }
+
+    // 0. Initial
+    // W <: Any / declared upper bound
+    // FlowCollector<W>.() -> Unit <: FlowCollector<W>.() -> Unit / from Argument { emit(0) }
+    // F <: Any / declared upper bound
+    // Flow<W> <: F / from Argument flow { emit(0) }
+    // Scope<F>.(F) -> Unit -> Scope<F>.(F) -> Unit / from Argument { it.collect() }
+
+    // 1. after analyze for { emit(0 }
+    // Unit <: Unit / from Lambda argument, probably { emit(0) }
+    // Int <: W / from For builder inference call
+    // Flow<Int> <: F / from For builder inference call
+
+    // 2. after analyze for { it.collect {} }
+    // Unit <: Unit / from Lambda argument, probably { it.collect {} }
+    // Flow<*> <: F / from For builder inference call
+    // ERROR_TYPE <: W / from For builder inference call
 }
 
 fun <F : Any> foo(

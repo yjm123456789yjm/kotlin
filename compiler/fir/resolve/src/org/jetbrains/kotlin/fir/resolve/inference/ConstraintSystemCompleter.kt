@@ -193,11 +193,17 @@ class ConstraintSystemCompleter(components: BodyResolveComponents, private val c
         // We assume useBuilderInferenceWithoutAnnotation = true for FIR
 
         val builder = getBuilder()
-        for (argument in lambdaArguments) {
+        var builderInferenceIsAlreadyUsedForOneArgument = false
+        // For unclear reason, initially here V we have arguments in reversed order in comparison with K1
+        for (argument in lambdaArguments.reversed()) {
+            if (builderInferenceIsAlreadyUsedForOneArgument) {
+                continue
+            }
             val notFixedInputTypeVariables = argument.inputTypes
                 .flatMap { it.extractTypeVariables() }.filter { it !in fixedTypeVariables }
 
             if (notFixedInputTypeVariables.isEmpty()) continue
+            builderInferenceIsAlreadyUsedForOneArgument = true
 
             for (variable in notFixedInputTypeVariables) {
                 builder.markPostponedVariable(notFixedTypeVariables.getValue(variable).typeVariable)
