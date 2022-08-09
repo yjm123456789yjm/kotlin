@@ -99,12 +99,8 @@ dependencies {
     implementation("com.ullink.slack:simpleslackapi:$slackApiVersion")
 
     implementation("io.ktor:ktor-client-auth:$ktorVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion") {
-        exclude("org.jetbrains.kotlin")
-    }
-    implementation("io.ktor:ktor-client-cio:$ktorVersion") {
-        exclude("org.jetbrains.kotlin")
-    }
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
     api("org.jetbrains.kotlin:kotlin-native-utils:$kotlinVersion")
 

@@ -19,12 +19,9 @@ val embedded by configurations.getting {
 }
 
 dependencies {
-    implementation(kotlinStdlib())
     api(project(":kotlin-gradle-plugin-idea"))
     embedded("com.google.protobuf:protobuf-java:3.19.4")
-    embedded("com.google.protobuf:protobuf-kotlin:3.19.4") {
-        exclude("org.jetbrains.kotlin")
-    }
+    embedded("com.google.protobuf:protobuf-kotlin:3.19.4")
     testImplementation(project(":kotlin-test:kotlin-test-junit"))
     testImplementation(testFixtures(project(":kotlin-gradle-plugin-idea")))
 }

@@ -26,12 +26,8 @@ dependencies {
     testApi(project(":kotlin-scripting-dependencies-maven"))
     testApi(project(":compiler:cli"))
 
-    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
-        exclude("org.jetbrains.kotlin")
-    }
-    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm")) {
-        exclude("org.jetbrains.kotlin")
-    }
+    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    testImplementation(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm"))
     testImplementation(commonDependency("org.jetbrains.kotlin:kotlin-reflect")) { isTransitive = false }
     testImplementation(project(":analysis:decompiled:decompiler-to-psi"))
     testImplementation(project(":analysis:decompiled:decompiler-to-file-stubs"))
@@ -47,12 +43,8 @@ dependencies {
     embeddableTestRuntime(project(":kotlin-scripting-dependencies-maven-all"))
     embeddableTestRuntime(kotlinStdlib("jdk8"))
     embeddableTestRuntime(testSourceSet.output)
-    embeddableTestRuntime(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core")) {
-        exclude("org.jetbrains.kotlin")
-    }
-    embeddableTestRuntime(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm")) {
-        exclude("org.jetbrains.kotlin")
-    }
+    embeddableTestRuntime(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core"))
+    embeddableTestRuntime(commonDependency("org.jetbrains.kotlinx", "kotlinx-coroutines-core-jvm"))
 }
 
 sourceSets {

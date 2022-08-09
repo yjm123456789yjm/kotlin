@@ -11,7 +11,7 @@ repositories {
 }
 
 dependencies {
-    compileOnly(kotlin("stdlib", bootstrapKotlinVersion))
+    compileOnly(kotlin("stdlib", embeddedKotlinVersion))
     compileOnly(gradleApi())
     compileOnly(gradleKotlinDsl())
     compileOnly("gradle.plugin.com.github.johnrengelman:shadow:${rootProject.extra["versions.shadow"]}")

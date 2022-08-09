@@ -19,9 +19,7 @@ dependencies {
     implementation(project(":compiler:fir:java"))
     implementation(project(":compiler:cli"))
 
-    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.12") {
-        exclude("org.jetbrains.kotlin")
-    }
+    implementation("org.jetbrains.kotlinx:kotlinx-html-jvm:0.6.12")
 
     compileOnly(intellijCore())
     compileOnly(commonDependency("commons-lang:commons-lang"))

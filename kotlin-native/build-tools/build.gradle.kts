@@ -89,12 +89,8 @@ dependencies {
     }
 
     implementation("io.ktor:ktor-client-auth:$ktorVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion") {
-        exclude("org.jetbrains.kotlin")
-    }
-    implementation("io.ktor:ktor-client-cio:$ktorVersion") {
-        exclude("org.jetbrains.kotlin")
-    }
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
     api(project(":native:kotlin-native-utils"))
     api(project(":kotlin-native-shared"))

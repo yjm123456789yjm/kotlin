@@ -199,12 +199,8 @@ dependencies {
     implementation("com.google.code.gson:gson:2.8.9") // Workaround for Gradle dependency resolution error
 
     implementation("io.ktor:ktor-client-auth:$ktorVersion")
-    implementation("io.ktor:ktor-client-core:$ktorVersion") {
-        exclude("org.jetbrains.kotlin")
-    }
-    implementation("io.ktor:ktor-client-cio:$ktorVersion") {
-        exclude("org.jetbrains.kotlin")
-    }
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-cio:$ktorVersion")
 
     implementation("org.jetbrains.kotlinx:kotlinx-metadata-klib:$metadataVersion")
     if (kotlinBuildProperties.isInJpsBuildIdeaSync) {

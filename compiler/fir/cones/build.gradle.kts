@@ -10,9 +10,7 @@ plugins {
 
 dependencies {
     api(project(":core:compiler.common"))
-    api(kotlinxCollectionsImmutable()) {
-        exclude("org.jetbrains.kotlin")
-    }
+    api(kotlinxCollectionsImmutable())
 
     compileOnly(intellijCore())
 }

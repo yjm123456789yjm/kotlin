@@ -15,9 +15,7 @@ dependencies {
     api(project(":compiler:cli"))
     api(intellijCore())
     api(jpsModel())
-    api("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:$benchmarks_version") {
-        exclude("org.jetbrains.kotlin")
-    }
+    api("org.jetbrains.kotlinx:kotlinx-benchmark-runtime:$benchmarks_version")
 }
 
 sourceSets {

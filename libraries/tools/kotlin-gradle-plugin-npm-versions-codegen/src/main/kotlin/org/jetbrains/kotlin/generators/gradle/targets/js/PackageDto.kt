@@ -5,8 +5,6 @@
 
 package org.jetbrains.kotlin.generators.gradle.targets.js
 
-import java.util.*
-
 data class Package(
     val name: String,
     val version: String,
@@ -17,10 +15,7 @@ data class Package(
     fun camelize(): String =
         displayName
             .split("-")
-            .mapIndexed { index, item ->
-                if (index == 0) item
-                else item.replaceFirstChar { if (it.isLowerCase()) it.titlecase(Locale.getDefault()) else it.toString() }
-            }
+            .mapIndexed { index, item -> if (index == 0) item else item.capitalize() }
             .joinToString("")
 }
 
