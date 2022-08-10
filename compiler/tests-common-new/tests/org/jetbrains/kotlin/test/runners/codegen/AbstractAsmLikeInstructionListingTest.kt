@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.backend.BlackBoxCodegenSuppressor
 import org.jetbrains.kotlin.test.backend.classic.ClassicBackendInput
+import org.jetbrains.kotlin.test.backend.classic.ClassicMiddleendOutput
 import org.jetbrains.kotlin.test.backend.classic.ClassicJvmBackendFacade
 import org.jetbrains.kotlin.test.backend.handlers.AsmLikeInstructionListingHandler
-import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
-import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
+import org.jetbrains.kotlin.test.backend.ir.*
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.configureClassicFrontendHandlersStep
 import org.jetbrains.kotlin.test.builders.configureFirHandlersStep
@@ -27,20 +27,21 @@ import org.jetbrains.kotlin.test.frontend.fir.handlers.FirDiagnosticsHandler
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.runners.AbstractKotlinCompilerWithTargetBackendTest
 
-abstract class AbstractAsmLikeInstructionListingTestBase<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>>(
+abstract class AbstractAsmLikeInstructionListingTestBase<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>, O : ResultingArtifact.MiddleendOutput<O>>(
     val targetFrontend: FrontendKind<R>,
     targetBackend: TargetBackend
 ) : AbstractKotlinCompilerWithTargetBackendTest(targetBackend) {
     abstract val frontendFacade: Constructor<FrontendFacade<R>>
     abstract val frontendToBackendConverter: Constructor<Frontend2BackendConverter<R, I>>
-    abstract val backendFacade: Constructor<BackendFacade<I, BinaryArtifacts.Jvm>>
+    abstract val middleendFacade: Constructor<MiddleendFacade<I, O>>
+    abstract val backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>
 
     override fun TestConfigurationBuilder.configuration() {
         defaultDirectives {
             +CHECK_ASM_LIKE_INSTRUCTIONS
         }
 
-        commonConfigurationForCodegenTest(targetFrontend, frontendFacade, frontendToBackendConverter, backendFacade)
+        commonConfigurationForCodegenTest(targetFrontend, frontendFacade, frontendToBackendConverter, middleendFacade, backendFacade)
 
         configureClassicFrontendHandlersStep {
             useHandlers(
@@ -65,7 +66,7 @@ abstract class AbstractAsmLikeInstructionListingTestBase<R : ResultingArtifact.F
 }
 
 open class AbstractAsmLikeInstructionListingTest :
-    AbstractAsmLikeInstructionListingTestBase<ClassicFrontendOutputArtifact, ClassicBackendInput>(
+    AbstractAsmLikeInstructionListingTestBase<ClassicFrontendOutputArtifact, ClassicBackendInput, ClassicMiddleendOutput>(
         FrontendKinds.ClassicFrontend,
         TargetBackend.JVM
     ) {
@@ -76,12 +77,15 @@ open class AbstractAsmLikeInstructionListingTest :
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, ClassicBackendInput>>
         get() = ::ClassicFrontend2ClassicBackendConverter
 
-    override val backendFacade: Constructor<BackendFacade<ClassicBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<ClassicBackendInput, ClassicMiddleendOutput>>
+        get() = ::ClassicIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<ClassicMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::ClassicJvmBackendFacade
 }
 
 open class AbstractIrAsmLikeInstructionListingTest :
-    AbstractAsmLikeInstructionListingTestBase<ClassicFrontendOutputArtifact, IrBackendInput>(
+    AbstractAsmLikeInstructionListingTestBase<ClassicFrontendOutputArtifact, IrBackendInput, IrMiddleendOutput>(
         FrontendKinds.ClassicFrontend,
         TargetBackend.JVM_IR
     ) {
@@ -92,7 +96,10 @@ open class AbstractIrAsmLikeInstructionListingTest :
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, IrBackendInput>>
         get() = ::ClassicFrontend2IrConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }
 

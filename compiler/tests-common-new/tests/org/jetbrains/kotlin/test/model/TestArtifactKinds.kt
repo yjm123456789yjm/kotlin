@@ -7,7 +7,10 @@ package org.jetbrains.kotlin.test.model
 
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.backend.classic.ClassicBackendInput
+import org.jetbrains.kotlin.test.backend.classic.ClassicMiddleendOutput
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
+import org.jetbrains.kotlin.test.backend.ir.IrMiddleendOutput
+import org.jetbrains.kotlin.test.backend.ir.KLibMiddleendOutput
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendOutputArtifact
 import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 
@@ -38,6 +41,18 @@ object BackendKinds {
 
     fun fromTargetBackend(targetBackend: TargetBackend?): BackendKind<*> {
         if (targetBackend == null) return BackendKind.NoBackend
+        return if (targetBackend.isIR) IrBackend
+        else ClassicBackend
+    }
+}
+
+object MiddleendKinds {
+    object ClassicBackend : MiddleendKind<ClassicMiddleendOutput>("ClassicBackend")
+    object IrBackend : MiddleendKind<IrMiddleendOutput>("IrBackend")
+    object KLibIrBackend : MiddleendKind<KLibMiddleendOutput>("KLibIrBackend")
+
+    fun fromTargetBackend(targetBackend: TargetBackend?): MiddleendKind<*> {
+        if (targetBackend == null) return MiddleendKind.NoBackend
         return if (targetBackend.isIR) IrBackend
         else ClassicBackend
     }

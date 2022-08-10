@@ -30,7 +30,7 @@ class ClassicJvmBackendFacade(
 
     override fun transform(
         module: TestModule,
-        inputArtifact: ClassicBackendInput
+        inputArtifact: ClassicMiddleendOutput
     ): BinaryArtifacts.Jvm {
         val configuration = testServices.compilerConfigurationProvider.getCompilerConfiguration(module)
         val (psiFiles, analysisResult, project, _) = inputArtifact

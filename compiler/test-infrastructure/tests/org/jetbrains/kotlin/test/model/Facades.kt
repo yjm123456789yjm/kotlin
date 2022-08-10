@@ -54,12 +54,22 @@ abstract class Frontend2BackendConverter<R : ResultingArtifact.FrontendOutput<R>
     }
 }
 
-abstract class BackendFacade<I : ResultingArtifact.BackendInput<I>, A : ResultingArtifact.Binary<A>>(
+abstract class MiddleendFacade<I : ResultingArtifact.BackendInput<I>, O : ResultingArtifact.MiddleendOutput<O>>(
     val testServices: TestServices,
     final override val inputKind: BackendKind<I>,
-    final override val outputKind: BinaryKind<A>
-) : AbstractTestFacade<I, A>() {
+    final override val outputKind: MiddleendKind<O>
+) : AbstractTestFacade<I, O>() {
     override fun shouldRunAnalysis(module: TestModule): Boolean {
-        return module.backendKind == inputKind && module.binaryKind == outputKind
+        return module.backendKind == inputKind && module.middleendKind == outputKind
+    }
+}
+
+abstract class BackendFacade<O : ResultingArtifact.MiddleendOutput<O>, A : ResultingArtifact.Binary<A>>(
+    val testServices: TestServices,
+    final override val inputKind: MiddleendKind<O>,
+    final override val outputKind: BinaryKind<A>
+) : AbstractTestFacade<O, A>() {
+    override fun shouldRunAnalysis(module: TestModule): Boolean {
+        return module.middleendKind == inputKind && module.binaryKind == outputKind
     }
 }

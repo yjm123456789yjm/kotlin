@@ -1,5 +1,5 @@
 /*
- * Copyright 2010-2020 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
  * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
  */
 
@@ -14,29 +14,30 @@ import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 import org.jetbrains.kotlin.ir.symbols.IrSymbol
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.resolve.BindingContext
-import org.jetbrains.kotlin.test.model.*
+import org.jetbrains.kotlin.test.model.MiddleendKind
+import org.jetbrains.kotlin.test.model.MiddleendKinds
+import org.jetbrains.kotlin.test.model.ResultingArtifact
 
-// IR backend (JVM, JS, Native)
-sealed class IrBackendInput : ResultingArtifact.BackendInput<IrBackendInput>() {
-    override val kind: BackendKind<IrBackendInput>
-        get() = BackendKinds.IrBackend
+sealed class IrMiddleendOutput : ResultingArtifact.MiddleendOutput<IrMiddleendOutput>() {
+    override val kind: MiddleendKind<IrMiddleendOutput>
+        get() = MiddleendKinds.IrBackend
 
     abstract val irModuleFragment: IrModuleFragment
 
-    data class JsIrBackendInput(
+    data class JsIrMiddleendOutput(
         override val irModuleFragment: IrModuleFragment,
         val sourceFiles: List<KtFile>,
         val bindingContext: BindingContext,
         val icData: List<KotlinFileSerializedData>,
         val expectDescriptorToSymbol: MutableMap<DeclarationDescriptor, IrSymbol>,
-    ) : IrBackendInput()
+    ) : IrMiddleendOutput()
 
-    data class JvmIrBackendInput(
+    data class JvmIrMiddleendOutput(
         val state: GenerationState,
         val codegenFactory: JvmIrCodegenFactory,
         val backendInput: JvmIrCodegenFactory.JvmIrBackendInput,
         val sourceFiles: List<KtSourceFile>
-    ) : IrBackendInput() {
+    ) : IrMiddleendOutput() {
         override val irModuleFragment: IrModuleFragment
             get() = backendInput.irModuleFragment
     }

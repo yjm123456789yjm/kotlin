@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.platform.jvm.JvmPlatforms
 import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.backend.classic.ClassicBackendInput
+import org.jetbrains.kotlin.test.backend.classic.ClassicMiddleendOutput
 import org.jetbrains.kotlin.test.backend.classic.ClassicJvmBackendFacade
 import org.jetbrains.kotlin.test.backend.handlers.JvmBackendDiagnosticsHandler
-import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
-import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
+import org.jetbrains.kotlin.test.backend.ir.*
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.classicFrontendHandlersStep
 import org.jetbrains.kotlin.test.builders.jvmArtifactsHandlersStep
@@ -34,12 +34,14 @@ import org.jetbrains.kotlin.test.services.sourceProviders.AdditionalDiagnosticsS
 import org.jetbrains.kotlin.test.services.sourceProviders.CoroutineHelpersSourceFilesProvider
 import org.jetbrains.kotlin.test.services.configuration.ScriptingEnvironmentConfigurator
 
-abstract class AbstractDiagnosticsTestWithJvmBackend<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>> : AbstractKotlinCompilerTest() {
+abstract class AbstractDiagnosticsTestWithJvmBackend<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>, O : ResultingArtifact.MiddleendOutput<O>> :
+    AbstractKotlinCompilerTest() {
     abstract val targetFrontend: FrontendKind<R>
     abstract val targetBackend: TargetBackend
     abstract val frontend: Constructor<FrontendFacade<R>>
     abstract val converter: Constructor<Frontend2BackendConverter<R, I>>
-    abstract val backendFacade: Constructor<BackendFacade<I, BinaryArtifacts.Jvm>>
+    abstract val middleendFacade: Constructor<IrMiddleendFacade<I, O>>
+    abstract val backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>
 
     override fun TestConfigurationBuilder.configuration() {
         globalDefaults {
@@ -76,6 +78,7 @@ abstract class AbstractDiagnosticsTestWithJvmBackend<R : ResultingArtifact.Front
         }
 
         facadeStep(converter)
+        facadeStep(middleendFacade)
         facadeStep(backendFacade)
 
         jvmArtifactsHandlersStep {
@@ -86,7 +89,7 @@ abstract class AbstractDiagnosticsTestWithJvmBackend<R : ResultingArtifact.Front
     }
 }
 
-abstract class AbstractDiagnosticsTestWithOldJvmBackend : AbstractDiagnosticsTestWithJvmBackend<ClassicFrontendOutputArtifact, ClassicBackendInput>() {
+abstract class AbstractDiagnosticsTestWithOldJvmBackend : AbstractDiagnosticsTestWithJvmBackend<ClassicFrontendOutputArtifact, ClassicBackendInput, ClassicMiddleendOutput>() {
     override val targetFrontend: FrontendKind<ClassicFrontendOutputArtifact>
         get() = FrontendKinds.ClassicFrontend
 
@@ -99,11 +102,14 @@ abstract class AbstractDiagnosticsTestWithOldJvmBackend : AbstractDiagnosticsTes
     override val converter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, ClassicBackendInput>>
         get() = ::ClassicFrontend2ClassicBackendConverter
 
-    override val backendFacade: Constructor<BackendFacade<ClassicBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<IrMiddleendFacade<ClassicBackendInput, ClassicMiddleendOutput>>
+        get() = ::ClassicIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<ClassicMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::ClassicJvmBackendFacade
 }
 
-abstract class AbstractDiagnosticsTestWithJvmIrBackend : AbstractDiagnosticsTestWithJvmBackend<ClassicFrontendOutputArtifact, IrBackendInput>() {
+abstract class AbstractDiagnosticsTestWithJvmIrBackend : AbstractDiagnosticsTestWithJvmBackend<ClassicFrontendOutputArtifact, IrBackendInput, IrMiddleendOutput>() {
     override val targetFrontend: FrontendKind<ClassicFrontendOutputArtifact>
         get() = FrontendKinds.ClassicFrontend
 
@@ -116,11 +122,14 @@ abstract class AbstractDiagnosticsTestWithJvmIrBackend : AbstractDiagnosticsTest
     override val converter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, IrBackendInput>>
         get() = ::ClassicFrontend2IrConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<IrMiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }
 
-abstract class AbstractFirDiagnosticsTestWithJvmIrBackend : AbstractDiagnosticsTestWithJvmBackend<FirOutputArtifact, IrBackendInput>() {
+abstract class AbstractFirDiagnosticsTestWithJvmIrBackend : AbstractDiagnosticsTestWithJvmBackend<FirOutputArtifact, IrBackendInput, IrMiddleendOutput>() {
     override val targetFrontend: FrontendKind<FirOutputArtifact>
         get() = FrontendKinds.FIR
 
@@ -133,6 +142,9 @@ abstract class AbstractFirDiagnosticsTestWithJvmIrBackend : AbstractDiagnosticsT
     override val converter: Constructor<Frontend2BackendConverter<FirOutputArtifact, IrBackendInput>>
         get() = ::Fir2IrResultsConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<IrMiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }

@@ -7,15 +7,14 @@ package org.jetbrains.kotlin.test.runners.codegen
 
 import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TargetBackend
-import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
-import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
+import org.jetbrains.kotlin.test.backend.ir.*
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2IrConverter
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendFacade
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontendOutputArtifact
 import org.jetbrains.kotlin.test.model.*
 
-open class AbstractIrBlackBoxCodegenTest : AbstractJvmBlackBoxCodegenTestBase<ClassicFrontendOutputArtifact, IrBackendInput>(
+open class AbstractIrBlackBoxCodegenTest : AbstractJvmBlackBoxCodegenTestBase<ClassicFrontendOutputArtifact, IrBackendInput, IrMiddleendOutput>(
     FrontendKinds.ClassicFrontend,
     TargetBackend.JVM_IR
 ) {
@@ -25,7 +24,10 @@ open class AbstractIrBlackBoxCodegenTest : AbstractJvmBlackBoxCodegenTestBase<Cl
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, IrBackendInput>>
         get() = ::ClassicFrontend2IrConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 
     override fun configure(builder: TestConfigurationBuilder) {

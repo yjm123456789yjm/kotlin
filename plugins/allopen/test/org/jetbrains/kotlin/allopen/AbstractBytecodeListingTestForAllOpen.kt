@@ -20,7 +20,9 @@ import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.backend.classic.ClassicBackendInput
 import org.jetbrains.kotlin.test.backend.classic.ClassicJvmBackendFacade
+import org.jetbrains.kotlin.test.backend.ir.StandardIrMiddleendFacade
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
+import org.jetbrains.kotlin.test.backend.ir.IrMiddleendFacade
 import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.frontend.classic.ClassicFrontend2ClassicBackendConverter
@@ -53,6 +55,8 @@ open class AbstractBytecodeListingTestForAllOpen :
         get() = ::ClassicFrontendFacade
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, ClassicBackendInput>>
         get() = ::ClassicFrontend2ClassicBackendConverter
+    override val middleendFacade: Constructor<IrMiddleendFacade<ClassicBackendInput, ClassicBackendInput>>
+        get() = ::StandardIrMiddleendFacade
     override val backendFacade: Constructor<BackendFacade<ClassicBackendInput, BinaryArtifacts.Jvm>>
         get() = ::ClassicJvmBackendFacade
 }
@@ -65,6 +69,8 @@ open class AbstractIrBytecodeListingTestForAllOpen :
         get() = ::ClassicFrontendFacade
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, IrBackendInput>>
         get() = ::ClassicFrontend2IrConverter
+    override val middleendFacade: Constructor<IrMiddleendFacade<IrBackendInput, IrBackendInput>>
+        get() = ::StandardIrMiddleendFacade
     override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }
@@ -77,6 +83,8 @@ open class AbstractFirBytecodeListingTestForAllOpen :
         get() = ::FirFrontendFacade
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<FirOutputArtifact, IrBackendInput>>
         get() = ::Fir2IrResultsConverter
+    override val middleendFacade: Constructor<IrMiddleendFacade<IrBackendInput, IrBackendInput>>
+        get() = ::StandardIrMiddleendFacade
     override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }

@@ -9,10 +9,10 @@ import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.backend.BlackBoxCodegenSuppressor
 import org.jetbrains.kotlin.test.backend.classic.ClassicBackendInput
+import org.jetbrains.kotlin.test.backend.classic.ClassicMiddleendOutput
 import org.jetbrains.kotlin.test.backend.classic.ClassicJvmBackendFacade
 import org.jetbrains.kotlin.test.backend.handlers.BytecodeTextHandler
-import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
-import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
+import org.jetbrains.kotlin.test.backend.ir.*
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.configureJvmArtifactsHandlersStep
 import org.jetbrains.kotlin.test.directives.JvmEnvironmentConfigurationDirectives.USE_PSI_CLASS_FILES_READING
@@ -28,13 +28,14 @@ import org.jetbrains.kotlin.test.frontend.fir.FirOutputArtifact
 import org.jetbrains.kotlin.test.model.*
 import org.jetbrains.kotlin.test.runners.AbstractKotlinCompilerWithTargetBackendTest
 
-abstract class AbstractBytecodeTextTestBase<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>>(
+abstract class AbstractBytecodeTextTestBase<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>, O : ResultingArtifact.MiddleendOutput<O>>(
     targetBackend: TargetBackend,
     val targetFrontend: FrontendKind<R>
 ) : AbstractKotlinCompilerWithTargetBackendTest(targetBackend) {
     abstract val frontendFacade: Constructor<FrontendFacade<R>>
     abstract val frontendToBackendConverter: Constructor<Frontend2BackendConverter<R, I>>
-    abstract val backendFacade: Constructor<BackendFacade<I, BinaryArtifacts.Jvm>>
+    abstract val middleendFacade: Constructor<MiddleendFacade<I, O>>
+    abstract val backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>
 
     override fun TestConfigurationBuilder.configuration() {
         defaultDirectives {
@@ -42,7 +43,7 @@ abstract class AbstractBytecodeTextTestBase<R : ResultingArtifact.FrontendOutput
             +WITH_REFLECT
         }
 
-        commonConfigurationForCodegenTest(targetFrontend, frontendFacade, frontendToBackendConverter, backendFacade)
+        commonConfigurationForCodegenTest(targetFrontend, frontendFacade, frontendToBackendConverter, middleendFacade, backendFacade)
 
         commonHandlersForCodegenTest()
 
@@ -54,7 +55,7 @@ abstract class AbstractBytecodeTextTestBase<R : ResultingArtifact.FrontendOutput
     }
 }
 
-open class AbstractBytecodeTextTest : AbstractBytecodeTextTestBase<ClassicFrontendOutputArtifact, ClassicBackendInput>(
+open class AbstractBytecodeTextTest : AbstractBytecodeTextTestBase<ClassicFrontendOutputArtifact, ClassicBackendInput, ClassicMiddleendOutput>(
     targetBackend = TargetBackend.JVM,
     targetFrontend = FrontendKinds.ClassicFrontend
 ) {
@@ -64,11 +65,14 @@ open class AbstractBytecodeTextTest : AbstractBytecodeTextTestBase<ClassicFronte
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, ClassicBackendInput>>
         get() = ::ClassicFrontend2ClassicBackendConverter
 
-    override val backendFacade: Constructor<BackendFacade<ClassicBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<ClassicBackendInput, ClassicMiddleendOutput>>
+        get() = ::ClassicIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<ClassicMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::ClassicJvmBackendFacade
 }
 
-open class AbstractIrBytecodeTextTest : AbstractBytecodeTextTestBase<ClassicFrontendOutputArtifact, IrBackendInput>(
+open class AbstractIrBytecodeTextTest : AbstractBytecodeTextTestBase<ClassicFrontendOutputArtifact, IrBackendInput, IrMiddleendOutput>(
     targetBackend = TargetBackend.JVM_IR,
     targetFrontend = FrontendKinds.ClassicFrontend
 ) {
@@ -78,11 +82,14 @@ open class AbstractIrBytecodeTextTest : AbstractBytecodeTextTestBase<ClassicFron
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, IrBackendInput>>
         get() = ::ClassicFrontend2IrConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }
 
-open class AbstractFirBytecodeTextTest : AbstractBytecodeTextTestBase<FirOutputArtifact, IrBackendInput>(
+open class AbstractFirBytecodeTextTest : AbstractBytecodeTextTestBase<FirOutputArtifact, IrBackendInput, IrMiddleendOutput>(
     targetBackend = TargetBackend.JVM_IR,
     targetFrontend = FrontendKinds.FIR
 ) {
@@ -92,7 +99,10 @@ open class AbstractFirBytecodeTextTest : AbstractBytecodeTextTestBase<FirOutputA
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<FirOutputArtifact, IrBackendInput>>
         get() = ::Fir2IrResultsConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 
     override fun configure(builder: TestConfigurationBuilder) {

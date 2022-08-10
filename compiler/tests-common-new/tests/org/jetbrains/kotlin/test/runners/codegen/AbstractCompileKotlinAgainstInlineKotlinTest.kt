@@ -11,10 +11,10 @@ import org.jetbrains.kotlin.test.TargetBackend
 import org.jetbrains.kotlin.test.TestInfrastructureInternals
 import org.jetbrains.kotlin.test.backend.BlackBoxCodegenSuppressor
 import org.jetbrains.kotlin.test.backend.classic.ClassicBackendInput
+import org.jetbrains.kotlin.test.backend.classic.ClassicMiddleendOutput
 import org.jetbrains.kotlin.test.backend.classic.ClassicJvmBackendFacade
 import org.jetbrains.kotlin.test.backend.handlers.IrInlineBodiesHandler
-import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
-import org.jetbrains.kotlin.test.backend.ir.JvmIrBackendFacade
+import org.jetbrains.kotlin.test.backend.ir.*
 import org.jetbrains.kotlin.test.bind
 import org.jetbrains.kotlin.test.builders.TestConfigurationBuilder
 import org.jetbrains.kotlin.test.builders.configureIrHandlersStep
@@ -35,17 +35,18 @@ import org.jetbrains.kotlin.test.services.SplittingModuleTransformerForBoxTests
 
 
 @OptIn(TestInfrastructureInternals::class)
-abstract class AbstractCompileKotlinAgainstInlineKotlinTestBase<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>>(
+abstract class AbstractCompileKotlinAgainstInlineKotlinTestBase<R : ResultingArtifact.FrontendOutput<R>, I : ResultingArtifact.BackendInput<I>, O : ResultingArtifact.MiddleendOutput<O>>(
     val targetFrontend: FrontendKind<R>,
     targetBackend: TargetBackend
 ) : AbstractKotlinCompilerWithTargetBackendTest(targetBackend) {
     abstract val frontendFacade: Constructor<FrontendFacade<R>>
     abstract val frontendToBackendConverter: Constructor<Frontend2BackendConverter<R, I>>
-    abstract val backendFacade: Constructor<BackendFacade<I, BinaryArtifacts.Jvm>>
+    abstract val middleendFacade: Constructor<MiddleendFacade<I, O>>
+    abstract val backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>
     open val directiveToSuppressTest: ValueDirective<TargetBackend> = IGNORE_BACKEND_MULTI_MODULE
 
     override fun TestConfigurationBuilder.configuration() {
-        commonConfigurationForCodegenTest(targetFrontend, frontendFacade, frontendToBackendConverter, backendFacade)
+        commonConfigurationForCodegenTest(targetFrontend, frontendFacade, frontendToBackendConverter, middleendFacade, backendFacade)
         useInlineHandlers()
         configureCommonHandlersForBoxTest()
         useModuleStructureTransformers(
@@ -56,7 +57,7 @@ abstract class AbstractCompileKotlinAgainstInlineKotlinTestBase<R : ResultingArt
 }
 
 open class AbstractCompileKotlinAgainstInlineKotlinTest :
-    AbstractCompileKotlinAgainstInlineKotlinTestBase<ClassicFrontendOutputArtifact, ClassicBackendInput>(
+    AbstractCompileKotlinAgainstInlineKotlinTestBase<ClassicFrontendOutputArtifact, ClassicBackendInput, ClassicMiddleendOutput>(
         FrontendKinds.ClassicFrontend,
         TargetBackend.JVM
     ) {
@@ -66,12 +67,15 @@ open class AbstractCompileKotlinAgainstInlineKotlinTest :
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, ClassicBackendInput>>
         get() = ::ClassicFrontend2ClassicBackendConverter
 
-    override val backendFacade: Constructor<BackendFacade<ClassicBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<ClassicBackendInput, ClassicMiddleendOutput>>
+        get() = ::ClassicIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<ClassicMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::ClassicJvmBackendFacade
 }
 
 open class AbstractIrCompileKotlinAgainstInlineKotlinTest :
-    AbstractCompileKotlinAgainstInlineKotlinTestBase<ClassicFrontendOutputArtifact, IrBackendInput>(
+    AbstractCompileKotlinAgainstInlineKotlinTestBase<ClassicFrontendOutputArtifact, IrBackendInput, IrMiddleendOutput>(
         FrontendKinds.ClassicFrontend,
         TargetBackend.JVM_IR
     ) {
@@ -81,7 +85,10 @@ open class AbstractIrCompileKotlinAgainstInlineKotlinTest :
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<ClassicFrontendOutputArtifact, IrBackendInput>>
         get() = ::ClassicFrontend2IrConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 }
 
@@ -103,7 +110,7 @@ open class AbstractIrSerializeCompileKotlinAgainstInlineKotlinTest : AbstractIrC
 }
 
 open class AbstractFirSerializeCompileKotlinAgainstInlineKotlinTest :
-    AbstractCompileKotlinAgainstInlineKotlinTestBase<FirOutputArtifact, IrBackendInput>(FrontendKinds.FIR, TargetBackend.JVM_IR_SERIALIZE) {
+    AbstractCompileKotlinAgainstInlineKotlinTestBase<FirOutputArtifact, IrBackendInput, IrMiddleendOutput>(FrontendKinds.FIR, TargetBackend.JVM_IR_SERIALIZE) {
 
     override val frontendFacade: Constructor<FrontendFacade<FirOutputArtifact>>
         get() = ::FirFrontendFacade
@@ -111,7 +118,10 @@ open class AbstractFirSerializeCompileKotlinAgainstInlineKotlinTest :
     override val frontendToBackendConverter: Constructor<Frontend2BackendConverter<FirOutputArtifact, IrBackendInput>>
         get() = ::Fir2IrResultsConverter
 
-    override val backendFacade: Constructor<BackendFacade<IrBackendInput, BinaryArtifacts.Jvm>>
+    override val middleendFacade: Constructor<MiddleendFacade<IrBackendInput, IrMiddleendOutput>>
+        get() = ::StandardIrMiddleendFacade
+
+    override val backendFacade: Constructor<BackendFacade<IrMiddleendOutput, BinaryArtifacts.Jvm>>
         get() = ::JvmIrBackendFacade
 
     override val directiveToSuppressTest = IGNORE_BACKEND_FIR_MULTI_MODULE

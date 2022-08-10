@@ -31,6 +31,15 @@ abstract class ResultingArtifact<A : ResultingArtifact<A>> {
         }
     }
 
+    abstract class MiddleendOutput<O : MiddleendOutput<O>> : ResultingArtifact<O>() {
+        abstract override val kind: MiddleendKind<O>
+
+        object Empty : MiddleendOutput<Empty>() {
+            override val kind: MiddleendKind<Empty>
+                get() = MiddleendKind.NoBackend
+        }
+    }
+
     abstract class Binary<A : Binary<A>> : ResultingArtifact<A>() {
         abstract override val kind: BinaryKind<A>
 

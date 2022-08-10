@@ -11,4 +11,4 @@ import org.jetbrains.kotlin.test.services.TestServices
 abstract class ClassicBackendFacade<A : ResultingArtifact.Binary<A>>(
     testServices: TestServices,
     binaryKind: BinaryKind<A>
-) : BackendFacade<ClassicBackendInput, A>(testServices, BackendKinds.ClassicBackend, binaryKind)
+) : BackendFacade<ClassicMiddleendOutput, A>(testServices, MiddleendKinds.ClassicBackend, binaryKind)

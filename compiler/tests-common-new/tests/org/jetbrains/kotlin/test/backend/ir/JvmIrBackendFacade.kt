@@ -30,9 +30,9 @@ class JvmIrBackendFacade(
 
     override fun transform(
         module: TestModule,
-        inputArtifact: IrBackendInput
+        inputArtifact: IrMiddleendOutput
     ): BinaryArtifacts.Jvm? {
-        require(inputArtifact is IrBackendInput.JvmIrBackendInput) {
+        require(inputArtifact is IrMiddleendOutput.JvmIrMiddleendOutput) {
             "JvmIrBackendFacade expects IrBackendInput.JvmIrBackendInput as input"
         }
         val state = inputArtifact.state

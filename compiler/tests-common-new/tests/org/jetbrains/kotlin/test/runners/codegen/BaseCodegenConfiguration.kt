@@ -10,6 +10,7 @@ import org.jetbrains.kotlin.test.Constructor
 import org.jetbrains.kotlin.test.HandlersStepBuilder
 import org.jetbrains.kotlin.test.backend.handlers.*
 import org.jetbrains.kotlin.test.backend.ir.IrBackendInput
+import org.jetbrains.kotlin.test.backend.ir.IrMiddleendFacade
 import org.jetbrains.kotlin.test.builders.*
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.DUMP_SMAP
 import org.jetbrains.kotlin.test.directives.CodegenTestDirectives.RUN_DEX_CHECKER
@@ -21,40 +22,44 @@ import org.jetbrains.kotlin.test.services.configuration.JvmEnvironmentConfigurat
 import org.jetbrains.kotlin.test.services.configuration.ScriptingEnvironmentConfigurator
 import org.jetbrains.kotlin.test.services.sourceProviders.*
 
-fun <F : ResultingArtifact.FrontendOutput<F>, B : ResultingArtifact.BackendInput<B>> TestConfigurationBuilder.commonConfigurationForCodegenAndDebugTest(
+fun <F : ResultingArtifact.FrontendOutput<F>, B : ResultingArtifact.BackendInput<B>, O : ResultingArtifact.MiddleendOutput<O>> TestConfigurationBuilder.commonConfigurationForCodegenAndDebugTest(
     frontendFacade: Constructor<FrontendFacade<F>>,
     frontendToBackendConverter: Constructor<Frontend2BackendConverter<F, B>>,
-    backendFacade: Constructor<BackendFacade<B, BinaryArtifacts.Jvm>>,
+    middleendFacade: Constructor<MiddleendFacade<B, O>>,
+    backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>
 ) {
     facadeStep(frontendFacade)
     classicFrontendHandlersStep()
     firHandlersStep()
     commonBackendStepsConfiguration(
         frontendToBackendConverter,
+        middleendFacade,
         irHandlersInit = {},
         backendFacade,
         jvmHandlersInit = {}
     )
 }
 
-fun <F : ResultingArtifact.FrontendOutput<F>, B : ResultingArtifact.BackendInput<B>> TestConfigurationBuilder.commonConfigurationForCodegenTest(
+fun <F : ResultingArtifact.FrontendOutput<F>, B : ResultingArtifact.BackendInput<B>, O : ResultingArtifact.MiddleendOutput<O>> TestConfigurationBuilder.commonConfigurationForCodegenTest(
     targetFrontend: FrontendKind<F>,
     frontendFacade: Constructor<FrontendFacade<F>>,
     frontendToBackendConverter: Constructor<Frontend2BackendConverter<F, B>>,
-    backendFacade: Constructor<BackendFacade<B, BinaryArtifacts.Jvm>>,
+    middleendFacade: Constructor<MiddleendFacade<B, O>>,
+    backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>,
 ) {
     commonServicesConfigurationForCodegenTest(targetFrontend)
-    commonConfigurationForCodegenAndDebugTest(frontendFacade, frontendToBackendConverter, backendFacade)
+    commonConfigurationForCodegenAndDebugTest(frontendFacade, frontendToBackendConverter, middleendFacade, backendFacade)
 }
 
-fun <F : ResultingArtifact.FrontendOutput<F>, B : ResultingArtifact.BackendInput<B>> TestConfigurationBuilder.commonConfigurationForDebugTest(
+fun <F : ResultingArtifact.FrontendOutput<F>, B : ResultingArtifact.BackendInput<B>, O : ResultingArtifact.MiddleendOutput<O>> TestConfigurationBuilder.commonConfigurationForDebugTest(
     targetFrontend: FrontendKind<F>,
     frontendFacade: Constructor<FrontendFacade<F>>,
     frontendToBackendConverter: Constructor<Frontend2BackendConverter<F, B>>,
-    backendFacade: Constructor<BackendFacade<B, BinaryArtifacts.Jvm>>,
+    middleendFacade: Constructor<MiddleendFacade<B, O>>,
+    backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>,
 ) {
     commonServicesConfigurationForDebugTest(targetFrontend)
-    commonConfigurationForCodegenAndDebugTest(frontendFacade, frontendToBackendConverter, backendFacade)
+    commonConfigurationForCodegenAndDebugTest(frontendFacade, frontendToBackendConverter, middleendFacade, backendFacade)
 }
 
 private fun TestConfigurationBuilder.commonServicesConfigurationForCodegenAndDebugTest(targetFrontend: FrontendKind<*>) {
@@ -96,13 +101,15 @@ fun TestConfigurationBuilder.commonServicesConfigurationForDebugTest(targetFront
     )
 }
 
-inline fun <B : ResultingArtifact.BackendInput<B>, F : ResultingArtifact.FrontendOutput<F>> TestConfigurationBuilder.commonBackendStepsConfiguration(
+inline fun <B : ResultingArtifact.BackendInput<B>, F : ResultingArtifact.FrontendOutput<F>, O : ResultingArtifact.MiddleendOutput<O>> TestConfigurationBuilder.commonBackendStepsConfiguration(
     noinline frontendToBackendConverter: Constructor<Frontend2BackendConverter<F, B>>,
+    noinline middleendFacade: Constructor<MiddleendFacade<B, O>>,
     irHandlersInit: HandlersStepBuilder<IrBackendInput>.() -> Unit,
-    noinline backendFacade: Constructor<BackendFacade<B, BinaryArtifacts.Jvm>>,
+    noinline backendFacade: Constructor<BackendFacade<O, BinaryArtifacts.Jvm>>,
     jvmHandlersInit: HandlersStepBuilder<BinaryArtifacts.Jvm>.() -> Unit,
 ) {
     facadeStep(frontendToBackendConverter)
+    facadeStep(middleendFacade)
     irHandlersStep(irHandlersInit)
     facadeStep(backendFacade)
     jvmArtifactsHandlersStep(jvmHandlersInit)
