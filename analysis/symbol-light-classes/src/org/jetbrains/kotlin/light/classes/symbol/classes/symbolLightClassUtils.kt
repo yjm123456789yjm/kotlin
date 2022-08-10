@@ -19,6 +19,7 @@ import org.jetbrains.kotlin.analysis.api.symbols.markers.KtSymbolWithTypeParamet
 import org.jetbrains.kotlin.analysis.api.symbols.markers.isPrivateOrPrivateToThis
 import org.jetbrains.kotlin.analysis.api.types.KtNonErrorClassType
 import org.jetbrains.kotlin.analysis.api.types.KtType
+import org.jetbrains.kotlin.analysis.api.types.KtTypeMappingMode
 import org.jetbrains.kotlin.analysis.project.structure.KtSourceModule
 import org.jetbrains.kotlin.analysis.project.structure.getKtModuleOfTypeSafe
 import org.jetbrains.kotlin.analysis.providers.createProjectWideOutOfBlockModificationTracker
@@ -426,7 +427,7 @@ internal fun SymbolLightClassBase.createInheritanceList(forExtendsList: Boolean,
         .filter { it.needToAddTypeIntoList() }
         .mapNotNull { type ->
             if (type !is KtNonErrorClassType) return@mapNotNull null
-            mapSuperType(type, this@createInheritanceList, kotlinCollectionAsIs = true)
+            mapType(type, this@createInheritanceList, KtTypeMappingMode.SUPER_TYPE)
         }
         .forEach { listBuilder.addReference(it) }
 
