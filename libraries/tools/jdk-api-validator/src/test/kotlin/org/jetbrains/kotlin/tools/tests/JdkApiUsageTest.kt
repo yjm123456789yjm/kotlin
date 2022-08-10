@@ -1,0 +1,132 @@
+/*
+ * Copyright 2010-2022 JetBrains s.r.o. and Kotlin Programming Language contributors.
+ * Use of this source code is governed by the Apache 2.0 license that can be found in the license/LICENSE.txt file.
+ */
+
+package org.jetbrains.kotlin.tools.tests
+
+import org.codehaus.mojo.animal_sniffer.*
+import org.codehaus.mojo.animal_sniffer.logging.Logger
+import org.codehaus.mojo.animal_sniffer.logging.PrintWriterLogger
+import java.nio.file.Path
+import kotlin.io.path.*
+import kotlin.test.*
+
+class JdkApiUsageTest {
+
+    @Test
+    fun kotlinStdlib() {
+        val artifact = jarArtifact("../../stdlib/jvm/build/libs", "kotlin-stdlib")
+        val logger = TestLogger()
+
+        val signatures = buildSignatures(artifact, logger = logger)
+        if (logger.hasError) {
+            fail("Building signatures has failed. See console logs for details.")
+        }
+
+        checkSignatures(artifact, signatures, logger)
+        if (logger.hasError) {
+            fail("Checking signatures has failed. See console logs for details.")
+        }
+    }
+
+    private fun checkSignatures(artifact: Path, signatures: Path, logger: Logger) {
+        val checker = SignatureChecker(signatures.inputStream(), emptySet(), logger)
+        checker.setSourcePath(emptyList())
+        checker.process(artifact)
+    }
+
+    private fun buildSignatures(additionalArtifact: Path, logger: Logger): Path {
+        val signaturesDirectory = Path(System.getProperty("signaturesDirectory"))
+        val mergedSignaturesFile = signaturesDirectory.resolve("signatures-merged")
+
+        if (mergedSignaturesFile.notExists()) {
+            val signatureInputStreams = signaturesDirectory.listDirectoryEntries().map { it.inputStream() }
+            val mergedSignaturesOutputStream = mergedSignaturesFile.outputStream()
+
+            val signatureBuilder = SignatureBuilder(signatureInputStreams.toTypedArray(), mergedSignaturesOutputStream, logger)
+            signatureBuilder.process(additionalArtifact.toFile()) // the overload that takes Path can't handle jar
+            signatureBuilder.close()
+        }
+
+        return mergedSignaturesFile
+    }
+
+    private fun jarArtifact(basePath: String, jarPattern: String): Path {
+        val kotlinVersion = System.getProperty("kotlinVersion")
+        val versionPattern = kotlinVersion?.let { "-" + Regex.escape(it) } ?: ".+"
+        val regex = Regex("$jarPattern$versionPattern\\.jar")
+        val base = Path(basePath).absolute().normalize()
+        val files = base.listDirectoryEntries().filter { file ->
+            file.name.let {
+                it matches regex && !it.endsWith("-sources.jar") && !it.endsWith("-javadoc.jar")
+            }
+        }
+
+        return files.singleOrNull() ?: throw Exception("No single file matching $regex in $base:\n${files.joinToString("\n")}")
+    }
+}
+
+private val undefinedReferencesToIgnore = listOf(
+    "int Integer.compareUnsigned(int, int)",
+    "int Integer.remainderUnsigned(int, int)",
+    "int Integer.divideUnsigned(int, int)",
+
+    "int Long.compareUnsigned(long, long)",
+    "long Long.remainderUnsigned(long, long)",
+    "long Long.divideUnsigned(long, long)",
+
+    "int Byte.hashCode(byte)",
+    "int Short.hashCode(short)",
+    "int Integer.hashCode(int)",
+    "int Long.hashCode(long)",
+    "int Float.hashCode(float)",
+    "int Double.hashCode(double)",
+)
+
+private class TestLogger : Logger {
+    private val logger = PrintWriterLogger(System.out)
+
+    var hasError: Boolean = false
+        private set
+
+    override fun info(message: String) {
+        logger.info(message)
+    }
+
+    override fun info(message: String, t: Throwable?) {
+        logger.info(message, t)
+    }
+
+    override fun debug(message: String) {
+        logger.debug(message)
+    }
+
+    override fun debug(message: String, t: Throwable?) {
+        logger.debug(message, t)
+    }
+
+    override fun warn(message: String) {
+        logger.warn(message)
+    }
+
+    override fun warn(message: String, t: Throwable?) {
+        logger.warn(message, t)
+    }
+
+    override fun error(message: String) {
+        error(message, null)
+    }
+
+    override fun error(message: String, t: Throwable?) {
+        val shouldIgnore = undefinedReferencesToIgnore.any {
+            message.endsWith("Undefined reference: $it")
+        }
+        if (shouldIgnore) {
+            return
+        }
+
+        hasError = true
+        logger.error(message, t)
+    }
+}

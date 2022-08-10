@@ -21,6 +21,7 @@ fun updateCompilerXml() {
         "libraries/tools/binary-compatibility-validator",
         "libraries/tools/dukat",
         "libraries/tools/gradle",
+        "libraries/tools/jdk-api-validator",
         "libraries/tools/kotlin-allopen",
         "libraries/tools/kotlin-annotation-processing",
         "libraries/tools/kotlin-annotation-processing-maven",
