@@ -16,10 +16,28 @@ class JdkApiUsageTest {
 
     @Test
     fun kotlinStdlib() {
-        val artifact = jarArtifact("../../stdlib/jvm/build/libs", "kotlin-stdlib")
-        val logger = TestLogger()
+        testApiUsage(
+            jarArtifact("../../stdlib/jvm/build/libs", "kotlin-stdlib"),
+            dependencies = listOf()
+        )
+    }
 
-        val signatures = buildSignatures(artifact, logger = logger)
+    @Test
+    fun kotlinReflect() {
+        testApiUsage(
+            jarArtifact("../../reflect/build/libs", "kotlin-reflect"),
+            dependencies = listOf(jarArtifact("../../stdlib/jvm/build/libs", "kotlin-stdlib"))
+        )
+    }
+
+    private fun testApiUsage(artifact: Path, dependencies: List<Path>) {
+        val logger = TestLogger()
+        val additionalArtifacts = buildList {
+            add(artifact)
+            addAll(dependencies)
+        }
+
+        val signatures = buildSignatures(additionalArtifacts, logger)
         if (logger.hasError) {
             fail("Building signatures has failed. See console logs for details.")
         }
@@ -33,28 +51,34 @@ class JdkApiUsageTest {
     private fun checkSignatures(artifact: Path, signatures: Path, logger: Logger) {
         val checker = SignatureChecker(signatures.inputStream(), emptySet(), logger)
         checker.setSourcePath(emptyList())
-        checker.process(artifact)
+        checker.process(artifact.toFile()) // the overload that takes Path can't handle jar files
     }
 
-    private fun buildSignatures(additionalArtifact: Path, logger: Logger): Path {
-        val signaturesDirectory = Path(System.getProperty("signaturesDirectory"))
-        val mergedSignaturesFile = signaturesDirectory.resolve("signatures-merged")
+    private fun buildSignatures(additionalArtifacts: List<Path>, logger: Logger): Path {
+        val signaturesDirectory = System.getProperty("signaturesDirectory")
+            .let { requireNotNull(it) { "Specify signaturesDirectory with a system property" } }
+            .let { Path(it) }
 
-        if (mergedSignaturesFile.notExists()) {
-            val signatureInputStreams = signaturesDirectory.listDirectoryEntries().map { it.inputStream() }
-            val mergedSignaturesOutputStream = mergedSignaturesFile.outputStream()
+        val mergedSignaturesDirectory = signaturesDirectory.resolveSibling("signatures-merged").createDirectories()
+        val mergedSignaturesFile = createTempFile(mergedSignaturesDirectory)
 
-            val signatureBuilder = SignatureBuilder(signatureInputStreams.toTypedArray(), mergedSignaturesOutputStream, logger)
-            signatureBuilder.process(additionalArtifact.toFile()) // the overload that takes Path can't handle jar
-            signatureBuilder.close()
+        val signatureInputStreams = signaturesDirectory.listDirectoryEntries().map { it.inputStream() }
+        val mergedSignaturesOutputStream = mergedSignaturesFile.outputStream()
+
+        val signatureBuilder = SignatureBuilder(signatureInputStreams.toTypedArray(), mergedSignaturesOutputStream, logger)
+        additionalArtifacts.forEach {
+            signatureBuilder.process(it.toFile()) // the overload that takes Path can't handle jar files
         }
+        signatureBuilder.close()
 
         return mergedSignaturesFile
     }
 
     private fun jarArtifact(basePath: String, jarPattern: String): Path {
         val kotlinVersion = System.getProperty("kotlinVersion")
-        val versionPattern = kotlinVersion?.let { "-" + Regex.escape(it) } ?: ".+"
+            .let { requireNotNull(it) { "Specify kotlinVersion with a system property" } }
+
+        val versionPattern = "-" + Regex.escape(kotlinVersion)
         val regex = Regex("$jarPattern$versionPattern\\.jar")
         val base = Path(basePath).absolute().normalize()
         val files = base.listDirectoryEntries().filter { file ->
@@ -90,34 +114,16 @@ private class TestLogger : Logger {
     var hasError: Boolean = false
         private set
 
-    override fun info(message: String) {
-        logger.info(message)
-    }
+    override fun info(message: String) = logger.info(message)
+    override fun info(message: String, t: Throwable?) = logger.info(message, t)
 
-    override fun info(message: String, t: Throwable?) {
-        logger.info(message, t)
-    }
+    override fun debug(message: String) = logger.debug(message)
+    override fun debug(message: String, t: Throwable?) = logger.debug(message, t)
 
-    override fun debug(message: String) {
-        logger.debug(message)
-    }
+    override fun warn(message: String) = logger.warn(message)
+    override fun warn(message: String, t: Throwable?) = logger.warn(message, t)
 
-    override fun debug(message: String, t: Throwable?) {
-        logger.debug(message, t)
-    }
-
-    override fun warn(message: String) {
-        logger.warn(message)
-    }
-
-    override fun warn(message: String, t: Throwable?) {
-        logger.warn(message, t)
-    }
-
-    override fun error(message: String) {
-        error(message, null)
-    }
-
+    override fun error(message: String) = error(message, null)
     override fun error(message: String, t: Throwable?) {
         val shouldIgnore = undefinedReferencesToIgnore.any {
             message.endsWith("Undefined reference: $it")
