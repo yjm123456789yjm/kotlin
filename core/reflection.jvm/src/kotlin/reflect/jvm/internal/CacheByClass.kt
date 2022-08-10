@@ -35,6 +35,7 @@ internal fun <V : Any> createCache(compute: (Class<*>) -> V): CacheByClass<V> {
     return if (useClassValue) ClassValueCache(compute) else ConcurrentHashMapCache(compute)
 }
 
+@org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
 private class ClassValueCache<V>(private val compute: (Class<*>) -> V) : CacheByClass<V>() {
 
     @Volatile

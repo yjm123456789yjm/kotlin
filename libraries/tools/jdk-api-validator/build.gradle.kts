@@ -10,13 +10,14 @@ val testArtifacts by configurations.creating
 val signature by configurations.creating
 
 dependencies {
-    implementation("org.codehaus.mojo:animal-sniffer:1.21")
-    implementation(project(":kotlin-stdlib-jdk8"))
-    testImplementation(project(":kotlin-test:kotlin-test-junit"))
+    api("org.codehaus.mojo:animal-sniffer:1.21")
+    api(project(":kotlin-stdlib-jdk8"))
+    testApi(project(":kotlin-test:kotlin-test-junit"))
 
     testArtifacts(project(":kotlin-stdlib"))
-    signature("org.codehaus.mojo.signature:java16:1.1@signature")
+    testArtifacts(project(":kotlin-reflect"))
 
+    signature("org.codehaus.mojo.signature:java16:1.1@signature")
 }
 
 val signaturesDirectory = buildDir.resolve("signatures")
