@@ -20,10 +20,6 @@ sourceSets {
             srcDir "${rootDir}/core/builtins/src"
             srcDir 'runtime'
             srcDir 'src'
-
-            dependencies {
-                compileOnly "org.codehaus.mojo:animal-sniffer-annotations:1.21"
-            }
         }
     }
     test {

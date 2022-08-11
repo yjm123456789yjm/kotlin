@@ -10,10 +10,6 @@ sourceSets {
     main {
         java {
             srcDir "${rootDir}/core/reflection.jvm/src"
-
-            dependencies {
-                compileOnly "org.codehaus.mojo:animal-sniffer-annotations:1.21"
-            }
         }
         resources {
             srcDir("${rootDir}/core/reflection.jvm/resources")

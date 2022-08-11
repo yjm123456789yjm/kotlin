@@ -107,7 +107,7 @@ private interface TypeImpl : Type {
 // because `AnnotatedType` has only appeared in JDK 8.
 @Suppress("ABSTRACT_MEMBER_NOT_IMPLEMENTED")
 @ExperimentalStdlibApi
-@org.codehaus.mojo.animal_sniffer.IgnoreJRERequirement
+@kotlin.jvm.internal.SuppressAnimalSniffer
 private class TypeVariableImpl(private val typeParameter: KTypeParameter) : TypeVariable<GenericDeclaration>, TypeImpl {
     override fun getName(): String = typeParameter.name
 
