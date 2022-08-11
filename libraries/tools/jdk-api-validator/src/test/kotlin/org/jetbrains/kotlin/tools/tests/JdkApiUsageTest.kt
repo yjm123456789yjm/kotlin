@@ -81,11 +81,7 @@ class JdkApiUsageTest {
         val versionPattern = "-" + Regex.escape(kotlinVersion)
         val regex = Regex("$jarPattern$versionPattern\\.jar")
         val base = Path(basePath).absolute().normalize()
-        val files = base.listDirectoryEntries().filter { file ->
-            file.name.let {
-                it matches regex && !it.endsWith("-sources.jar") && !it.endsWith("-javadoc.jar")
-            }
-        }
+        val files = base.listDirectoryEntries().filter { it.name matches regex }
 
         return files.singleOrNull() ?: throw Exception("No single file matching $regex in $base:\n${files.joinToString("\n")}")
     }
