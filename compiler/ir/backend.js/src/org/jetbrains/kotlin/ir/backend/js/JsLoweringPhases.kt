@@ -20,9 +20,6 @@ import org.jetbrains.kotlin.ir.backend.js.lower.calls.CallsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.cleanup.CleanupLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.*
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.*
-import org.jetbrains.kotlin.ir.backend.js.lower.interfaces.CollectClassesForInstanceCheckLowering
-import org.jetbrains.kotlin.ir.backend.js.lower.interfaces.CollectInterfacesForInstanceCheckLowering
-import org.jetbrains.kotlin.ir.backend.js.lower.interfaces.SubstituteTypeCheckableInterfacesLowering
 import org.jetbrains.kotlin.ir.declarations.IrFile
 import org.jetbrains.kotlin.ir.declarations.IrModuleFragment
 
@@ -805,26 +802,6 @@ private val implicitlyExportedDeclarationsMarkingLowering = makeDeclarationTrans
 )
 
 
-private val collectInterfacesForInstanceCheckLowering = makeBodyLoweringPhase(
-    ::CollectInterfacesForInstanceCheckLowering,
-    name = "CollectInterfacesForInstanceCheckLowering",
-    description = "Collect interfaces which are used inside isInterface intrinsic"
-)
-
-private val collectClassesForInstanceCheckLowering = makeDeclarationTransformerPhase(
-    ::CollectClassesForInstanceCheckLowering,
-    name = "CollectClassesForInstanceCheckLowering",
-    description = "Collect classes which implements interfaces which are used inside isInterface intrinsic",
-    prerequisite = setOf(collectInterfacesForInstanceCheckLowering)
-)
-
-private val substituteTypeCheckableInterfacesLowering = makeBodyLoweringPhase(
-    ::SubstituteTypeCheckableInterfacesLowering,
-    name = "SubstituteTypeCheckableInterfacesLowering",
-    description = "Put only type checkable interfaces inside property references intrinsics",
-    prerequisite = setOf(collectClassesForInstanceCheckLowering, propertyReferenceLoweringPhase)
-)
-
 private val cleanupLoweringPhase = makeBodyLoweringPhase(
     { CleanupLowering() },
     name = "CleanupLowering",
@@ -948,12 +925,7 @@ val loweringList = listOf<Lowering>(
     callsLoweringPhase,
     escapedIdentifiersLowering,
     implicitlyExportedDeclarationsMarkingLowering,
-    collectInterfacesForInstanceCheckLowering,
-    collectClassesForInstanceCheckLowering,
     cleanupLoweringPhase,
-    collectInterfacesForInstanceCheckLowering,
-    collectClassesForInstanceCheckLowering,
-    substituteTypeCheckableInterfacesLowering,
     // Currently broken due to static members lowering making single-open-class
     // files non-recognizable as single-class files
     // moveOpenClassesToSeparatePlaceLowering,

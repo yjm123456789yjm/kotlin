@@ -107,12 +107,10 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
 
 
     // RTTI:
-    val bitMaskSymbol = getInternalClassWithoutPackage("kotlin.js.BitMask")
-    val generateInterfaceIdSymbol = getInternalFunction("generateInterfaceId")
+    val implementSymbol = getInternalFunction("implement")
+    val setMetadataForSymbol = getInternalFunction("setMetadataFor")
 
     val isInterfaceSymbol = getInternalFunction("isInterface")
-    val getInterfaceIdSymbol = getInternalFunction("getInterfaceId")
-    val getInterfaceIdInRuntimeSymbol = getInternalFunction("getInterfaceIdInRuntime")
     val isArraySymbol = getInternalFunction("isArray")
     //    val isCharSymbol = getInternalFunction("isChar")
     val isObjectSymbol = getInternalFunction("isObject")
@@ -313,8 +311,6 @@ class JsIntrinsics(private val irBuiltIns: IrBuiltIns, val context: JsIrBackendC
     // TODO move to IntrinsifyCallsLowering
     val doNotIntrinsifyAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("DoNotIntrinsify"))
     val jsFunAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsFun"))
-    val jsSubtypeCheckableAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsSubtypeCheckable"))
-    val jsReflectedClassAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsReflectedClass"))
 
     val jsImplicitExportAnnotationSymbol = context.symbolTable.referenceClass(context.getJsInternalClass("JsImplicitExport"))
 

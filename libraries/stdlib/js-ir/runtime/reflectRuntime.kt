@@ -10,7 +10,7 @@ import kotlin.reflect.KProperty
 internal fun getPropertyCallableRef(
     name: String,
     paramCount: Int,
-    superTypes: IntArray,
+    superType: dynamic,
     getter: dynamic,
     setter: dynamic
 ): KProperty<*> {
@@ -20,37 +20,23 @@ internal fun getPropertyCallableRef(
     return getPropertyRefClass(
         getter,
         getKPropMetadata(paramCount, setter),
-        getInterfaceMaskFor(getter, superTypes)
+        getInterfaceMaskFor(getter, superType)
     ).unsafeCast<KProperty<*>>()
 }
 
-internal fun getLocalDelegateReference(name: String, superTypes: IntArray, mutable: Boolean, lambda: dynamic): KProperty<*> {
-    lambda.get = lambda
-    lambda.set = if (mutable) lambda else null
-    lambda.callableName = name
-    return getPropertyRefClass(
-        lambda,
-        getKPropMetadata(0, lambda),
-        getInterfaceMaskFor(lambda, superTypes)
-    ).unsafeCast<KProperty<*>>()
+internal fun getLocalDelegateReference(name: String, superType: dynamic, mutable: Boolean, lambda: dynamic): KProperty<*> {
+    return getPropertyCallableRef(name, 0, superType, lambda, if (mutable) lambda else null)
 }
 
-private fun getPropertyRefClass(obj: Ctor, metadata: Metadata, imask: BitMask?): dynamic {
-    obj.`$metadata$` = metadata;
-    obj.constructor = obj;
-    imask?.let { obj.`$imask$` = it }
+private fun getPropertyRefClass(obj: Ctor, metadata: Metadata, imask: BitMask): dynamic {
+    obj.`$metadata$` = metadata
+    obj.constructor = obj
+    obj.`$imask$` = imask
     return obj;
 }
 
-private fun getInterfaceMaskFor(obj: Ctor, superTypes: IntArray): BitMask? {
-    val alreadyCreatedMask = obj.`$imask$`.unsafeCast<BitMask?>()
-
-    if (alreadyCreatedMask != null || superTypes.size == 0) {
-        return alreadyCreatedMask
-    }
-
-    return BitMask(*superTypes)
-}
+private fun getInterfaceMaskFor(obj: Ctor, superType: dynamic): BitMask =
+    obj.`$imask$` ?: implement(superType)
 
 @Suppress("UNUSED_PARAMETER")
 private fun getKPropMetadata(paramCount: Int, setter: Any?): dynamic {

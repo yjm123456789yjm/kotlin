@@ -13,6 +13,11 @@ import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
+import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.classOrNull
+import org.jetbrains.kotlin.ir.types.defaultType
+import org.jetbrains.kotlin.ir.types.isAny
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -24,6 +29,8 @@ class UselessDeclarationsRemover(
     private val context: JsIrBackendContext,
     private val dceRuntimeDiagnostic: RuntimeDiagnostic?,
 ) : IrElementVisitorVoid {
+    private val savedTypesCache = hashMapOf<IrClassSymbol, Set<IrClassSymbol>>()
+
     override fun visitElement(element: IrElement) {
         element.acceptChildrenVoid(this)
     }
@@ -48,16 +55,22 @@ class UselessDeclarationsRemover(
             declaration.annotations = declaration.annotations.filter { it.shouldKeepAnnotation() }
         }
 
-        if (!declaration.isInterface) {
-            val jsSubtypeCheckableAnnotation = declaration.annotations.findAnnotation(JsAnnotations.JsSubtypeCheckableFqn) ?: return
-            val interfacesReferencesVararg = jsSubtypeCheckableAnnotation.getValueArgument(0) as IrVararg
-            interfacesReferencesVararg.elements.removeIf { it is IrClassReference && it.symbol.owner !in usefulDeclarations }
+        declaration.superTypes = declaration.superTypes
+            .flatMap { it.classOrNull?.collectUsedSuperTypes() ?: emptyList() }
+            .distinct()
+            .map { it.defaultType }
+    }
 
-            if (interfacesReferencesVararg.elements.isEmpty()) {
-                declaration.annotations = declaration.annotations.filter { it !== jsSubtypeCheckableAnnotation }
+    private fun IrClassSymbol.collectUsedSuperTypes(): Set<IrClassSymbol> {
+        return savedTypesCache.getOrPut(this) {
+            if (owner in usefulDeclarations) {
+                setOf(this)
+            } else {
+                owner.superTypes
+                    .flatMap { it.takeIf { !it.isAny() }?.classOrNull?.collectUsedSuperTypes() ?: emptyList() }
+                    .toSet()
             }
         }
-
     }
 
     // TODO bring back the primary constructor fix

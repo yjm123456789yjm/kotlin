@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.dce
 
+import org.jetbrains.kotlin.backend.common.lower.MethodsFromAnyGeneratorForLowerings.Companion.collectOverridenSymbols
 import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.JsStatementOrigins
 import org.jetbrains.kotlin.ir.backend.js.export.isExported
@@ -12,7 +13,7 @@ import org.jetbrains.kotlin.ir.backend.js.lower.isBuiltInClass
 import org.jetbrains.kotlin.ir.backend.js.utils.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrGetObjectValue
+import org.jetbrains.kotlin.ir.expressions.IrFunctionAccessExpression
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
@@ -25,21 +26,18 @@ internal class JsUsefulDeclarationProcessor(
 
     private val equalsMethod = getMethodOfAny("equals")
     private val hashCodeMethod = getMethodOfAny("hashCode")
-    private val subtypeCheckableIntrinsic = context.intrinsics.jsSubtypeCheckableAnnotationSymbol.constructors.single()
 
     override val bodyVisitor: BodyVisitorBase = object : BodyVisitorBase() {
-        override fun visitCall(expression: IrCall, data: IrDeclaration) {
-            // We need to prevent subtypeCheckableIntrinsic arguments to be added inside useful declarations
-            // to remove not so useful interfaces, because the annotation contains whole hierarchy
-            if (expression.symbol === subtypeCheckableIntrinsic) {
-                return
+        override fun visitFunctionAccess(expression: IrFunctionAccessExpression, data: IrDeclaration) {
+            if (expression.symbol != context.intrinsics.implementSymbol) {
+                // Just ignore implement to not include large chunk of code inside small applications if it's not needed
+                super.visitFunctionAccess(expression, data)
             }
+        }
 
+        override fun visitCall(expression: IrCall, data: IrDeclaration) {
             super.visitCall(expression, data)
             when (expression.symbol) {
-                context.kpropertyBuilder -> {
-                    context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(data, "property reference needs reflect interfaces")
-                }
                 context.intrinsics.jsBoxIntrinsic -> {
                     val inlineClass = context.inlineClassesUtils.getInlinedClass(expression.getTypeArgument(0)!!)!!
                     val constructor = inlineClass.declarations.filterIsInstance<IrConstructor>().single { it.isPrimary }
@@ -129,20 +127,16 @@ internal class JsUsefulDeclarationProcessor(
         super.processClass(irClass)
 
         if (irClass.containsMetadata()) {
-            if (irClass.isInterface && irClass.isJsSubtypeCheckable()) {
-                context.intrinsics.bitMaskSymbol.constructors.single().owner.enqueue(irClass, "interface metadata")
-            }
-
-            if (irClass.isJsReflectedClass()) {
-                context.intrinsics.metadataInterfaceConstructorSymbol.owner.enqueue(irClass, "interface metadata")
-                context.intrinsics.getInterfaceIdSymbol.owner.enqueue(irClass, "interface metadata")
-            }
-
             when {
                 irClass.isObject -> context.intrinsics.metadataObjectConstructorSymbol.owner.enqueue(irClass, "object metadata")
-                irClass.isInterface -> context.intrinsics.generateInterfaceIdSymbol.owner.enqueue(irClass, "interface id")
+                irClass.isInterface -> {
+                    context.intrinsics.implementSymbol.owner.enqueue(irClass, "interface metadata")
+                    context.intrinsics.metadataInterfaceConstructorSymbol.owner.enqueue(irClass, "interface metadata")
+                }
                 else -> context.intrinsics.metadataClassConstructorSymbol.owner.enqueue(irClass, "class metadata")
             }
+
+            context.intrinsics.setMetadataForSymbol.owner.enqueue(irClass, "metadata")
         }
     }
 

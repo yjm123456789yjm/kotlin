@@ -5,8 +5,34 @@
 
 package kotlin.js
 
-internal fun interfaceMeta(name: String?, iid: Int?, associatedObjectKey: Number?, associatedObjects: dynamic, suspendArity: Array<Int>?): Metadata {
-    return createMetadata("interface", name, associatedObjectKey, associatedObjects, suspendArity, iid)
+internal fun setMetadataFor(
+    ctor: Ctor,
+    name: String?,
+    metadataConstructor: (name: String?, associatedObjectKey: Number?, associatedObjects: dynamic, suspendArity: Array<Int>?) -> Metadata,
+    parent: Ctor?,
+    interfaces: Array<dynamic>?,
+    associatedObjectKey: Number?,
+    associatedObjects: dynamic,
+    suspendArity: Array<Int>?
+) {
+    if (parent != null) {
+        js("""
+          ctor.prototype = Object.create(parent.prototype)
+          ctor.prototype.constructor = ctor;
+        """)
+    }
+
+    val metadata = metadataConstructor(name, associatedObjectKey, associatedObjects, suspendArity)
+    ctor.`$metadata$` = metadata
+
+    if (interfaces != null) {
+        val receiver = if (metadata.iid != null) ctor else ctor.prototype
+        receiver.`$imask$` = implement(*interfaces)
+    }
+}
+
+internal fun interfaceMeta(name: String?, associatedObjectKey: Number?, associatedObjects: dynamic, suspendArity: Array<Int>?): Metadata {
+    return createMetadata("interface", name, associatedObjectKey, associatedObjects, suspendArity, generateInterfaceId())
 }
 
 internal fun objectMeta(name: String?, associatedObjectKey: Number?, associatedObjects: dynamic, suspendArity: Array<Int>?): Metadata {
@@ -46,14 +72,16 @@ internal external interface Metadata {
     val associatedObjectKey: Number?
     val associatedObjects: dynamic
     val suspendArity: Array<Int>?
+    val iid: Int?
 
     var `$kClass$`: dynamic
 }
 
 internal external interface Ctor {
-    var `$metadata$`: Metadata?
+    var `$imask$`: BitMask?
+    var `$metadata$`: Metadata
     var constructor: Ctor?
-    var `$imask$`: dynamic
+    val prototype: dynamic
 }
 
 private var iid: Int? = null
@@ -74,8 +102,8 @@ private fun isInterfaceImpl(obj: dynamic, iface: Int): Boolean {
     return mask.isBitSettled(iface)
 }
 
-internal fun isInterface(obj: dynamic, iface: Int): Boolean {
-    return isInterfaceImpl(obj, iface)
+internal fun isInterface(obj: dynamic, iface: dynamic): Boolean {
+    return isInterfaceImpl(obj, iface.`$metadata$`.iid)
 }
 
 internal fun isSuspendFunction(obj: dynamic, arity: Int): Boolean {
@@ -86,7 +114,7 @@ internal fun isSuspendFunction(obj: dynamic, arity: Int): Boolean {
 
     if (jsTypeOf(obj) == "object" && jsIn("${'$'}metadata${'$'}", obj.constructor)) {
         @Suppress("IMPLICIT_BOXING_IN_IDENTITY_EQUALS")
-        return obj.constructor.unsafeCast<Ctor>().`$metadata$`?.suspendArity?.let {
+        return obj.constructor.unsafeCast<Ctor>().`$metadata$`.suspendArity?.let {
             var result = false
             for (item in it) {
                 if (arity == item) {
@@ -184,16 +212,9 @@ internal fun isComparable(value: dynamic): Boolean {
     return type == "string" ||
             type == "boolean" ||
             isNumber(value) ||
-            isInterface(value, getInterfaceIdInRuntime(jsClassIntrinsic<Comparable<*>>()))
+            isInterface(value, jsClassIntrinsic<Comparable<*>>())
 }
 
 @OptIn(JsIntrinsic::class)
 internal fun isCharSequence(value: dynamic): Boolean =
-    jsTypeOf(value) == "string" || isInterface(value, getInterfaceIdInRuntime(jsClassIntrinsic<CharSequence>()))
-
-internal fun getInterfaceIdInRuntime(klass: dynamic): Int {
-    return if (klass is Int) klass else getInterfaceId(klass)
-}
-
-internal fun getInterfaceId(intfc: dynamic): Int =
-    intfc.`$metadata$`.iid.unsafeCast<Int>()
+    jsTypeOf(value) == "string" || isInterface(value, jsClassIntrinsic<CharSequence>())

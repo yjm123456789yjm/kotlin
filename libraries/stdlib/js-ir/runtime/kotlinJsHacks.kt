@@ -56,6 +56,3 @@ internal annotation class JsImplicitExport()
 
 @Target(AnnotationTarget.CLASS)
 internal annotation class JsSubtypeCheckable(vararg val implements: KClass<*>)
-
-@Target(AnnotationTarget.CLASS)
-internal annotation class JsReflectedClass

@@ -22,10 +22,8 @@ import org.jetbrains.kotlin.ir.expressions.IrExpression
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
 import org.jetbrains.kotlin.ir.symbols.IrClassifierSymbol
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.classifierOrNull
-import org.jetbrains.kotlin.ir.types.isAny
+import org.jetbrains.kotlin.ir.symbols.IrSimpleFunctionSymbol
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.js.backend.ast.*
 import org.jetbrains.kotlin.js.common.isValidES5Identifier
@@ -36,7 +34,6 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     private val className = context.getNameForClass(irClass)
     private val classNameRef = className.makeRef()
     private val baseClass: IrType? = irClass.superTypes.firstOrNull { !it.classifierOrFail.isInterface }
-    private val shouldGenerateConstructor = !irClass.isInterface || irClass.isJsReflectedClass()
 
     private val baseClassRef by lazy { // Lazy in case was not collected by namer during JsClassGenerator construction
         if (baseClass != null && !baseClass.isAny()) baseClass.getClassRef(context) else null
@@ -50,7 +47,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     fun generate(): JsStatement {
         assert(!irClass.isExpect)
 
-        if (!es6mode && shouldGenerateConstructor) maybeGeneratePrimaryConstructor()
+        if (!es6mode) maybeGeneratePrimaryConstructor()
 
         val transformer = IrDeclarationToJsTransformer()
 
@@ -80,9 +77,8 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                                 jsClass.constructor = it
                             }
                         }
-                    } else if (shouldGenerateConstructor) {
+                    } else {
                         classBlock.statements += declaration.accept(transformer, context)
-                        classModel.preDeclarationBlock.statements += generateInheritanceCode()
                     }
                 }
                 is IrSimpleFunction -> {
@@ -112,12 +108,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             }
         }
 
-        if (irClass.isInterface) {
-            classModel.preDeclarationBlock.statements += when {
-                irClass.isJsReflectedClass() -> generateClassMetadata()
-                else -> generateInterfaceVariableDeclaration()
-            }
-        } else {
+        if (!irClass.isInterface) {
             for (property in properties) {
                 if (property.getter?.extensionReceiverParameter != null || property.setter?.extensionReceiverParameter != null)
                     continue
@@ -216,28 +207,13 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                     )
                 }
             }
-
-            classModel.preDeclarationBlock.statements += generateClassMetadata()
-            classModel.preDeclarationBlock.statements += generateInterfacesMetadata()
         }
+
+        classModel.preDeclarationBlock.statements += generateSetMetadataCall()
 
         context.staticContext.classModels[irClass.symbol] = classModel
 
         return classBlock
-    }
-
-    private fun generateInterfaceId(): JsExpression? {
-        return runIf(irClass.isInterface) {
-            (generateInterfaceVariableDeclaration() as? JsVars)?.vars?.single()?.initExpression
-        }
-    }
-
-    private fun generateInterfaceVariableDeclaration(): JsStatement {
-        val backendContext = context.staticContext.backendContext
-        val generateInterfaceId = backendContext.intrinsics.generateInterfaceIdSymbol
-        val generateInterfaceIdCall = backendContext.createIrBuilder(irClass.symbol).irCall(generateInterfaceId)
-
-        return jsVar(className, generateInterfaceIdCall, context)
     }
 
     private inline fun IrSimpleFunction?.getOrGenerateIfFinal(generateFunc: IrSimpleFunction.() -> JsFunction?): JsExpression? {
@@ -337,66 +313,49 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             val func = JsFunction(emptyScope, JsBlock(), "Ctor for ${irClass.name}")
             func.name = className
             classBlock.statements += func.makeStmt()
-            classModel.preDeclarationBlock.statements += generateInheritanceCode()
         }
     }
 
-    private fun generateInheritanceCode(): List<JsStatement> {
-        val baseClassPrototype = baseClassRef ?: return emptyList()
+    private fun generateSetMetadataCall(): JsStatement {
+        val setMetadataFor = context.staticContext.backendContext.intrinsics.setMetadataForSymbol.owner
 
-        val createCall = jsAssignment(
-            classPrototypeRef, JsInvocation(Namer.JS_OBJECT_CREATE_FUNCTION, prototypeOf(baseClassPrototype))
+        val ctor = classNameRef
+        val parent = baseClassRef
+        val name = generateSimpleName()
+        val interfaces = generateInterfacesList()
+        val metadataConstructor = getMetadataConstructor()
+        val associatedObjectKey = generateAssociatedObjectKey()
+        val associatedObjects = generateAssociatedObjects()
+        val suspendArity = generateSuspendArity()
+
+        return JsInvocation(
+            JsNameRef(context.getNameForStaticFunction(setMetadataFor)),
+            listOf(ctor, name, metadataConstructor, parent, interfaces, associatedObjectKey, associatedObjects, suspendArity)
+                .dropLastWhile { it == null }
+                .map { it ?: Namer.JS_UNDEFINED }
         ).makeStmt()
 
-        val ctorAssign = jsAssignment(JsNameRef(Namer.CONSTRUCTOR_NAME, classPrototypeRef), classNameRef).makeStmt()
-
-        return listOf(createCall, ctorAssign)
     }
 
-    private fun generateInterfacesMetadata(): List<JsStatement> {
-        val backendContext = context.staticContext.backendContext
-        val subtypeCheckableInterfaces = irClass.takeIf { !it.isInterface }?.getJsSubtypeCheckableInterfaces() ?: return emptyList()
-        val bitMaskClassConstructor = backendContext.intrinsics.bitMaskSymbol.constructors.single()
 
-        val bitMaskCall = backendContext.createIrBuilder(irClass.symbol).irCall(bitMaskClassConstructor).apply {
-            val listOfInterfacesIds = IrVarargImpl(
-                UNDEFINED_OFFSET,
-                UNDEFINED_OFFSET,
-                backendContext.dynamicType,
-                backendContext.dynamicType,
-                subtypeCheckableInterfaces.map { it.asInterfaceId() }
-            )
+    private fun IrType.asConstructorRef(): JsNameRef? {
+        val ownerSymbol = classOrNull?.takeIf {
+            !isAny() && !isFunctionType() && !it.owner.isEffectivelyExternal()
+        } ?: return null
 
-            putValueArgument(0, listOfInterfacesIds)
-        }
-
-        val bitMaskJsCall = bitMaskCall.accept(IrElementToJsExpressionTransformer(), context)
-        val metadataAssignment = jsAssignment(JsNameRef(Namer.INTERFACES_MASK, classPrototypeRef), bitMaskJsCall)
-
-        return listOf(metadataAssignment.makeStmt())
+        return JsNameRef(context.getNameForClass(ownerSymbol.owner))
     }
 
-    private fun IrClassReference.asInterfaceId(): IrExpression {
-        val backendContext = context.staticContext.backendContext
-        val builder = backendContext.createIrBuilder(symbol)
+    private fun IrType.isFunctionType() = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
-        val owner = symbol.owner as IrClass
+    private fun isCoroutineClass(): Boolean = irClass.superTypes.any { it.isSuspendFunctionTypeOrSubtype() }
 
-        val jsClassReference = builder.irCall(backendContext.intrinsics.jsClass).apply {
-            putTypeArgument(0, owner.defaultType)
-        }
-
-        return if (!owner.isJsReflectedClass()) {
-            jsClassReference
-        } else {
-            builder.irCall(backendContext.intrinsics.getInterfaceIdSymbol).apply {
-                putValueArgument(0, jsClassReference)
-            }
-        }
+    private fun generateSimpleName(): JsStringLiteral? {
+        return irClass.name.takeIf { !it.isSpecial }?.let { JsStringLiteral(it.identifier) }
     }
 
-    private fun generateClassMetadata(): JsStatement {
-        val metadataConstructor = with(context.staticContext.backendContext.intrinsics) {
+    private fun getMetadataConstructor(): JsNameRef {
+        val metadataConstructorSymbol = with(context.staticContext.backendContext.intrinsics) {
             when {
                 irClass.isInterface -> metadataInterfaceConstructorSymbol
                 irClass.isObject -> metadataObjectConstructorSymbol
@@ -404,27 +363,16 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             }
         }
 
-        val simpleName = irClass.name
-            .takeIf { !it.isSpecial }
-            ?.let { JsStringLiteral(it.identifier) }
-
-        val iid = generateInterfaceId()
-        val associatedObjectKey = generateAssociatedObjectKey()
-        val associatedObjects = generateAssociatedObjects()
-        val suspendArity = generateSuspendArity()
-
-        val constructorCall = JsInvocation(
-            JsNameRef(context.getNameForStaticFunction(metadataConstructor.owner)),
-            mutableListOf(simpleName, iid, associatedObjectKey, associatedObjects, suspendArity)
-                .also { if (!irClass.isInterface) it.removeAt(1) }
-                .dropLastWhile { it == null }
-                .map { it ?: Namer.JS_UNDEFINED }
-        )
-
-        return jsAssignment(JsNameRef(Namer.METADATA, classNameRef), constructorCall).makeStmt()
+        return JsNameRef(context.getNameForStaticFunction(metadataConstructorSymbol.owner))
     }
 
-    private fun isCoroutineClass(): Boolean = irClass.superTypes.any { it.isSuspendFunctionTypeOrSubtype() }
+    private fun generateInterfacesList(): JsArrayLiteral? {
+        val listRef = irClass.superTypes
+            .takeIf { it.size > 1 || it.singleOrNull() != baseClass }
+            ?.mapNotNull { it.asConstructorRef() }
+            ?.takeIf { it.isNotEmpty() } ?: return null
+        return JsArrayLiteral(listRef)
+    }
 
     private fun generateSuspendArity(): JsArrayLiteral? {
         if (!isCoroutineClass()) return null
@@ -436,8 +384,6 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
         return JsArrayLiteral(arity)
     }
-
-    private fun IrType.isFunctionType() = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 
     private fun generateAssociatedObjectKey(): JsIntLiteral? {
         return context.getAssociatedObjectKey(irClass)?.let { JsIntLiteral(it) }
@@ -491,18 +437,8 @@ private fun IrOverridableDeclaration<*>.overridesExternal(): Boolean {
 
 private val IrClassifierSymbol.isInterface get() = (owner as? IrClass)?.isInterface == true
 
-private fun IrClass.getAllRelatedSymbols(): Set<IrClassSymbol> {
-    val superTypes = superTypes.map { it.classifierOrFail as IrClassSymbol }
-    val checkableInterfaces = getJsSubtypeCheckableInterfaces()?.map { it.symbol as IrClassSymbol } ?: emptyList()
-
-    return buildSet {
-        addAll(checkableInterfaces)
-        addAll(superTypes)
-    }
-}
-
 class JsIrClassModel(val klass: IrClass) {
-    val superClasses = klass.getAllRelatedSymbols()
+    val superClasses = klass.superTypes.map { it.classifierOrNull as IrClassSymbol }
 
     val preDeclarationBlock = JsCompositeBlock()
     val postDeclarationBlock = JsCompositeBlock()
