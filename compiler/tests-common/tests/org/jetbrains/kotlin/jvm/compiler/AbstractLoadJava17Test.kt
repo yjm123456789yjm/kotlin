@@ -10,7 +10,7 @@ import org.jetbrains.kotlin.test.util.KtTestUtil
 import java.io.File
 
 abstract class AbstractLoadJava17Test : AbstractLoadJavaTest() {
-    override fun getJdkKind(): TestJdkKind = TestJdkKind.FULL_JDK_17
+    override fun getJdkKind(): TestJdkKind = TestJdkKind.FULL_JDK_17_0
     override fun getJdkHomeForJavac(): File = KtTestUtil.getJdk17Home()
     override fun getAdditionalJavacArgs(): List<String> = ADDITIONAL_JAVAC_ARGS_FOR_17
 }
