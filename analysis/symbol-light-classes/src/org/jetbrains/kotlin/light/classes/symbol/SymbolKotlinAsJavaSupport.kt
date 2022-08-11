@@ -17,6 +17,7 @@ import org.jetbrains.kotlin.analysis.providers.createPackageProvider
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtFakeLightClass
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
+import org.jetbrains.kotlin.asJava.classes.KtLightClassForFacade
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.light.classes.symbol.caches.SymbolLightClassFacadeCache
 import org.jetbrains.kotlin.light.classes.symbol.classes.SymbolBasedFakeLightClass
@@ -29,6 +30,7 @@ import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtElement
 import org.jetbrains.kotlin.psi.KtFile
 import org.jetbrains.kotlin.psi.KtScript
+import org.jetbrains.kotlin.utils.addToStdlib.firstIsInstance
 
 class SymbolKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupport() {
     override fun findClassOrObjectDeclarationsInPackage(
@@ -97,6 +99,11 @@ class SymbolKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupp
         return getFacadeClassesForFiles(facadeFqName, filesForFacade)
     }
 
+    override fun getLightFacade(file: KtFile): KtLightClassForFacade? {
+        // TODO(dimonchik0036): rework
+        return getFacadeClasses(file.javaFileFacadeFqName, file.getKtModule().contentScope).firstIsInstance()
+    }
+
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> =
         error("Should not be called")
 
@@ -117,8 +124,8 @@ class SymbolKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupp
             .filter { it.isFromSourceOrLibraryBinary(project) }
             .mapTo(mutableSetOf()) { it.javaFileFacadeFqName.shortName().asString() }
 
-    override fun findFilesForFacade(facadeFqName: FqName, scope: GlobalSearchScope): Collection<KtFile> {
-        return project.createDeclarationProvider(scope)
+    override fun findFilesForFacade(facadeFqName: FqName, searchScope: GlobalSearchScope): Collection<KtFile> {
+        return project.createDeclarationProvider(searchScope)
             .findFilesForFacade(facadeFqName)
             .filter { it.isFromSourceOrLibraryBinary(project) }
     }
@@ -126,7 +133,7 @@ class SymbolKotlinAsJavaSupport(private val project: Project) : KotlinAsJavaSupp
     override fun getFakeLightClass(classOrObject: KtClassOrObject): KtFakeLightClass =
         SymbolBasedFakeLightClass(classOrObject)
 
-    override fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): PsiClass =
+    override fun createFacadeForSyntheticFile(file: KtFile): KtLightClassForFacade =
         TODO("Not implemented")
 
     private fun getFacadeClassesForFiles(facadeFqName: FqName, allFiles: Collection<KtFile>): Collection<PsiClass> {

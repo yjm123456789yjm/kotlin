@@ -8,8 +8,6 @@
 package org.jetbrains.kotlin.asJava.classes
 
 import com.intellij.openapi.components.ServiceManager
-import com.intellij.openapi.project.Project
-import com.intellij.psi.search.GlobalSearchScope
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtFile
@@ -17,8 +15,8 @@ import org.jetbrains.kotlin.psi.KtScript
 
 interface KotlinLightClassFactory {
     fun createClass(classOrObject: KtClassOrObject): KtLightClassForSourceDeclaration?
-    fun createFacade(project: Project, facadeClassFqName: FqName, searchScope: GlobalSearchScope): KtLightClassForFacade?
-    fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): KtLightClassForFacade
+    fun createFacade(facadeClassFqName: FqName, files: List<KtFile>): KtLightClassForFacade
+    fun createFacadeForSyntheticFile(file: KtFile): KtLightClassForFacade
     fun createScript(script: KtScript): KtLightClassForScript?
 
     companion object {
@@ -29,12 +27,12 @@ interface KotlinLightClassFactory {
             return instance.createClass(classOrObject)
         }
 
-        fun createFacade(project: Project, facadeClassFqName: FqName, searchScope: GlobalSearchScope): KtLightClassForFacade? {
-            return instance.createFacade(project, facadeClassFqName, searchScope)
+        fun createFacade(facadeClassFqName: FqName, files: List<KtFile>): KtLightClassForFacade {
+            return instance.createFacade(facadeClassFqName, files)
         }
 
-        fun createFacadeForSyntheticFile(facadeClassFqName: FqName, file: KtFile): KtLightClassForFacade {
-            return instance.createFacadeForSyntheticFile(facadeClassFqName, file)
+        fun createFacadeForSyntheticFile(file: KtFile): KtLightClassForFacade {
+            return instance.createFacadeForSyntheticFile(file)
         }
 
         fun createScript(script: KtScript): KtLightClassForScript? {

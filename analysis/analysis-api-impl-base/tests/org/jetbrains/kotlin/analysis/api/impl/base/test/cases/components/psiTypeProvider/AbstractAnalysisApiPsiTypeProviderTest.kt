@@ -10,8 +10,8 @@ import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiElementVisitor
 import org.jetbrains.kotlin.analysis.api.analyze
-import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.base.AbstractAnalysisApiSingleFileTest
+import org.jetbrains.kotlin.analysis.test.framework.services.expressionMarkerProvider
 import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadInReadAction
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
@@ -71,7 +71,7 @@ abstract class AbstractAnalysisApiPsiTypeProviderTest : AbstractAnalysisApiSingl
         project: Project
     ): KtLightClass? {
         val containingClass = declaration.parents.firstIsInstanceOrNull<KtClassOrObject>() ?: return null
-        return project.getService(KotlinAsJavaSupport::class.java).getLightClass(containingClass)
+        return KotlinAsJavaSupport.getInstance(project).getLightClass(containingClass)
     }
 
     private fun KtLightClass.findLightDeclarationContext(ktDeclaration: KtDeclaration): KtLightElement<*, *>? {
