@@ -1,5 +1,5 @@
 // WITH_STDLIB
-// IGNORE_BACKEND: JS
+// IGNORE_BACKEND: JS, JS_IR
 
 import kotlin.test.assertEquals
 
