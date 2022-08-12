@@ -1,11 +1,11 @@
 public final class LateinitPropertyKt /* LateinitPropertyKt*/ {
-  private static java.lang.String b;
+  private static final java.lang.String b;
 
-  private static java.lang.String c;
+  private static final java.lang.String c;
 
-  public static java.lang.String a;
+  public static final java.lang.String a;
 
-  public static java.lang.String d;
+  public static final java.lang.String d;
 
   @org.jetbrains.annotations.NotNull()
   public static final java.lang.String getA();//  getA()

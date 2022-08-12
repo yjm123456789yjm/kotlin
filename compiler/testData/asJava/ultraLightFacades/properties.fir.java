@@ -1,51 +1,61 @@
 public final class PropertiesKt /* PropertiesKt*/ {
   @org.jetbrains.annotations.NotNull()
-  private static error.NonExistentClass delegatedProp$delegate;
+  private static final error.NonExistentClass delegatedProp$delegate;
 
   @org.jetbrains.annotations.NotNull()
   private static final java.lang.Object arrayConst;
 
   @org.jetbrains.annotations.NotNull()
+  private static final java.lang.String name;
+
+  @org.jetbrains.annotations.NotNull()
+  private static final java.lang.String protectedWithPrivateSet;
+
+  @org.jetbrains.annotations.NotNull()
+  private static final java.lang.String x$1;
+
+  @org.jetbrains.annotations.NotNull()
   private static final java.lang.String x;
+
+  @org.jetbrains.annotations.NotNull()
+  private static final kotlin.Lazy<java.lang.String> lazyProp$delegate;
 
   @org.jetbrains.annotations.NotNull()
   private static final kotlin.jvm.functions.Function1<java.lang.Integer, java.lang.Integer> sum;
 
   @org.jetbrains.annotations.NotNull()
-  private static java.lang.String name;
-
-  @org.jetbrains.annotations.NotNull()
-  private static java.lang.String protectedWithPrivateSet;
-
-  @org.jetbrains.annotations.NotNull()
-  private static java.lang.String x$1;
-
-  @org.jetbrains.annotations.NotNull()
-  private static kotlin.Lazy<java.lang.String> lazyProp$delegate;
-
-  @org.jetbrains.annotations.NotNull()
   public static final java.lang.String SUBSYSTEM_DEPRECATED = "This subsystem is deprecated" /* initializer type: java.lang.String */;
 
   @org.jetbrains.annotations.Nullable()
-  private static java.lang.Boolean isEmptyMutable;
+  private static final java.lang.Boolean isEmptyMutable;
 
   @org.jetbrains.annotations.Nullable()
-  private static java.lang.Boolean islowercase;
+  private static final java.lang.Boolean islowercase;
 
   @org.jetbrains.annotations.Nullable()
-  private static java.lang.Integer counter2;
+  private static final java.lang.Integer counter2;
 
   @org.jetbrains.annotations.Nullable()
-  private static java.lang.Integer getInt;
+  private static final java.lang.Integer getInt;
 
   @org.jetbrains.annotations.Nullable()
-  private static java.lang.Integer isEmptyInt;
+  private static final java.lang.Integer isEmptyInt;
 
-  private static error.NonExistentClass delegatedProp2$delegate;
+  private static final error.NonExistentClass delegatedProp2$delegate;
 
   private static final error.NonExistentClass intConst;
 
+  private static final int counter;
+
   private static final int f1;
+
+  private static final int f2;
+
+  private static final int int1;
+
+  private static final int int2;
+
+  private static final int internalWithPrivateSet;
 
   private static final int plainField;
 
@@ -53,21 +63,11 @@ public final class PropertiesKt /* PropertiesKt*/ {
 
   private static final int privateVar;
 
-  private static int counter;
+  private static final java.lang.String internalVarPrivateSet;
 
-  private static int f2;
+  private static final java.lang.String protectedLateinitVar;
 
-  private static int int1;
-
-  private static int int2;
-
-  private static int internalWithPrivateSet;
-
-  private static java.lang.String internalVarPrivateSet;
-
-  private static java.lang.String protectedLateinitVar;
-
-  public static error.NonExistentClass subject;
+  public static final error.NonExistentClass subject;
 
   @org.jetbrains.annotations.NotNull()
   protected static final java.lang.String getProtectedLateinitVar();//  getProtectedLateinitVar()
