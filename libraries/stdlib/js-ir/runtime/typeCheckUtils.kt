@@ -97,13 +97,56 @@ internal fun generateInterfaceId(): Int {
     return iid
 }
 
+@Suppress("UNUSED_PARAMETER")
+private fun getPrototypeOf(obj: dynamic) =
+    js("Object.getPrototypeOf(obj)")
+
+private fun searchForMetadata(obj: dynamic): Metadata? {
+    if (obj == null) {
+        return obj
+    }
+    var metadata: Metadata? = obj.`$metadata$`
+    var currentObject = getPrototypeOf(obj)
+
+    while (metadata == null) {
+        val currentConstructor = currentObject.constructor
+        metadata = currentConstructor.`$metadata$`
+        currentObject = getPrototypeOf(currentObject)
+        if (currentObject == null) {
+            return null
+        }
+    }
+
+    return metadata
+}
+
+// TODO: Remove after 1.8 bootstrapping
+// Needed to pass all nodejs tests, because of stdlib compilation via bootstrapped compiler with old metadata format
+private fun verySlowIsInterfaceImpl(obj: dynamic, iface: dynamic): Boolean {
+    val metadata = searchForMetadata(obj) ?: return false
+    val interfaces = metadata.asDynamic().associatedObjectKey
+
+    if (
+        interfaces != null &&
+        (interfaces.indexOf(iface) != -1 || interfaces.some { x -> verySlowIsInterfaceImpl(x, iface) })
+    ) {
+       return true
+    }
+
+    return verySlowIsInterfaceImpl(getPrototypeOf(obj), iface)
+}
+
 private fun isInterfaceImpl(obj: dynamic, iface: Int): Boolean {
     val mask: BitMask = obj.`$imask$`.unsafeCast<BitMask?>() ?: return false
     return mask.isBitSettled(iface)
 }
 
 internal fun isInterface(obj: dynamic, iface: dynamic): Boolean {
-    return isInterfaceImpl(obj, iface.`$metadata$`.iid)
+    return if (obj.`$imask$` != null) {
+        isInterfaceImpl(obj, iface.`$metadata$`.iid)
+    } else {
+        verySlowIsInterfaceImpl(obj, iface)
+    }
 }
 
 internal fun isSuspendFunction(obj: dynamic, arity: Int): Boolean {
@@ -197,7 +240,8 @@ internal fun jsIsType(obj: dynamic, jsClass: dynamic): Boolean {
     }
 
     if (klassMetadata.kind === "interface") {
-        return isInterfaceImpl(obj, klassMetadata.iid.unsafeCast<Int>())
+        val iid =  klassMetadata.iid.unsafeCast<Int?>()
+        return iid?.let { isInterfaceImpl(obj, it) } ?: verySlowIsInterfaceImpl(obj, constructor)
     }
 
     return false
