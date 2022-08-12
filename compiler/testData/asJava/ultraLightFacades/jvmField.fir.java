@@ -4,6 +4,6 @@ public final class JvmFieldKt /* JvmFieldKt*/ {
   public static final java.util.Collection<?> a;
 
   @kotlin.jvm.JvmField()
-  public static final int b;
+  public static final int b = 1 /* initializer type: int */;
 
 }

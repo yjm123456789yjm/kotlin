@@ -6,16 +6,16 @@ public final class PropertiesKt /* PropertiesKt*/ {
   private static final java.lang.Object arrayConst;
 
   @org.jetbrains.annotations.NotNull()
-  private static final java.lang.String name;
+  private static final java.lang.String name = "x" /* initializer type: java.lang.String */;
 
   @org.jetbrains.annotations.NotNull()
-  private static final java.lang.String protectedWithPrivateSet;
+  private static final java.lang.String protectedWithPrivateSet = "" /* initializer type: java.lang.String */;
 
   @org.jetbrains.annotations.NotNull()
-  private static final java.lang.String x$1;
+  private static final java.lang.String x = "" /* initializer type: java.lang.String */;
 
   @org.jetbrains.annotations.NotNull()
-  private static final java.lang.String x;
+  private static final java.lang.String x$1 = "" /* initializer type: java.lang.String */;
 
   @org.jetbrains.annotations.NotNull()
   private static final kotlin.Lazy<java.lang.String> lazyProp$delegate;
@@ -43,25 +43,25 @@ public final class PropertiesKt /* PropertiesKt*/ {
 
   private static final error.NonExistentClass delegatedProp2$delegate;
 
-  private static final error.NonExistentClass intConst;
+  private static final error.NonExistentClass intConst = 30 /* initializer type: int */;
 
-  private static final int counter;
+  private static final int counter = 0 /* initializer type: int */;
 
-  private static final int f1;
+  private static final int f1 = 2 /* initializer type: int */;
 
-  private static final int f2;
+  private static final int f2 = 3 /* initializer type: int */;
 
   private static final int int1;
 
   private static final int int2;
 
-  private static final int internalWithPrivateSet;
+  private static final int internalWithPrivateSet = 1 /* initializer type: int */;
 
-  private static final int plainField;
+  private static final int plainField = 1 /* initializer type: int */;
 
-  private static final int privateVal;
+  private static final int privateVal = 42 /* initializer type: int */;
 
-  private static final int privateVar;
+  private static final int privateVar = 42 /* initializer type: int */;
 
   private static final java.lang.String internalVarPrivateSet;
 
