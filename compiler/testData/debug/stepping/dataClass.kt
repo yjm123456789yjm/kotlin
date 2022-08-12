@@ -85,11 +85,9 @@ fun box() {
 // test.kt:17 box
 // test.kt:1 D.component2_7eebsb_k$
 // test.kt:18 box
-// test.kt:1 D.copy$default_cbhffz_k$
-// test.kt:1 D.copy$default_cbhffz_k$
-// test.kt:1 D.copy$default_cbhffz_k$
-// test.kt:1 D.copy$default_cbhffz_k$
-// test.kt:1 D.copy$default_cbhffz_k$
+// test.kt:1 D.copy$default_jk3j80_k$
+// test.kt:1 D.copy$default_jk3j80_k$
+// test.kt:1 D.copy$default_jk3j80_k$
 // test.kt:1 D.copy_t8q04r_k$
 // test.kt:3 D
 // test.kt:3 D

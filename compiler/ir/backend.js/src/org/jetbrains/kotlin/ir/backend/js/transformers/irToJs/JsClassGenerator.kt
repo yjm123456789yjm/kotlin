@@ -342,13 +342,13 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         val fastPrototype = generateFastPrototype()
         val suspendArity = generateSuspendArity()
 
-        val undefined = context.getNameForField(context.staticContext.backendContext.intrinsics.void.owner.backingField!!)
+        val undefined = context.staticContext.backendContext.getVoid().accept(IrElementToJsExpressionTransformer(), context)
 
         val constructorCall = JsInvocation(
             JsNameRef(context.getNameForStaticFunction(metadataConstructor.owner)),
             listOf(simpleName, interfaces, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
                 .dropLastWhile { it == null }
-                .map { it ?: undefined.makeRef() }
+                .map { it ?: undefined }
         )
 
         return jsAssignment(JsNameRef(Namer.METADATA, classNameRef), constructorCall).makeStmt()

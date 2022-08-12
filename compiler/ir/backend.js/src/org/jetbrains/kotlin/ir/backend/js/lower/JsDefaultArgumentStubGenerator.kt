@@ -12,6 +12,7 @@ import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.export.isExported
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.JsAnnotations
+import org.jetbrains.kotlin.ir.backend.js.utils.getVoid
 import org.jetbrains.kotlin.ir.builders.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrBody
@@ -35,7 +36,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                 toParameter.type,
                 irEqeqeqWithoutBox(
                     irGet(toParameter, toParameter.type),
-                    irGetField(null, void.owner.backingField!!, toParameter.type)
+                    this@JsDefaultArgumentStubGenerator.context.getVoid()
                 ),
                 it,
                 irGet(toParameter)
@@ -52,7 +53,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
         }
     }
 
-    private fun IrConstructor.introduceDefaultResolution(): IrConstructor {
+    private fun IrFunction.introduceDefaultResolution(): IrFunction {
         val irBuilder = context.createIrBuilder(symbol, startOffset, endOffset)
 
         val variables = mutableMapOf<IrValueParameter, IrValueParameter>()
@@ -75,10 +76,11 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                 statements += body?.statements ?: emptyList()
             }
 
-            context.mapping.defaultArgumentsDispatchFunction[this] = this
         }
 
-        return this
+        return also {
+            context.mapping.defaultArgumentsDispatchFunction[it] = it
+        }
     }
 
     override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
@@ -86,7 +88,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
             return null
         }
 
-        if (declaration is IrConstructor && declaration.hasDefaultArgs()) {
+        if (declaration.hasDefaultArgs() && (declaration is IrConstructor || declaration.isTopLevel)) {
             return listOf(declaration.introduceDefaultResolution())
         }
 
