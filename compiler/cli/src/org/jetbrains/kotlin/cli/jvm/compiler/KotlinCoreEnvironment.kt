@@ -437,9 +437,6 @@ class KotlinCoreEnvironment private constructor(
             val projectEnv = ProjectEnvironment(parentDisposable, appEnv, configuration)
             val environment = KotlinCoreEnvironment(projectEnv, configuration, configFiles)
 
-            synchronized(APPLICATION_LOCK) {
-                ourProjectCount++
-            }
             return environment
         }
 
@@ -447,15 +444,7 @@ class KotlinCoreEnvironment private constructor(
         fun createForProduction(
             projectEnvironment: ProjectEnvironment, configuration: CompilerConfiguration, configFiles: EnvironmentConfigFiles
         ): KotlinCoreEnvironment {
-            val environment = KotlinCoreEnvironment(projectEnvironment, configuration, configFiles)
-
-            if (projectEnvironment.environment == applicationEnvironment) {
-                // accounting for core environment disposing
-                synchronized(APPLICATION_LOCK) {
-                    ourProjectCount++
-                }
-            }
-            return environment
+            return KotlinCoreEnvironment(projectEnvironment, configuration, configFiles)
         }
 
         @TestOnly
@@ -500,14 +489,7 @@ class KotlinCoreEnvironment private constructor(
         ): KotlinCoreApplicationEnvironment {
             synchronized(APPLICATION_LOCK) {
                 if (ourApplicationEnvironment == null) {
-                    val disposable = if (unitTestMode) {
-                        parentDisposable
-                    } else {
-                        // TODO this is a memory leak in the compiler, as this Disposable is not registered and thus is never disposed
-                        // but using parentDisposable as disposable in compiler, causes access to application extension points after
-                        // they was disposed, this needs to be fixed
-                        Disposer.newDisposable("Disposable for the KotlinCoreApplicationEnvironment")
-                    }
+                    val disposable = Disposer.newDisposable("Disposable for the KotlinCoreApplicationEnvironment")
                     ourApplicationEnvironment = createApplicationEnvironment(disposable, configuration, unitTestMode)
                     ourProjectCount = 0
                     Disposer.register(disposable, Disposable {
@@ -516,11 +498,7 @@ class KotlinCoreEnvironment private constructor(
                         }
                     })
                 }
-                // Disposing of the environment is unsafe in production then parallel builds are enabled, but turning it off universally
-                // breaks a lot of tests, therefore it is disabled for production and enabled for tests
-                if (CompilerSystemProperties.KOTLIN_COMPILER_ENVIRONMENT_KEEPALIVE_PROPERTY.value.toBooleanLenient() != true) {
-                    // JPS may run many instances of the compiler in parallel (there's an option for compiling independent modules in parallel in IntelliJ)
-                    // All projects share the same ApplicationEnvironment, and when the last project is disposed, the ApplicationEnvironment is disposed as well
+                try {
                     Disposer.register(parentDisposable, Disposable {
                         synchronized(APPLICATION_LOCK) {
                             if (--ourProjectCount <= 0) {
@@ -528,6 +506,8 @@ class KotlinCoreEnvironment private constructor(
                             }
                         }
                     })
+                } finally {
+                    ourProjectCount++
                 }
 
                 return ourApplicationEnvironment!!
@@ -544,6 +524,7 @@ class KotlinCoreEnvironment private constructor(
                 ourApplicationEnvironment = null
                 Disposer.dispose(environment.parentDisposable)
                 ZipHandler.clearFileAccessorCache()
+                Exception("<${Thread.currentThread()}> Disposal trace [${environment}] with [${environment.application}] by CL [${environment.javaClass.classLoader}]").printStackTrace()
             }
         }
 
