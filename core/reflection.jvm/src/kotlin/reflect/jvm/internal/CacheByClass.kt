@@ -41,12 +41,14 @@ private class ClassValueCache<V>(private val compute: (Class<*>) -> V) : CacheBy
     @Volatile
     private var classValue = initClassValue()
 
+    @kotlin.reflect.jvm.internal.SuppressAnimalSniffer
     private fun initClassValue() = object : ClassValue<V>() {
         override fun computeValue(type: Class<*>): V {
             return compute(type)
         }
     }
 
+    @kotlin.reflect.jvm.internal.SuppressAnimalSniffer
     override fun get(key: Class<*>): V = classValue[key]
 
     override fun clear() {
