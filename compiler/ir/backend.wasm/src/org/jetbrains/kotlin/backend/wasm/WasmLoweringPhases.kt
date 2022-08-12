@@ -14,7 +14,6 @@ import org.jetbrains.kotlin.backend.common.lower.optimizations.PropertyAccessorI
 import org.jetbrains.kotlin.backend.common.phaser.*
 import org.jetbrains.kotlin.backend.common.toMultiModuleAction
 import org.jetbrains.kotlin.backend.wasm.lower.*
-import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.AddContinuationToFunctionCallsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.AddContinuationToNonLocalSuspendFunctionsLowering
@@ -146,8 +145,8 @@ private val tailrecLoweringPhase = makeWasmModulePhase(
 
 private val wasmStringSwitchOptimizerLowering = makeWasmModulePhase(
     ::WasmStringSwitchOptimizerLowering,
-    name = "!!!",
-    description = "!!!"
+    name = "WasmStringSwitchOptimizerLowering",
+    description = "Replace when with constant string cases to binary search by string hashcodes"
 )
 
 private val complexExternalDeclarationsToTopLevelFunctionsLowering = makeWasmModulePhase(
@@ -401,13 +400,6 @@ private val tryCatchCanonicalization = makeWasmModulePhase(
     prerequisite = setOf(functionInliningPhase)
 )
 
-private val returnableBlockLoweringPhase = makeWasmModulePhase(
-    ::ReturnableBlockLowering,
-    name = "ReturnableBlockLowering",
-    description = "Replace returnable block with do-while loop",
-    prerequisite = setOf(functionInliningPhase)
-)
-
 private val bridgesConstructionPhase = makeWasmModulePhase(
     ::WasmBridgesConstruction,
     name = "BridgesConstruction",
@@ -625,7 +617,6 @@ val wasmPhases = NamedCompilerPhase(
             unhandledExceptionLowering then
 
             tryCatchCanonicalization then
-            returnableBlockLoweringPhase then
 
             forLoopsLoweringPhase then
             propertyLazyInitLoweringPhase then

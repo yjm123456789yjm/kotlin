@@ -58,23 +58,42 @@ class WasmIrExpressionBuilder(
             }
         }
 
+        val lastInstruction = lastInstr
+        if (lastInstruction == null) {
+            addInstruction(op, immediates)
+            return
+        }
+        val lastOperator = lastInstruction.operator
+
         // simple pure instruction + drop/unreachable -> nothing
-        if ((op == WasmOp.DROP || op == WasmOp.UNREACHABLE) && lastInstr?.operator?.pureStacklessInstruction() == true) {
+        if ((op == WasmOp.DROP || op == WasmOp.UNREACHABLE) && lastOperator.pureStacklessInstruction()) {
             expression.removeLast()
             lastInstr = expression.lastOrNull()
             return
         }
 
         // local set and local get for the same argument -> local tee
-        if (lastInstr?.operator == WasmOp.LOCAL_SET && op == WasmOp.LOCAL_GET) {
-            val localSetNumber = (expression.lastOrNull()?.immediates?.firstOrNull() as? WasmImmediate.LocalIdx)?.value
-            val localGetNumber = (immediates.firstOrNull() as? WasmImmediate.LocalIdx)?.value
-            if (localGetNumber == localSetNumber) {
-                expression.removeLast()
-                addInstruction(WasmOp.LOCAL_TEE, immediates)
-                return
+        if (lastOperator == WasmOp.LOCAL_SET && op == WasmOp.LOCAL_GET) {
+            val localSetNumber = (lastInstruction.immediates.firstOrNull() as? WasmImmediate.LocalIdx)?.value
+            if (localSetNumber != null) {
+                val localGetNumber = (immediates.firstOrNull() as? WasmImmediate.LocalIdx)?.value
+                if (localGetNumber == localSetNumber) {
+                    expression.removeLast()
+                    addInstruction(WasmOp.LOCAL_TEE, immediates)
+                    return
+                }
             }
         }
+
+//        // br0 and end -> end
+//        if (lastOperator == WasmOp.BR && op == WasmOp.END) {
+//            val localBrLabel = (lastInstruction.immediates.firstOrNull() as? WasmImmediate.LabelIdx)?.value
+//            if (localBrLabel == 0) {
+//                expression.removeLast()
+//                addInstruction(WasmOp.END, immediates)
+//                return
+//            }
+//        }
 
         addInstruction(op, immediates)
     }
