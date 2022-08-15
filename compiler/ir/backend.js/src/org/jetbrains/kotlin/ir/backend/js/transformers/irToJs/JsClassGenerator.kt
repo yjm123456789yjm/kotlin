@@ -368,6 +368,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
     private fun generateInterfacesList(): JsArrayLiteral? {
         val listRef = irClass.superTypes
+            .filter { it.classOrNull?.owner?.isExternal != true }
             .takeIf { it.size > 1 || it.singleOrNull() != baseClass }
             ?.mapNotNull { it.asConstructorRef() }
             ?.takeIf { it.isNotEmpty() } ?: return null
@@ -375,9 +376,8 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     }
 
     private fun generateSuspendArity(): JsArrayLiteral? {
-        if (!isCoroutineClass()) return null
-
-        val arity = context.staticContext.backendContext.mapping.suspendArityStore[irClass]!!
+        val invokeFunctions = context.staticContext.backendContext.mapping.suspendArityStore[irClass] ?: return null
+        val arity = invokeFunctions
             .map { it.valueParameters.size }
             .distinct()
             .map { JsIntLiteral(it) }

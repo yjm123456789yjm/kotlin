@@ -108,13 +108,10 @@ private fun searchForMetadata(obj: dynamic): Metadata? {
     var metadata: Metadata? = obj.`$metadata$`
     var currentObject = getPrototypeOf(obj)
 
-    while (metadata == null) {
+    while (metadata == null && currentObject != null) {
         val currentConstructor = currentObject.constructor
         metadata = currentConstructor.`$metadata$`
         currentObject = getPrototypeOf(currentObject)
-        if (currentObject == null) {
-            return null
-        }
     }
 
     return metadata
