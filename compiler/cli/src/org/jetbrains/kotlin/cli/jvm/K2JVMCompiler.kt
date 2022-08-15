@@ -151,9 +151,6 @@ class K2JVMCompiler : CLICompiler<K2JVMCompilerArguments>() {
                 if (environment.getSourceFiles().isEmpty() && !arguments.allowNoSourceFiles && buildFile == null) {
                     if (arguments.version) return OK
 
-                    val env = environment.projectEnvironment.environment
-                    System.err.println("<${Thread.currentThread()}> ERR ENV IS [->${env}] with [->${env.application}] by CL [${env.application.javaClass.classLoader}]")
-
                     messageCollector.report(ERROR, "No source files")
                     return COMPILATION_ERROR
                 }

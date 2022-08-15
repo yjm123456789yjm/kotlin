@@ -524,7 +524,6 @@ class KotlinCoreEnvironment private constructor(
                 ourApplicationEnvironment = null
                 Disposer.dispose(environment.parentDisposable)
                 ZipHandler.clearFileAccessorCache()
-                Exception("<${Thread.currentThread()}> Disposal trace [${environment}] with [${environment.application}] by CL [${environment.javaClass.classLoader}]").printStackTrace()
             }
         }
 
