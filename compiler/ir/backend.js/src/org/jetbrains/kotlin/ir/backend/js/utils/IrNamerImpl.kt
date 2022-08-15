@@ -13,8 +13,8 @@ import org.jetbrains.kotlin.js.backend.ast.JsName
 
 class IrNamerImpl(
     private val newNameTables: NameTables,
-    private val context: JsIrBackendContext,
-) : IrNamerBase() {
+    context: JsIrBackendContext
+) : IrNamerBase(context) {
     override fun getNameForStaticDeclaration(declaration: IrDeclarationWithName): JsName =
         newNameTables.getNameForStaticDeclaration(declaration).toJsName()
 

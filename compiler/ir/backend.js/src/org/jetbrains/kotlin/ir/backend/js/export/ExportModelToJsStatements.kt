@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.export
 
+import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.JsAstUtils
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.defineProperty
 import org.jetbrains.kotlin.ir.backend.js.transformers.irToJs.jsAssignment
@@ -20,7 +21,8 @@ import org.jetbrains.kotlin.util.collectionUtils.filterIsInstanceAnd
 
 class ExportModelToJsStatements(
     private val namer: IrNamer,
-    private val declareNewNamespace: (String) -> String
+    private val declareNewNamespace: (String) -> String,
+    private val backendContext: JsIrBackendContext
 ) {
     private val namespaceToRefMap = mutableMapOf<String, JsNameRef>()
 
@@ -43,8 +45,8 @@ class ExportModelToJsStatements(
                 for (element in elements) {
                     val newNamespace = "$currentNamespace$$element"
                     val newNameSpaceRef = namespaceToRefMap.getOrPut(newNamespace) {
-                        val varName = JsName(declareNewNamespace(newNamespace), false)
-                        val namespaceRef = jsElementAccess(element, currentRef)
+                        val varName = backendContext.getJsName(declareNewNamespace(newNamespace))
+                        val namespaceRef = jsElementAccess(element, currentRef, backendContext)
                         statements += JsVars(
                             JsVars.JsVar(
                                 varName,
@@ -68,12 +70,12 @@ class ExportModelToJsStatements(
             is ExportedFunction -> {
                 val name = namer.getNameForStaticDeclaration(declaration.ir)
                 if (esModules) {
-                    listOf(JsExport(name, alias = JsName(declaration.name, false)))
+                    listOf(JsExport(name, alias = backendContext.getJsName(declaration.name)))
                 } else {
                     if (namespace != null) {
                         listOf(
                             jsAssignment(
-                                jsElementAccess(declaration.name, namespace),
+                                jsElementAccess(declaration.name, namespace, backendContext),
                                 JsNameRef(name)
                             ).makeStmt()
                         )
@@ -95,7 +97,7 @@ class ExportModelToJsStatements(
 
             is ExportedObject -> {
                 require(namespace != null) { "Only namespaced properties are allowed" }
-                val newNameSpace = jsElementAccess(declaration.name, namespace)
+                val newNameSpace = jsElementAccess(declaration.name, namespace, backendContext)
                 val getter = JsNameRef(namer.getNameForStaticDeclaration(declaration.irGetter))
                 val staticsExport = declaration.nestedClasses.flatMap { generateDeclarationExport(it, newNameSpace, esModules) }
                 listOf(defineProperty(namespace, declaration.name, getter, null).makeStmt()) + staticsExport
@@ -104,13 +106,13 @@ class ExportModelToJsStatements(
             is ExportedRegularClass -> {
                 if (declaration.isInterface) return emptyList()
                 val newNameSpace = if (namespace != null)
-                    jsElementAccess(declaration.name, namespace)
+                    jsElementAccess(declaration.name, namespace, backendContext)
                 else
                     JsNameRef(Namer.PROTOTYPE_NAME, namer.getNameForClass(declaration.ir).makeRef())
                 val name = namer.getNameForStaticDeclaration(declaration.ir)
                 val klassExport =
                     if (esModules) {
-                        JsExport(name, alias = JsName(declaration.name, false))
+                        JsExport(name, alias = backendContext.getJsName(declaration.name))
                     } else {
                         if (namespace != null) {
                             jsAssignment(
@@ -144,7 +146,7 @@ class ExportModelToJsStatements(
         val outerClassRef = namer.getNameForStaticDeclaration(outerClass.ir).makeRef()
         val companionObject = ir.companionObject()
         val secondaryConstructors = members.filterIsInstanceAnd<ExportedFunction> { it.isStatic }
-        val bindConstructor = JsName("__bind_constructor_", false)
+        val bindConstructor = backendContext.getJsName("__bind_constructor_")
 
         val blockStatements = mutableListOf<JsStatement>(
             JsVars(JsVars.JsVar(bindConstructor, innerClassRef.bindToThis()))

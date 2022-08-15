@@ -9,7 +9,6 @@ import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.descriptors.ClassKind
 import org.jetbrains.kotlin.ir.backend.js.utils.JsGenerationContext
 import org.jetbrains.kotlin.ir.backend.js.utils.Namer
-import org.jetbrains.kotlin.ir.backend.js.utils.emptyScope
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsNameOrKotlinName
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
@@ -138,7 +137,7 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
     override fun visitSetField(expression: IrSetField, context: JsGenerationContext): JsExpression {
         val field = expression.symbol.owner
         val fieldName = context.getNameForField(field)
-        val dest = jsElementAccess(fieldName.ident, expression.receiver?.accept(this, context))
+        val dest = jsElementAccess(fieldName.ident, expression.receiver?.accept(this, context), context.staticContext.backendContext)
         val source = expression.value.accept(this, context)
         return jsAssignment(dest, source).withSource(expression, context)
     }
@@ -244,7 +243,7 @@ class IrElementToJsExpressionTransformer : BaseIrElementToJsNodeTransformer<JsEx
     }
 
     override fun visitDynamicMemberExpression(expression: IrDynamicMemberExpression, data: JsGenerationContext): JsExpression =
-        jsElementAccess(expression.memberName, expression.receiver.accept(this, data)).withSource(expression, data)
+        jsElementAccess(expression.memberName, expression.receiver.accept(this, data), data.staticContext.backendContext).withSource(expression, data)
 
     override fun visitDynamicOperatorExpression(expression: IrDynamicOperatorExpression, data: JsGenerationContext): JsExpression =
         when (expression.operator) {

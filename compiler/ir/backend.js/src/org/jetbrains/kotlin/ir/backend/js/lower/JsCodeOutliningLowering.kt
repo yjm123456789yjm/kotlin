@@ -177,7 +177,7 @@ private class JsCodeOutlineTransformer(
         }
         val newFun = JsFunction(emptyScope, JsBlock(newStatements), "")
         kotlinLocalsUsedInJs.forEach { irParameter ->
-            newFun.parameters.add(JsParameter(JsName(irParameter.name.identifier, false)))
+            newFun.parameters.add(JsParameter(backendContext.getJsName(irParameter.name.identifier)))
         }
 
         with(backendContext.createIrBuilder(container.symbol)) {

@@ -15,8 +15,13 @@ import org.jetbrains.annotations.NotNull;
 public final class JsRootScope extends JsScope {
   private final JsProgram program;
 
+  @Override
+  @NotNull
+  public String getDescription() {
+      return "Root";
+  }
+
   public JsRootScope(JsProgram program) {
-    super("Root");
     this.program = program;
   }
 

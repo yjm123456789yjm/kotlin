@@ -18,6 +18,7 @@ import org.jetbrains.kotlin.ir.backend.js.codegen.JsGenerationGranularity
 import org.jetbrains.kotlin.ir.backend.js.lower.*
 import org.jetbrains.kotlin.ir.backend.js.lower.calls.CallsLowering
 import org.jetbrains.kotlin.ir.backend.js.lower.cleanup.CleanupLowering
+import org.jetbrains.kotlin.ir.backend.js.lower.cleanup.IrMemoryTrimmer
 import org.jetbrains.kotlin.ir.backend.js.lower.coroutines.*
 import org.jetbrains.kotlin.ir.backend.js.lower.inline.*
 import org.jetbrains.kotlin.ir.declarations.IrFile
@@ -807,6 +808,13 @@ private val cleanupLoweringPhase = makeBodyLoweringPhase(
     name = "CleanupLowering",
     description = "Clean up IR before codegen"
 )
+
+private val trimIrMemory = makeCustomJsModulePhase(
+    { context, module -> IrMemoryTrimmer(module).trimIrModule() },
+    name = "IrMemoryTrimmer",
+    description = "Trim Ir memory"
+).toModuleLowering()
+
 private val moveOpenClassesToSeparatePlaceLowering = makeCustomJsModulePhase(
     { context, module ->
         if (context.granularity == JsGenerationGranularity.PER_FILE)
@@ -926,6 +934,7 @@ val loweringList = listOf<Lowering>(
     escapedIdentifiersLowering,
     implicitlyExportedDeclarationsMarkingLowering,
     cleanupLoweringPhase,
+    trimIrMemory,
     // Currently broken due to static members lowering making single-open-class
     // files non-recognizable as single-class files
     // moveOpenClassesToSeparatePlaceLowering,

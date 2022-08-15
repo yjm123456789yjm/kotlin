@@ -13,9 +13,15 @@ import org.jetbrains.annotations.NotNull;
 public class JsCatchScope extends JsDeclarationScope {
     private final JsName name;
 
+    @NotNull
+    @Override
+    public String getDescription() {
+        return "Catch scope";
+    }
+
     public JsCatchScope(JsScope parent, @NotNull String ident) {
-        super(parent, "Catch scope", true);
-        name = new JsName(ident, false);
+        super(parent, true);
+        name = new JsNameLegacy(ident, false);
     }
 
     @Override

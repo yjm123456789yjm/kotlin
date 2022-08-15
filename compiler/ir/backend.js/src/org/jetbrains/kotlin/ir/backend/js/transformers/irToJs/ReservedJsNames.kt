@@ -6,12 +6,13 @@
 package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 
 import org.jetbrains.kotlin.js.backend.ast.JsName
+import org.jetbrains.kotlin.js.backend.ast.JsNameIr
 import org.jetbrains.kotlin.js.backend.ast.JsNameRef
 
 class ReservedJsNames {
     companion object {
-        fun makeInternalModuleName() = JsName("_", false)
-        fun makeJsExporterName() = JsName("\$jsExportAll\$", false)
+        val internalModuleName = JsNameIr("_")
+        val jsExporterName = JsNameIr("\$jsExportAll\$")
         fun makeCrossModuleNameRef(moduleName: JsName) = JsNameRef("\$_\$", moduleName.makeRef())
     }
 }

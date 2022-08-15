@@ -5,6 +5,7 @@
 
 package org.jetbrains.kotlin.ir.backend.js.utils
 
+import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.util.parentAsClass
 import org.jetbrains.kotlin.js.backend.ast.JsName
@@ -23,12 +24,17 @@ interface IrNamer {
     fun getAssociatedObjectKey(irClass: IrClass): Int?
 }
 
-abstract class IrNamerBase : IrNamer {
+abstract class IrNamerBase(val context: JsIrBackendContext) : IrNamer {
     abstract override fun getNameForMemberFunction(function: IrSimpleFunction): JsName
     abstract override fun getNameForMemberField(field: IrField): JsName
     abstract override fun getNameForStaticDeclaration(declaration: IrDeclarationWithName): JsName
 
-    protected fun String.toJsName(temporary: Boolean = true) = JsName(this, temporary)
+    protected fun String.toJsName(temporary: Boolean = true): JsName {
+        if (temporary) {
+            return context.getJsTemporaryName(this)
+        }
+        return context.getJsName(this)
+    }
 
     override fun getNameForStaticFunction(function: IrSimpleFunction): JsName =
         getNameForStaticDeclaration(function)

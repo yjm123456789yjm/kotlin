@@ -29,6 +29,7 @@ import org.jetbrains.kotlin.js.sourceMap.SourceMap3Builder
 import org.jetbrains.kotlin.js.sourceMap.SourceMapBuilderConsumer
 import org.jetbrains.kotlin.js.util.TextOutputImpl
 import org.jetbrains.kotlin.serialization.js.ModuleKind
+import org.jetbrains.kotlin.utils.addToStdlib.popLast
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
@@ -96,7 +97,9 @@ class IrModuleToJsTransformerTmp(
             multiModule,
             mainModuleName,
             moduleKind,
-            generateProgramFragments(modules, exportData, minimizedMemberNames),
+            generateProgramFragments(modules, exportData, minimizedMemberNames).also {
+                backendContext.clearCaches()
+            },
             SourceMapsInfo.from(backendContext.configuration),
             relativeRequirePath,
             generateScriptModule,
@@ -180,7 +183,11 @@ class IrModuleToJsTransformerTmp(
     private val generateFilePaths = backendContext.configuration.getBoolean(JSConfigurationKeys.GENERATE_COMMENTS_WITH_FILE_PATH)
     private val pathPrefixMap = backendContext.configuration.getMap(JSConfigurationKeys.FILE_PATHS_PREFIX_MAP)
 
-    private fun generateProgramFragment(file: IrFile, exports: List<ExportedDeclaration>, minimizedMemberNames: Boolean): JsIrProgramFragment {
+    private fun generateProgramFragment(
+        file: IrFile,
+        exports: List<ExportedDeclaration>,
+        minimizedMemberNames: Boolean
+    ): JsIrProgramFragment {
         val nameGenerator = JsNameLinkingNamer(backendContext, minimizedMemberNames)
 
         val globalNameScope = NameTable<IrDeclaration>()
@@ -195,10 +202,10 @@ class IrModuleToJsTransformerTmp(
             polyfills.statements += backendContext.polyfills.getAllPolyfillsFor(file)
         }
 
-        val internalModuleName = ReservedJsNames.makeInternalModuleName()
+        val internalModuleName = ReservedJsNames.internalModuleName
         val globalNames = NameTable<String>(globalNameScope)
         val exportStatements =
-            ExportModelToJsStatements(staticContext, { globalNames.declareFreshName(it, it) }).generateModuleExport(
+            ExportModelToJsStatements(staticContext, { globalNames.declareFreshName(it, it) }, backendContext).generateModuleExport(
                 ExportedModule(mainModuleName, moduleKind, exports),
                 internalModuleName,
             )
@@ -254,7 +261,8 @@ class IrModuleToJsTransformerTmp(
                 val jsName = staticContext.getNameForStaticFunction(it)
                 val generateArgv = it.valueParameters.firstOrNull()?.isStringArrayParameter() ?: false
                 val generateContinuation = it.isLoweredSuspendFunction(backendContext)
-                result.mainFunction = JsInvocation(jsName.makeRef(), generateMainArguments(generateArgv, generateContinuation, staticContext)).makeStmt()
+                result.mainFunction =
+                    JsInvocation(jsName.makeRef(), generateMainArguments(generateArgv, generateContinuation, staticContext)).makeStmt()
             }
         }
 
@@ -337,32 +345,36 @@ private fun generateWrappedModuleBody(
     if (multiModule) {
 
         val moduleToRef = program.crossModuleDependencies(relativeRequirePath)
+        program.modules = emptyList()
 
-        val main = program.mainModule
-        val others = program.otherModules
-
-        val mainModule = generateSingleWrappedModuleBody(
-            mainModuleName,
-            moduleKind,
-            main.fragments,
-            sourceMapsInfo,
-            generateScriptModule,
-            generateCallToMain = true,
-            moduleToRef[main]!!,
-        )
-
-        val dependencies = others.map { module ->
-            val moduleName = module.externalModuleName
-
-            moduleName to generateSingleWrappedModuleBody(
-                moduleName,
+        val mainModule = moduleToRef.removeLast().let { (main, mainRef) ->
+            generateSingleWrappedModuleBody(
+                mainModuleName,
                 moduleKind,
-                module.fragments,
+                main.fragments,
                 sourceMapsInfo,
                 generateScriptModule,
-                generateCallToMain = false,
-                moduleToRef[module]!!,
+                generateCallToMain = true,
+                mainRef,
             )
+        }
+
+        val dependencies = buildList(moduleToRef.size) {
+            while (moduleToRef.isNotEmpty()) {
+                moduleToRef.removeFirst().let { (module, moduleRef) ->
+                    val moduleName = module.externalModuleName
+                    val moduleBody = generateSingleWrappedModuleBody(
+                        moduleName,
+                        moduleKind,
+                        module.fragments,
+                        sourceMapsInfo,
+                        generateScriptModule,
+                        generateCallToMain = false,
+                        moduleRef,
+                    )
+                    add(moduleName to moduleBody)
+                }
+            }
         }
 
         return CompilationOutputs(mainModule.jsCode, mainModule.jsProgram, mainModule.sourceMap, dependencies)
@@ -428,7 +440,7 @@ fun generateSingleWrappedModuleBody(
 
     return CompilationOutputs(
         jsCode.toString(),
-        program,
+        null,
         sourceMapBuilder?.build()
     )
 }

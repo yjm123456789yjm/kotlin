@@ -152,16 +152,16 @@ class IrModuleToJsTransformer(
         val (importStatements, importedJsModules) =
             generateImportStatements(
                 getNameForExternalDeclaration = { staticContext.getNameForStaticDeclaration(it) },
-                declareFreshGlobal = { JsName(sanitizeName(it), false) } // TODO: Declare fresh name
+                declareFreshGlobal = { backendContext.getJsName(sanitizeName(it)) } // TODO: Declare fresh name
             )
 
         val moduleBody = generateModuleBody(modules, staticContext)
-        val internalModuleName = ReservedJsNames.makeInternalModuleName()
+        val internalModuleName = ReservedJsNames.internalModuleName
         val globalNames = NameTable<String>(namer.globalNames)
-        val exportStatements = ExportModelToJsStatements(nameGenerator) { globalNames.declareFreshName(it, it) }
+        val exportStatements = ExportModelToJsStatements(nameGenerator, { globalNames.declareFreshName(it, it) }, backendContext)
             .generateModuleExport(exportedModule, internalModuleName)
 
-        val (crossModuleImports, importedKotlinModules) = generateCrossModuleImports(nameGenerator, modules, dependencies, { JsName(sanitizeName(it), false) })
+        val (crossModuleImports, importedKotlinModules) = generateCrossModuleImports(nameGenerator, modules, dependencies, { backendContext.getJsName(sanitizeName(it)) })
         val crossModuleExports = generateCrossModuleExports(modules, refInfo, internalModuleName)
 
         val program = JsProgram()
@@ -256,7 +256,7 @@ class IrModuleToJsTransformer(
             modules += JsImportedModule(module.externalModuleName(), moduleName, null, relativeRequirePath)
 
             names.forEach {
-                imports += JsVars(JsVars.JsVar(JsName(it, false), JsNameRef(it, ReservedJsNames.makeCrossModuleNameRef(moduleName))))
+                imports += JsVars(JsVars.JsVar(backendContext.getJsName(it), JsNameRef(it, ReservedJsNames.makeCrossModuleNameRef(moduleName))))
             }
         }
 
@@ -442,7 +442,7 @@ class IrModuleToJsTransformer(
                 .forEach { declaration ->
                     val declName = getNameForExternalDeclaration(declaration)
                     importStatements.add(
-                        JsVars(JsVars.JsVar(declName, jsElementAccess(declaration.getJsNameOrKotlinName().identifier, qualifiedReference)))
+                        JsVars(JsVars.JsVar(declName, jsElementAccess(declaration.getJsNameOrKotlinName().identifier, qualifiedReference, backendContext)))
                     )
                 }
         }

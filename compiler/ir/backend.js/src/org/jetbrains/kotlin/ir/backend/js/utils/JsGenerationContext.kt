@@ -10,15 +10,21 @@ import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrLoop
 import org.jetbrains.kotlin.ir.expressions.IrReturnableBlock
 import org.jetbrains.kotlin.ir.symbols.IrFunctionSymbol
+import org.jetbrains.kotlin.js.backend.ast.JsLocation
 import org.jetbrains.kotlin.js.backend.ast.JsName
 import org.jetbrains.kotlin.js.backend.ast.JsScope
 
-val emptyScope: JsScope
-    get() = object : JsScope("nil") {
-        override fun doCreateName(ident: String): JsName {
-            error("Trying to create name in empty scope")
-        }
+val emptyScope: JsScope = object : JsScope() {
+    override fun getDescription() = "nil"
+
+    override fun doCreateName(ident: String): JsName {
+        error("Trying to create name in empty scope")
     }
+
+    override fun copyOwnNames(other: JsScope?) {
+        error("Trying to copy names to empty scope")
+    }
+}
 
 class JsGenerationContext(
     val currentFile: IrFile,
@@ -27,7 +33,9 @@ class JsGenerationContext(
     val localNames: LocalNameGenerator? = null,
     private val nameCache: MutableMap<IrElement, JsName> = mutableMapOf(),
     private val useBareParameterNames: Boolean = false,
-): IrNamer by staticContext {
+) : IrNamer by staticContext {
+    val locationCache = mutableMapOf<Int, JsLocation>()
+
     fun newFile(file: IrFile, func: IrFunction? = null, localNames: LocalNameGenerator? = null): JsGenerationContext {
         return JsGenerationContext(
             currentFile = file,
@@ -53,11 +61,11 @@ class JsGenerationContext(
     fun getNameForValueDeclaration(declaration: IrDeclarationWithName): JsName {
         return nameCache.getOrPut(declaration) {
             if (useBareParameterNames) {
-                JsName(sanitizeName(declaration.name.asString()), true)
+                staticContext.backendContext.getJsTemporaryName(sanitizeName(declaration.name.asString()))
             } else {
                 val name = localNames!!.variableNames.names[declaration]
                     ?: error("Variable name is not found ${declaration.name}")
-                JsName(name, true)
+                staticContext.backendContext.getJsTemporaryName(name)
             }
         }
     }
@@ -65,14 +73,14 @@ class JsGenerationContext(
     fun getNameForLoop(loop: IrLoop): JsName? {
         return nameCache.getOrPut(loop) {
             val name = localNames!!.localLoopNames.names[loop] ?: return null
-            JsName(name, true)
+            staticContext.backendContext.getJsTemporaryName(name)
         }
     }
 
     fun getNameForReturnableBlock(block: IrReturnableBlock): JsName? {
         return nameCache.getOrPut(block) {
             val name = localNames!!.localReturnableBlockNames.names[block] ?: return null
-            return JsName(name, true)
+            return staticContext.backendContext.getJsTemporaryName(name)
         }
     }
 

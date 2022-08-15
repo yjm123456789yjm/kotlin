@@ -40,6 +40,8 @@ import org.jetbrains.kotlin.ir.types.impl.IrDynamicTypeImpl
 import org.jetbrains.kotlin.ir.util.SymbolTable
 import org.jetbrains.kotlin.ir.util.kotlinPackageFqn
 import org.jetbrains.kotlin.ir.util.render
+import org.jetbrains.kotlin.js.backend.ast.JsNameIr
+import org.jetbrains.kotlin.js.backend.ast.JsNameIrTemporary
 import org.jetbrains.kotlin.js.config.ErrorTolerancePolicy
 import org.jetbrains.kotlin.js.config.JSConfigurationKeys
 import org.jetbrains.kotlin.js.config.RuntimeDiagnostic
@@ -378,5 +380,21 @@ class JsIrBackendContext(
     override fun report(element: IrElement?, irFile: IrFile?, message: String, isError: Boolean) {
         /*TODO*/
         print(message)
+    }
+
+    private val jsNameCache = mutableMapOf<String, JsNameIr>()
+    fun getJsName(ident: String): JsNameIr {
+        return jsNameCache.getOrPut(ident) { JsNameIr(ident) }
+    }
+
+    private val temporaryJsNameCache = mutableMapOf<String, JsNameIrTemporary>()
+    fun getJsTemporaryName(ident: String): JsNameIrTemporary {
+        return temporaryJsNameCache.getOrPut(ident) { JsNameIrTemporary(ident) }
+    }
+
+    fun clearCaches() {
+        jsNameCache.clear()
+        temporaryJsNameCache.clear()
+        fieldDataCache.clear()
     }
 }

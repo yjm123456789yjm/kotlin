@@ -19,19 +19,19 @@ public class JsBlock extends SourceInfoAwareJsNode implements JsStatement {
     private final List<JsStatement> statements;
 
     public JsBlock() {
-        this(new ArrayList<JsStatement>());
+        this.statements = new SmartList<JsStatement>();
     }
 
     public JsBlock(JsStatement statement) {
-        this(new SmartList<JsStatement>(statement));
+        this.statements = new SmartList<JsStatement>(statement);
     }
 
     public JsBlock(JsStatement... statements) {
-        this(new SmartList<JsStatement>(statements));
+        this.statements = new SmartList<JsStatement>(statements);
     }
 
     public JsBlock(@NotNull List<JsStatement> statements) {
-        this.statements = statements;
+        this.statements = new SmartList<JsStatement>(statements);
     }
 
     @NotNull

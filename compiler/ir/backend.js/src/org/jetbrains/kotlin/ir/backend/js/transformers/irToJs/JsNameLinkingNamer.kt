@@ -18,7 +18,7 @@ import org.jetbrains.kotlin.js.backend.ast.*
 import org.jetbrains.kotlin.utils.DFS
 import org.jetbrains.kotlin.utils.addToStdlib.safeAs
 
-class JsNameLinkingNamer(private val context: JsIrBackendContext, private val minimizedMemberNames: Boolean) : IrNamerBase() {
+class JsNameLinkingNamer(context: JsIrBackendContext, private val minimizedMemberNames: Boolean) : IrNamerBase(context) {
 
     val nameMap = mutableMapOf<IrDeclaration, JsName>()
 
@@ -27,7 +27,7 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext, private val mi
             val name = (this as? IrClass)?.let { context.localClassNames[this] } ?: let {
                 this.nameIfPropertyAccessor() ?: getJsNameOrKotlinName().asString()
             }
-            JsName(sanitizeName(prefix + name), true)
+            context.getJsTemporaryName(sanitizeName(prefix + name))
         }
     }
 
@@ -40,7 +40,9 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext, private val mi
             val jsModule: String? = declaration.getJsModule()
             val maybeParentFile: IrFile? = declaration.parent as? IrFile
             val fileJsModule: String? = maybeParentFile?.getJsModule()
-            val jsQualifier: List<JsName>? = maybeParentFile?.getJsQualifier()?.split('.')?.map { JsName(it, false) }
+            val jsQualifier: List<JsName>? = maybeParentFile?.getJsQualifier()?.split('.')?.map {
+                context.getJsName(it)
+            }
 
             when {
                 jsModule != null -> {
@@ -50,18 +52,18 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext, private val mi
                         val parent = declaration.fqNameWhenAvailable!!.parent()
                         parent.child(declaration.getJsNameOrKotlinName()).asString()
                     }
-                    val name = JsName(sanitizeName(nameString), false)
+                    val name = context.getJsName(sanitizeName(nameString))
                     importedModules += JsImportedModule(jsModule, name, name.makeRef())
                     return name
                 }
 
                 fileJsModule != null -> {
                     if (declaration !in nameMap) {
-                        val moduleName = JsName(sanitizeName("\$module\$$fileJsModule"), true)
+                        val moduleName = context.getJsTemporaryName(sanitizeName("\$module\$$fileJsModule"))
                         importedModules += JsImportedModule(fileJsModule, moduleName, null)
                         val qualifiedReference =
                             if (jsQualifier == null) moduleName.makeRef() else (listOf(moduleName) + jsQualifier).makeRef()
-                        imports[declaration] = jsElementAccess(declaration.getJsNameOrKotlinName().identifier, qualifiedReference)
+                        imports[declaration] = jsElementAccess(declaration.getJsNameOrKotlinName().identifier, qualifiedReference, context)
                         return declaration.getName()
                     }
                 }
@@ -70,7 +72,7 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext, private val mi
                     val name = declaration.getJsNameOrKotlinName().identifier
 
                     if (jsQualifier != null) {
-                        imports[declaration] = jsElementAccess(name, jsQualifier.makeRef())
+                        imports[declaration] = jsElementAccess(name, jsQualifier.makeRef(), context)
                         return declaration.getName()
                     }
 
@@ -95,7 +97,7 @@ class JsNameLinkingNamer(private val context: JsIrBackendContext, private val mi
     override fun getNameForMemberField(field: IrField): JsName {
         require(!field.isStatic)
         // TODO this looks funny. Rethink.
-        return JsName(field.parentAsClass.fieldData()[field]!!, false)
+        return context.getJsName(field.parentAsClass.fieldData()[field]!!)
     }
 
     private fun IrClass.fieldData(): Map<IrField, String> {

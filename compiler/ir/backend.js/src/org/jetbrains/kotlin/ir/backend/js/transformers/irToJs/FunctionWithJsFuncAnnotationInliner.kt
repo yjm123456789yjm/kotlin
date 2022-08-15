@@ -6,6 +6,7 @@
 package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 
 import org.jetbrains.kotlin.backend.common.compilationException
+import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.expressions.IrCall
 import org.jetbrains.kotlin.ir.backend.js.utils.JsGenerationContext
 import org.jetbrains.kotlin.ir.backend.js.utils.getJsFunAnnotation
@@ -18,7 +19,7 @@ class FunctionWithJsFuncAnnotationInliner(private val jsFuncCall: IrCall, privat
     fun generateResultStatement(): List<JsStatement> {
         return function.body.statements
             .run {
-                SimpleJsCodeInliner(replacements)
+                SimpleJsCodeInliner(replacements, context.staticContext.backendContext)
                     .apply { acceptList(this@run) }
                     .withTemporaryVariablesForExpressions(this)
             }
@@ -42,7 +43,7 @@ class FunctionWithJsFuncAnnotationInliner(private val jsFuncCall: IrCall, privat
     }
 }
 
-private class SimpleJsCodeInliner(private val replacements: Map<JsName, JsExpression>): RecursiveJsVisitor() {
+private class SimpleJsCodeInliner(private val replacements: Map<JsName, JsExpression>, private val context: JsIrBackendContext): RecursiveJsVisitor() {
     private val temporaryNamesForExpressions = mutableMapOf<JsName, JsExpression>()
 
     fun withTemporaryVariablesForExpressions(statements: List<JsStatement>): List<JsStatement> {
@@ -61,7 +62,7 @@ private class SimpleJsCodeInliner(private val replacements: Map<JsName, JsExpres
     }
 
     private fun JsName.declareNewTemporaryFor(expression: JsExpression): JsName {
-        return JsName(ident, true)
+        return context.getJsTemporaryName(ident)
             .also { temporaryNamesForExpressions[it] = expression }
     }
 

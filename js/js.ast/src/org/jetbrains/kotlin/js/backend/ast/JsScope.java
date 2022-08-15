@@ -40,20 +40,16 @@ import java.util.regex.Pattern;
  * hierarchy.
  */
 public abstract class JsScope {
-    @NotNull
-    private final String description;
     private Map<String, JsName> names = Collections.emptyMap();
     private final JsScope parent;
 
     private static final Pattern FRESH_NAME_SUFFIX = Pattern.compile("[\\$_]\\d+$");
 
-    public JsScope(JsScope parent, @NotNull String description) {
-        this.description = description;
+    public JsScope(JsScope parent) {
         this.parent = parent;
     }
 
-    protected JsScope(@NotNull String description) {
-        this.description = description;
+    protected JsScope() {
         parent = null;
     }
 
@@ -93,7 +89,7 @@ public abstract class JsScope {
     @NotNull
     public static JsName declareTemporaryName(@NotNull String suggestedName) {
         assert !suggestedName.isEmpty();
-        return new JsName(suggestedName, true);
+        return new JsNameLegacy(suggestedName, true);
     }
 
     /**
@@ -146,26 +142,26 @@ public abstract class JsScope {
     @Override
     public final String toString() {
         if (parent != null) {
-            return description + "->" + parent;
+            return getDescription() + "->" + parent;
         }
         else {
-            return description;
+            return getDescription();
         }
     }
 
     public void copyOwnNames(JsScope other) {
-        names = new HashMap<>(names);
-        names.putAll(other.names);
+        if (!other.names.isEmpty()) {
+            names = new HashMap<>(names);
+            names.putAll(other.names);
+        }
     }
 
     @NotNull
-    public String getDescription() {
-        return description;
-    }
+    abstract public String getDescription();
 
     @NotNull
     protected JsName doCreateName(@NotNull String ident) {
-        JsName name = new JsName(ident, false);
+        JsName name = new JsNameLegacy(ident, false);
         names = Maps.put(names, ident, name);
         return name;
     }

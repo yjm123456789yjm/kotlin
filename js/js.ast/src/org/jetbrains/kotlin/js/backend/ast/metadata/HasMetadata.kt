@@ -16,27 +16,45 @@
 
 package org.jetbrains.kotlin.js.backend.ast.metadata
 
-abstract class HasMetadata {
-    private val metadata: MutableMap<String, Any?> = hashMapOf()
+interface HasMetadata {
+    fun <T> getData(key: String): T
+    fun <T> setData(key: String, value: T)
+    fun hasData(key: String): Boolean
+    fun removeData(key: String)
+    fun copyMetadataFrom(other: HasMetadata)
+}
 
-    fun <T> getData(key: String): T {
+open class HasMetadataImpl : HasMetadata {
+    private var backingMetadata: MutableMap<String, Any?>? = null
+
+    private val metadata: MutableMap<String, Any?>
+        get() {
+            if (backingMetadata == null) {
+                backingMetadata = hashMapOf()
+            }
+            return backingMetadata!!
+        }
+
+    final override fun <T> getData(key: String): T {
         @Suppress("UNCHECKED_CAST")
         return metadata[key] as T
     }
 
-    fun <T> setData(key: String, value: T) {
+    final override fun <T> setData(key: String, value: T) {
         metadata[key] = value
     }
 
-    fun hasData(key: String): Boolean {
-        return metadata.containsKey(key)
+    final override fun hasData(key: String): Boolean {
+        return backingMetadata?.containsKey(key) == true
     }
 
-    fun removeData(key: String) {
-        metadata.remove(key)
+    final override fun removeData(key: String) {
+        backingMetadata?.remove(key)
     }
 
-    fun copyMetadataFrom(other: HasMetadata) {
-        metadata.putAll(other.metadata)
+    final override fun copyMetadataFrom(other: HasMetadata) {
+        if (other is HasMetadataImpl) {
+            metadata.putAll(other.metadata)
+        }
     }
 }

@@ -17,43 +17,59 @@
 package org.jetbrains.kotlin.js.backend.ast
 
 import org.jetbrains.kotlin.js.common.RESERVED_KEYWORDS
+import org.jetbrains.kotlin.utils.SmartList
 import java.util.*
+import kotlin.collections.ArrayList
 
-class JsObjectScope(parent: JsScope, description: String) : JsScope(parent, description)
-
-object JsDynamicScope : JsScope(null, "Scope for dynamic declarations") {
-    override fun doCreateName(name: String) = JsName(name, false)
+class JsObjectScope(parent: JsScope, private val scopeDescription: String) : JsScope(parent) {
+    override fun getDescription() = scopeDescription
 }
 
-open class JsFunctionScope(parent: JsScope, description: String) : JsDeclarationScope(parent, description) {
+object JsDynamicScope : JsScope() {
+    override fun doCreateName(name: String) = JsNameLegacy(name)
+    override fun getDescription() = "Scope for dynamic declarations"
+}
+
+open class JsFunctionScope(parent: JsScope, private val scopeDescription: String) : JsDeclarationScope(parent) {
+    override fun getDescription() = scopeDescription
+
     override fun hasOwnName(name: String): Boolean = RESERVED_WORDS.contains(name) || super.hasOwnName(name)
 
     open fun declareNameUnsafe(identifier: String): JsName = super.declareName(identifier)
 }
 
-open class JsDeclarationScope(parent: JsScope, description: String, useParentScopeStack: Boolean = false) : JsScope(parent, description) {
-    private val labelScopes: Stack<LabelScope> =
-            if (parent is JsDeclarationScope && useParentScopeStack) parent.labelScopes else Stack<LabelScope>()
+abstract class JsDeclarationScope(parent: JsScope, useParentScopeStack: Boolean = false) : JsScope(parent) {
+    private var labelScopesBacking: ArrayList<LabelScope>? =
+        if (parent is JsDeclarationScope && useParentScopeStack) parent.labelScopesBacking else null
 
     private val topLabelScope
-        get() = if (labelScopes.isNotEmpty()) labelScopes.peek() else null
+        get() = labelScopesBacking?.let { if (it.isNotEmpty()) it.last() else null }
+
+    private val labelScopes: ArrayList<LabelScope>
+        get() {
+            if (labelScopesBacking == null) {
+                labelScopesBacking = ArrayList<LabelScope>()
+            }
+            return labelScopesBacking!!
+        }
 
     open fun enterLabel(label: String, outputName: String): JsName {
         val scope = LabelScope(topLabelScope, label, outputName)
-        labelScopes.push(scope)
+        labelScopes.add(scope)
         return scope.labelName
     }
 
     open fun exitLabel() {
         assert(labelScopes.isNotEmpty()) { "No scope to exit from" }
-        labelScopes.pop()
+        labelScopes.removeLast()
     }
 
     open fun findLabel(label: String): JsName? =
             topLabelScope?.findName(label)
 
-    private inner class LabelScope(parent: LabelScope?, val ident: String, outputIdent: String) : JsScope(parent, "Label scope for $ident") {
-        val labelName: JsName = JsName(outputIdent, true)
+    private inner class LabelScope(parent: LabelScope?, val ident: String, outputIdent: String) : JsScope(parent) {
+        val labelName: JsName = JsNameLegacy(outputIdent, true)
+        override fun getDescription() = "Label scope for $ident"
 
         override fun findOwnName(name: String): JsName? =
                 if (name == ident) labelName else null

@@ -80,11 +80,11 @@ class NewStableStaticNamesCollectorVisitor(val needToCollectReferences: Boolean)
 }
 
 class NewNamerImpl(
-    val context: JsIrBackendContext,
+    context: JsIrBackendContext,
     val unit: IrToJs.CodegenUnit,
     val exportId: (IrDeclarationWithName) -> String,
     val stableNames: Set<String>,
-) : IrNamerBase() {
+) : IrNamerBase(context) {
     val staticNames = NameTable<IrDeclaration>(
         reserved = stableNames.toMutableSet()
     )
@@ -107,11 +107,11 @@ class NewNamerImpl(
         )
         // TODO: Webpack not minimize member names, it is long name, which is not minimized, so it affects final JS bundle size
         // Use shorter names
-        return JsName("f_$fieldName", false)
+        return context.getJsName("f_$fieldName")
     }
 
     override fun getNameForStaticDeclaration(declaration: IrDeclarationWithName): JsName {
-        staticNames.names[declaration]?.let { return JsName(it, false) }
+        staticNames.names[declaration]?.let { return context.getJsName(it) }
 
         fun registerImport(moduleId: String, importedName: String) {
             val fullModuleId = if (moduleId.startsWith(".")) {
@@ -165,7 +165,7 @@ class NewNamerImpl(
             }
         }
 
-        return JsName(staticNames.names[declaration]!!, false)
+        return context.getJsName(staticNames.names[declaration]!!)
     }
 }
 

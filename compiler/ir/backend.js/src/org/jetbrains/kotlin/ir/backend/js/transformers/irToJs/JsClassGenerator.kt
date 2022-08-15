@@ -187,7 +187,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                     val setterForwarder = property.setter
                         .takeIf { it.shouldExportAccessor(context.staticContext.backendContext) }
                         .getOrGenerateIfFinal {
-                            val setterArgName = JsName("value", false)
+                            val setterArgName = context.staticContext.backendContext.getJsName("value")
                             propertyAccessorForwarder("setter forwarder") {
                                 JsInvocation(it, JsNameRef(setterArgName)).makeStmt()
                             }?.apply {
@@ -244,7 +244,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     }
 
     private fun IrSimpleFunction.prototypeAccessRef(): JsExpression {
-        return jsElementAccess(name.asString(), classPrototypeRef)
+        return jsElementAccess(name.asString(), classPrototypeRef, context.staticContext.backendContext)
     }
 
     private fun IrClass.shouldCopyFrom(): Boolean {
@@ -253,7 +253,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
 
     private fun generateMemberFunction(declaration: IrSimpleFunction): Pair<JsExpression, JsFunction?> {
         val memberName = context.getNameForMemberFunction(declaration.realOverrideTarget)
-        val memberRef = jsElementAccess(memberName.ident, classPrototypeRef)
+        val memberRef = jsElementAccess(memberName.ident, classPrototypeRef, context.staticContext.backendContext)
 
         if (declaration.isReal && declaration.body != null) {
             val translatedFunction: JsFunction = declaration.accept(IrFunctionToJsTransformer(), context)
@@ -291,7 +291,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                             classModel.postDeclarationBlock.statements += missedOverrides
                                 .map { missedOverride ->
                                     val name = context.getNameForMemberFunction(missedOverride)
-                                    val ref = jsElementAccess(name.ident, classPrototypeRef)
+                                    val ref = jsElementAccess(name.ident, classPrototypeRef, context.staticContext.backendContext)
                                     jsAssignment(ref, reference).makeStmt()
                                 }
                         }

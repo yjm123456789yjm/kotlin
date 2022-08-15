@@ -6,16 +6,18 @@
 package org.jetbrains.kotlin.ir.backend.js.lower.cleanup
 
 import org.jetbrains.kotlin.backend.common.BodyLoweringPass
+import org.jetbrains.kotlin.backend.common.FileLoweringPass
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.IrStatement
 import org.jetbrains.kotlin.backend.common.ir.isPure
-import org.jetbrains.kotlin.ir.declarations.IrDeclaration
+import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.types.isNothing
 import org.jetbrains.kotlin.ir.util.transformFlat
 import org.jetbrains.kotlin.ir.visitors.IrElementVisitorVoid
 import org.jetbrains.kotlin.ir.visitors.acceptChildrenVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
+import org.jetbrains.kotlin.utils.SmartList
 
 class CleanupLowering : BodyLoweringPass {
 
@@ -114,5 +116,82 @@ private class CodeCleaner : IrElementVisitorVoid {
     override fun visitContainerExpression(expression: IrContainerExpression) {
         super.visitContainerExpression(expression)
         expression.cleanUpStatements()
+    }
+}
+
+class IrMemoryTrimmer(val module: IrModuleFragment) : IrElementVisitorVoid {
+    fun trimIrModule() {
+        module.acceptVoid(this)
+    }
+
+    private fun MutableList<*>.tryTrimToSize() {
+        when (this) {
+            is ArrayList -> trimToSize()
+            is SmartList -> trimToSize()
+        }
+    }
+
+    override fun visitElement(element: IrElement) {
+        element.acceptChildrenVoid(this)
+    }
+
+    override fun visitModuleFragment(declaration: IrModuleFragment) {
+        declaration.files.tryTrimToSize()
+        super.visitModuleFragment(declaration)
+    }
+
+    override fun visitFile(declaration: IrFile) {
+        declaration.declarations.tryTrimToSize()
+        super.visitFile(declaration)
+    }
+
+    override fun visitScript(declaration: IrScript) {
+        declaration.statements.tryTrimToSize()
+        super.visitScript(declaration)
+    }
+
+    override fun visitClass(declaration: IrClass) {
+        declaration.declarations.tryTrimToSize()
+        super.visitClass(declaration)
+    }
+
+    override fun visitExternalPackageFragment(declaration: IrExternalPackageFragment) {
+        declaration.declarations.tryTrimToSize()
+        super.visitExternalPackageFragment(declaration)
+    }
+
+    override fun visitContainerExpression(expression: IrContainerExpression) {
+        expression.statements.tryTrimToSize()
+        super.visitContainerExpression(expression)
+    }
+
+    override fun visitDynamicOperatorExpression(expression: IrDynamicOperatorExpression) {
+        expression.arguments.tryTrimToSize()
+        super.visitDynamicOperatorExpression(expression)
+    }
+
+    override fun visitErrorCallExpression(expression: IrErrorCallExpression) {
+        expression.arguments.tryTrimToSize()
+        super.visitErrorCallExpression(expression)
+    }
+
+    override fun visitWhen(expression: IrWhen) {
+        expression.branches.tryTrimToSize()
+        super.visitWhen(expression)
+    }
+
+    override fun visitStringConcatenation(expression: IrStringConcatenation) {
+        expression.arguments.tryTrimToSize()
+        super.visitStringConcatenation(expression)
+    }
+
+    override fun visitTry(aTry: IrTry) {
+        aTry.catches.tryTrimToSize()
+        super.visitTry(aTry)
+    }
+
+    override fun visitVararg(expression: IrVararg) {
+        expression.elements.tryTrimToSize()
+        super.visitVararg(expression)
     }
 }

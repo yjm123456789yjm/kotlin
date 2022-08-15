@@ -8,6 +8,7 @@ package org.jetbrains.kotlin.ir.backend.js.transformers.irToJs
 import org.jetbrains.kotlin.backend.common.compilationException
 import org.jetbrains.kotlin.ir.IrElement
 import org.jetbrains.kotlin.ir.UNDEFINED_OFFSET
+import org.jetbrains.kotlin.ir.backend.js.JsIrBackendContext
 import org.jetbrains.kotlin.ir.backend.js.JsStatementOrigins
 import org.jetbrains.kotlin.ir.backend.js.utils.*
 import org.jetbrains.kotlin.ir.declarations.IrClass
@@ -43,9 +44,9 @@ fun <T : JsNode> IrWhen.toJsNode(
         }
     }
 
-fun jsElementAccess(name: String, receiver: JsExpression?): JsExpression =
+fun jsElementAccess(name: String, receiver: JsExpression?, backendContext: JsIrBackendContext): JsExpression =
     if (receiver == null || name.isValidES5Identifier()) {
-        JsNameRef(JsName(name, false), receiver)
+        JsNameRef(backendContext.getJsName(name), receiver)
     } else {
         JsArrayAccess(receiver, JsStringLiteral(name))
     }
@@ -128,7 +129,7 @@ fun translateCall(
                 val propertyName = context.getNameForProperty(property)
                 val nameRef = when (jsDispatchReceiver) {
                     null -> JsNameRef(propertyName)
-                    else -> jsElementAccess(propertyName.ident, jsDispatchReceiver)
+                    else -> jsElementAccess(propertyName.ident, jsDispatchReceiver, context.staticContext.backendContext)
                 }
                 return when (function) {
                     property.getter -> nameRef
@@ -176,7 +177,7 @@ fun translateCall(
 
     val ref = when (jsDispatchReceiver) {
         null -> JsNameRef(symbolName)
-        else -> jsElementAccess(symbolName.ident, jsDispatchReceiver)
+        else -> jsElementAccess(symbolName.ident, jsDispatchReceiver, context.staticContext.backendContext)
     }
 
     return if (isExternalVararg) {
@@ -193,12 +194,12 @@ fun translateCall(
         if (jsDispatchReceiver != null) {
             if (argumentsAsSingleArray is JsArrayLiteral) {
                 JsInvocation(
-                    jsElementAccess(symbolName.ident, jsDispatchReceiver),
+                    jsElementAccess(symbolName.ident, jsDispatchReceiver, context.staticContext.backendContext),
                     argumentsAsSingleArray.expressions
                 )
             } else {
                 // TODO: Do not create IIFE at all? (Currently there is no reliable way to create temporary variable in current scope)
-                val receiverName = JsName("\$externalVarargReceiverTmp", false)
+                val receiverName = context.staticContext.backendContext.getJsName("\$externalVarargReceiverTmp")
                 val receiverRef = receiverName.makeRef()
 
                 val iifeFun = JsFunction(
@@ -207,7 +208,7 @@ fun translateCall(
                         JsVars(JsVars.JsVar(receiverName, jsDispatchReceiver)),
                         JsReturn(
                             JsInvocation(
-                                JsNameRef("apply", jsElementAccess(symbolName.ident, receiverRef)),
+                                JsNameRef("apply", jsElementAccess(symbolName.ident, receiverRef, context.staticContext.backendContext)),
                                 listOf(
                                     receiverRef,
                                     argumentsAsSingleArray
@@ -496,13 +497,15 @@ private inline fun <T : JsNode> T.addSourceInfoIfNeed(node: IrElement, context: 
 
     if (node.startOffset == UNDEFINED_OFFSET || node.endOffset == UNDEFINED_OFFSET) return
 
-    val fileEntry = context.currentFile.fileEntry
-
-    val path = fileEntry.name
-    val startLine = fileEntry.getLineNumber(node.startOffset)
-    val startColumn = fileEntry.getColumnNumber(node.startOffset)
+    val location = context.locationCache.getOrPut(node.startOffset) {
+        val fileEntry = context.currentFile.fileEntry
+        val path = fileEntry.name
+        val startLine = fileEntry.getLineNumber(node.startOffset)
+        val startColumn = fileEntry.getColumnNumber(node.startOffset)
+        JsLocation(path, startLine, startColumn)
+    }
 
     // TODO maybe it's better to fix in JsExpressionStatement
     val locationTarget = if (this is JsExpressionStatement) this.expression else this
-    locationTarget.source = JsLocation(path, startLine, startColumn)
+    locationTarget.source = location
 }
