@@ -35,6 +35,8 @@ class WasmSymbols(
 
     private val kotlinTopLevelPackage: PackageViewDescriptor =
         context.module.getPackage(FqName("kotlin"))
+    private val enumsInternalPackage: PackageViewDescriptor =
+        context.module.getPackage(FqName("kotlin.enums"))
     private val wasmInternalPackage: PackageViewDescriptor =
         context.module.getPackage(FqName("kotlin.wasm.internal"))
     private val collectionsPackage: PackageViewDescriptor =
@@ -99,6 +101,9 @@ class WasmSymbols(
         getInternalFunction("getCoroutineContext")
     override val returnIfSuspended =
         getInternalFunction("returnIfSuspended")
+
+    override val createEnumEntries: IrSimpleFunctionSymbol = getFunction("enumEntries", enumsInternalPackage)
+    override val enumEntries: IrClassSymbol = getIrClass(FqName.fromSegments(listOf("kotlin", "enums", "EnumEntries")))
 
     val coroutineEmptyContinuation: IrPropertySymbol = symbolTable.referenceProperty(
         getProperty(FqName.fromSegments(listOf("kotlin", "wasm", "internal", "EmptyContinuation")))

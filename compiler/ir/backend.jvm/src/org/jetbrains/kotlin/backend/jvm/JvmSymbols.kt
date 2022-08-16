@@ -216,7 +216,7 @@ class JvmSymbols(
         }
     }
 
-    val enumEntries: IrClassSymbol = createClass(FqName("kotlin.enums.EnumEntries"), ClassKind.INTERFACE) { klass ->
+    override val enumEntries: IrClassSymbol = createClass(FqName("kotlin.enums.EnumEntries"), ClassKind.INTERFACE) { klass ->
         // Actually it is E : Enum<E>, but doesn't seem to have any effect yet
         klass.addTypeParameter("E", irBuiltIns.anyNType)
     }
@@ -228,7 +228,7 @@ class JvmSymbols(
         }
     }
 
-    val createEnumEntries: IrSimpleFunctionSymbol = enumEntriesKt.functions.single { it.owner.name.asString() == "enumEntries" }
+    override val createEnumEntries: IrSimpleFunctionSymbol = enumEntriesKt.functions.single { it.owner.name.asString() == "enumEntries" }
 
     override val defaultConstructorMarker: IrClassSymbol =
         createClass(FqName("kotlin.jvm.internal.DefaultConstructorMarker"))

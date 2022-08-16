@@ -20,13 +20,14 @@ import org.jetbrains.kotlin.ir.backend.js.JsCommonBackendContext
 import org.jetbrains.kotlin.ir.backend.js.JsLoweredDeclarationOrigin
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.builders.*
-import org.jetbrains.kotlin.ir.builders.declarations.buildConstructor
-import org.jetbrains.kotlin.ir.builders.declarations.buildField
-import org.jetbrains.kotlin.ir.builders.declarations.buildFun
+import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
+import org.jetbrains.kotlin.ir.types.IrType
+import org.jetbrains.kotlin.ir.types.defaultType
 import org.jetbrains.kotlin.ir.types.makeNullable
+import org.jetbrains.kotlin.ir.types.typeWith
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -461,10 +462,19 @@ private val IrClass.isInstantiableEnum: Boolean
 private val IrDeclaration.parentEnumClassOrNull: IrClass?
     get() = parents.filterIsInstance<IrClass>().firstOrNull { it.isInstantiableEnum }
 
-class EnumSyntheticFunctionsLowering(val context: JsCommonBackendContext) : DeclarationTransformer {
+private const val ENTRIES_FIELD_NAME = "\$ENTRIES"
+private const val ENUM_VALUES_FIELD_NAME = "\$VALUES";
+private const val VALUES_HELPER_FUNCTION_NAME = "\$values"
+private const val ENTRIES_HELPER_FUNCTION_NAME = "\$entries"
 
+class EnumSyntheticFunctionsAndPropertiesLowering(
+    val context: JsCommonBackendContext,
+    private val supportRawFunctionReference: Boolean = false,
+    private val syntheticFieldsShouldBeReinitialized: Boolean = false,
+) : DeclarationTransformer {
     private val IrEnumEntry.getInstanceFun by context.mapping.enumEntryToGetInstanceFun
     private val IrClass.initEntryInstancesFun: IrSimpleFunction? by context.mapping.enumClassToInitEntryInstancesFun
+    private val IrClass.enumArrayType get() = context.irBuiltIns.arrayClass.typeWith(defaultType)
 
     override fun transformFlat(declaration: IrDeclaration): List<IrDeclaration>? {
         if (declaration is IrConstructor && declaration.isPrimary && declaration.parentEnumClassOrNull != null &&
@@ -490,7 +500,7 @@ class EnumSyntheticFunctionsLowering(val context: JsCommonBackendContext) : Decl
                         statements += when (kind) {
                             IrSyntheticBodyKind.ENUM_VALUES -> createEnumValuesBody(declaration, enumClass)
                             IrSyntheticBodyKind.ENUM_VALUEOF -> createEnumValueOfBody(declaration, enumClass)
-                            IrSyntheticBodyKind.ENUM_ENTRIES -> TODO("NOT IMPLEMENTED ON JS")
+                            IrSyntheticBodyKind.ENUM_ENTRIES -> createEnumEntriesBody(declaration, enumClass)
                         }.statements
                     }
                 }
@@ -501,6 +511,101 @@ class EnumSyntheticFunctionsLowering(val context: JsCommonBackendContext) : Decl
     }
 
     private val throwISESymbol = context.ir.symbols.throwISE
+
+    private fun createEnumEntriesBody(entriesGetter: IrFunction, enumClass: IrClass): IrBlockBody {
+        val entriesField = enumClass.addEnumEntriesField()
+        return context.createIrBuilder(entriesGetter.symbol).run {
+            irBlockBody {
+                if (syntheticFieldsShouldBeReinitialized) {
+                    +irIfThen(
+                        irEqualsNull(irGetField(null, entriesField)),
+                        irSetField(null, entriesField, entriesField.initializer!!.expression)
+                    )
+                }
+                +irReturn(irGetField(null, entriesField))
+            }
+        }
+    }
+
+    private fun IrClass.addEnumEntriesField(): IrField {
+        val valuesHelperFunction = buildValuesHelperFunction()
+        val valuesField = buildValuesField(valuesHelperFunction)
+        val entriesHelperFunction = buildEntriesHelperFunction(valuesField)
+        return buildEntriesField(entriesHelperFunction)
+    }
+
+    private fun IrClass.buildEntriesHelperFunction(valuesField: IrField): IrFunction = addFunction {
+        name = Name.identifier(ENTRIES_HELPER_FUNCTION_NAME)
+        returnType = enumArrayType
+        visibility = PRIVATE
+        origin = IrDeclarationOrigin.SYNTHETIC_HELPER_FOR_ENUM_VALUES
+    }.apply {
+        body = context.createIrBuilder(symbol).run {
+            irBlockBody {
+                if (syntheticFieldsShouldBeReinitialized) {
+                    +irIfThen(
+                        irEqualsNull(irGetField(null, valuesField)),
+                        irSetField(null, valuesField, valuesField.initializer!!.expression)
+                    )
+                }
+                +irReturn(irGetField(null, valuesField))
+            }
+        }
+    }
+
+
+    private fun IrClass.buildValuesHelperFunction(): IrFunction = addFunction {
+        name = Name.identifier(VALUES_HELPER_FUNCTION_NAME)
+        returnType = enumArrayType
+        visibility = PRIVATE
+        origin = IrDeclarationOrigin.SYNTHETIC_HELPER_FOR_ENUM_VALUES
+    }.apply {
+        body = context.createIrBuilder(symbol).run {
+            irBlockBody {
+                +irReturn(irVararg(defaultType, enumEntries.map { irCall(it.getInstanceFun!!) }))
+            }
+        }
+    }
+
+    private fun IrClass.buildEntriesField(entriesHelper: IrFunction): IrField = addField {
+        name = Name.identifier(ENTRIES_FIELD_NAME)
+        type = context.ir.symbols.enumEntries.defaultType
+        visibility = PRIVATE
+        origin = IrDeclarationOrigin.FIELD_FOR_ENUM_ENTRIES
+        isFinal = true
+        isStatic = true
+    }.apply {
+        initializer = context.createIrBuilder(symbol).run {
+            irExprBody(irCall(this@EnumSyntheticFunctionsAndPropertiesLowering.context.ir.symbols.createEnumEntries).apply {
+                val referenceType = context.irBuiltIns.functionN(0).typeWith(enumArrayType)
+                putValueArgument(0, referenceFor(entriesHelper, referenceType))
+            })
+        }
+    }
+
+    private fun IrBuilderWithScope.referenceFor(function: IrFunction, type: IrType): IrDeclarationReference {
+        return if (supportRawFunctionReference) {
+            irRawFunctionReference(type, function.symbol)
+        } else {
+            irFunctionReference(type, function.symbol)
+        }
+    }
+
+    private fun IrClass.buildValuesField(valuesHelperFunction: IrFunction): IrField = addField {
+        name = Name.identifier(ENUM_VALUES_FIELD_NAME)
+        type = enumArrayType
+        visibility = PRIVATE
+        origin = IrDeclarationOrigin.FIELD_FOR_ENUM_VALUES
+        isFinal = true
+        isStatic = true
+    }.apply {
+        initializer = context.createIrBuilder(symbol).run {
+            irExprBody(
+                irCall(valuesHelperFunction.symbol)
+            )
+        }
+    }
+
 
     private fun createEnumValueOfBody(valueOfFun: IrFunction, irClass: IrClass): IrBlockBody {
         val nameParameter = valueOfFun.valueParameters[0]
