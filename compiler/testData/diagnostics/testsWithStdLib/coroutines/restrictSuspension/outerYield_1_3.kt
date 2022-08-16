@@ -28,8 +28,9 @@ class RestrictedController<T> {
     }
 }
 
-fun <T> buildSequence(c: suspend RestrictedController<T>.() -> Unit) {}
+fun <T> buildSequence(@BuilderInference c: suspend RestrictedController<T>.() -> Unit) {}
 
+@BuilderInference
 suspend fun <T> RestrictedController<T>.yield2(x: T) {}
 
 fun test() {

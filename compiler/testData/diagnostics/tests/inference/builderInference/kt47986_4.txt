@@ -1,6 +1,6 @@
 package
 
-public fun </*0*/ K> buildFoo(/*0*/ builderAction: Foo<K>.() -> kotlin.Unit): Foo<K>
+@kotlin.OptIn(markerClass = {kotlin.experimental.ExperimentalTypeInference::class}) public fun </*0*/ K> buildFoo(/*0*/ @kotlin.BuilderInference builderAction: Foo<K>.() -> kotlin.Unit): Foo<K>
 public fun main(): kotlin.Unit
 public fun </*0*/ K : Bar<N>, /*1*/ N : Bar<K>> Foo<K>.bar(/*0*/ x: kotlin.Int = ...): kotlin.Unit
 

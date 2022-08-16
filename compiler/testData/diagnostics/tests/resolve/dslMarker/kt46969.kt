@@ -1,4 +1,5 @@
 // FIR_IDENTICAL
+// WITH_STDLIB
 @DslMarker
 annotation class Foo
 
@@ -9,8 +10,8 @@ interface Scope<T> {
 
 fun foo(block: Scope<Nothing>.() -> Unit) {}
 
-inline fun <reified T> Scope<*>.nested(noinline block: Scope<T>.() -> Unit) {}
-inline fun <reified K> Scope<*>.nested2(noinline block: Scope<K>.() -> Unit) {}
+inline fun <reified T> Scope<*>.nested(noinline @<!OPT_IN_USAGE_ERROR!>BuilderInference<!> block: Scope<T>.() -> Unit) {}
+inline fun <reified K> Scope<*>.nested2(noinline @<!OPT_IN_USAGE_ERROR!>BuilderInference<!> block: Scope<K>.() -> Unit) {}
 
 
 fun main() {

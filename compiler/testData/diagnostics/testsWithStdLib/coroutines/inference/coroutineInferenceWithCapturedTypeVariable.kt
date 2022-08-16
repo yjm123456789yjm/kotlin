@@ -10,7 +10,7 @@ suspend fun main() {
 
 
 @OptIn(ExperimentalTypeInference::class)
-fun <K> iFlow(block: suspend iFlowCollector<in K>.() -> Unit): iFlow<K> = TODO()
+fun <K> iFlow(@BuilderInference block: suspend iFlowCollector<in K>.() -> Unit): iFlow<K> = TODO()
 
 interface iFlowCollector<S> {
     suspend fun emit(value: S)

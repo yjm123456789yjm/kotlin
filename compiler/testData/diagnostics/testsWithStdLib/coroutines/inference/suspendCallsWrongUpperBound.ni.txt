@@ -1,7 +1,7 @@
 package
 
 public val test: kotlin.String
-public fun </*0*/ S : kotlin.Number> generate(/*0*/ g: suspend Controller<S>.() -> kotlin.Unit): S
+public fun </*0*/ S : kotlin.Number> generate(/*0*/ @kotlin.BuilderInference g: suspend Controller<S>.() -> kotlin.Unit): S
 
 public final class Controller</*0*/ T : kotlin.Number> {
     public constructor Controller</*0*/ T : kotlin.Number>()

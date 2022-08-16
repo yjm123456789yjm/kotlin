@@ -1,11 +1,16 @@
 // !RENDER_DIAGNOSTICS_FULL_TEXT
+// WITH_STDLIB
+
+import kotlin.experimental.ExperimentalTypeInference
+
 fun <T> flowOf(value: T): Flow<T> = TODO()
 
 interface FlowCollector<in T> {}
 
 interface Flow<out T>
 
-fun <T, R> Flow<T>.transform(transform: FlowCollector<R>.(T) -> Unit): Flow<R> = TODO()
+@OptIn(ExperimentalTypeInference::class)
+fun <T, R> Flow<T>.transform(@BuilderInference transform: FlowCollector<R>.(T) -> Unit): Flow<R> = TODO()
 
 fun f() {
     fun <T> doEmit(collector: FlowCollector<T>) {}

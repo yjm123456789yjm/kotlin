@@ -2,8 +2,8 @@ package
 
 public fun foo(/*0*/ block: Scope<kotlin.Nothing>.() -> kotlin.Unit): kotlin.Unit
 public fun main(): kotlin.Unit
-public inline fun </*0*/ reified T> Scope<*>.nested(/*0*/ noinline block: Scope<T>.() -> kotlin.Unit): kotlin.Unit
-public inline fun </*0*/ reified K> Scope<*>.nested2(/*0*/ noinline block: Scope<K>.() -> kotlin.Unit): kotlin.Unit
+public inline fun </*0*/ reified T> Scope<*>.nested(/*0*/ @kotlin.BuilderInference noinline block: Scope<T>.() -> kotlin.Unit): kotlin.Unit
+public inline fun </*0*/ reified K> Scope<*>.nested2(/*0*/ @kotlin.BuilderInference noinline block: Scope<K>.() -> kotlin.Unit): kotlin.Unit
 
 @kotlin.DslMarker public final annotation class Foo : kotlin.Annotation {
     public constructor Foo()

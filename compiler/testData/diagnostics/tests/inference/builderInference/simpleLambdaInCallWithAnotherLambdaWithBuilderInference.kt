@@ -7,7 +7,7 @@ import kotlin.experimental.ExperimentalTypeInference
 @OptIn(ExperimentalTypeInference::class)
 fun <R> combined(
     check: () -> Unit,
-    block: TestInterface<R>.() -> Unit
+    @BuilderInference block: TestInterface<R>.() -> Unit
 ): R = TODO()
 
 interface TestInterface<R> {

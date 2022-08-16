@@ -6,7 +6,7 @@ import kotlin.experimental.ExperimentalTypeInference
 
 @OptIn(ExperimentalTypeInference::class)
 fun <R> build(
-    block: TestInterface<R>.() -> Unit
+    @BuilderInference block: TestInterface<R>.() -> Unit
 ): R = TODO()
 
 class Inv<K>

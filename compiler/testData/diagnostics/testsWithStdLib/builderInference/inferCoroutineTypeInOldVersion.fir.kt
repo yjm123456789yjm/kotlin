@@ -16,7 +16,7 @@ val member = build {
     add(42)
 }
 
-val memberWithoutAnn = <!NEW_INFERENCE_NO_INFORMATION_FOR_PARAMETER!>wrongBuild<!> {
+val memberWithoutAnn = wrongBuild {
     <!ILLEGAL_SUSPEND_FUNCTION_CALL!>add<!>(42)
 }
 

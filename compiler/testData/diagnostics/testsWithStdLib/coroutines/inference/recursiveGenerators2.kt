@@ -11,9 +11,10 @@ class GenericController<T> {
     suspend fun yield(t: T) {}
 }
 
-fun <S> generate(g: suspend GenericController<S>.() -> Unit): List<S> = TODO()
+fun <S> generate(@BuilderInference g: suspend GenericController<S>.() -> Unit): List<S> = TODO()
 
-suspend fun <S> GenericController<List<S>>.yieldGenerate(g: suspend GenericController<S>.() -> Unit): Unit = TODO()
+@BuilderInference
+suspend fun <S> GenericController<List<S>>.yieldGenerate(@BuilderInference g: suspend GenericController<S>.() -> Unit): Unit = TODO()
 
 val test1 = generate {
     // TODO: KT-15185

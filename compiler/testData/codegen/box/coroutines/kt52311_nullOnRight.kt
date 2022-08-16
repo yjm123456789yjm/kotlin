@@ -6,7 +6,7 @@ import kotlin.coroutines.intrinsics.*
 
 fun someCondition() = false
 
-suspend fun suspendHere() = suspendCoroutineUninterceptedOrReturn {
+suspend fun suspendHere(): Unit = suspendCoroutineUninterceptedOrReturn {
     it.resume(Unit)
     COROUTINE_SUSPENDED
 }

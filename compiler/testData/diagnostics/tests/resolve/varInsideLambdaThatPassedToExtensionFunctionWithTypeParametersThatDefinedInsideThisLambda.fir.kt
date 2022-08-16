@@ -1,7 +1,7 @@
 // WITH_STDLIB
 // ISSUE: KT-52197
 
-fun <K, V> helper(builderAction: MutableMap<K, V>.() -> Unit) {
+fun <K, V> helper(@<!OPT_IN_USAGE_ERROR!>BuilderInference<!> builderAction: MutableMap<K, V>.() -> Unit) {
     builderAction(mutableMapOf())
 }
 

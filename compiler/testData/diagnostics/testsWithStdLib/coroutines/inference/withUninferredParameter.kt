@@ -6,7 +6,7 @@ class GenericController<T> {
     suspend fun yield(t: T) {}
 }
 
-fun <S> generate(g: suspend GenericController<S>.(S) -> Unit): S = TODO()
+fun <S> generate(@<!OPT_IN_USAGE_ERROR!>BuilderInference<!> g: suspend GenericController<S>.(S) -> Unit): S = TODO()
 
 val test1 = generate {
     yield(4)

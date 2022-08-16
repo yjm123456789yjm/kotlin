@@ -1,8 +1,13 @@
 // FIR_IDENTICAL
 // !LANGUAGE: +ForbidInferringPostponedTypeVariableIntoDeclaredUpperBound
+// WITH_STDLIB
+
+import kotlin.experimental.ExperimentalTypeInference
+
 class Foo<K>
 
-fun <K> buildFoo(builderAction: Foo<K>.() -> Unit): Foo<K> = Foo()
+@OptIn(ExperimentalTypeInference::class)
+fun <K> buildFoo(@BuilderInference builderAction: Foo<K>.() -> Unit): Foo<K> = Foo()
 
 fun <K> Foo<K>.bar(x: Int = 1) {}
 

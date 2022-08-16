@@ -5,7 +5,7 @@ class Controller<T : Number> {
     suspend fun yield(t: T) {}
 }
 
-fun <S : Number> generate(g: suspend Controller<S>.() -> Unit): S = TODO()
+fun <S : Number> generate(@<!OPT_IN_USAGE_ERROR!>BuilderInference<!> g: suspend Controller<S>.() -> Unit): S = TODO()
 
 val test = generate {
     yield(<!TYPE_MISMATCH!>"foo"<!>)

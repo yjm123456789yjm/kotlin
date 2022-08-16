@@ -1,7 +1,12 @@
 // !RENDER_DIAGNOSTICS_FULL_TEXT
+// WITH_STDLIB
+
+import kotlin.experimental.ExperimentalTypeInference
+
 class Foo<K>
 
-fun <K> buildFoo(builderAction: Foo<K>.() -> Unit): Foo<K> = Foo()
+@OptIn(ExperimentalTypeInference::class)
+fun <K> buildFoo(@BuilderInference builderAction: Foo<K>.() -> Unit): Foo<K> = Foo()
 
 fun <L> Foo<L>.bar() {}
 
