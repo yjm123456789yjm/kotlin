@@ -10,6 +10,17 @@
 #elif USE_GCC_UNWIND
 // GCC unwinder for backtrace.
 #include <unwind.h>
+#if __MINGW64__  // Include section for a workaround in getUnwindPtr()
+#include <windows.h>    // needed before <winnt.h>
+#include <winnt.h>      // definition of type PDISPATCHER_CONTEXT
+struct _Unwind_Context  // from https://github.com/gcc-mirror/gcc/blob/master/libgcc/unwind-seh.c#L69
+{
+  _Unwind_Word cfa;
+  _Unwind_Word ra;
+  _Unwind_Word reg[2];
+  PDISPATCHER_CONTEXT disp;
+};
+#endif // __MINGW64__
 #else
 // Glibc backtrace() function.
 #include <execinfo.h>
@@ -46,10 +57,16 @@ struct Backtrace {
 };
 
 _Unwind_Ptr getUnwindPtr(_Unwind_Context* context) {
-#if (__MINGW32__ || __MINGW64__)
+#if __MINGW64__
+    // Workaround for misfeature in old libgcc, fixed only in version 12: https://github.com/gcc-mirror/gcc/commit/bd6ecbe48ada79bb14cbb30ef8318495b5237790
+    // Fortunately, disp->ControlPc also has "ms_context.Rip" (see first line of while loop of _Unwind_Backtrace)
+    return context->disp->ControlPc;
+#else
+#if __MINGW32__
     return _Unwind_GetRegionStart(context);
 #else
     return _Unwind_GetIP(context);
+#endif
 #endif
 }
 
