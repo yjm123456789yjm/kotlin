@@ -169,7 +169,7 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
 
     override suspend fun waitForConditionToBecomeTrue(predicate: () -> Boolean) {
         if (predicate()) return
-        suspendCoroutine { continuation ->
+        suspendCoroutine<Unit> { continuation ->
             require(waitingOnPredicate == null) { "already waiting!" }
             waitingOnPredicate = predicate to continuation
         }
@@ -187,7 +187,7 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
     override suspend fun sendPlainTextMessage(methodName: String, paramsJson: String): String {
         val messageId = nextMessageId++
         sendPlainTextMessage("""{"id":$messageId,"method":$methodName,"params":$paramsJson}""")
-        return suspendCoroutine { continuation ->
+        return suspendCoroutine<CDPMethodInvocationResult> { continuation ->
             messageContinuations[messageId] = CDPMethodCallEncodingInfoPlainText to continuation
         }.cast<CDPMethodInvocationResultPlainText>().string
     }
@@ -198,7 +198,7 @@ private class NodeJsInspectorClientContextImpl(engine: NodeJsInspectorClient) : 
         val messageId = nextMessageId++
         val (encodedMessage, encodingInfo) = encodeMethodCallWithMessageId(messageId)
         sendPlainTextMessage(encodedMessage)
-        return suspendCoroutine { continuation ->
+        return suspendCoroutine<CDPMethodInvocationResult> { continuation ->
             messageContinuations[messageId] = encodingInfo to continuation
         }
     }
