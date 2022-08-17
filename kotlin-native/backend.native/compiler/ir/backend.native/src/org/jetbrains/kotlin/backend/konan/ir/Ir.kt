@@ -442,6 +442,9 @@ internal class KonanSymbols(
 
     override val setWithoutBoundCheckName: Name? = KonanNameConventions.setWithoutBoundCheck
 
+    override val enumEntries: IrClassSymbol get() = TODO("NOT IMPLEMENTED YET")
+    override val createEnumEntries: IrSimpleFunctionSymbol get() = TODO("NOT IMPLEMENTED YET")
+
     private val testFunctionKindCache = TestProcessor.FunctionKind.values().associate {
         val symbol = if (it.runtimeKindString.isEmpty())
             null
