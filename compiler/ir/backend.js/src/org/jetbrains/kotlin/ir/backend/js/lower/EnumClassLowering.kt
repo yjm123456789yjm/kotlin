@@ -24,10 +24,7 @@ import org.jetbrains.kotlin.ir.builders.declarations.*
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrVarargImpl
-import org.jetbrains.kotlin.ir.types.IrType
-import org.jetbrains.kotlin.ir.types.defaultType
-import org.jetbrains.kotlin.ir.types.makeNullable
-import org.jetbrains.kotlin.ir.types.typeWith
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.ir.visitors.IrElementTransformerVoid
 import org.jetbrains.kotlin.ir.visitors.acceptVoid
@@ -463,9 +460,6 @@ private val IrDeclaration.parentEnumClassOrNull: IrClass?
     get() = parents.filterIsInstance<IrClass>().firstOrNull { it.isInstantiableEnum }
 
 private const val ENTRIES_FIELD_NAME = "\$ENTRIES"
-private const val ENUM_VALUES_FIELD_NAME = "\$VALUES";
-private const val VALUES_HELPER_FUNCTION_NAME = "\$values"
-private const val ENTRIES_HELPER_FUNCTION_NAME = "\$entries"
 
 class EnumSyntheticFunctionsAndPropertiesLowering(
     val context: JsCommonBackendContext,
@@ -528,58 +522,28 @@ class EnumSyntheticFunctionsAndPropertiesLowering(
     }
 
     private fun IrClass.addEnumEntriesField(): IrField {
-        val valuesHelperFunction = buildValuesHelperFunction()
-        val valuesField = buildValuesField(valuesHelperFunction)
-        val entriesHelperFunction = buildEntriesHelperFunction(valuesField)
-        return buildEntriesField(entriesHelperFunction)
+        return buildEntriesField(searchForValuesFunction())
     }
 
-    private fun IrClass.buildEntriesHelperFunction(valuesField: IrField): IrFunction = addFunction {
-        name = Name.identifier(ENTRIES_HELPER_FUNCTION_NAME)
-        returnType = enumArrayType
-        visibility = PRIVATE
-        origin = IrDeclarationOrigin.SYNTHETIC_HELPER_FOR_ENUM_VALUES
-    }.apply {
-        body = context.createIrBuilder(symbol).run {
-            irBlockBody {
-                if (syntheticFieldsShouldBeReinitialized) {
-                    +irIfThen(
-                        irEqualsNull(irGetField(null, valuesField)),
-                        irSetField(null, valuesField, valuesField.initializer!!.expression)
-                    )
-                }
-                +irReturn(irGetField(null, valuesField))
+    private fun IrClass.searchForValuesFunction(): IrFunction {
+        return declarations.find { it is IrFunction && it.isStatic && it.returnType.isArray() } as IrFunction
+    }
+
+    private fun IrClass.buildEntriesField(entriesHelper: IrFunction): IrField = with(context.ir.symbols) {
+        addField {
+            name = Name.identifier(ENTRIES_FIELD_NAME)
+            type = enumEntries.defaultType
+            visibility = PRIVATE
+            origin = IrDeclarationOrigin.FIELD_FOR_ENUM_ENTRIES
+            isFinal = true
+            isStatic = true
+        }.apply {
+            initializer = context.createIrBuilder(symbol).run {
+                irExprBody(irCall(createEnumEntries).apply {
+                    val referenceType = context.irBuiltIns.functionN(0).typeWith(enumEntries.defaultType)
+                    putValueArgument(0, referenceFor(entriesHelper, referenceType))
+                })
             }
-        }
-    }
-
-
-    private fun IrClass.buildValuesHelperFunction(): IrFunction = addFunction {
-        name = Name.identifier(VALUES_HELPER_FUNCTION_NAME)
-        returnType = enumArrayType
-        visibility = PRIVATE
-        origin = IrDeclarationOrigin.SYNTHETIC_HELPER_FOR_ENUM_VALUES
-    }.apply {
-        body = context.createIrBuilder(symbol).run {
-            irBlockBody {
-                +irReturn(irVararg(defaultType, enumEntries.map { irCall(it.getInstanceFun!!) }))
-            }
-        }
-    }
-
-    private fun IrClass.buildEntriesField(entriesHelper: IrFunction): IrField = addField {
-        name = Name.identifier(ENTRIES_FIELD_NAME)
-        type = context.ir.symbols.enumEntries.defaultType
-        visibility = PRIVATE
-        origin = IrDeclarationOrigin.FIELD_FOR_ENUM_ENTRIES
-        isFinal = true
-        isStatic = true
-    }.apply {
-        initializer = context.createIrBuilder(symbol).run {
-            irExprBody(irCall(this@EnumSyntheticFunctionsAndPropertiesLowering.context.ir.symbols.createEnumEntries).apply {
-                val referenceType = context.irBuiltIns.functionN(0).typeWith(enumArrayType)
-                putValueArgument(0, referenceFor(entriesHelper, referenceType))
-            })
         }
     }
 
@@ -588,21 +552,6 @@ class EnumSyntheticFunctionsAndPropertiesLowering(
             irRawFunctionReference(type, function.symbol)
         } else {
             irFunctionReference(type, function.symbol)
-        }
-    }
-
-    private fun IrClass.buildValuesField(valuesHelperFunction: IrFunction): IrField = addField {
-        name = Name.identifier(ENUM_VALUES_FIELD_NAME)
-        type = enumArrayType
-        visibility = PRIVATE
-        origin = IrDeclarationOrigin.FIELD_FOR_ENUM_VALUES
-        isFinal = true
-        isStatic = true
-    }.apply {
-        initializer = context.createIrBuilder(symbol).run {
-            irExprBody(
-                irCall(valuesHelperFunction.symbol)
-            )
         }
     }
 
@@ -629,14 +578,12 @@ class EnumSyntheticFunctionsAndPropertiesLowering(
 
     private fun createEnumValuesBody(valuesFun: IrFunction, irClass: IrClass): IrBlockBody {
         return context.createIrBuilder(valuesFun.symbol).run {
-            irBlockBody {
-                val instances = irClass.enumEntries.map { irCall(it.getInstanceFun!!) }
-                +irReturn(
-                    IrVarargImpl(UNDEFINED_OFFSET, UNDEFINED_OFFSET, valuesFun.returnType, irClass.defaultType, instances)
-                )
-            }
+            irBlockBody { +irReturn(arrayOfEnumEntriesOf(irClass)) }
         }
     }
+
+    private fun IrBuilderWithScope.arrayOfEnumEntriesOf(enumClass: IrClass)  =
+        irVararg(enumClass.defaultType, enumClass.enumEntries.map { irCall(it.getInstanceFun!!) })
 }
 
 private val IrClass.enumEntries: List<IrEnumEntry>

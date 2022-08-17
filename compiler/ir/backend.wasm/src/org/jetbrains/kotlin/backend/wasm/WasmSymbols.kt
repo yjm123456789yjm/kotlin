@@ -102,8 +102,8 @@ class WasmSymbols(
     override val returnIfSuspended =
         getInternalFunction("returnIfSuspended")
 
-    override val createEnumEntries: IrSimpleFunctionSymbol = getFunction("enumEntries", enumsInternalPackage)
-    override val enumEntries: IrClassSymbol = getIrClass(FqName.fromSegments(listOf("kotlin", "enums", "EnumEntries")))
+    override val enumEntries = getIrClass(FqName.fromSegments(listOf("kotlin", "enums", "EnumEntries")))
+    override val createEnumEntries = getFunction("enumEntries", enumsInternalPackage)
 
     val coroutineEmptyContinuation: IrPropertySymbol = symbolTable.referenceProperty(
         getProperty(FqName.fromSegments(listOf("kotlin", "wasm", "internal", "EmptyContinuation")))

@@ -221,10 +221,8 @@ class JsIrBackendContext(
             override val coroutineSuspendedGetter =
                 coroutineSymbols.coroutineSuspendedGetter
 
-            override val enumEntries: IrClassSymbol = getIrClass(ENUMS_PACKAGE_FQNAME.child(Name.identifier("EnumEntries")))
-
-            override val createEnumEntries: IrSimpleFunctionSymbol =
-                symbolTable.referenceSimpleFunction(getFunctions(ENUMS_PACKAGE_FQNAME.child(Name.identifier("enumEntries"))).single())
+            override val enumEntries = getIrClass(ENUMS_PACKAGE_FQNAME.child(Name.identifier("EnumEntries")))
+            override val createEnumEntries = symbolTable.referenceSimpleFunction(getFunctions(ENUMS_PACKAGE_FQNAME.child(Name.identifier("enumEntries"))).single())
 
             private val _arraysContentEquals = getFunctions(FqName("kotlin.collections.contentEquals")).mapNotNull {
                 if (it.extensionReceiverParameter != null && it.extensionReceiverParameter!!.type.isNullable())
