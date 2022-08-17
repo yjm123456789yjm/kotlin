@@ -270,11 +270,11 @@ class SymbolTable {
   // Finds symbol having nearest smaller address
   IMAGE_SYMBOL* findFunctionSymbol(const void* address) {
     IMAGE_SYMBOL* result = nullptr;
-    const void* resultAddress = nullptr;
+    auto resultAddress = (uintptr_t)nullptr;
     for (DWORD i = 0; i < numberOfSymbols; ++i) {
       IMAGE_SYMBOL* symbol = &symbols[i];
-      const void* symbolAddress = getSymbolAddress(symbol);
-      if (symbol->Type == 0x20 && address >= symbolAddress && resultAddress < symbolAddress) {
+      auto symbolAddress = (uintptr_t)getSymbolAddress(symbol);
+      if (symbol->Type == 0x20 && (uintptr_t)address >= symbolAddress && resultAddress < symbolAddress) {
         resultAddress = symbolAddress;
         result = symbol;
       }
