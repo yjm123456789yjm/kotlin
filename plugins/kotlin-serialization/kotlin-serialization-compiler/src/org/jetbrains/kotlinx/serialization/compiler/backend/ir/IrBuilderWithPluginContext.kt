@@ -90,11 +90,13 @@ interface IrBuilderWithPluginContext {
         name: Name,
         initializerBuilder: IrBlockBodyBuilder.() -> Unit
     ): IrProperty {
-        val lazySafeModeClassDescriptor = compilerContext.referenceClass(ClassId.topLevel(LAZY_MODE_FQ))!!.owner
-        val lazyFunctionSymbol = compilerContext.referenceFunctions(CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("lazy"))).single {
-            it.owner.valueParameters.size == 2 && it.owner.valueParameters[0].type == lazySafeModeClassDescriptor.defaultType
-        }
-        val publicationEntryDescriptor = lazySafeModeClassDescriptor.enumEntries().single { it.name == LAZY_PUBLICATION_MODE_NAME }
+        val lazySafeModeClass = compilerContext.referenceClass(ClassId.topLevel(LAZY_MODE_FQ))!!
+        val entry = lazySafeModeClass.owner.declarations.filterIsInstance<IrEnumEntry>().single { it.name == LAZY_PUBLICATION_MODE_NAME }
+
+        val lazyFunctionSymbol =
+            compilerContext.referenceFunctions(CallableId(StandardNames.BUILT_INS_PACKAGE_FQ_NAME, Name.identifier("lazy"))).single {
+                it.owner.valueParameters.size == 2 && it.owner.valueParameters[0].type == lazySafeModeClass.defaultType
+            }
 
         val lazyIrClass = compilerContext.referenceClass(ClassId.topLevel(LAZY_FQ))!!.owner
         val lazyIrType = lazyIrClass.defaultType.substitute(mapOf(lazyIrClass.typeParameters[0].symbol to targetIrType))
@@ -113,8 +115,8 @@ interface IrBuilderWithPluginContext {
                 val enumElement = IrGetEnumValueImpl(
                     startOffset,
                     endOffset,
-                    lazySafeModeClassDescriptor.defaultType,
-                    publicationEntryDescriptor.symbol
+                    lazySafeModeClass.defaultType,
+                    entry.symbol
                 )
 
                 val lambdaExpression = containingClass.createLambdaExpression(targetIrType, initializerBuilder)
