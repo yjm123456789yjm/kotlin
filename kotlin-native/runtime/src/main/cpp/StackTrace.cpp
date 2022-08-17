@@ -10,9 +10,9 @@
 #elif USE_GCC_UNWIND
 // GCC unwinder for backtrace.
 #include <unwind.h>
-#if __MINGW64__  // Include section for a workaround in getUnwindPtr()
-#include <windows.h>    // needed before <winnt.h>
-#include <winnt.h>      // definition of type PDISPATCHER_CONTEXT
+#if __MINGW64__  // Hack to workaround buggy GCC unwinder in MinGW64/libgcc before version 12
+#include <windows.h>
+#include <winnt.h>
 struct _Unwind_Context  // from https://github.com/gcc-mirror/gcc/blob/master/libgcc/unwind-seh.c#L69
 {
   _Unwind_Word cfa;
@@ -21,6 +21,12 @@ struct _Unwind_Context  // from https://github.com/gcc-mirror/gcc/blob/master/li
   PDISPATCHER_CONTEXT disp;
 };
 #endif // __MINGW64__
+
+#elif USE_WINAPI_UNWIND
+// CaptureStackBackTrace can be used instead of buggy GCC unwinder in MinGW64/libgcc before version 12
+#include <windows.h>
+#include <winnt.h>
+
 #else
 // Glibc backtrace() function.
 #include <execinfo.h>
@@ -58,15 +64,11 @@ struct Backtrace {
 
 _Unwind_Ptr getUnwindPtr(_Unwind_Context* context) {
 #if __MINGW64__
-    // Workaround for misfeature in old libgcc, fixed only in version 12: https://github.com/gcc-mirror/gcc/commit/bd6ecbe48ada79bb14cbb30ef8318495b5237790
+    // Workaround for misfeature in old MinGW64/libgcc, fixed only in version 12: https://github.com/gcc-mirror/gcc/commit/bd6ecbe48ada79bb14cbb30ef8318495b5237790
     // Fortunately, disp->ControlPc also has "ms_context.Rip" (see first line of while loop of _Unwind_Backtrace)
     return context->disp->ControlPc;
 #else
-#if __MINGW32__
-    return _Unwind_GetRegionStart(context);
-#else
     return _Unwind_GetIP(context);
-#endif
 #endif
 }
 
@@ -113,7 +115,7 @@ NO_INLINE std_support::vector<void*> kotlin::internal::GetCurrentStackTrace(size
     return {};
 #else
 
-#if (__MINGW32__ || __MINGW64__)
+#if __MINGW64__
     // Skip GetCurrentStackTrace, _Unwind_Backtrace + anything asked by the caller.
     const size_t kSkipFrames = 2 + skipFrames;
 #else
@@ -132,6 +134,14 @@ NO_INLINE std_support::vector<void*> kotlin::internal::GetCurrentStackTrace(size
     _Unwind_Backtrace(unwindCallback, static_cast<void*>(&traceHolder));
     RuntimeAssert(result.size() == traceHolder.currentSize, "Expected and collected sizes of the stacktrace differ");
 
+    return result;
+#elif USE_WINAPI_UNWIND
+    // Take into account this function and StackTrace::current.
+    constexpr size_t maxSize = GetMaxStackTraceDepth<StackTraceCapacityKind::kDynamic>() + 2;
+    result.resize(maxSize);
+    size_t size = CaptureStackBackTrace(kSkipFrames, maxSize, result.data(), nullptr);
+    if (size <= kSkipFrames) return {};
+    result.resize(size);
     return result;
 #else
     // Take into account this function and StackTrace::current.
@@ -156,7 +166,7 @@ NO_INLINE size_t kotlin::internal::GetCurrentStackTrace(size_t skipFrames, std_s
     return {};
 #else
 
-#if (__MINGW32__ || __MINGW64__)
+#if __MINGW64__
     // Skip GetCurrentStackTrace, _Unwind_Backtrace + anything asked by the caller.
     const size_t kSkipFrames = 2 + skipFrames;
 #else
@@ -168,6 +178,16 @@ NO_INLINE size_t kotlin::internal::GetCurrentStackTrace(size_t skipFrames, std_s
     Backtrace traceHolder(kSkipFrames, buffer);
     _Unwind_Backtrace(unwindCallback, static_cast<void*>(&traceHolder));
     return traceHolder.currentSize;
+#elif USE_WINAPI_UNWIND
+    // Take into account this function and StackTrace::current.
+    constexpr size_t maxSize = GetMaxStackTraceDepth<StackTraceCapacityKind::kFixed>() + 2;
+    void* tmpBuffer[maxSize];
+    size_t size = CaptureStackBackTrace(kSkipFrames, maxSize, tmpBuffer, nullptr);
+    if (size <= kSkipFrames) return 0;
+
+    size_t elementsCount = std::min(buffer.size(), size);
+    std::copy_n(std::begin(tmpBuffer), elementsCount, std::begin(buffer));
+    return elementsCount;
 #else
     // Take into account this function and StackTrace::current.
     constexpr size_t maxSize = GetMaxStackTraceDepth<StackTraceCapacityKind::kFixed>() + 2;
