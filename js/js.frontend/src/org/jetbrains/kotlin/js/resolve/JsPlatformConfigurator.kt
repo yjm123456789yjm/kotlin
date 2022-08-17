@@ -25,7 +25,6 @@ object JsPlatformConfigurator : PlatformConfiguratorBase(
         JsRuntimeAnnotationChecker,
         JsDynamicDeclarationChecker,
         JsExportAnnotationChecker,
-        JsOptionalAnnotationChecker,
         JsExportDeclarationChecker,
     ),
     additionalCallCheckers = listOf(

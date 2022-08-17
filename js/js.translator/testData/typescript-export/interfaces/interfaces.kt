@@ -35,7 +35,7 @@ fun processInterface(test: TestInterface): String {
 @JsExport
 external interface OptionalFieldsInterface {
     val required: Int
-    @JsOptional val notRequired: Int?
+    val notRequired: Int?
 }
 
 @JsExport
