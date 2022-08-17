@@ -16,17 +16,4 @@ internal fun <E : Enum<E>> enumEntries(entriesProvider: () -> Array<E>): EnumEnt
 
 @SinceKotlin("1.8")
 @ExperimentalStdlibApi
-private class EnumEntriesList<E : Enum<E>>(private val entriesProvider: () -> Array<E>) : EnumEntries<E> {
-    private var _entries: Array<E>? = null
-    private val entries: Array<E>
-        get() {
-            var e = _entries
-            if (e != null) return e
-            e = entriesProvider()
-            _entries = e
-            return e
-        }
-
-    val size: Int get() = entries.size
-    fun get(index: Int): E = entries[index]
-}
+private class EnumEntriesList<E : Enum<E>>(val entriesProvider: () -> Array<E>) : EnumEntries<E>
