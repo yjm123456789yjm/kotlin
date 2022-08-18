@@ -392,6 +392,7 @@ val ignoreTestFailures by extra(project.kotlinBuildProperties.ignoreTestFailures
 
 val dependencyOnSnapshotReflectWhitelist = setOf(
     ":kotlin-compiler",
+    ":kotlin-reflect",
     ":tools:binary-compatibility-validator",
     ":tools:kotlin-stdlib-gen",
 )
@@ -412,7 +413,7 @@ allprojects {
                 return@eachDependency
             }
             val expectedReflectVersion = commonDependencyVersion("org.jetbrains.kotlin", "kotlin-reflect")
-            if (requested.name == "kotlin-reflect" && project.path !in dependencyOnSnapshotReflectWhitelist) {
+            if ((requested.name == "kotlin-reflect" || requested.name == "kotlin-reflect-api") && project.path !in dependencyOnSnapshotReflectWhitelist) {
                 check(requested.version == expectedReflectVersion) {
                     """
                         $configuration: 'kotlin-reflect' should have '$expectedReflectVersion' version. But it was '${requested.version}'
