@@ -16,8 +16,6 @@ import org.jetbrains.kotlin.analysis.test.framework.utils.executeOnPooledThreadI
 import org.jetbrains.kotlin.asJava.KotlinAsJavaSupport
 import org.jetbrains.kotlin.asJava.classes.KtLightClass
 import org.jetbrains.kotlin.asJava.elements.KtLightElement
-import org.jetbrains.kotlin.light.classes.symbol.caches.SymbolLightClassFacadeCache
-import org.jetbrains.kotlin.name.Name
 import org.jetbrains.kotlin.psi.KtClassOrObject
 import org.jetbrains.kotlin.psi.KtDeclaration
 import org.jetbrains.kotlin.psi.KtFile
@@ -60,11 +58,7 @@ abstract class AbstractAnalysisApiPsiTypeProviderTest : AbstractAnalysisApiSingl
     private fun getFacadeLightClass(
         ktFile: KtFile,
         project: Project,
-    ): KtLightClass? {
-        val mainKtFileFqName = ktFile.packageFqName.child(Name.identifier(ktFile.name))
-        return project.getService(SymbolLightClassFacadeCache::class.java)
-            .getOrCreateSymbolLightFacade(listOf(ktFile), mainKtFileFqName)
-    }
+    ): KtLightClass? = project.getService(KotlinAsJavaSupport::class.java).getLightFacade(ktFile)
 
     private fun createLightClassByContainingClass(
         declaration: KtDeclaration,
