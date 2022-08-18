@@ -2,7 +2,7 @@
 fun test() {
     foo(
         flow { emit(0) }
-    ) <!BUILDER_INFERENCE_OFF!>{ it.collect <!TOO_MANY_ARGUMENTS!>{}<!> }<!>
+    ) { it.collect {} }
 
     // 0. Initial
     // W <: Any / declared upper bound
