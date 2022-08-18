@@ -100,11 +100,10 @@ size_t winAPIUnwind(size_t skipCount, std_support::span<void*> result)
 
         if (skipCount > 0) {
             skipCount--;
-        } else  {
-            RuntimeAssert(currentSize < result.size(), "Buffer overflow");
+        } else {
             result[currentSize++] = reinterpret_cast<void*>(context.Rip);
         }
-    } while (context.Rip != 0);
+    } while (context.Rip != 0 && currentSize < result.size());
 
     return currentSize;
 }
