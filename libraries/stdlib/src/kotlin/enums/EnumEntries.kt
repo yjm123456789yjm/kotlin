@@ -24,6 +24,12 @@ public sealed interface EnumEntries<E : Enum<E>> : List<E>
 @SinceKotlin("1.8")
 internal fun <E : Enum<E>> enumEntries(entriesProvider: () -> Array<E>): EnumEntries<E> = EnumEntriesList(entriesProvider)
 
+@PublishedApi
+@ExperimentalStdlibApi
+@SinceKotlin("1.8")
+internal fun <E : Enum<E>> enumEntries(entries: Array<E>): EnumEntries<E> = EnumEntriesList(entries)
+
+
 /*
  * For enum class E, this class is instantiated in the following manner (NB it's pseudocode that does not
  * reflect code generation strategy precisely):
@@ -55,7 +61,14 @@ internal fun <E : Enum<E>> enumEntries(entriesProvider: () -> Array<E>): EnumEnt
  */
 @SinceKotlin("1.8")
 @ExperimentalStdlibApi
-private class EnumEntriesList<E : Enum<E>>(private val entriesProvider: () -> Array<E>) : EnumEntries<E>, AbstractList<E>() {
+private class EnumEntriesList<E : Enum<E>> private constructor(
+    private val entriesProvider: (() -> Array<E>)?,
+    @Volatile // Volatile is required for safe publication of the array. It doesn't incur any real-world penalties
+    private var _entries: Array<E>?
+) : EnumEntries<E>, AbstractList<E>() {
+
+    constructor(entriesProvider: () -> Array<E>) : this(entriesProvider, null)
+    constructor(entries: Array<E>) : this(null, entries)
 
     /*
      * Open questions to implementation:
@@ -74,13 +87,11 @@ private class EnumEntriesList<E : Enum<E>>(private val entriesProvider: () -> Ar
      *  - TODO package-info for kotlinlang
      */
 
-    @Volatile // Volatile is required for safe publication of the array. It doesn't incur any real-world penalties
-    private var _entries: Array<E>? = null
     private val entries: Array<E>
         get() {
             var e = _entries
             if (e != null) return e
-            e = entriesProvider()
+            e = entriesProvider!!()
             _entries = e
             return e
         }
