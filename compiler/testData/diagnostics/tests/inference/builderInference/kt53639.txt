@@ -1,0 +1,24 @@
+package
+
+public fun main2(/*0*/ input: InputWrapper<kotlin.Unit>): Output
+public fun </*0*/ From, /*1*/ To> InputWrapper<From>.doMapping(/*0*/ foo: (From) -> kotlin.collections.List<To>, /*1*/ bar: (kotlin.collections.List<To>) -> kotlin.Boolean = ...): InputWrapper<kotlin.collections.List<To>>
+
+public final data class InputWrapper</*0*/ TItem> {
+    public constructor InputWrapper</*0*/ TItem>(/*0*/ value: TItem)
+    public final val value: TItem
+    public final operator /*synthesized*/ fun component1(): TItem
+    public final /*synthesized*/ fun copy(/*0*/ value: TItem = ...): InputWrapper<TItem>
+    public open override /*1*/ /*synthesized*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*synthesized*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*synthesized*/ fun toString(): kotlin.String
+}
+
+public final data class Output {
+    public constructor Output(/*0*/ source: InputWrapper<kotlin.collections.List<kotlin.String>>)
+    public final val source: InputWrapper<kotlin.collections.List<kotlin.String>>
+    public final operator /*synthesized*/ fun component1(): InputWrapper<kotlin.collections.List<kotlin.String>>
+    public final /*synthesized*/ fun copy(/*0*/ source: InputWrapper<kotlin.collections.List<kotlin.String>> = ...): Output
+    public open override /*1*/ /*synthesized*/ fun equals(/*0*/ other: kotlin.Any?): kotlin.Boolean
+    public open override /*1*/ /*synthesized*/ fun hashCode(): kotlin.Int
+    public open override /*1*/ /*synthesized*/ fun toString(): kotlin.String
+}
