@@ -49,9 +49,6 @@ sealed class WasmHeapType {
         object Any : Simple("any", -0x12)
         object Eq : Simple("eq", -0x13)
 
-        @Suppress("unused")
-        object ExnH : Simple("exn", -0x18)
-
         object Data : Simple("data", -0x19)
 
         override fun toString(): String {
