@@ -29,7 +29,7 @@ class KotlinK1LightClassFactory : KotlinLightClassFactory {
         val mainFile = files.first()
         return CachedValuesManager.getCachedValue(mainFile) {
             CachedValueProvider.Result.create(
-                createFacadeNoCache(facadeClassFqName, files),
+                createFacadeNoCache(mainFile.javaFileFacadeFqName, files),
                 KotlinModificationTrackerService.getInstance(mainFile.project).outOfBlockModificationTracker,
             )
         }

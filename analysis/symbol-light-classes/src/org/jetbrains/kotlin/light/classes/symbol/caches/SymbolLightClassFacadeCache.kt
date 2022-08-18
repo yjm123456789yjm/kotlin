@@ -46,7 +46,7 @@ class SymbolLightClassFacadeCache(private val project: Project) {
         return when {
             ktFiles.none { it.isCompiled } ->
                 analyzeForLightClasses(firstFile) {
-                    SymbolLightClassForFacade(firstFile.manager, facadeClassFqName, ktFiles)
+                    SymbolLightClassForFacade(facadeClassFqName, ktFiles)
                 }
 
             ktFiles.all { it.isCompiled } -> {

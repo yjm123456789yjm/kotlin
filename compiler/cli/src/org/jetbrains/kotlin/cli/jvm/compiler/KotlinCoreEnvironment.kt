@@ -733,7 +733,7 @@ class KotlinCoreEnvironment private constructor(
             with(project) {
                 val traceHolder = CliTraceHolder()
                 val cliLightClassGenerationSupport = CliLightClassGenerationSupport(traceHolder, project)
-                val kotlinAsJavaSupport = CliKotlinAsJavaSupport(traceHolder)
+                val kotlinAsJavaSupport = CliKotlinAsJavaSupport(project, traceHolder)
                 registerService(LightClassGenerationSupport::class.java, cliLightClassGenerationSupport)
                 registerService(CliLightClassGenerationSupport::class.java, cliLightClassGenerationSupport)
                 registerService(KotlinAsJavaSupport::class.java, kotlinAsJavaSupport)
