@@ -174,9 +174,8 @@ bool gc::ConcurrentMarkAndSweep::PerformFullGC(int64_t epoch) noexcept {
 
     RuntimeLogDebug({kTagGC}, "Waiting for marking in threads");
     mm::WaitForThreadsMarking();
-    RuntimeLogInfo({kTagGC}, "Collected root set of size %zu", lastGCMarkStats.rootSetSize);
     auto timeMarkingUs = konan::getTimeMicros();
-    RuntimeLogDebug({kTagGC}, "Marked all threads in %" PRIu64 " microseconds", timeMarkingUs - timeStartUs);
+    RuntimeLogInfo({kTagGC}, "Collected root set of size %zu and marked %zu objects in all threads in %" PRIu64 " microseconds", lastGCMarkStats.rootSetSize, lastGCMarkStats.aliveHeapSet, timeMarkingUs - timeSuspendUs);
 
     scheduler.gcData().UpdateAliveSetBytes(lastGCMarkStats.aliveHeapSetBytes);
 
