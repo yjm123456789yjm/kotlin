@@ -401,16 +401,21 @@ allprojects {
         pluginManager.apply("common-configuration")
     }
     configurations.all {
+        val configuration = this
+        // Dokka plugin adds configurations that depend on own kotlin-reflect version
+        // ./gradlew dokkaGradle70Javadoc -Pkotlin.build.gradle.publish.javadocs=true
+        if (name.startsWith("dokkaGradle")) {
+            return@all
+        }
         resolutionStrategy.eachDependency {
-            // Javadoc publishing adds dokka dependencies that have transitive dependencies on stdlib and reflect
-            if (requested.group != "org.jetbrains.kotlin" || kotlinBuildProperties.publishGradlePluginsJavadoc) {
+            if (requested.group != "org.jetbrains.kotlin") {
                 return@eachDependency
             }
             val expectedReflectVersion = commonDependencyVersion("org.jetbrains.kotlin", "kotlin-reflect")
             if (requested.name == "kotlin-reflect" && project.path !in dependencyOnSnapshotReflectWhitelist) {
                 check(requested.version == expectedReflectVersion) {
                     """
-                        'kotlin-reflect' should have '$expectedReflectVersion' version. But it was '${requested.version}'
+                        $configuration: 'kotlin-reflect' should have '$expectedReflectVersion' version. But it was '${requested.version}'
                         Suggestions:
                             1. Use 'commonDependency("org.jetbrains.kotlin:kotlin-reflect") { isTransitive = false }'
                             2. Avoid 'kotlin-reflect' leakage from transitive dependencies with 'exclude("org.jetbrains.kotlin")'
@@ -420,7 +425,7 @@ allprojects {
             if (requested.name.startsWith("kotlin-stdlib")) {
                 check(requested.version != expectedReflectVersion) {
                     """
-                        '${requested.name}' has a wrong version. It's not allowed to be '$expectedReflectVersion'
+                        $configuration: '${requested.name}' has a wrong version. It's not allowed to be '$expectedReflectVersion'
                         Suggestions:
                             1. Most likely, it leaked from 'kotlin-reflect' transitive dependencies. Use 'isTransitive = false' for
                                'kotlin-reflect' dependencies
