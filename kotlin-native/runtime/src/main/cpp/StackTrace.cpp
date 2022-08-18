@@ -82,8 +82,12 @@ _Unwind_Reason_Code unwindCallback(struct _Unwind_Context* context, void* arg) {
     return _URC_NO_REASON;
 }
 #elif USE_WINAPI_UNWIND
+// winAPIUnwind() does:
+// - if `result` is not empty -> stores IPs of stacktrace(ignoring first `skipCount` entries) into `result`, and returns amount of stored IPs
+// - if `result` is empty  -> returns depth of stacktrace(ignoring first `skipCount` entries)
 size_t winAPIUnwind(size_t skipCount, std_support::span<void*> result)
 {
+    size_t resultSize = result.size();
     size_t currentSize = 0;
     CONTEXT context;
     context.ContextFlags = CONTEXT_ALL;
@@ -101,9 +105,11 @@ size_t winAPIUnwind(size_t skipCount, std_support::span<void*> result)
         if (skipCount > 0) {
             skipCount--;
         } else {
-            result[currentSize++] = reinterpret_cast<void*>(context.Rip);
+            if(resultSize > 0)
+                result[currentSize] = reinterpret_cast<void*>(context.Rip);
+            ++currentSize;
         }
-    } while (context.Rip != 0 && currentSize < result.size());
+    } while (context.Rip != 0 && (resultSize == 0 || currentSize < resultSize));
 
     return currentSize;
 }
@@ -143,9 +149,9 @@ NO_INLINE std_support::vector<void*> kotlin::internal::GetCurrentStackTrace(size
 
     return result;
 #elif USE_WINAPI_UNWIND
-    constexpr size_t depth = GetMaxStackTraceDepth<StackTraceCapacityKind::kFixed>() + 2;
-    if (depth <= kSkipFrames) return {};
-    result.resize(depth - kSkipFrames);
+    size_t depth = winAPIUnwind(kSkipFrames, std_support::span<void*>());
+    if (depth <= 0) return {};
+    result.resize(depth);
 
     winAPIUnwind(kSkipFrames, std_support::span<void*>(result.data(), result.size()));
     return result;
