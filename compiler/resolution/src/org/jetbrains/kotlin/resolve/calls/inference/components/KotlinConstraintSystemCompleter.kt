@@ -16,6 +16,7 @@ import org.jetbrains.kotlin.types.error.ErrorTypeKind
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.model.TypeConstructorMarker
 import org.jetbrains.kotlin.types.model.TypeVariableMarker
+import org.jetbrains.kotlin.types.model.TypeVariableTypeConstructorMarker
 import org.jetbrains.kotlin.types.model.safeSubstitute
 import org.jetbrains.kotlin.types.typeUtil.asTypeProjection
 import org.jetbrains.kotlin.utils.addIfNotNull
@@ -155,7 +156,7 @@ class KotlinConstraintSystemCompleter(
 
             // Stage 7: try to complete call with the builder inference if there are uninferred type variables
             val areThereAppearedProperConstraintsForSomeVariable = tryToCompleteWithBuilderInference(
-                completionMode, topLevelAtoms, topLevelType, postponedArguments, collectVariablesFromContext, analyze
+                completionMode, topLevelAtoms, topLevelType, postponedArguments, collectVariablesFromContext, diagnosticsHolder, analyze
             )
 
             if (areThereAppearedProperConstraintsForSomeVariable)
@@ -205,6 +206,7 @@ class KotlinConstraintSystemCompleter(
         topLevelType: UnwrappedType,
         postponedArguments: List<PostponedResolvedAtom>,
         collectVariablesFromContext: Boolean,
+        diagnosticsHolder: KotlinDiagnosticsHolder,
         analyze: (PostponedResolvedAtom) -> Unit
     ): Boolean {
         if (completionMode == ConstraintSystemCompletionMode.PARTIAL) return false
@@ -215,13 +217,28 @@ class KotlinConstraintSystemCompleter(
         if (!useBuilderInferenceOnlyIfNeeded) return false
 
         val lambdaArguments = postponedArguments.filterIsInstance<ResolvedLambdaAtom>().takeIf { it.isNotEmpty() } ?: return false
+
+        fun ResolvedLambdaAtom.notFixedInputTypeVariables(): List<TypeVariableTypeConstructorMarker> =
+            inputTypes.flatMap { it.extractTypeVariables() }.filter { it !in fixedTypeVariables }
+
         val useBuilderInferenceWithoutAnnotation =
             languageVersionSettings.supportsFeature(LanguageFeature.UseBuilderInferenceWithoutAnnotation)
 
+        val dangerousBuilderInferenceWithoutAnnotation =
+            lambdaArguments.size >= 2 && lambdaArguments.count { it.notFixedInputTypeVariables().isNotEmpty() } >= 2
+
         val builder = getBuilder()
         for (argument in lambdaArguments) {
-            if (!argument.atom.hasBuilderInferenceAnnotation && !useBuilderInferenceWithoutAnnotation)
-                continue
+            if (!argument.atom.hasBuilderInferenceAnnotation) {
+                if (!useBuilderInferenceWithoutAnnotation || dangerousBuilderInferenceWithoutAnnotation) {
+                    if (argument.notFixedInputTypeVariables().isNotEmpty() && dangerousBuilderInferenceWithoutAnnotation) {
+                        diagnosticsHolder.addDiagnostic(BuilderInferenceOff(argument.atom))
+                    }
+                    if (!useBuilderInferenceWithoutAnnotation) {
+                        continue
+                    }
+                }
+            }
 
             // Imitate having builder inference annotation. TODO: Remove after getting rid of @BuilderInference
             if (!argument.atom.hasBuilderInferenceAnnotation && useBuilderInferenceWithoutAnnotation) {

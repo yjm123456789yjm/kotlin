@@ -309,6 +309,10 @@ class DiagnosticReporterByTrackingStrategy(
                     )
                 )
             }
+
+            BuilderInferenceOff::class.java -> {
+                trace.report(BUILDER_INFERENCE_OFF.on(callArgument.psiCallArgument.valueArgument.asElement()))
+            }
         }
     }
 

@@ -63,6 +63,10 @@ class NonVarargSpread(val argument: KotlinCallArgument) : KotlinCallDiagnostic(I
     override fun report(reporter: DiagnosticReporter) = reporter.onCallArgumentSpread(argument, this)
 }
 
+class BuilderInferenceOff(val argument: KotlinCallArgument) : KotlinCallDiagnostic(RESOLVED) {
+    override fun report(reporter: DiagnosticReporter) = reporter.onCallArgument(argument, this)
+}
+
 class MixingNamedAndPositionArguments(override val argument: KotlinCallArgument) : InapplicableArgumentDiagnostic()
 
 class NamedArgumentNotAllowed(val argument: KotlinCallArgument, val descriptor: CallableDescriptor) : KotlinCallDiagnostic(INAPPLICABLE) {
