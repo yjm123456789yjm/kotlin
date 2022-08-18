@@ -767,6 +767,12 @@ public class FirIdeDependentAnalysisSourceModuleIsUsedAsExpressionTestGenerated 
     }
 
     @Test
+    @TestMetadata("expressionBodyLambdaReturningInt.kt")
+    public void testExpressionBodyLambdaReturningInt() throws Exception {
+        runTest("analysis/analysis-api/testData/components/expressionInfoProvider/isUsedAsExpression/expressionBodyLambdaReturningInt.kt");
+    }
+
+    @Test
     @TestMetadata("extensionFunctionAnonymous.kt")
     public void testExtensionFunctionAnonymous() throws Exception {
         runTest("analysis/analysis-api/testData/components/expressionInfoProvider/isUsedAsExpression/extensionFunctionAnonymous.kt");
@@ -1796,6 +1802,12 @@ public class FirIdeDependentAnalysisSourceModuleIsUsedAsExpressionTestGenerated 
     @TestMetadata("when.kt")
     public void testWhen() throws Exception {
         runTest("analysis/analysis-api/testData/components/expressionInfoProvider/isUsedAsExpression/when.kt");
+    }
+
+    @Test
+    @TestMetadata("when2.kt")
+    public void testWhen2() throws Exception {
+        runTest("analysis/analysis-api/testData/components/expressionInfoProvider/isUsedAsExpression/when2.kt");
     }
 
     @Test

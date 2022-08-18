@@ -196,16 +196,22 @@ internal class KtFirExpressionInfoProvider(
                             (child as KtExpression).getKtType() == parent.getKtType()
                         })
             is KtNamedFunction ->
-                if (parent.bodyExpression != child) {
-                    false
-                } else {
-                    val childAsExpression = child as KtExpression
-                    analyze(parent) {
-                        !parent.getReturnKtType().isUnit
-                                || (childAsExpression.getKtType()?.isUnit == true)
-                                || (childAsExpression as? KtLambdaExpression)?.getExpectedType()?.isUnit == true
-                    }
+                when {
+                    parent.bodyExpression != child ->
+                        false
+                    parent.bodyBlockExpression == child ->
+                        analyze(parent) {
+                            !parent.getReturnKtType().isUnit
+                        }
+                    // parent.bodyExpression == child ->
+                    else ->
+                        analyze(parent) {
+                            !parent.getReturnKtType().isUnit
+                                    || (child as? KtExpression)?.getKtType()?.isUnit == true
+                                    || (child as? KtLambdaExpression)?.getExpectedType()?.isUnit == true
+                        }
                 }
+
             is KtParameter ->
                 parent.defaultValue == child
             is KtVariableDeclaration ->
