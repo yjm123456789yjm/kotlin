@@ -159,7 +159,7 @@ class KotlinConstraintSystemCompleter(
 
             // Stage 7: try to complete call with the builder inference if there are uninferred type variables
             val areThereAppearedProperConstraintsForSomeVariable = tryToCompleteWithBuilderInference(
-                completionMode, topLevelAtoms, topLevelType, postponedArguments, collectVariablesFromContext, analyze
+                completionMode, topLevelAtoms, topLevelType, postponedArguments, collectVariablesFromContext, diagnosticsHolder, analyze
             )
 
             if (areThereAppearedProperConstraintsForSomeVariable)
@@ -209,6 +209,7 @@ class KotlinConstraintSystemCompleter(
         topLevelType: UnwrappedType,
         postponedArguments: List<PostponedResolvedAtom>,
         collectVariablesFromContext: Boolean,
+        diagnosticsHolder: KotlinDiagnosticsHolder,
         analyze: (PostponedResolvedAtom) -> Unit
     ): Boolean {
         if (completionMode == ConstraintSystemCompletionMode.PARTIAL) return false
@@ -230,7 +231,14 @@ class KotlinConstraintSystemCompleter(
         val builder = getBuilder()
         for (argument in lambdaArguments) {
             if (!argument.atom.hasBuilderInferenceAnnotation) {
-                if (!useBuilderInferenceWithoutAnnotation) continue
+                if (!useBuilderInferenceWithoutAnnotation) {
+                    if (argument.notFixedInputTypeVariables().isNotEmpty() &&
+                        languageVersionSettings.supportsFeature(LanguageFeature.UseBuilderInferenceWithoutAnnotation)
+                    ) {
+                        diagnosticsHolder.addDiagnostic(BuilderInferenceOff(argument.atom))
+                    }
+                    continue
+                }
             }
 
             val notFixedInputTypeVariables = argument.notFixedInputTypeVariables()
