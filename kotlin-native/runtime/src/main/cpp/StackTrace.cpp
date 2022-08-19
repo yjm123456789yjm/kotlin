@@ -85,31 +85,32 @@ _Unwind_Reason_Code unwindCallback(struct _Unwind_Context* context, void* arg) {
 // winAPIUnwind() does:
 // - if `result` is not empty -> stores IPs of stacktrace(ignoring first `skipCount` entries) into `result`, and returns amount of stored IPs
 // - if `result` is empty  -> returns depth of stacktrace(ignoring first `skipCount` entries)
-size_t winAPIUnwind(size_t skipCount, std_support::span<void*> result)
+NO_INLINE size_t winAPIUnwind(size_t skipCount, std_support::span<void*> result)
 {
     size_t resultSize = result.size();
+    bool doStoreIPs = resultSize > 0;
     size_t currentSize = 0;
-    CONTEXT context;
+    CONTEXT context = {};
     context.ContextFlags = CONTEXT_ALL;
     RtlCaptureContext (&context);
     do {
-        DWORD64 imageBase;
-        UNWIND_HISTORY_TABLE historyTable;
+        DWORD64 imageBase = 0;
+        UNWIND_HISTORY_TABLE historyTable = {};
         PRUNTIME_FUNCTION FunctionEntry = RtlLookupFunctionEntry (context.Rip, &imageBase, &historyTable);
         if (!FunctionEntry)
             break;
-        PVOID handlerData;
-        ULONG64 establisherFrame;
-        RtlVirtualUnwind (UNW_FLAG_NHANDLER, imageBase, context.Rip, FunctionEntry, &context, &handlerData, &establisherFrame, NULL);
+        PVOID handlerData = nullptr;
+        ULONG64 establisherFrame = 0;
+        RtlVirtualUnwind (UNW_FLAG_NHANDLER, imageBase, context.Rip, FunctionEntry, &context, &handlerData, &establisherFrame, nullptr);
 
         if (skipCount > 0) {
             skipCount--;
         } else {
-            if(resultSize > 0)
+            if(doStoreIPs)
                 result[currentSize] = reinterpret_cast<void*>(context.Rip);
             ++currentSize;
         }
-    } while (context.Rip != 0 && (resultSize == 0 || currentSize < resultSize));
+    } while (context.Rip != 0 && (currentSize < resultSize || !doStoreIPs));
 
     return currentSize;
 }
