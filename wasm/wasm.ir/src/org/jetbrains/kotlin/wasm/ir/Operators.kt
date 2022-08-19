@@ -376,6 +376,9 @@ enum class WasmOp(
     BR_ON_NON_DATA("br_on_non_data", 0xfb64, listOf(LABEL_IDX)),
     BR_ON_NON_I31("br_on_non_i31", 0xfb65, listOf(LABEL_IDX)),
 
+    EXTERN_INTERNALIZE("extern.internalize", 0xfb70), // externref -> anyref
+    EXTERN_EXTERNALIZE("extern.externalize", 0xfb71), // anyref -> externref
+
     // Pseudo-instruction, just alias for a normal call. It's used to easily spot get_unit on the wasm level.
     GET_UNIT("call", 0x10, FUNC_IDX)
     ;

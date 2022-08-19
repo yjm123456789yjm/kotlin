@@ -267,6 +267,8 @@ internal annotation class WasmOp(val name: String) {
         const val BR_ON_I31 = "BR_ON_I31"
         const val BR_ON_NON_DATA = "BR_ON_NON_DATA"
         const val BR_ON_NON_I31 = "BR_ON_NON_I31"
+        const val EXTERN_INTERNALIZE = "EXTERN_INTERNALIZE"
+        const val EXTERN_EXTERNALIZE = "EXTERN_EXTERNALIZE"
         const val GET_UNIT = "GET_UNIT"
     }
 }
