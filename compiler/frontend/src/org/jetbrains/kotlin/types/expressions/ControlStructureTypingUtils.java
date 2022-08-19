@@ -21,12 +21,10 @@ import com.google.common.collect.Lists;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.util.PsiTreeUtil;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.kotlin.builtins.KotlinBuiltIns;
-import org.jetbrains.kotlin.config.LanguageVersionSettings;
 import org.jetbrains.kotlin.descriptors.*;
 import org.jetbrains.kotlin.descriptors.annotations.Annotations;
 import org.jetbrains.kotlin.descriptors.impl.SimpleFunctionDescriptorImpl;
@@ -39,16 +37,10 @@ import org.jetbrains.kotlin.resolve.BindingContext;
 import org.jetbrains.kotlin.resolve.BindingContextUtils;
 import org.jetbrains.kotlin.resolve.BindingTrace;
 import org.jetbrains.kotlin.resolve.calls.CallResolver;
-import org.jetbrains.kotlin.resolve.calls.context.ResolutionContext;
-import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystem;
-import org.jetbrains.kotlin.resolve.calls.inference.ConstraintSystemStatus;
-import org.jetbrains.kotlin.resolve.calls.inference.ConstraintsUtil;
-import org.jetbrains.kotlin.resolve.calls.inference.InferenceErrorData;
 import org.jetbrains.kotlin.resolve.calls.model.MutableDataFlowInfoForArguments;
 import org.jetbrains.kotlin.resolve.calls.model.ResolvedCall;
 import org.jetbrains.kotlin.resolve.calls.results.OverloadResolutionResults;
 import org.jetbrains.kotlin.resolve.calls.smartcasts.DataFlowInfo;
-import org.jetbrains.kotlin.resolve.calls.tasks.ExplicitReceiverKind;
 import org.jetbrains.kotlin.resolve.calls.tasks.TracingStrategy;
 import org.jetbrains.kotlin.resolve.calls.util.CallMaker;
 import org.jetbrains.kotlin.resolve.descriptorUtil.AnnotationsForResolveUtilsKt;
@@ -59,10 +51,8 @@ import org.jetbrains.kotlin.types.typeUtil.TypeUtilsKt;
 
 import java.util.*;
 
-import static org.jetbrains.kotlin.diagnostics.Errors.TYPE_INFERENCE_FAILED_ON_SPECIAL_CONSTRUCT;
 import static org.jetbrains.kotlin.resolve.BindingContext.CALL;
 import static org.jetbrains.kotlin.resolve.BindingContext.RESOLVED_CALL;
-import static org.jetbrains.kotlin.resolve.calls.inference.constraintPosition.ConstraintPositionKind.EXPECTED_TYPE_POSITION;
 
 public class ControlStructureTypingUtils {
     private static final Logger LOG = Logger.getInstance(ControlStructureTypingUtils.class);
@@ -160,7 +150,7 @@ public class ControlStructureTypingUtils {
             @Nullable MutableDataFlowInfoForArguments dataFlowInfoForArguments
     ) {
         TracingStrategy tracing = createTracingForSpecialConstruction(call, construct.getName(), context);
-        TypeSubstitutor knownTypeParameterSubstitutor = createKnownTypeParameterSubstitutorForSpecialCall(construct, function, context.expectedType, context.languageVersionSettings);
+        TypeSubstitutor knownTypeParameterSubstitutor = createKnownTypeParameterSubstitutorForSpecialCall(construct, function, context.expectedType);
         OverloadResolutionResults<FunctionDescriptor> results = callResolver.resolveCallWithGivenDescriptors(
                 context, call, Collections.singletonList(function), tracing, knownTypeParameterSubstitutor, dataFlowInfoForArguments, null
         );
@@ -171,8 +161,7 @@ public class ControlStructureTypingUtils {
     private static @Nullable TypeSubstitutor createKnownTypeParameterSubstitutorForSpecialCall(
             @NotNull ResolveConstruct construct,
             @NotNull SimpleFunctionDescriptorImpl function,
-            @NotNull KotlinType expectedType,
-            @NotNull LanguageVersionSettings languageVersionSettings
+            @NotNull KotlinType expectedType
     ) {
         if (construct == ResolveConstruct.ELVIS
             || TypeUtils.noExpectedType(expectedType)
@@ -532,36 +521,6 @@ public class ControlStructureTypingUtils {
                 trace.record(RESOLVED_CALL, call, resolvedCall);
             }
 
-            @Override
-            public void typeInferenceFailed(
-                    @NotNull ResolutionContext<?> context, @NotNull InferenceErrorData data
-            ) {
-                ConstraintSystem constraintSystem = data.constraintSystem;
-                ConstraintSystemStatus status = constraintSystem.getStatus();
-                assert !status.isSuccessful() : "Report error only for not successful constraint system";
-
-                if (status.hasErrorInConstrainingTypes() || status.hasUnknownParameters()) {
-                    return;
-                }
-                KtExpression expression = (KtExpression) call.getCallElement();
-                if (status.hasOnlyErrorsDerivedFrom(EXPECTED_TYPE_POSITION) || status.hasConflictingConstraints()
-                        || status.hasTypeInferenceIncorporationError()) { // todo after KT-... remove this line
-                    if (noTypeCheckingErrorsInExpression(expression, context.trace, data.expectedType)) {
-                        KtExpression calleeExpression = call.getCalleeExpression();
-                        if (calleeExpression instanceof KtWhenExpression || calleeExpression instanceof KtIfExpression) {
-                            if (status.hasConflictingConstraints() || status.hasTypeInferenceIncorporationError()) {
-                                // TODO provide comprehensible error report for hasConflictingConstraints() case (if possible)
-                                context.trace.report(TYPE_INFERENCE_FAILED_ON_SPECIAL_CONSTRUCT.on(expression));
-                            }
-                        }
-                    }
-                    return;
-                }
-                KtDeclaration parentDeclaration = PsiTreeUtil.getParentOfType(expression, KtNamedDeclaration.class);
-                logError("Expression: " + (parentDeclaration != null ? parentDeclaration.getText() : expression.getText()) +
-                         "\nConstraint system status: \n" + ConstraintsUtil.getDebugMessageForStatus(status));
-            }
-
             private boolean noTypeCheckingErrorsInExpression(
                     KtExpression expression,
                     @NotNull BindingTrace trace,
@@ -616,28 +575,6 @@ public class ControlStructureTypingUtils {
         }
 
         @Override
-        public void missingReceiver(
-                @NotNull BindingTrace trace, @NotNull ReceiverParameterDescriptor expectedReceiver
-        ) {
-            logError();
-        }
-
-        @Override
-        public void wrongReceiverType(
-                @NotNull BindingTrace trace,
-                @NotNull ReceiverParameterDescriptor receiverParameter,
-                @NotNull ReceiverValue receiverArgument,
-                @NotNull ResolutionContext<?> c
-        ) {
-            logError();
-        }
-
-        @Override
-        public void noReceiverAllowed(@NotNull BindingTrace trace) {
-            logError();
-        }
-
-        @Override
         public void noValueForParameter(
                 @NotNull BindingTrace trace, @NotNull ValueParameterDescriptor valueParameter
         ) {
@@ -681,14 +618,6 @@ public class ControlStructureTypingUtils {
         }
 
         @Override
-        public void nestedClassAccessViaInstanceReference(
-                @NotNull BindingTrace trace, @NotNull ClassDescriptor classDescriptor,
-                @NotNull ExplicitReceiverKind explicitReceiverKind
-        ) {
-            logError();
-        }
-
-        @Override
         public void unsafeCall(
                 @NotNull BindingTrace trace, @NotNull KotlinType type, boolean isCallForImplicitInvoke
         ) {
@@ -698,13 +627,6 @@ public class ControlStructureTypingUtils {
         @Override
         public void invisibleMember(
                 @NotNull BindingTrace trace, @NotNull DeclarationDescriptorWithVisibility descriptor
-        ) {
-            logError();
-        }
-
-        @Override
-        public void typeInferenceFailed(
-                @NotNull ResolutionContext<?> context, @NotNull InferenceErrorData inferenceErrorData
         ) {
             logError();
         }
