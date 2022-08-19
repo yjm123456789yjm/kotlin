@@ -37,5 +37,5 @@ internal fun checkFrame(goldFunName: String, actualLine: String) {
 
     val (funName, offset) = findResult?.destructured ?: throw Error("Cannot find '$goldFunName + <int>' in $actualLine")
     assertEquals(goldFunName, funName)
-    assert(offset.toInt() > 0)
+    assertTrue(offset.toInt() > 0)
 }
