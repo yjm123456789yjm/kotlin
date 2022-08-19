@@ -324,6 +324,9 @@ class MemberDeserializer(private val c: DeserializationContext) {
         val callableDescriptor = c.containingDeclaration as CallableDescriptor
         val containerOfCallable = callableDescriptor.containingDeclaration.asProtoContainer()
 
+        val message = "containingDeclarationName: ${c.containingDeclaration.name} containerSource: ${c.containerSource?.presentableString}"
+        val params = mutableListOf<String>()
+
         return valueParameters.mapIndexed { i, proto ->
             val flags = if (proto.hasFlags()) proto.flags else 0
             val annotations = if (containerOfCallable != null && Flags.HAS_ANNOTATIONS.get(flags)) {
@@ -333,17 +336,22 @@ class MemberDeserializer(private val c: DeserializationContext) {
                         .toList()
                 }
             } else Annotations.EMPTY
-            ValueParameterDescriptorImpl(
-                callableDescriptor, null, i,
-                annotations,
-                c.nameResolver.getName(proto.name),
-                c.typeDeserializer.type(proto.type(c.typeTable)),
-                Flags.DECLARES_DEFAULT_VALUE.get(flags),
-                Flags.IS_CROSSINLINE.get(flags),
-                Flags.IS_NOINLINE.get(flags),
-                proto.varargElementType(c.typeTable)?.let { c.typeDeserializer.type(it) },
-                SourceElement.NO_SOURCE
-            )
+            try {
+                ValueParameterDescriptorImpl(
+                    callableDescriptor, null, i,
+                    annotations,
+                    c.nameResolver.getName(proto.name),
+                    c.typeDeserializer.type(proto.type(c.typeTable)),
+                    Flags.DECLARES_DEFAULT_VALUE.get(flags),
+                    Flags.IS_CROSSINLINE.get(flags),
+                    Flags.IS_NOINLINE.get(flags),
+                    proto.varargElementType(c.typeTable)?.let { c.typeDeserializer.type(it) },
+                    SourceElement.NO_SOURCE
+                ).also { params.add("${it.name}: ${it.type}") }
+            } catch (e: Throwable) {
+                params.add("${c.nameResolver.getName(proto.name)}: ???")
+                throw RuntimeException(message + " params:\n" + params.joinToString(separator = "\n"))
+            }
         }.toList()
     }
 
