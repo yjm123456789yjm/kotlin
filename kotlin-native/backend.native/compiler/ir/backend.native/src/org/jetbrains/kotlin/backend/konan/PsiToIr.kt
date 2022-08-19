@@ -6,6 +6,7 @@ import org.jetbrains.kotlin.backend.common.overrides.FakeOverrideChecker
 import org.jetbrains.kotlin.backend.common.serialization.DescriptorByIdSignatureFinderImpl
 import org.jetbrains.kotlin.backend.common.serialization.mangle.ManglerChecker
 import org.jetbrains.kotlin.backend.common.serialization.mangle.descriptor.Ir2DescriptorManglerAdapter
+import org.jetbrains.kotlin.backend.common.serialization.unlinked.UnlinkedDeclarationsSupportImpl
 import org.jetbrains.kotlin.backend.konan.descriptors.isForwardDeclarationModule
 import org.jetbrains.kotlin.backend.konan.descriptors.isFromInteropLibrary
 import org.jetbrains.kotlin.backend.konan.ir.KonanSymbols
@@ -116,7 +117,7 @@ internal fun Context.psiToIr(
                         config.resolve.includedLibraries.map { it.uniqueName }
                 ).associateWith { friendModules }
 
-        val unlinkedDeclarationsSupport = KonanUnlinkedDeclarationsSupport(generatorContext.irBuiltIns, allowUnboundSymbols)
+        val unlinkedDeclarationsSupport = UnlinkedDeclarationsSupportImpl(generatorContext.irBuiltIns, allowUnboundSymbols)
 
         KonanIrLinker(
                 currentModule = moduleDescriptor,
