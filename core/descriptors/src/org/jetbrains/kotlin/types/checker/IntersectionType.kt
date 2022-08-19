@@ -16,15 +16,19 @@
 
 package org.jetbrains.kotlin.types.checker
 
+import org.jetbrains.kotlin.descriptors.TypeParameterDescriptor
 import org.jetbrains.kotlin.resolve.constants.IntegerLiteralTypeConstructor
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.error.ErrorTypeKind
-import java.util.*
-import kotlin.collections.LinkedHashSet
 import org.jetbrains.kotlin.types.error.ErrorUtils
+import java.util.*
 
 fun intersectWrappedTypes(types: Collection<KotlinType>) = intersectTypes(types.map { it.unwrap() })
 
+fun intersectUpperBounds(descriptor: TypeParameterDescriptor, upperBounds: List<KotlinType>): KotlinType {
+    assert(upperBounds.isNotEmpty()) { "Upper bound list is empty: $descriptor" }
+    return intersectWrappedTypes(upperBounds)
+}
 
 fun intersectTypes(types: List<SimpleType>) = intersectTypes(types as List<UnwrappedType>) as SimpleType
 

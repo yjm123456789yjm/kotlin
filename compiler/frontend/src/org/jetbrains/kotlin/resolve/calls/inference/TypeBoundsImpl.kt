@@ -26,6 +26,7 @@ import org.jetbrains.kotlin.resolve.constants.IntegerValueTypeConstructor
 import org.jetbrains.kotlin.types.*
 import org.jetbrains.kotlin.types.error.ErrorUtils
 import org.jetbrains.kotlin.types.checker.KotlinTypeChecker
+import org.jetbrains.kotlin.types.checker.intersectWrappedTypes
 import org.jetbrains.kotlin.utils.addIfNotNull
 import java.util.*
 
@@ -131,8 +132,8 @@ class TypeBoundsImpl(override val typeVariable: TypeVariable) : TypeBounds {
 
         val upperBounds = filterBounds(bounds, UPPER_BOUND, values)
         if (upperBounds.isNotEmpty()) {
-            val intersectionOfUpperBounds = TypeIntersector.intersectTypes(upperBounds)
-            if (intersectionOfUpperBounds != null && tryPossibleAnswer(bounds, intersectionOfUpperBounds)) {
+            val intersectionOfUpperBounds = intersectWrappedTypes(upperBounds)
+            if (tryPossibleAnswer(bounds, intersectionOfUpperBounds)) {
                 return setOf(intersectionOfUpperBounds)
             }
         }
