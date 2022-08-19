@@ -4,7 +4,7 @@
 // TARGET_BACKEND: JVM
 // NO_CHECK_LAMBDA_INLINING
 // FILE: inlined.kt
-package flow
+package flowBox
 
 interface Flow<T> {
     suspend fun collect(collector: FlowCollector<T>)
@@ -31,7 +31,10 @@ inline fun <T, R> Flow<T>.map(crossinline transformer: suspend (value: T) -> R):
     transform { value -> emit(transformer(value)) }
 
 // FILE: box.kt
-import flow.*
+
+package box
+
+import flowBox.*
 import helpers.*
 import kotlin.reflect.*
 import kotlin.reflect.jvm.*
