@@ -25,19 +25,17 @@ fun main() {
                 "kfun:#exception(){}",
                 "kfun:#main(){}",
         )
-        assertEquals( goldValues.size, stackTrace.size )
-        goldValues.zip(stackTrace).forEach { checkFrame(it) }
+        assertEquals(goldValues.size, stackTrace.size)
+        goldValues.zip(stackTrace).forEach { checkFrame(it.first, it.second) }
         println("Passed")
     }
 }
 
 internal val regex = Regex("(kfun.+) \\+ (\\d+)")
-internal fun checkFrame(pair: Pair<String, String>) {
-    val goldFunName = pair.first
-    val actualLine = pair.second
+internal fun checkFrame(goldFunName: String, actualLine: String) {
     val findResult = regex.find(actualLine)
 
     val (funName, offset) = findResult?.destructured ?: throw Error("Cannot find '$goldFunName + <int>' in $actualLine")
-    assertEquals( goldFunName, funName )
-    assert( offset.toInt() > 0 )
+    assertEquals(goldFunName, funName)
+    assert(offset.toInt() > 0)
 }

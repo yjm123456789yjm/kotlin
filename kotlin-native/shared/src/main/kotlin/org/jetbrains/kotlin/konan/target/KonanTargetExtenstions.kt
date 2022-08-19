@@ -73,6 +73,7 @@ fun KonanTarget.supportsCoreSymbolication(): Boolean =
         )
 
 fun KonanTarget.supportsGccUnwind(): Boolean = family == Family.ANDROID || family == Family.LINUX || this is KonanTarget.MINGW_X86
+// MINGW_X64 target does not support GCC unwind, since sysroot has libgcc version < 12 which has a bug in _Unwind_Backtrace
 fun KonanTarget.supportsWinAPIUnwind(): Boolean = this is KonanTarget.MINGW_X64
 
 fun KonanTarget.supportsThreads(): Boolean = when(this) {

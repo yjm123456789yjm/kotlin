@@ -100,8 +100,8 @@ NO_INLINE size_t winAPIUnwind(size_t skipCount, std_support::span<void*> result)
         if (!FunctionEntry)
             break;
         PVOID handlerData = nullptr;
-        ULONG64 establisherFrame = 0;
-        RtlVirtualUnwind (UNW_FLAG_NHANDLER, imageBase, context.Rip, FunctionEntry, &context, &handlerData, &establisherFrame, nullptr);
+        ULONG64 establisherFramePointers[2] = { 0, 0 };
+        RtlVirtualUnwind (UNW_FLAG_NHANDLER, imageBase, context.Rip, FunctionEntry, &context, &handlerData, establisherFramePointers, nullptr);
 
         if (skipCount > 0) {
             skipCount--;
