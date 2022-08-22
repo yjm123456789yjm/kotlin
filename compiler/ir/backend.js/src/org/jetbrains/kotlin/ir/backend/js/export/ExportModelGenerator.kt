@@ -86,13 +86,15 @@ class ExportModelGenerator(val context: JsIrBackendContext, val generateNamespac
                 ExportedFunction(
                     function.getExportedIdentifier(),
                     returnType = exportType(function.returnType),
-                    parameters = (listOfNotNull(function.extensionReceiverParameter) + function.valueParameters).map { exportParameter(it) },
                     typeParameters = function.typeParameters.map(::exportTypeParameter),
                     isMember = parent is IrClass,
                     isStatic = function.isStaticMethodOfClass,
                     isAbstract = parent is IrClass && !parent.isInterface && function.modality == Modality.ABSTRACT,
                     isProtected = function.visibility == DescriptorVisibilities.PROTECTED,
-                    ir = function
+                    ir = function,
+                    parameters = (listOfNotNull(function.extensionReceiverParameter) + function.valueParameters)
+                        .filter { it.shouldBeExported() }
+                        .map { exportParameter(it) },
                 )
             }
         }
@@ -356,6 +358,10 @@ class ExportModelGenerator(val context: JsIrBackendContext, val generateNamespac
 
     private fun IrClass.shouldNotBeImplemented(): Boolean {
         return isInterface && !isExternal || isJsImplicitExport()
+    }
+
+    private fun IrValueParameter.shouldBeExported(): Boolean {
+        return origin != JsLoweredDeclarationOrigin.JS_SUPER_CONTEXT_PARAMETER
     }
 
     private fun IrClass.shouldContainImplementationOfMagicProperty(superTypes: Iterable<IrType>): Boolean {

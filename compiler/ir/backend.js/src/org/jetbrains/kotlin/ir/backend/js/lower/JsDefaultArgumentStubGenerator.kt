@@ -104,15 +104,15 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
             return listOf(originalFun, defaultFunStub)
         }
 
-        with(defaultFunStub) {
-            valueParameters.forEach {
-                if (it.defaultValue != null) {
-                    it.origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
+        if (!defaultFunStub.isFakeOverride) {
+            with(defaultFunStub) {
+                valueParameters.forEach {
+                    if (it.defaultValue != null) {
+                        it.origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
+                    }
+                    it.defaultValue = null
                 }
-                it.defaultValue = null
-            }
 
-            if (!defaultFunStub.isFakeOverride) {
                 if (originalFun.isExported(context)) {
                     context.additionalExportedDeclarations.add(defaultFunStub)
 
