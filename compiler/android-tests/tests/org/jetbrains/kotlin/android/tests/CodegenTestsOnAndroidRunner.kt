@@ -79,7 +79,6 @@ class CodegenTestsOnAndroidRunner private constructor(private val pathManager: P
 
             folders.forEach {
                 assertTrue("${it.path} is not directory") { it.isDirectory }
-                if (it.listFiles()!!.isEmpty()) return@forEach
                 val isIr = it.name.contains("_ir")
                 val testCases = parseSingleReportInFolder(it)
                 testCases.forEach { aCase ->

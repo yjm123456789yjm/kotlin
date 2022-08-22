@@ -305,7 +305,6 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
                 if (pathFilter != null && !file.path.contains(pathFilter)) {
                     continue
                 }
-                if (!file.path.contains("withCapturedInlineLambda")) continue
 
                 if (!InTextDirectivesUtils.isPassingTarget(backend.compatibleWith, file) ||
                     InTextDirectivesUtils.isIgnoredTarget(TargetBackend.ANDROID, file)
