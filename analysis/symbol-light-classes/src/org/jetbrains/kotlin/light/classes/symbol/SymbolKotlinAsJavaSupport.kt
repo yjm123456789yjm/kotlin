@@ -117,17 +117,13 @@ class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtMo
         facadeFqName: FqName,
         files: List<KtFile>,
         module: KtModule,
-    ): KtLightClassForFacade? = analyzeForLightClasses(files.first()) {
+    ): KtLightClassForFacade = analyzeForLightClasses(files.first()) {
         SymbolLightClassForFacade(facadeFqName, files)
     }
 
     override val KtModule.contentSearchScope: GlobalSearchScope get() = this.contentScope
 
-    override fun KtModule.isApplicable(): Boolean = when (this) {
-        is KtSourceModule -> true
-        is KtLibraryModule -> true
-        else -> false
-    }
+    override fun facadeIsApplicable(module: KtModule, file: KtFile): Boolean = module.isFromSourceOrLibraryBinary()
 
     override fun getScriptClasses(scriptFqName: FqName, scope: GlobalSearchScope): Collection<PsiClass> = error("Should not be called")
 
@@ -144,7 +140,13 @@ class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtMo
 
     override fun createFacadeForSyntheticFile(file: KtFile): KtLightClassForFacade = TODO("Not implemented")
 
-    private fun KtElement.isFromSourceOrLibraryBinary(project: Project): Boolean = getKtModule(project).isApplicable()
+    private fun KtElement.isFromSourceOrLibraryBinary(project: Project): Boolean = getKtModule(project).isFromSourceOrLibraryBinary()
+
+    private fun KtModule.isFromSourceOrLibraryBinary() = when (this) {
+        is KtSourceModule -> true
+        is KtLibraryModule -> true
+        else -> false
+    }
 }
 
 

@@ -22,7 +22,7 @@ abstract class KotlinAsJavaSupportBase<TModule>(protected val project: Project) 
         if (file.isScript()) return null
         if (file.isCompiled && !file.name.endsWith(".class")) return null
 
-        val module = file.findModule().takeIf { it.isApplicable() } ?: return null
+        val module = file.findModule().takeIf { facadeIsApplicable(it, file) } ?: return null
         val facadeFqName = file.javaFileFacadeFqName
         val facadeFiles = if (file.isJvmMultifileClassFile && !file.isCompiled) {
             findFilesForFacade(facadeFqName, module.contentSearchScope).filter(KtFile::isJvmMultifileClassFile)
@@ -39,7 +39,7 @@ abstract class KotlinAsJavaSupportBase<TModule>(protected val project: Project) 
     }
 
     abstract fun KtFile.findModule(): TModule
-    abstract fun TModule.isApplicable(): Boolean
+    abstract fun facadeIsApplicable(module: TModule, file: KtFile): Boolean
     abstract val TModule.contentSearchScope: GlobalSearchScope
 
     abstract fun createInstanceOfLightFacade(facadeFqName: FqName, files: List<KtFile>, module: TModule): KtLightClassForFacade?
@@ -66,7 +66,7 @@ abstract class KotlinAsJavaSupportBase<TModule>(protected val project: Project) 
 
     override fun getFacadeNames(packageFqName: FqName, scope: GlobalSearchScope): Collection<String> {
         return findFilesForFacadeByPackage(packageFqName, scope).mapNotNullTo(mutableSetOf()) { file ->
-            file.takeIf { it.findModule().isApplicable() }?.javaFileFacadeFqName?.shortName()?.asString()
+            file.takeIf { facadeIsApplicable(it.findModule(), file) }?.javaFileFacadeFqName?.shortName()?.asString()
         }.toSet()
     }
 
