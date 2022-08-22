@@ -34,7 +34,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
     private val baseClassRef by lazy { // Lazy in case was not collected by namer during JsClassGenerator construction
         if (baseClass != null && !baseClass.isAny()) baseClass.getClassRef(context) else null
     }
-    private val classPrototypeRef = prototypeOf(classNameRef)
+    private val classPrototypeRef = prototypeOf(classNameRef, context.staticContext)
     private val classBlock = JsCompositeBlock()
     private val classModel = JsIrClassModel(irClass)
 
@@ -200,7 +200,8 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
                             classPrototypeRef,
                             context.getNameForProperty(property).ident,
                             getter = getterForwarder,
-                            setter = setterForwarder
+                            setter = setterForwarder,
+                            context.staticContext
                         )
                     )
                 }
@@ -315,7 +316,8 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         val baseClassPrototype = baseClassRef ?: return emptyList()
 
         val createCall = jsAssignment(
-            classPrototypeRef, JsInvocation(Namer.JS_OBJECT_CREATE_FUNCTION, prototypeOf(baseClassPrototype))
+            JsNameRef(Namer.PROTOTYPE_NAME, classNameRef),
+            objectCreate(prototypeOf(baseClassPrototype, context.staticContext), context.staticContext),
         ).makeStmt()
 
         val ctorAssign = jsAssignment(JsNameRef(Namer.CONSTRUCTOR_NAME, classPrototypeRef), classNameRef).makeStmt()
@@ -342,13 +344,11 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
         val fastPrototype = generateFastPrototype()
         val suspendArity = generateSuspendArity()
 
-        val undefined = context.staticContext.backendContext.getVoid().accept(IrElementToJsExpressionTransformer(), context)
-
         val constructorCall = JsInvocation(
             JsNameRef(context.getNameForStaticFunction(metadataConstructor.owner)),
             listOf(simpleName, interfaces, associatedObjectKey, associatedObjects, suspendArity, fastPrototype)
                 .dropLastWhile { it == null }
-                .map { it ?: undefined }
+                .map { it ?: jsUndefined(context, context.staticContext.backendContext) }
         )
 
         return jsAssignment(JsNameRef(Namer.METADATA, classNameRef), constructorCall).makeStmt()
@@ -387,7 +387,7 @@ class JsClassGenerator(private val irClass: IrClass, val context: JsGenerationCo
             ?.run { JsArrayLiteral(map { JsNameRef(context.getNameForClass(it.owner)) }) }
     }
 
-    private fun generateFastPrototype() = baseClassRef?.let { prototypeOf(it) }
+    private fun generateFastPrototype() = baseClassRef?.let { prototypeOf(it, context.staticContext) }
 
     private fun IrType.isFunctionType() = isFunctionOrKFunction() || isSuspendFunctionOrKFunction()
 

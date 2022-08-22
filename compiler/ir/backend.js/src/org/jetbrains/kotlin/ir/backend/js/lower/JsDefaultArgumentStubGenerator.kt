@@ -13,19 +13,25 @@ import org.jetbrains.kotlin.ir.backend.js.export.isExported
 import org.jetbrains.kotlin.ir.backend.js.ir.JsIrBuilder
 import org.jetbrains.kotlin.ir.backend.js.utils.JsAnnotations
 import org.jetbrains.kotlin.ir.backend.js.utils.getVoid
+import org.jetbrains.kotlin.ir.backend.js.utils.realOverrideTarget
 import org.jetbrains.kotlin.ir.builders.*
+import org.jetbrains.kotlin.ir.builders.declarations.addValueParameter
 import org.jetbrains.kotlin.ir.declarations.*
-import org.jetbrains.kotlin.ir.expressions.IrBody
-import org.jetbrains.kotlin.ir.expressions.IrConstructorCall
-import org.jetbrains.kotlin.ir.expressions.IrExpression
-import org.jetbrains.kotlin.ir.expressions.IrSetValue
+import org.jetbrains.kotlin.ir.expressions.*
 import org.jetbrains.kotlin.ir.expressions.impl.IrConstImpl
 import org.jetbrains.kotlin.ir.util.*
 import org.jetbrains.kotlin.name.FqName
+import org.jetbrains.kotlin.name.Name
+import org.jetbrains.kotlin.utils.addIfNotNull
+import org.jetbrains.kotlin.utils.addToStdlib.runIf
 
 class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
-    DefaultArgumentStubGenerator(context, skipExternalMethods = true, forceSetOverrideSymbols = false, keepOriginalArguments = true) {
-    private val void = context.intrinsics.void
+    DefaultArgumentStubGenerator(
+        context,
+        skipExternalMethods = true,
+        forceSetOverrideSymbols = false,
+        factory = JsDefaultArgumentFunctionFactory(context)
+    ) {
 
     private fun IrBuilderWithScope.createDefaultResolutionExpression(
         defaultExpression: IrExpression?,
@@ -98,15 +104,15 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
             return listOf(originalFun, defaultFunStub)
         }
 
-        if (!defaultFunStub.isFakeOverride) {
-            with(defaultFunStub) {
-                valueParameters.forEach {
-                    if (it.defaultValue != null) {
-                        it.origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
-                    }
-                    it.defaultValue = null
+        with(defaultFunStub) {
+            valueParameters.forEach {
+                if (it.defaultValue != null) {
+                    it.origin = JsLoweredDeclarationOrigin.JS_SHADOWED_DEFAULT_PARAMETER
                 }
+                it.defaultValue = null
+            }
 
+            if (!defaultFunStub.isFakeOverride) {
                 if (originalFun.isExported(context)) {
                     context.additionalExportedDeclarations.add(defaultFunStub)
 
@@ -131,6 +137,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
     }
 
     override fun IrFunction.generateDefaultStubBody(originalDeclaration: IrFunction): IrBody {
+        val ctx = context
         val irBuilder = context.createIrBuilder(symbol, startOffset, endOffset)
 
         val variables = mutableMapOf<IrValueParameter, IrValueDeclaration>().apply {
@@ -154,7 +161,7 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                     )
                 }
 
-            +irReturn(irCall(originalDeclaration).apply {
+            val wrappedFunctionCall = irCall(originalDeclaration).apply {
                 passTypeArgumentsFrom(originalDeclaration)
                 dispatchReceiver = dispatchReceiverParameter?.let { irGet(it) }
                 extensionReceiver = extensionReceiverParameter?.let { irGet(it) }
@@ -162,7 +169,54 @@ class JsDefaultArgumentStubGenerator(override val context: JsIrBackendContext) :
                 originalDeclaration.valueParameters.forEachIndexed { index, irValueParameter ->
                     putValueArgument(index, irGet(variables[irValueParameter] ?: valueParameters[index]))
                 }
-            })
+            }
+
+            var superContextValueParam: IrValueParameter? = null
+
+            val superFunCall = runIf(wrappedFunctionCall.dispatchReceiver != null && !originalDeclaration.isExported(ctx)) {
+                val superContext = valueParameters.last().also {
+                    superContextValueParam = it
+                }
+                val realOverrideTarget = originalDeclaration.realOverrideTarget
+                if (realOverrideTarget.parentClassOrNull?.isInterface == true) {
+                    irCall(realOverrideTarget).apply {
+                        extensionReceiver = wrappedFunctionCall.extensionReceiver?.deepCopyWithSymbols()
+                        (0 until wrappedFunctionCall.valueArgumentsCount).forEach {
+                            putValueArgument(it, wrappedFunctionCall.getValueArgument(it)?.deepCopyWithSymbols())
+                        }
+                    }
+                } else {
+                    irCall(ctx.intrinsics.jsCall).apply {
+                        putValueArgument(0, wrappedFunctionCall.dispatchReceiver!!.deepCopyWithSymbols())
+                        putValueArgument(
+                            1,
+                            irCall(ctx.intrinsics.jsContexfulRef).apply {
+                                putValueArgument(0, irGet(superContext))
+                                putValueArgument(1, irRawFunctionReferefence(ctx.dynamicType, originalDeclaration.symbol))
+                            }
+                        )
+                        putValueArgument(2, irVararg(ctx.dynamicType, buildList {
+                            addIfNotNull(wrappedFunctionCall.extensionReceiver?.deepCopyWithSymbols())
+                            (0 until wrappedFunctionCall.valueArgumentsCount).forEach {
+                                addIfNotNull(wrappedFunctionCall.getValueArgument(it)?.deepCopyWithSymbols())
+                            }
+                        }))
+                    }
+                }
+            }
+
+            +irReturn(
+                if (superFunCall == null) {
+                    wrappedFunctionCall
+                } else {
+                    irIfThenElse(
+                        originalDeclaration.returnType,
+                        irEqeqeqWithoutBox(irGet(superContextValueParam!!), ctx.getVoid()),
+                        wrappedFunctionCall,
+                        superFunCall
+                    )
+                }
+            )
         }
     }
 

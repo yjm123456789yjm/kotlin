@@ -43,7 +43,7 @@ private fun getKPropMetadata(paramCount: Int, setter: Any?, type: dynamic): dyna
 }
 
 private fun metadataObject(): Metadata {
-    return classMeta(void, void, void, void, void, void)
+    return classMeta(VOID, VOID, VOID, VOID, VOID, VOID)
 }
 
 private val propertyRefClassMetadataCache: Array<Array<dynamic>> = arrayOf<Array<dynamic>>(

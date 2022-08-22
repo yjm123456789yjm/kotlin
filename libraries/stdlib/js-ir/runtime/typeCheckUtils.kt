@@ -12,7 +12,7 @@ internal fun interfaceMeta(
     associatedObjects: dynamic,
     suspendArity: Array<Int>?,
 ): Metadata {
-    return createMetadata("interface", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, void)
+    return createMetadata("interface", name, interfaces, associatedObjectKey, associatedObjects, suspendArity, VOID)
 }
 
 internal fun objectMeta(
@@ -48,7 +48,7 @@ private fun createMetadata(
     suspendArity: Array<Int>?,
     fastPrototype: Prototype?
 ): Metadata {
-    val undef = void
+    val undef = VOID
     return js("""({
     kind: kind,
     simpleName: name,

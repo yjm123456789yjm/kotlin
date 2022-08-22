@@ -15,12 +15,8 @@ import org.jetbrains.kotlin.ir.backend.js.utils.getJsNameOrKotlinName
 import org.jetbrains.kotlin.ir.backend.js.utils.invokeFunForLambda
 import org.jetbrains.kotlin.ir.declarations.*
 import org.jetbrains.kotlin.ir.expressions.IrCall
-import org.jetbrains.kotlin.ir.expressions.IrGetObjectValue
 import org.jetbrains.kotlin.ir.symbols.IrClassSymbol
-import org.jetbrains.kotlin.ir.types.classOrNull
-import org.jetbrains.kotlin.ir.types.classifierOrFail
-import org.jetbrains.kotlin.ir.types.classifierOrNull
-import org.jetbrains.kotlin.ir.types.getClass
+import org.jetbrains.kotlin.ir.types.*
 import org.jetbrains.kotlin.ir.util.*
 
 internal class JsUsefulDeclarationProcessor(
@@ -65,9 +61,9 @@ internal class JsUsefulDeclarationProcessor(
                     val ref = expression.getTypeArgument(0)?.classOrNull ?: context.irBuiltIns.anyClass
                     referencedJsClassesFromExpressions += ref.owner
                 }
-                context.intrinsics.jsObjectCreate -> {
+                context.intrinsics.jsObjectCreateSymbol -> {
                     val classToCreate = expression.getTypeArgument(0)!!.classifierOrFail.owner as IrClass
-                    classToCreate.enqueue(data, "intrinsic: jsObjectCreate")
+                    classToCreate.enqueue(data, "intrinsic: jsObjectCreateSymbol")
                     constructedClasses += classToCreate
                 }
                 context.intrinsics.jsEquals -> {
@@ -113,6 +109,14 @@ internal class JsUsefulDeclarationProcessor(
 
     }
 
+    override fun processSimpleFunction(irFunction: IrSimpleFunction) {
+        super.processSimpleFunction(irFunction)
+        val property = irFunction.correspondingPropertySymbol ?: return
+        if (property.owner.isExported(context)) {
+            context.intrinsics.jsDefinePropertySymbol.owner.enqueue(irFunction, "property for export")
+        }
+    }
+
     override fun processClass(irClass: IrClass) {
         super.processClass(irClass)
 
@@ -120,13 +124,29 @@ internal class JsUsefulDeclarationProcessor(
             when {
                 irClass.isInterface -> context.intrinsics.metadataInterfaceConstructorSymbol.owner.enqueue(irClass, "interface metadata")
                 irClass.isObject -> context.intrinsics.metadataObjectConstructorSymbol.owner.enqueue(irClass, "object metadata")
-                else -> context.intrinsics.metadataClassConstructorSymbol.owner.enqueue(irClass, "class metadata")
+                else -> {
+                    context.intrinsics.metadataClassConstructorSymbol.owner.enqueue(irClass, "class metadata")
+                }
+            }
+        }
+
+        if (!irClass.isExpect && !irClass.isExternal && !irClass.defaultType.isAny()) {
+            if (!irClass.isInterface) {
+                context.intrinsics.jsPrototypeOfSymbol.owner.enqueue(irClass, "class metadata")
+            }
+
+            if (irClass.superTypes.any { !it.isInterface() }) {
+                context.intrinsics.jsObjectCreateSymbol.owner.enqueue(irClass, "class metadata")
+            }
+
+            if (irClass.isInner || irClass.isObject) {
+                context.intrinsics.jsDefinePropertySymbol.owner.enqueue(irClass, "class metadata")
             }
         }
     }
 
     private fun IrClass.containsMetadata(): Boolean =
-        !isExternal && !isExpect &&  !isBuiltInClass(this)
+        !isExternal && !isExpect && !isBuiltInClass(this)
 
     override fun processConstructedClassDeclaration(declaration: IrDeclaration) {
         if (declaration in result) return
