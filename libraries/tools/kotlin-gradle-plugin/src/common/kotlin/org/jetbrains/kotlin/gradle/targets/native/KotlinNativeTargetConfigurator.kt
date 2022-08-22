@@ -69,8 +69,8 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
 
 
         if (binary !is TestExecutable) {
-            tasks.named(binary.compilation.target.artifactsTaskName).configure { it.dependsOn(result) }
-            locateOrRegisterTask<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).configure { it.dependsOn(result) }
+            tasks.named(binary.compilation.target.artifactsTaskName).dependsOn(result)
+            locateOrRegisterTask<Task>(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(result)
         }
 
         if (binary is Framework) {
@@ -257,7 +257,10 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
     }
 
     override fun configureArchivesAndComponent(target: T): Unit = with(target.project) {
-        registerTask<DefaultTask>(target.artifactsTaskName) { }
+        registerTask<DefaultTask>(target.artifactsTaskName) {
+            it.group = BasePlugin.BUILD_GROUP
+            it.description = "Assembles outputs for target '${target.name}'."
+        }
         target.compilations.all { createKlibCompilationTask(it) }
 
         val apiElements = configurations.getByName(target.apiElementsConfigurationName)
@@ -302,7 +305,10 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
         }
 
         target.binaries.prefixGroups.all { prefixGroup ->
-            val linkGroupTask = project.tasks.maybeCreate(prefixGroup.linkTaskName)
+            val linkGroupTask = project.locateOrRegisterTask<Task>(prefixGroup.linkTaskName) {
+                it.group = BasePlugin.BUILD_GROUP
+                it.description = "Links all binaries for target '${target.name}'."
+            }
             prefixGroup.binaries.all {
                 linkGroupTask.dependsOn(it.linkTaskName)
             }
@@ -310,7 +316,10 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
 
         // Create an aggregate link task for each compilation.
         target.compilations.all {
-            project.registerTask<DefaultTask>(it.binariesTaskName)
+            project.registerTask<DefaultTask>(it.binariesTaskName) { task ->
+                task.group = BasePlugin.BUILD_GROUP
+                task.description = "Links all binaries for compilation '${it.name}' of target '${it.target.name}'."
+            }
         }
 
         project.whenEvaluated {
@@ -438,20 +447,14 @@ open class KotlinNativeTargetConfigurator<T : KotlinNativeTarget> : AbstractKotl
 
             compilation.output.classesDirs.from(compileTaskProvider.map { it.outputFile })
 
-            project.project.tasks.named(compilation.compileAllTaskName).configure {
-                it.dependsOn(compileTaskProvider)
-            }
+            project.project.tasks.named(compilation.compileAllTaskName).dependsOn(compileTaskProvider)
 
             if (compilation.isMainCompilationData()) {
                 if (compilation is KotlinNativeCompilation) {
-                    project.project.tasks.named(compilation.target.artifactsTaskName).configure {
-                        it.dependsOn(compileTaskProvider)
-                    }
+                    project.project.tasks.named(compilation.target.artifactsTaskName).dependsOn(compileTaskProvider)
                 }
 
-                project.project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).configure {
-                    it.dependsOn(compileTaskProvider)
-                }
+                project.project.tasks.named(LifecycleBasePlugin.ASSEMBLE_TASK_NAME).dependsOn(compileTaskProvider)
             }
             val shouldAddCompileOutputsToElements = compilation.owner is GradleKpmVariant || compilation.isMainCompilationData()
             if (shouldAddCompileOutputsToElements) {
@@ -555,7 +558,10 @@ internal class GradleKpmNativeTargetConfigurator<T : KotlinNativeTarget>(private
     }
 
     private fun configureBinariesTask(target: T) {
-        target.project.registerTask<DefaultTask>(target.artifactsTaskName) { }
+        target.project.registerTask<DefaultTask>(target.artifactsTaskName) {
+            it.group = BasePlugin.BUILD_GROUP
+            it.description = "Assembles outputs for target '${target.name}'."
+        }
     }
 }
 
