@@ -110,7 +110,7 @@ class SymbolKotlinAsJavaSupport(project: Project) : KotlinAsJavaSupportBase<KtMo
     override fun tracker(file: KtFile): ModificationTracker = when (val module = file.getKtModule(project)) {
         is KtSourceModule -> module.createModuleWithoutDependenciesOutOfBlockModificationTracker(project)
         is KtLibraryModule -> project.createAllLibrariesModificationTracker()
-        else -> error("invariant with isApplicable is violated")
+        else -> super.tracker(file)
     }
 
     override fun createInstanceOfLightFacade(
