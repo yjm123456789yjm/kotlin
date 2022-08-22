@@ -284,6 +284,7 @@ abstract class AnnotationCodegen(
 
     companion object {
 
+        @Suppress("UNUSED_PARAMETER")
         fun genAnnotationsOnTypeParametersAndBounds(
             context: JvmBackendContext,
             typeParameterContainer: IrTypeParametersContainer,
@@ -292,53 +293,53 @@ abstract class AnnotationCodegen(
             boundType: Int,
             visitor: (typeRef: Int, typePath: TypePath?, descriptor: String, visible: Boolean) -> AnnotationVisitor
         ) {
-            if (context.state.target != JVM_1_6) {
-                typeParameterContainer.typeParameters.forEachIndexed { index, typeParameter ->
-                    object : AnnotationCodegen(classCodegen, context, true) {
-                        override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
-
-                            return visitor(
-                                TypeReference.newTypeParameterReference(referenceType, index).value,
-                                null,
-                                descr,
-                                visible
-                            )
-                        }
-
-                        override fun visitTypeAnnotation(descr: String, path: TypePath?, visible: Boolean): AnnotationVisitor {
-                            throw RuntimeException(
-                                "Error during generation: type annotation shouldn't be presented on type parameter: " +
-                                        "${ir2string(typeParameter)} in ${ir2string(typeParameterContainer)}"
-                            )
-                        }
-                    }.genAnnotations(typeParameter, null, null)
-
-                    if (context.state.configuration.getBoolean(JVMConfigurationKeys.EMIT_JVM_TYPE_ANNOTATIONS)) {
-                        var superInterfaceIndex = 1
-                        typeParameter.superTypes.forEach { superType ->
-                            val isClassOrTypeParameter = !superType.isInterface() && !superType.isAnnotation()
-                            val superIndex = if (isClassOrTypeParameter) 0 else superInterfaceIndex++
-                            object : AnnotationCodegen(classCodegen, context, true) {
-                                override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
-                                    throw RuntimeException(
-                                        "Error during generation: only type annotations should be presented on type parameters bounds: " +
-                                                "${ir2string(typeParameter)} in ${ir2string(typeParameter)}"
-                                    )
-                                }
-
-                                override fun visitTypeAnnotation(descr: String, path: TypePath?, visible: Boolean): AnnotationVisitor {
-                                    return visitor(
-                                        TypeReference.newTypeParameterBoundReference(boundType, index, superIndex).value,
-                                        path,
-                                        descr,
-                                        visible
-                                    )
-                                }
-                            }.generateTypeAnnotations(typeParameterContainer, superType)
-                        }
-                    }
-                }
-            }
+//            if (context.state.target != JVM_1_6) {
+//                typeParameterContainer.typeParameters.forEachIndexed { index, typeParameter ->
+//                    object : AnnotationCodegen(classCodegen, context, true) {
+//                        override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
+//
+//                            return visitor(
+//                                TypeReference.newTypeParameterReference(referenceType, index).value,
+//                                null,
+//                                descr,
+//                                visible
+//                            )
+//                        }
+//
+//                        override fun visitTypeAnnotation(descr: String, path: TypePath?, visible: Boolean): AnnotationVisitor {
+//                            throw RuntimeException(
+//                                "Error during generation: type annotation shouldn't be presented on type parameter: " +
+//                                        "${ir2string(typeParameter)} in ${ir2string(typeParameterContainer)}"
+//                            )
+//                        }
+//                    }.genAnnotations(typeParameter, null, null)
+//
+//                    if (context.state.configuration.getBoolean(JVMConfigurationKeys.EMIT_JVM_TYPE_ANNOTATIONS)) {
+//                        var superInterfaceIndex = 1
+//                        typeParameter.superTypes.forEach { superType ->
+//                            val isClassOrTypeParameter = !superType.isInterface() && !superType.isAnnotation()
+//                            val superIndex = if (isClassOrTypeParameter) 0 else superInterfaceIndex++
+//                            object : AnnotationCodegen(classCodegen, context, true) {
+//                                override fun visitAnnotation(descr: String, visible: Boolean): AnnotationVisitor {
+//                                    throw RuntimeException(
+//                                        "Error during generation: only type annotations should be presented on type parameters bounds: " +
+//                                                "${ir2string(typeParameter)} in ${ir2string(typeParameter)}"
+//                                    )
+//                                }
+//
+//                                override fun visitTypeAnnotation(descr: String, path: TypePath?, visible: Boolean): AnnotationVisitor {
+//                                    return visitor(
+//                                        TypeReference.newTypeParameterBoundReference(boundType, index, superIndex).value,
+//                                        path,
+//                                        descr,
+//                                        visible
+//                                    )
+//                                }
+//                            }.generateTypeAnnotations(typeParameterContainer, superType)
+//                        }
+//                    }
+//                }
+//            }
         }
 
         private fun isInvisibleForNullabilityAnalysis(declaration: IrDeclaration): Boolean =
