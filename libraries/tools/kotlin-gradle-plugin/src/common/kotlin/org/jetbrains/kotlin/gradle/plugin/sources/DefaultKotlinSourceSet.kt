@@ -88,7 +88,10 @@ abstract class DefaultKotlinSourceSet @Inject constructor(
         dependencies { configure.execute(this) }
 
     override fun dependsOn(other: KotlinSourceSet) {
-        dependsOnSourceSetsImpl.add(other)
+        if (!dependsOnSourceSetsImpl.add(other)) {
+            /* Already added this dependsOn edge: Nothing to do! */
+            return
+        }
 
         // Fail-fast approach: check on each new added edge and report a circular dependency at once when the edge is added.
         checkForCircularDependencies()
