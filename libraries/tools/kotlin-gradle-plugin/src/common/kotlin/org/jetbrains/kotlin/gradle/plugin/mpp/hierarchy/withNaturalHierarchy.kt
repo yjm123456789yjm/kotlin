@@ -23,7 +23,7 @@ import org.jetbrains.kotlin.gradle.plugin.ExperimentalKotlinGradlePluginApi
  *       apple                  linux              windows              androidNative                   ...
  *
  *         |
- *  +------+----+------------+------------+
+ *  +-----------+------------+------------+
  *  |           |            |            |
  *
  * macos       ios         tvos        watchos
