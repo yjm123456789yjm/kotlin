@@ -6,7 +6,7 @@
 package org.jetbrains.kotlin.asJava
 
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.roots.ProjectRootModificationTracker
+import com.intellij.openapi.util.ModificationTracker
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.util.CachedValueProvider
 import com.intellij.psi.util.CachedValuesManager
@@ -48,11 +48,12 @@ abstract class KotlinAsJavaSupportBase<TModule>(protected val project: Project) 
     override fun getLightFacade(file: KtFile): KtLightClassForFacade? = CachedValuesManager.getCachedValue(file) {
         CachedValueProvider.Result.create(
             createLightFacade(file),
-            if (file.isCompiled)
-                ProjectRootModificationTracker.getInstance(project)
-            else
-                KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker,
+            tracker(file),
         )
+    }
+
+    open fun tracker(file: KtFile): ModificationTracker {
+        return KotlinModificationTrackerService.getInstance(project).outOfBlockModificationTracker
     }
 
     override fun getFacadeClassesInPackage(packageFqName: FqName, scope: GlobalSearchScope): Collection<KtLightClassForFacade> {
