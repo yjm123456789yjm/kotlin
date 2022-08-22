@@ -16,10 +16,12 @@ import org.jetbrains.kotlin.fileClasses.isJvmMultifileClassFile
 import org.jetbrains.kotlin.fileClasses.javaFileFacadeFqName
 import org.jetbrains.kotlin.name.FqName
 import org.jetbrains.kotlin.psi.KtFile
+import org.jetbrains.kotlin.serialization.deserialization.builtins.BuiltInSerializerProtocol
 
 abstract class KotlinAsJavaSupportBase<TModule>(protected val project: Project) : KotlinAsJavaSupport() {
     fun createLightFacade(file: KtFile): KtLightClassForFacade? {
         if (file.isScript()) return null
+        if (file.isCompiled && file.name.endsWith(BuiltInSerializerProtocol.BUILTINS_FILE_EXTENSION)) return null
 
         val module = file.findModule().takeIf { it.isApplicable() } ?: return null
         val facadeFqName = file.javaFileFacadeFqName
