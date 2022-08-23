@@ -27,7 +27,7 @@ suspend inline fun <T> Flow<T>.collect(crossinline body: suspend (T) -> Unit) =
 inline fun <T, R> Flow<T>.transform(crossinline transformer: suspend FlowCollector<R>.(value: T) -> Unit): Flow<R> =
     flow<R> { collect { value -> transformer(value) } }
 
-inline fun <T, R> Flow<T>.map(crossinline transformer: suspend (value: T) -> R): Flow<R> =
+inline fun Flow<String>.map(crossinline transformer: suspend (value: String) -> String): Flow<String> =
     transform { value -> emit(transformer(value)) }
 
 // FILE: box.kt
