@@ -134,6 +134,22 @@ public class ReadKotlinClassHeaderAnnotationVisitor implements AnnotationVisitor
     public void visitEnd() {
     }
 
+    /**
+     * About the default values:
+     * <p>
+     * We want to ignore default values for some fields, since they were recorded by mistake
+     * and caused troubles during decompilation and deserialization.
+     * <p>
+     * Currently, those fields are not recorded at all if they have default values (see
+     * {@link org.jetbrains.kotlin.jvm.abi.JvmAbiMetadataProcessorKt#visitKotlinMetadata}).
+     * It means that if the library was compiled by a recent version of Kotlin compiler,
+     * it will have no default values recorded at all.
+     * <p>
+     * However, there are a lot of already compiled libraries with written recorded defaults. That's
+     * why we have to additionally ignore default values in this visitor - otherwise we'll get
+     * incorrectly deserialized Kotlin declarations, and that would lead to STUB vs PSI Mismatch
+     * errors and other problems.
+     */
     private class KotlinMetadataArgumentVisitor implements AnnotationArgumentVisitor {
         @Override
         public void visit(@Nullable Name name, @Nullable Object value) {
@@ -150,18 +166,19 @@ public class ReadKotlinClassHeaderAnnotationVisitor implements AnnotationVisitor
                     metadataVersionArray = (int[]) value;
                 }
             }
+            // see javadoc about default values above
             else if (METADATA_EXTRA_STRING_FIELD_NAME.equals(string)) {
-                if (value instanceof String) {
+                if (value instanceof String && !((String) value).isEmpty()) {
                     extraString = (String) value;
                 }
             }
             else if (METADATA_EXTRA_INT_FIELD_NAME.equals(string)) {
-                if (value instanceof Integer) {
+                if (value instanceof Integer && (Integer) value != 0) {
                     extraInt = (Integer) value;
                 }
             }
             else if (METADATA_PACKAGE_NAME_FIELD_NAME.equals(string)) {
-                if (value instanceof String) {
+                if (value instanceof String && !((String) value).isEmpty()) {
                     packageName = (String) value;
                 }
             }
@@ -191,7 +208,10 @@ public class ReadKotlinClassHeaderAnnotationVisitor implements AnnotationVisitor
             return new CollectStringArrayAnnotationVisitor() {
                 @Override
                 protected void visitEnd(@NotNull String[] result) {
-                    data = result;
+                    // see javadoc about default values above
+                    if (result.length > 0) {
+                        data = result;
+                    }
                 }
             };
         }
@@ -201,7 +221,10 @@ public class ReadKotlinClassHeaderAnnotationVisitor implements AnnotationVisitor
             return new CollectStringArrayAnnotationVisitor() {
                 @Override
                 protected void visitEnd(@NotNull String[] result) {
-                    strings = result;
+                    // see javadoc about default values above
+                    if (result.length > 0) {
+                        strings = result;
+                    }
                 }
             };
         }
