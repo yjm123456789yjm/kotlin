@@ -159,12 +159,12 @@ class CodegenTestsOnAndroidGenerator private constructor(private val pathManager
             File("compiler/testData/codegen/boxInline")
         )
 
-        generateTestMethodsForDirectories(
-            TargetBackend.ANDROID,
-            COMMON,
-            REFLECT,
-            *folders
-        )
+//        generateTestMethodsForDirectories(
+//            TargetBackend.ANDROID,
+//            COMMON,
+//            REFLECT,
+//            *folders
+//        )
 
         generateTestMethodsForDirectories(
             TargetBackend.ANDROID_IR,
